@@ -7,6 +7,7 @@
 
 | 番号 | タイトル | status | 作成日 |
 | --- | --- | --- | --- |
+| ADR-20261013-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない][adr-20261013-001-fresh-clone-per-ai-session] | accepted | 2026-10-13 |
 
 <!--
 行の例（表の最後に足す）:
@@ -20,3 +21,4 @@
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
 [stages]: ../requirements/06-setup-and-stages.md
 [req]: ../requirements/README.md
+[adr-20261013-001-fresh-clone-per-ai-session]: ./adr-20261013-001-fresh-clone-per-ai-session.md
