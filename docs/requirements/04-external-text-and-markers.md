@@ -84,7 +84,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評者が落とした 🔴 の、PR ごとの累計） | 許さない | 進行役（収束の判定、マージの判定） | IMPL-18、IMPL-22 |
 | `fix` | PR の対応コメント | `round=<n>`、`head=<SHA>` | 許さない | 進行役（対応済みのラウンドの判定） | IMPL-23 |
 | `merge` | PR のマージ判定のコメント | `head=<SHA>`、`merge=ready\|human`、`reasons=<満たさない条件の記号>` | 許さない | 人（マージの判断）、進行役（一致の集計） | MERGE-3 |
-| `note` | Issue か PR の、進行役のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由） | `kind=wait\|overlap\|remind\|stop`、必要なら `reason=<短い記号>` | 許さない | 進行役（「1 回だけ書く」の判定：同じ `kind` と `reason` の有効な印があれば書かない） | FLOW-8、FLOW-10、MERGE-3、[ADR-20261015-004][adr-markers] |
+| `note` | Issue か PR の、進行役のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由、PR と Issue の結びつき） | `kind=wait\|overlap\|remind\|stop\|link`、必要なら `reason=<短い記号>`（`stop` の例：`marker-invalid` `unlinked-pr`）。`link` は、Issue に置くときは `pr=<PR の番号>`、PR に置くときは `issue=<Issue の番号>` を持つ | 許さない | 進行役（「1 回だけ書く」の判定：同じ `kind` と `reason` の有効な印があれば書かない。`link` は PR と Issue の結びつけ。IMPL-6） | FLOW-8、FLOW-10、MERGE-3、IMPL-6、[ADR-20261015-004][adr-markers]、[ADR-20261016-001][adr-pr] |
 
 人が書く固定の見出し（進行役は、push 以上の権限を持つ人が書き、印を持たないコメントだけを読む。FLOW-14）：
 
@@ -104,3 +104,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [f08]: ./08-review-skill.md
 [adr-intake]: ../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
+[adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md

@@ -11,7 +11,9 @@
   出力契約は進行役が自分の JSON スキーマで `result` の文を検証し、欠けや型の違いがあれば「実行の失敗」（IMPL-14）とする。解析できない出力を「成功」や「0 件」と読まない。
   `--json-schema` は `--agent` と併用すると `structured_output` が空になる（段階 2 で確認）ので頼らない。エージェント定義には「返事は JSON だけ。前後に文を付けない」と書く
   PR の作成・draft/ready の切り替え・Status と Agent 欄の更新・Issue と PR へのコメントは、すべて進行役が出力を検証してから行う（gh-aw の safe outputs と同じ）
-- IMPL-6 進行役が PR を `develop` 向けに draft で作る。本文に `Closes #<番号>` と検査の結果を書く。題名は Conventional Commits の規約（小文字か日本語で始める。squash の件名になり commitlint が検査する）に進行役が照らしてから使う
+- IMPL-6 進行役が PR を `develop` 向けに draft で作る。本文に `Closes #<番号>` と検査の結果を書く（`Closes #<番号>` は人向けの表示。`develop` 向けの PR には GitHub が Issue との結びつきを張らないので、結びつけには使わない）。題名は Conventional Commits の規約（小文字か日本語で始める。squash の件名になり commitlint が検査する）に進行役が照らしてから使う。
+  PR と Issue は、(1) head のブランチ名が `<型>/issue-<番号>`（IMPL-2）、(2) head のリポが base と同じ（fork でない）、(3) 進行役の署名付きの結びつきの印がある、の 3 つで結びつける。PR を作った直後に、Issue に `note kind=link pr=<PR の番号>`、PR に `note kind=link issue=<Issue の番号>` の印付きのコメントを投稿する。作者のアカウントは条件にしない（SETUP-13）。
+  同じリポに、ブランチ名が一致するのに結びつきの印が無い PR があれば、Issue を `needs-human` にし、`note kind=stop reason=unlinked-pr` を投稿する。fork からの PR は、本文が Issue を参照していても扱わない。Issue 1 件に結びつく PR は 1 件で、マージされずに閉じられていれば `needs-human`（[ADR-20261016-001][adr-pr]）
 - IMPL-7 PR を作ったら進行役が Status を In Review にし、担当者（Assignee）はメンテナのまま。AI の担当は Project の単一選択欄「Agent」で表す（値：`worker` `reviewer` `human` `paused`）
 - IMPL-8 ADR の起票が要ると分かったら、作業 AI は実装せずに「止まった理由」を出力契約で返し、進行役が Issue へコメントして `needs-human` を付ける（ADR が先、実装は承認後）
 - IMPL-9 着手の前に、基線が緑であることを確かめる。緑でない（赤、無い、保留）なら、新しい着手（計画を含む）・最初の実装・載せ直しをせず、Issue に `needs-human` は付けない。作った PR のレビュー・修正・収束・マージの判定・片付けと、受け入れ・承認の確定は続け、基線が緑に戻った実行から自動で再開する（壊れた基線の上に積まない。Anthropic の harness の「まず動くことを確かめる」。[ADR-20261015-006][adr-flow]）。
@@ -90,7 +92,17 @@
   マイルストーンは付けない。人がマイルストーンを付けるまで受け入れ（TEXT-12）も走らせない（🟢 の Issue が毎日増えて人の読む量を超えないため）。同じ見出しの open な Issue があれば作らずにコメントで PR 番号を足す（重複を防ぐ）。
   Issue を作ってから PR を Ready to Merge にする（先にマージすると、Issue 化に失敗したとき指摘が消える）
 - IMPL-27 終了条件：CI が緑、かつ最新のラウンドの印が `verdict=pass`（🔴 🟡 が 0 件。🟢 は残ってよい）。
-  「CI が緑」の定義：設定に列挙した必須チェック（例：`check (ubuntu-latest)` `check (windows-latest)` `commitlint`）のすべてが、PR の head SHA に対して `success`。1 つでも無い・`pending`・`skipped`・`failure` なら緑ではない（検査が走らなかった変更を通さない）。
+  「CI が緑」の定義：設定に列挙した必須チェック（例：`check (ubuntu-latest)` `check (windows-latest)` `commitlint`）のすべてが、PR の head SHA に対して `success`。必須チェックのうち 1 つでも、head に対するチェックがまだ作られていないか、結果が `success` 以外なら、緑ではない（検査が走らなかった変更を通さない）。
+  緑でないときの扱いは、必須チェックごとに結果を読み、1 つでも当てはまれば次の表の上の行から順に決める。同じ head に同じ名前のチェックが複数あるとき（再実行）は、最新の 1 件を採る（[ADR-20261016-001][adr-pr]）
+
+  | CI の結果 | 扱い |
+  | --- | --- |
+  | `action_required` | `needs-human`（ワークフローの実行に人の承認が要る） |
+  | `failure`、`timed_out` | 修正に回す。失敗したチェックの名前と結果だけを、最新のラウンドの 🔴 として作業 AI に渡し、往復（IMPL-24）に数える。CI のログは渡さない（作業 AI は自分の作業場所で `pnpm check` を実行して確かめる）。`fix` の印の `round` は、最新の `review` の印の `round` と同じ |
+  | チェックがまだ作られていない（push の直後）、`queued`、`in_progress`、`pending`、`waiting`、`requested` | 待つ。次の実行で読み直す |
+  | `cancelled`、`skipped`、`neutral`、`stale` | 待つ。同じ head で、完了から設定の時間が経っても変わらなければ `needs-human`（人が再実行するか、原因を確かめる） |
+  | すべて `success` | 緑 |
+
   照合はチェック名だけでなく、チェックを出した app（GitHub Actions）と、base 側に存在するワークフローのパスでも行う（AI が同じ名前の job を足して緑にする経路を塞ぐ）。必須チェックの一覧が空なら点検（SETUP-2）を fail にする（空を「すべて success」と読まない）。
   進行役は実行の中で CI を待たず、次回の実行で結果を読む（FLOW-4）。いまの運用（2 回目のレビューで指摘 0 件ならマージ）を含み、🟢 だけ残った場合も収束とする。
   1 回目から pass なら 1 回で収束とする。満たしたら Status を Ready to Merge にする
@@ -132,3 +144,4 @@
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md

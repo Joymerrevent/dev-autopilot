@@ -38,13 +38,13 @@
 
 ### レビューとマージ
 
-- UNDECIDED-9 **pass なのに CI が緑でないとき。** pass なのに CI が赤・無い・保留のときの扱い。赤を修正に回して往復に数えるか、無い・保留は待つか（IMPL-27。[02-implement-review-fix.md][f02]）
-- UNDECIDED-10 **2 件目以降の `merge=ready`。** 1 回の実行で `merge=ready` 1 件を超えた PR の扱い（`human` にすると一致の記録が汚れる）（MERGE-5。[03-merge.md][f03]）
+- UNDECIDED-9 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**pass なのに CI が緑でないとき。** pass なのに CI が赤・無い・保留のときの扱い。赤を修正に回して往復に数えるか、無い・保留は待つか（IMPL-27。[02-implement-review-fix.md][f02]）~~
+- UNDECIDED-10 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**2 件目以降の `merge=ready`。** 1 回の実行で `merge=ready` 1 件を超えた PR の扱い（`human` にすると一致の記録が汚れる）（MERGE-5。[03-merge.md][f03]）~~
 
 ### 受け入れと印
 
 - UNDECIDED-11 **欠番**（[ADR-20261015-004][adr-markers] で決めた）：~~**印の体系の拡張。** 進行役の投稿すべてに印を付けるか（待ち・催促・警告・停止の理由）、署名の対象に種類・リポ・番号を含めるか、進行役の印が無効化されていたら `needs-human` にするか（「[印と固定の見出しの一覧][f04]」。[04-external-text-and-markers.md][f04]）~~
-- UNDECIDED-12 **PR と Issue の結びつけ。** `Closes #n` でなく head のブランチ名・同じリポ・作者・印の番号で引くか（IMPL-6。[02-implement-review-fix.md][f02]）
+- UNDECIDED-12 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**PR と Issue の結びつけ。** `Closes #n` でなく head のブランチ名・同じリポ・作者・印の番号で引くか（IMPL-6。[02-implement-review-fix.md][f02]）~~
 - UNDECIDED-13 **欠番**（[ADR-20261015-004][adr-markers] で決めた）：~~**権限確認の範囲。** `needs-human` を外す・Status を戻す・`plan:*` を付ける操作の人と、渡す文の編集者。渡す文の最終編集が `agent-ready` より後なら `needs-human` にするか（TEXT-10、「[Issue の状態の遷移][f01]」の戻す手順。[04-external-text-and-markers.md][f04]、[01-issue-flow.md][f01]）~~
 - UNDECIDED-14 **欠番**（[ADR-20261015-003][adr-intake] で決めた）：~~**検疫で見つかったときの印。** TEXT-9 は「見つかったら下書きを作らない」と書いた直後に「下書きコメントに『混入の検査：有り（種類）』の行を必ず書く」としている。
   TEXT-12 も「有りなら下書きを作らない」。一方、「[印と固定の見出しの一覧][f04]」の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）~~
@@ -102,3 +102,4 @@
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md

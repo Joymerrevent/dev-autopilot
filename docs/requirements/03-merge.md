@@ -10,6 +10,7 @@
     変更ファイルの一覧は API でなく、進行役が自分の clone で `git diff --raw <base>...<head>` を取って作る（API のページ送りの漏れを「一覧に無い」と読まないため）
   - 変更したファイルに、方針に係るパス（下の一覧）が 1 つも無い
 - MERGE-3 判定の結果は進行役が PR のコメントに印として書く（形は IMPL-18 と同じ。`merge=ready` か `merge=human`、満たさない条件、head の SHA）。`ready` なら Ready to Merge にして人に渡す。`human` なら理由を添えて Ready to Merge のまま人に渡す。
+  判定の時点で CI が緑でなければ（IMPL-27）、判定を次の実行に回し、`merge` の印を書かない（`merge=human` にしない。[ADR-20261016-001][adr-pr]）。
   人は印を見てマージし、印と違う判断をしたとき（`ready` をマージしない、`human` をマージする）はその理由を PR にコメントする。この一致・不一致が判定の信頼度の記録になる（FLOW-13、[段階 8][f06] の出口）。
   **一致・不一致の数え方**：`merge=human` の PR が人にマージされたら不一致（進行役が次回の実行で検出する）。`merge=ready` の PR は、人が「## 判定と違う判断」の見出しでコメントしたら不一致、マージされたら一致。
   どちらも無く 7 日経った PR には進行役が 1 回だけ催促のコメント（1 回かどうかは `note` の印（`kind=remind`）で判定する）を書き、人が動くまで段階 8 の 10 件に数えない
@@ -22,7 +23,7 @@
   - 判定は diff の状態も見る：削除（D）・改名（R）・種類の変更（T。シンボリックリンク化など）・実行属性の変更は、パスが許可一覧にあっても `merge=human`
   - 許可一覧に **含めない**（常に `merge=human`）の例：`docs/adr/**` `docs/design/**` `ROADMAP.md`、`CLAUDE.md` `.claude/**`、**`dev-autopilot/**`（自己改変）**、`.claude-plugin/**` `.github/**`、
     `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`（利用者の CC で動く防衛と雛形）、`plugin/scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
-- MERGE-5 人がマージするときは `gh pr merge --squash --match-head-commit <印の head SHA>` を使い、印の SHA と実際の head の一致をサーバ側でも強制する（人の手順として利用の文書に書く。将来、実行を進行役に移すときも同じコマンド）。1 回の実行で `merge=ready` にするのは 1 件まで（人が 1 件マージするごとに、残りは載せ直しと CI を経て判定し直す）。
+- MERGE-5 人がマージするときは `gh pr merge --squash --match-head-commit <印の head SHA>` を使い、印の SHA と実際の head の一致をサーバ側でも強制する（人の手順として利用の文書に書く。将来、実行を進行役に移すときも同じコマンド）。1 回の実行で `merge=ready` にするのは 1 件まで（人が 1 件マージするごとに、残りは載せ直しと CI を経て判定し直す）。判定する順は PR の番号の小さい順。2 件目以降の、`merge=ready` になるはずの PR は、判定を次の実行に回して `merge` の印を書かず（`merge=human` にしない）、Status は `Ready to Merge` のままにする。`merge=human` の判定は 1 件の上限に数えない（[ADR-20261016-001][adr-pr]）。
   ruleset（SETUP-1 が作る）に「base と最新であること」（必須チェックの strict）を入れ、古い base で pass した PR はマージされない。載せ直しは進行役が自分の clone で `git merge origin/develop` を行い、結果の SHA を push する（force push を使わない。worktree の中では git を実行しない。「[安全側に倒す設計][f05]」）
 - MERGE-6 **載せ直しで head が変わったときの扱い**。載せ直しは進行役が行う。載せ直しの前後で `develop` に対する差分の patch-id（`git patch-id --stable --verbatim`。行番号を無視し、周辺の行と空白は含む。`--verbatim` を付けるのは、既定では空白の違いを無視し、インデントだけの変更を同一と読むため）が同一なら、
   進行役が同じ内容（round・件数・verdict）の印を新しい head に付け直す。再レビューはせず、往復（IMPL-24）にも数えない。CI は新しい head で改めて緑を要求する。
@@ -34,3 +35,4 @@
 [f05]: ./05-safety.md
 [f06]: ./06-setup-and-stages.md
 [f11]: ./11-records.md
+[adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
