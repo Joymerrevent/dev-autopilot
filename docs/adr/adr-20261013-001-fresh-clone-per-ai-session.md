@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-13
-updated: 2026-10-14
+updated: 2026-10-16
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -93,7 +93,7 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 - **AI のセッションを起動した後の clone**：進行役は、取り込みの fetch の取り出し元にする以外に git を実行しない。`git fetch origin`・`worktree remove`・`branch -D` も行わない
 - **消す**：同じ名前で作り直す直前と、片付け（FLOW-27、MERGE-7）のときに、`sessions/<名前>/` をフォルダごと消す。git は使わず、シンボリックリンクの先をたどらない。
   消す前に `sessions/<名前>/clone/.git/worktrees/worktree/commondir` と `gitdir` をファイルとして読み（git は worktree の管理フォルダを、worktree のフォルダの名前 `worktree` で作る）、作ったときの中身と違えば、消さずに作業場所の Issue を `needs-human` にし、`check` で warn にする（SAFE-4）
-- **並列（UNDECIDED-2）**：clone はセッションごとに別なので、Issue の間でも、作業とレビューと批評の間でも `.git` を共有しない。WIP の上限を上げても（段階 9）同じ形のまま動く。
+- **並列（UNDECIDED-2）**：clone はセッションごとに別なので、Issue の間でも、作業とレビューと批評の間でも `.git` を共有しない。WIP の上限を上げても（段階 9（WIP の上限を上げ、実行の間隔を狭める段階））同じ形のまま動く。
   `allowWrite` の列挙はせず、sandbox の既定に任せる（SAFE-11）
 - **`commondir` の前提（UNDECIDED-4）**：SAFE-12 の前提を次の文に改める。
   「sandbox は worktree の `commondir` を保護する（FACT-9）。ただし保護の一覧は Claude Code の版で変わりうるうえ、親 clone の `.git/commondir` の作成のように確かめていない経路があり、git は `commondir` を見つけると指す先の `config` を読む」。
@@ -118,7 +118,7 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 
 ### 確認方法（Confirmation）
 
-- 段階 3 の `check`（SETUP-2）で、次を実際に試す
+- 段階 3（`setup` と `check` を作る段階）の `check`（SETUP-2）で、次を実際に試す
   - objects を書き換えた clone から進行役の clone へ fetch すると失敗し、進行役の clone に書き換えた中身が入らないこと
   - 進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと（`find <clone>/.git/objects -type f -links +1` の出力が空）
   - `.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと
@@ -172,7 +172,7 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 - 範囲外：上限（IMPL-13）に当たって止まったセッションの作業を、次のセッションに引き継ぐか。本 ADR では引き継がず、次のセッションは GitHub にある状態（push 済みの commit と計画）から始める。
   今の要件も「続きから再開する」とは書いておらず、IMPL-13 は途中の状態を commit しないと決めている。ただし Issue ごとの worktree を使い続ける今の要件の形では、やり直しの作業 AI が前のセッションの残したファイルと commit を目にしていた。
   引き継ぐ形の案として、止まったセッションでも AI が commit した分だけを進行役の clone へ取り込み、漏えいの検査と実行するパスの検査（IMPL-15）を通して作業ブランチへ push し、次のセッションをその commit から始める形がある。
-  IMPL-13 の「途中の状態を commit しない」を変え、未完成の作業を GitHub に push することになるので、別に決める。段階 5 で上限に当たった回数を記録してから決める。要件に反映するときに、[決めていないこと][undecided]に足す
+  IMPL-13 の「途中の状態を commit しない」を変え、未完成の作業を GitHub に push することになるので、別に決める。段階 5（計画と実装を動かし、レビューは人が行う段階）で上限に当たった回数を記録してから決める。要件に反映するときに、[決めていないこと][undecided]に足す
 - 要件への反映（承認の後に、別の PR で行う）
   - IMPL-1：AI の作業場所の clone は、AI のセッションごとに origin の URL から作り直すことを書き足す
   - IMPL-16：「AI の作業場所の clone から PR の head で切る専用の worktree」を、「レビューのたびに origin の URL から clone し、PR の head で切る worktree」に改める

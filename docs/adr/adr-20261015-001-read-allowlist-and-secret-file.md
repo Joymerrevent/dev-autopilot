@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -118,7 +118,7 @@ decision-makers: メンテナ
 
 ### 確認方法（Confirmation）
 
-- 段階 3 の `check`（SETUP-2）で、次を実際に試す
+- 段階 3（`setup` と `check` を作る段階）の `check`（SETUP-2）で、次を実際に試す
   - sandbox の中から、ホームのファイル・`<置き場>/controller/`・別のセッションのフォルダ・秘密の置き場を読めないこと。自分のセッションの clone と worktree は読めること
   - sandbox の中で、決定 1 の環境変数を渡して `git commit` と `pnpm install` が通ること
   - Read ツールで worktree の外を読もうとすると拒否され、`permission_denials` に記録されること

@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -91,7 +91,7 @@ decision-makers: メンテナ
   - 検疫で見つかった Issue では、受け入れ AI を起動せず、検疫の結果と `quarantine=found` の印だけのコメントを投稿して `needs-human` を付けること。コメントに見つかった文の中身が無いこと
   - 次の実行で、印のある Issue に受け入れが走らないこと
   - `quarantine=found` の Issue で `agent-ready` が付いたとき、`## 作業指示` のコメントが無ければ `intake-final` を投稿せずに `needs-human` のままにし、あれば `source=instruction` だけを渡す文にすること
-- 段階 4（棚卸しと受け入れ）の出口の記録で、受け入れた件数とマイルストーンの候補を人が直した件数を数える
+- 段階 4（棚卸しと受け入れを動かす段階）の出口の記録で、受け入れた件数とマイルストーンの候補を人が直した件数を数える
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 

@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -52,7 +52,7 @@ store をセッションの間で共有すると、ある AI のセッション�
 - store は、セッションのフォルダを消すとき（ADR-20261013-001）に一緒に消える
 - npm のキャッシュは、今の要件のまま一時フォルダに置く（ADR 20261006-01 の `npm_config_cache` の設定。SAFE-10）
 - npm のレジストリにつながらず `pnpm install` が失敗したら、実行の失敗（IMPL-14）として次回に持ち越す
-- 見直す時期：段階 9（並列と間隔の短縮）で、導入の時間や通信量が問題になったら、案C を確かめてから決め直す
+- 見直す時期：段階 9（WIP の上限を上げ、実行の間隔を狭める段階）で、導入の時間や通信量が問題になったら、案C を確かめてから決め直す
 
 ### 影響（Consequences）
 
@@ -64,7 +64,7 @@ store をセッションの間で共有すると、ある AI のセッション�
 
 ### 確認方法（Confirmation）
 
-- 段階 3 の `check`（SETUP-2）で、sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すことを確かめる
+- 段階 3（`setup` と `check` を作る段階）の `check`（SETUP-2）で、sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すことを確かめる
 - `check` で、安全設定の `allowRead` と `allowWrite` に共有の store が無いことと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いことを確かめる
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
@@ -87,7 +87,7 @@ store をセッションの間で共有すると、ある AI のセッション�
 - 良い点: AI は store に書けず、速い
 - 悪い点: 進行役が sandbox の外で `pnpm` を動かし、AI が書き換えうる lockfile を読んで外へ通信する。lifecycle script は動かさない（`--ignore-scripts`）が、SAFE-2 の (d) の境界に近づく
 - 悪い点: 読むだけの store で `pnpm install` が通るかを確かめていない。仕組みが増える
-- 見送り。段階 9 で導入の時間が問題になったら確かめる
+- 見送り。段階 9（WIP の上限を上げ、実行の間隔を狭める段階）で導入の時間が問題になったら確かめる
 
 ## 補足情報（More Information）
 
