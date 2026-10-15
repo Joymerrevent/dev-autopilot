@@ -11,6 +11,7 @@
 | ADR-20261015-001 | [AI の読み取りは自分のセッションのフォルダに絞り、秘密は進行役だけが読むファイルに置き、手動実行は launchd のジョブを起こす][adr-20261015-001-read-allowlist-and-secret-file] | accepted | 2026-10-15 |
 | ADR-20261015-002 | [AI のセッションは依存の store を共有せず、セッションの一時フォルダの store で依存を導入する][adr-20261015-002-no-shared-dependency-store] | accepted | 2026-10-15 |
 | ADR-20261015-003 | [受け入れはマイルストーンを待たずに走らせ、検疫で見つかったら作業指示を書かずに検疫の結果と印だけを投稿する][adr-20261015-003-intake-scope-and-quarantine-report] | accepted | 2026-10-15 |
+| ADR-20261015-004 | [進行役の投稿にはすべて署名付きの印を付け、人の操作は操作した人の権限と時刻を確かめてから従う][adr-20261015-004-signed-markers-and-actor-checks] | accepted | 2026-10-15 |
 
 <!--
 行の例（表の最後に足す）:
@@ -28,3 +29,4 @@
 [adr-20261015-001-read-allowlist-and-secret-file]: ./adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-20261015-002-no-shared-dependency-store]: ./adr-20261015-002-no-shared-dependency-store.md
 [adr-20261015-003-intake-scope-and-quarantine-report]: ./adr-20261015-003-intake-scope-and-quarantine-report.md
+[adr-20261015-004-signed-markers-and-actor-checks]: ./adr-20261015-004-signed-markers-and-actor-checks.md
