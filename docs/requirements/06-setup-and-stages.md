@@ -20,7 +20,8 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行役の clone へ fetch すると失敗すること。
-  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと
+  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと。
+  依存の store も試す（[ADR-20261015-002][adr-store] の確認方法）：sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すこと、安全設定の `allowRead` と `allowWrite` に共有の store が無いこと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いこと
 - SETUP-3 **設定ファイルの正本は 1 つ**（STRUCT-2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
 - SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
 
@@ -73,3 +74,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [f10]: ./10-verified-facts.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md

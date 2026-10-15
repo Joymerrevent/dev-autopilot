@@ -27,7 +27,8 @@
 - SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
   書き込みはその Issue の worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す。
-  ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行役は AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）と `TMPDIR` をセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）
+  ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行役は AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）と `TMPDIR` をセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）。
+  pnpm の store はセッションの一時フォルダの下（`$XDG_DATA_HOME/pnpm/store`）に置き、セッションの間で共有しない。共有の store（人の store も、dev-autopilot 用に別に作る store も）を `allowRead` と `allowWrite` に足さず、`PNPM_HOME` は渡さない（渡すと store の場所が変わる。FACT-25。[ADR-20261015-002][adr-store]）
 - SAFE-11 AI は worktree で作業する。worktree の gitdir と objects は親 clone の `.git/` にあり、worktree のフォルダだけでは `git commit` が通らない。
   作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許すので、`allowWrite` の列挙は要らない（段階 2 で `git commit` が通ることを確認）。
   `.git/worktrees/<名前>/gitdir` は `denyWrite` にする（段階 2 で、sandbox は `commondir` `config.worktree` と親の `config` `hooks/**` を既定で保護するが `gitdir` は書けたため）。
@@ -55,3 +56,4 @@
 [f11]: ./11-records.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md

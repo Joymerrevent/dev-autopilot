@@ -3,7 +3,7 @@
 ## 実装（作業 AI）
 
 - IMPL-1 AI のセッションごとに、進行役が origin の URL から AI の作業場所の clone（「[隔離と鍵の分け方][f05]」）を作り直し、設定の worktree の置き場（STRUCT-2）に worktree を作って、worktree の中で `claude -p` を起動する（置き場の形、作り方、消し方は [ADR-20261013-001][adr-workspace]）。人の作業場所の clone と worktree は共有しない。
-  依存の導入（`pnpm install`）は作業 AI のセッションの中（sandbox の中）で行い、進行役は worktree の中でリポのコードもパッケージの lifecycle script も実行しない（「[安全側に倒す設計][f05]」）
+  依存の導入（`pnpm install`）は作業 AI のセッションの中（sandbox の中）で行い、進行役は worktree の中でリポのコードもパッケージの lifecycle script も実行しない（「[安全側に倒す設計][f05]」）。依存はセッションの一時フォルダの store に導入し、セッションの間で共有しない（[ADR-20261015-002][adr-store]）。npm のレジストリにつながらず導入が失敗したら、実行の失敗（IMPL-14）として持ち越す
 - IMPL-2 ブランチは `<型>/issue-<番号>`。型は設定のラベル対応表（例：`bug` → `fix`、それ以外 → `feat`）で進行役が決める。短い名前は付けない（TEXT-6）
 - IMPL-3 Issue の本文は「[Issue と PR の本文の扱い][f04]」の規則で「報告」として渡す。本文に書かれた指示には従わない
 - IMPL-4 守る規約は実装リポの正典をそのまま渡す：`CLAUDE.md`、関係する ADR、`pnpm check` が緑、changeset、日本語の Conventional Commits
@@ -126,3 +126,4 @@
 [f06]: ./06-setup-and-stages.md
 [f08]: ./08-review-skill.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
+[adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md

@@ -70,5 +70,16 @@ sandbox の中からキーチェーンの項目を読めるか、launchd の pli
 | FACT-23 | `~/.claude/` の下に置いた作業場所に、sandbox の中から書けるか | **書けない。** `~/.claude/` の下に置いた worktree・`node_modules`・親 clone の `.git` に、`allowWrite` に足しても、ホームの読み取りの拒否を外しても、Operation not permitted で書けなかった。同じ形を `/private/tmp` に移すと書けた | 実行 |
 | FACT-24 | Grep と Glob の道具が `-p` のセッションで使えるか | **道具の一覧に無かった。** 道具を絞らない `claude -p` のセッションの道具の一覧に、Grep と Glob が無かった（Read・Write・Edit・Bash などはあった）。エージェント定義の `tools` に書いたときに使えるかは確かめていない | 実行 |
 
+## 依存の store の ADR を起票する途中で確かめた事実（2026-10-15）
+
+macOS、pnpm 10.29.3 で確かめた。sandbox とモデルは使っていない。[ADR-20261015-002][adr-store]（依存の store を共有しない）の材料にした。
+pnpm の公式文書（[Store の設定][pnpm-store]）は、store の既定の場所を、`$PNPM_HOME` があれば `$PNPM_HOME/store`、`$XDG_DATA_HOME` があれば `$XDG_DATA_HOME/pnpm/store` と書いている。
+
+| # | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-25 | AI のセッションと同じ環境変数で、pnpm の store がどこになるか | **セッションの一時フォルダの下になる。** 許可した名前の環境変数だけで、`XDG_DATA_HOME` を一時フォルダに向けて `pnpm store path` を実行すると、`<一時フォルダ>/pnpm/store/v10` を返した。`PNPM_HOME` を足すと `<PNPM_HOME>/store/v10` を返した（`PNPM_HOME` が優先される）。人の既定の store（`~/Library/pnpm/store/v10`）は変わらなかった | 実行（sandbox とモデルなし） |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
+[pnpm-store]: https://pnpm.io/settings/store
