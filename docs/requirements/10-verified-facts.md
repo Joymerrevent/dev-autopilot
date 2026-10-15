@@ -58,4 +58,17 @@ sandbox の中の AI が親 clone の `.git/commondir` を新しく作れるか�
 | FACT-20 | 普通の clone（worktree でない）の `.git/` に `commondir` のファイルを置いたとき、git がどう振る舞うか | **git は `commondir` が指すフォルダを共通のフォルダとして使い、指す先の `config` を読む。** `.git/commondir` に別のフォルダのパスを書き、別のフォルダの `config` に `core.fsmonitor` のコマンドを書くと、clone で `git fetch origin` を実行したとき（終了コード 0）にコマンドが実行された。`git rev-parse --git-common-dir` は別のフォルダを返した | 実行（sandbox なし） |
 | FACT-21 | AI のセッションごとに作業場所を作り直す費用 | business-os を GitHub の URL から `git clone --no-checkout --no-tags` で約 3.0 秒、`git worktree add --detach` で 0.04 秒。`pnpm install --frozen-lockfile --ignore-scripts` は、手元の共有の store で 1.1 秒、空の store で 3.0 秒（`node_modules` は 137 MB）。clone の objects にリンク数 2 以上のファイルは無かった。手元の Mac（APFS）では、store と `node_modules` のファイルは共有しなかった（リンク数 1）。sandbox の中（通信は許可した先だけ）では計測していない | 実行（sandbox なし） |
 
+## 読み取りの範囲の ADR を起票する途中で確かめた事実（2026-10-15）
+
+macOS、Claude Code 2.1.285、haiku、git 2.50.1、pnpm 10.29.3 で確かめた。[ADR-20261013-001][adr-workspace] の形（`sessions/<名前>/clone` と `worktree`）を使い捨ての場所に作り、偽の秘密を置いた。
+`claude -p --setting-sources local --settings <安全設定>` を、許可した名前の環境変数だけで起動した。3 つの事実は、[ADR-20261015-001][adr-read]（AI の読み取り範囲と秘密の置き場）の材料にした。
+sandbox の中からキーチェーンの項目を読めるか、launchd の plist の環境変数が `launchctl print` で見えるかは、試験の操作を作業の環境の自動の許可判定が止めたため、確かめていない。
+
+| # | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-22 | AI の読み取りを、自分のセッションのフォルダに絞れるか | **絞れる。** sandbox の `denyRead` に `~/` と置き場の全体、`allowRead` に自分のセッションのフォルダを入れると、狭い方の規則が勝った。ホームのファイル（`.zshrc`、`.gitconfig`、`gh` の設定（リンクの名前と実体のパスの両方）、`.claude.json`、会話の記録、LaunchAgents）、進行役の偽の秘密、別のセッション、セッションの一覧は読めず、自分の clone と worktree は読めた。置き場がホームの外（`/private/tmp`）にあると、`~/` の拒否だけでは進行役の偽の秘密と別のセッションを読めた。**環境変数を渡さないと git と pnpm が止まる**：git は `~/.config/git/config` を読めず終了コード 128、pnpm は `~/.npmrc` を読めず終了コード 255。`GIT_CONFIG_GLOBAL=/dev/null`、`NPM_CONFIG_USERCONFIG=/dev/null`、XDG の 4 つと `TMPDIR` をセッションの一時フォルダに向けると、`git commit`、`pnpm install`（空の store で 9 秒）、`pnpm check:types`、`pnpm check:test`（441 件）が通った。親 clone の `.git/hooks` と `.git/config` には書けなかった。Read ツールは、`permissions.allow` に `Read` が無いと、worktree の外のファイルを「Claude requested permissions to read from this path, but you haven't granted it yet」で拒否し、`permission_denials` に記録した。worktree の中は読めた | 実行 |
+| FACT-23 | `~/.claude/` の下に置いた作業場所に、sandbox の中から書けるか | **書けない。** `~/.claude/` の下に置いた worktree・`node_modules`・親 clone の `.git` に、`allowWrite` に足しても、ホームの読み取りの拒否を外しても、Operation not permitted で書けなかった。同じ形を `/private/tmp` に移すと書けた | 実行 |
+| FACT-24 | Grep と Glob の道具が `-p` のセッションで使えるか | **道具の一覧に無かった。** 道具を絞らない `claude -p` のセッションの道具の一覧に、Grep と Glob が無かった（Read・Write・Edit・Bash などはあった）。エージェント定義の `tools` に書いたときに使えるかは確かめていない | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
+[adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md

@@ -47,11 +47,12 @@ dev-autopilot/
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受け入れ AI の拒否後のモデル、Agent ツールを許すか（IMPL-14）、批評者の確信度のしきい値（IMPL-22）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、進行役が実行するパスの一覧（IMPL-15）、漏えい検査の見本の置き場
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
-  - 安全：進行役のアカウント名（IMPL-20）、sandbox の `--settings` の置き場と `denyRead` `denyWrite` の一覧（「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（「[安全側に倒す設計][f05]」）。PAT と署名の鍵の値は設定ファイルに書かず環境変数で渡す
+  - 安全：進行役のアカウント名（IMPL-20）、sandbox の `--settings` の置き場と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダを含む。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **起動は Plugin として。** 進行役は `claude -p --plugin-dir <進行役専用 clone の絶対パス>/dev-autopilot/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
   `--plugin-dir` は AI の worktree の中ではなく、進行役が実行している専用 clone（AI が書けない）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
   分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
   配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行役の `src/`・テスト・前提データ・文書は配らない。
+  `/dev-autopilot` の手動の 1 回実行は、進行役を直接起動せず、`launchctl kickstart`（`-k` なし）で定期の実行と同じ launchd のジョブを起こす（[ADR-20261015-001][adr-read]）。
   人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行役を動かすときは、設定ファイルの `devAutopilotPath`（dev-autopilot のフォルダの絶対パス。分離前は進行役専用 clone の中の `dev-autopilot/`、分離後は専用マシンの clone）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない
 - STRUCT-4 **検査は dev-autopilot 自身が持ち、business-os はそれを呼ぶだけ。** `dev-autopilot/` を pnpm の workspace のパッケージにし、自分の `package.json`（`check` スクリプト）・`tsconfig.json`・`vitest.config.ts`・`.markdownlint-cli2.jsonc` を持つ。
   型検査・vitest・markdownlint（参照スタイルのリンク）は dev-autopilot の `check` が回す。business-os の `package.json` には `check:dev-autopilot`（`pnpm --filter dev-autopilot check`）を 1 つ足すだけで、
@@ -95,3 +96,4 @@ dev-autopilot/
 [f02]: ./02-implement-review-fix.md
 [f04]: ./04-external-text-and-markers.md
 [f05]: ./05-safety.md
+[adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md

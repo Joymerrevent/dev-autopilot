@@ -97,7 +97,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 ## 運用の規則
 
 - 状態の正は GitHub に置く（PR の有無と draft、印、Status、Agent 欄、ラベル）。進行役は毎回そこから状態を組み立て、手元の記録は補助にする。各手順は「すでに済んでいれば何もしない」（PR があれば作らない、コメントがあれば足さない）
-- 多重起動を lockfile で防ぐ。launchd の自動実行と人の `/dev-autopilot` の手動実行も同じ lock を取る。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
+- 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、`launchctl kickstart`（`-k` なし。`-k` は動いている進行役を殺す）で定期の実行と同じ launchd のジョブを起こし（[ADR-20261015-001][adr-read]）、同じ lock を取る。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
   lock で見送った実行と、Mac のスリープで launchd が起動しなかった日は記録に残し、`check` が warn に出す（段階 4 の「7 回の実行」はこれらを除いて数える）
 - 止める合図：設定ファイルの `enabled: false`（全体）、Project の Agent 欄 `paused`（その Issue）。進行役は毎回の最初に読む
 - 書かずに試す合図：設定ファイルの `dryRun: true`。進行役は GitHub への書き込み（コメント・ラベル・Project の欄・PR）をすべて手元の記録に「書くつもりだった内容」として残し、実際には書かない。読むことと AI のセッションは行う（段階 4 の最初と、新しい段階に入るときに使う）
@@ -106,3 +106,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [f04]: ./04-external-text-and-markers.md
 [f06]: ./06-setup-and-stages.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
+[adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
