@@ -9,6 +9,7 @@
 | --- | --- | --- | --- |
 | ADR-20261013-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない][adr-20261013-001-fresh-clone-per-ai-session] | accepted | 2026-10-13 |
 | ADR-20261015-001 | [AI の読み取りは自分のセッションのフォルダに絞り、秘密は進行役だけが読むファイルに置き、手動実行は launchd のジョブを起こす][adr-20261015-001-read-allowlist-and-secret-file] | accepted | 2026-10-15 |
+| ADR-20261015-002 | [AI のセッションは依存の store を共有せず、セッションの一時フォルダの store で依存を導入する][adr-20261015-002-no-shared-dependency-store] | accepted | 2026-10-15 |
 
 <!--
 行の例（表の最後に足す）:
@@ -24,3 +25,4 @@
 [req]: ../requirements/README.md
 [adr-20261013-001-fresh-clone-per-ai-session]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-20261015-001-read-allowlist-and-secret-file]: ./adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-20261015-002-no-shared-dependency-store]: ./adr-20261015-002-no-shared-dependency-store.md
