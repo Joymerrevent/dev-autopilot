@@ -40,7 +40,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 | SETUP-7 | Issue 依存（blocked by）が 1 件も入っていない | 受け入れが候補（本文の `#n` の参照）を出し、人が下書きで直し、`agent-ready` の後に進行役が確定して入れる（TEXT-12）。読み書きは REST の `/issues/{n}/dependencies/blocked_by` で行える（公式文書で確認） |
 | SETUP-8 | 処理対象を示すラベルが無い | `agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus` を `setup` が足す。名前は設定ファイルに持ち、ここに書いた名前は初期値 |
 | SETUP-9 | `develop` にブランチ保護が無い | ruleset で PR 必須にする（自律セッションの直 push を仕組みで止める） |
-| SETUP-10 | コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（SAFE-14）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
+| SETUP-10 | 済み（2026-10-16 に確認）：コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（SAFE-14）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
 | SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は「[分離を見越した構成][f07]」の構成 |
 | SETUP-12 | `claude -p` の実行は利用枠を消費する | 1 回の実行・1 日あたりの上限を設定に持つ |
 | SETUP-13 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（IMPL-18）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む） |

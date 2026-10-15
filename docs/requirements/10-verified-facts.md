@@ -68,7 +68,7 @@ sandbox の中からキーチェーンの項目を読めるか、launchd の pli
 |---|---|---|---|
 | FACT-22 | AI の読み取りを、自分のセッションのフォルダに絞れるか | **絞れる。** sandbox の `denyRead` に `~/` と置き場の全体、`allowRead` に自分のセッションのフォルダを入れると、狭い方の規則が勝った。ホームのファイル（`.zshrc`、`.gitconfig`、`gh` の設定（リンクの名前と実体のパスの両方）、`.claude.json`、会話の記録、LaunchAgents）、進行役の偽の秘密、別のセッション、セッションの一覧は読めず、自分の clone と worktree は読めた。置き場がホームの外（`/private/tmp`）にあると、`~/` の拒否だけでは進行役の偽の秘密と別のセッションを読めた。**環境変数を渡さないと git と pnpm が止まる**：git は `~/.config/git/config` を読めず終了コード 128、pnpm は `~/.npmrc` を読めず終了コード 255。`GIT_CONFIG_GLOBAL=/dev/null`、`NPM_CONFIG_USERCONFIG=/dev/null`、XDG の 4 つと `TMPDIR` をセッションの一時フォルダに向けると、`git commit`、`pnpm install`（空の store で 9 秒）、`pnpm check:types`、`pnpm check:test`（441 件）が通った。親 clone の `.git/hooks` と `.git/config` には書けなかった。Read ツールは、`permissions.allow` に `Read` が無いと、worktree の外のファイルを「Claude requested permissions to read from this path, but you haven't granted it yet」で拒否し、`permission_denials` に記録した。worktree の中は読めた | 実行 |
 | FACT-23 | `~/.claude/` の下に置いた作業場所に、sandbox の中から書けるか | **書けない。** `~/.claude/` の下に置いた worktree・`node_modules`・親 clone の `.git` に、`allowWrite` に足しても、ホームの読み取りの拒否を外しても、Operation not permitted で書けなかった。同じ形を `/private/tmp` に移すと書けた | 実行 |
-| FACT-24 | Grep と Glob の道具が `-p` のセッションで使えるか | **道具の一覧に無かった。** 道具を絞らない `claude -p` のセッションの道具の一覧に、Grep と Glob が無かった（Read・Write・Edit・Bash などはあった）。エージェント定義の `tools` に書いたときに使えるかは確かめていない | 実行 |
+| FACT-24 | Grep と Glob の道具が `-p` のセッションで使えるか | **道具の一覧に無かった。** 道具を絞らない `claude -p` のセッションの道具の一覧に、Grep と Glob が無かった（Read・Write・Edit・Bash などはあった）。~~エージェント定義の `tools` に書いたときに使えるかは確かめていない~~ FACT-26 で確かめた（使える） | 実行 |
 
 ## 依存の store の ADR を起票する途中で確かめた事実（2026-10-15）
 
@@ -78,6 +78,14 @@ pnpm の公式文書（[Store の設定][pnpm-store]）は、store の既定の�
 | # | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
 | FACT-25 | AI のセッションと同じ環境変数で、pnpm の store がどこになるか | **セッションの一時フォルダの下になる。** 許可した名前の環境変数だけで、`XDG_DATA_HOME` を一時フォルダに向けて `pnpm store path` を実行すると、`<一時フォルダ>/pnpm/store/v10` を返した。`PNPM_HOME` を足すと `<PNPM_HOME>/store/v10` を返した（`PNPM_HOME` が優先される）。人の既定の store（`~/Library/pnpm/store/v10`）は変わらなかった | 実行（sandbox とモデルなし） |
+
+## 確かめることを片付ける途中で確かめた事実（2026-10-16）
+
+macOS、Claude Code 2.1.285、haiku で確かめた。試験用の Plugin（エージェント 1 つ、`tools: Read, Grep, Glob`）を `--plugin-dir` と `--agent` で起動し、`claude -p --setting-sources local --settings <安全設定>` を、許可した名前の環境変数だけで起動した。`permissions.allow` に `Read` は入れていない。UNDECIDED-28 を確かめるために行った。
+
+| # | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-26 | エージェント定義の `tools` に Grep と Glob を書いたときに使えるか。作業フォルダの外を読めるか | **使える。** `--output-format stream-json` の初期化の記録で、セッションの道具の一覧が `Read` `Grep` `Glob` になり、3 つとも作業フォルダの中で使えた。FACT-24 で道具の一覧に無かったのは、道具を指定しない既定のセッションの一覧。**作業フォルダの外は、Read と同じく `-p` で自動で拒否された**：Grep と Glob で、作業フォルダの外のフォルダ、ホーム、`~/.zshrc` を試すと、「Claude requested permissions to read from …, but you haven't granted it」で拒否され、`permission_denials` に記録された | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md

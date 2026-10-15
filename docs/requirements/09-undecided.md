@@ -76,13 +76,13 @@
 
 ## 確かめること
 
-- UNDECIDED-23 **準備の作業（「[いまのリポジトリに無いもの][f06]」）が今どこまで済んでいるか。** 「[いまのリポジトリに無いもの][f06]」は 2026-10-07 時点の「足りないもの」の一覧で、その後どこまで済んだかを確かめた記録が無い。
+- UNDECIDED-23 **欠番**（2026-10-16 に確かめた。済んでいたのは SETUP-10 だけで、「[いまのリポジトリに無いもの][f06]」の表に書き添えた。SETUP-11 は `dev-autopilot/` と構造仕様の表は済み、TypeScript の置き場（`src/` と tsconfig）はまだ無い。ほかの行は段階 3（`setup` と `check` を作る段階）以降で作る）：~~**準備の作業（「[いまのリポジトリに無いもの][f06]」）が今どこまで済んでいるか。** 「[いまのリポジトリに無いもの][f06]」は 2026-10-07 時点の「足りないもの」の一覧で、その後どこまで済んだかを確かめた記録が無い。
   SETUP-11 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
-  SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものは「[いまのリポジトリに無いもの][f06]」の冒頭の規則に従って、行を残したまま済んだことを書き添える（[06-setup-and-stages.md][f06]）
+  SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものは「[いまのリポジトリに無いもの][f06]」の冒頭の規則に従って、行を残したまま済んだことを書き添える（[06-setup-and-stages.md][f06]）~~
 - UNDECIDED-24 **欠番**（[ADR-20261013-001][adr-workspace] で、進行役が AI の触った clone で fetch しない形に決め、確かめる必要が無くなった）：~~**AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
   段階 2 で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。段階 3 の点検で確かめる~~
-- UNDECIDED-28 **計画役の道具の Grep と Glob が使えるか。** 計画役は読むだけの道具（Read・Grep・Glob）で動く前提（「[登場するもの][f00]」）だが、Claude Code 2.1.285 の `-p` のセッションの道具の一覧に Grep と Glob が無かった（FACT-24。[10-verified-facts.md][f10]）。
-  エージェント定義の `tools` に書いたときに使えるかを、段階 3 で確かめる。使えなければ、計画役がファイルを探す手段を決める
+- UNDECIDED-28 **欠番**（FACT-26 で確かめた。エージェント定義の `tools` に書けば使え、作業フォルダの外は Read と同じく拒否される）：~~**計画役の道具の Grep と Glob が使えるか。** 計画役は読むだけの道具（Read・Grep・Glob）で動く前提（「[登場するもの][f00]」）だが、Claude Code 2.1.285 の `-p` のセッションの道具の一覧に Grep と Glob が無かった（FACT-24。[10-verified-facts.md][f10]）。
+  エージェント定義の `tools` に書いたときに使えるかを、段階 3 で確かめる。使えなければ、計画役がファイルを探す手段を決める~~
 - UNDECIDED-29 **Project の欄の値を最後に変えた人を API で取れるか。** GraphQL の `ProjectV2ItemFieldSingleSelectValue` は `creator`（「項目を作った人」）と `updatedAt` しか持たず、値を最後に変えた人を指すかが型の定義から分からない（[ADR-20261015-004][adr-markers]）。
   捨てる Project で、別の人が値を書き換えたときに `creator` が変わるかを確かめる（FACT-15 と同じやり方）。取れるなら、Status と Agent 欄を戻した人の権限も確かめる形にできる
 
