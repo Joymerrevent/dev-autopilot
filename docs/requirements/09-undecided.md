@@ -46,10 +46,10 @@
 - UNDECIDED-11 **印の体系の拡張。** 進行役の投稿すべてに印を付けるか（待ち・催促・警告・停止の理由）、署名の対象に種類・リポ・番号を含めるか、進行役の印が無効化されていたら `needs-human` にするか（「[印と固定の見出しの一覧][f04]」。[04-external-text-and-markers.md][f04]）
 - UNDECIDED-12 **PR と Issue の結びつけ。** `Closes #n` でなく head のブランチ名・同じリポ・作者・印の番号で引くか（IMPL-6。[02-implement-review-fix.md][f02]）
 - UNDECIDED-13 **権限確認の範囲。** `needs-human` を外す・Status を戻す・`plan:*` を付ける操作の人と、渡す文の編集者。渡す文の最終編集が `agent-ready` より後なら `needs-human` にするか（TEXT-10、「[Issue の状態の遷移][f01]」の戻す手順。[04-external-text-and-markers.md][f04]、[01-issue-flow.md][f01]）
-- UNDECIDED-14 **検疫で見つかったときの印。** TEXT-9 は「見つかったら下書きを作らない」と書いた直後に「下書きコメントに『混入の検査：有り（種類）』の行を必ず書く」としている。
-  TEXT-12 も「有りなら下書きを作らない」。一方、「[印と固定の見出しの一覧][f04]」の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）
-- UNDECIDED-15 **受け入れの対象とマイルストーンの候補。** TEXT-12 は受け入れの対象を「マイルストーンが付いている Issue」に限りながら、マイルストーンの候補を出すことになっている。
-  「[決まっていること][f00]」の「人の関所」と FLOW-15〜FLOW-16 は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）
+- UNDECIDED-14 **欠番**（[ADR-20261015-003][adr-intake] で決めた）：~~**検疫で見つかったときの印。** TEXT-9 は「見つかったら下書きを作らない」と書いた直後に「下書きコメントに『混入の検査：有り（種類）』の行を必ず書く」としている。
+  TEXT-12 も「有りなら下書きを作らない」。一方、「[印と固定の見出しの一覧][f04]」の `intake` の印は `quarantine=found` を持ち、下書きを作らないなら印を載せる場所が無い（[04-external-text-and-markers.md][f04]）~~
+- UNDECIDED-15 **欠番**（[ADR-20261015-003][adr-intake] で決めた）：~~**受け入れの対象とマイルストーンの候補。** TEXT-12 は受け入れの対象を「マイルストーンが付いている Issue」に限りながら、マイルストーンの候補を出すことになっている。
+  「[決まっていること][f00]」の「人の関所」と FLOW-15〜FLOW-16 は、起票されたら受け入れる流れで、マイルストーンを条件にしていない（[04-external-text-and-markers.md][f04]、[00-overview.md][f00]、[01-issue-flow.md][f01]）~~
 
 ### 安全と設定
 
@@ -96,3 +96,4 @@
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
+[adr-intake]: ../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
