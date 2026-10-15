@@ -65,14 +65,14 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | FLOW-24 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 7 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
 | FLOW-25 | 人が別の PR をマージし base が進んだ。載せ直して、差分が同じなら印を付け直し（Status はそのまま）、変わったら FLOW-22 に戻る（Status を `In Review` に戻す） | 進行役 | `Ready to Merge` か `In Review` | 空か `reviewer` | 変えない | MERGE-5、MERGE-6 |
 | FLOW-26 | 印を見てマージする | 人 | 変えない（進行役が次回の実行で検出するまで） | 変えない | 変えない | MERGE-1、MERGE-5 |
-| FLOW-27 | マージを検出し、Issue を閉じ、worktree を消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
+| FLOW-27 | マージを検出し、Issue を閉じ、作業場所（clone と worktree）をフォルダごと消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
 
 止まる遷移（どの段階からでも起きうる）：
 
 | # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| FLOW-29 | ADR の起票が要る、基線が赤、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく worktree の残骸 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-9、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
+| FLOW-29 | ADR の起票が要る、基線が赤、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（UNDECIDED-27） | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-9、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
 | FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受け入れ AI の拒否。3 回未満。次回に持ち越す） | 進行役 | 変えない | 変えない | 変えない | IMPL-14 の表 |
 | FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
 | FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
@@ -101,7 +101,8 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
   lock で見送った実行と、Mac のスリープで launchd が起動しなかった日は記録に残し、`check` が warn に出す（段階 4 の「7 回の実行」はこれらを除いて数える）
 - 止める合図：設定ファイルの `enabled: false`（全体）、Project の Agent 欄 `paused`（その Issue）。進行役は毎回の最初に読む
 - 書かずに試す合図：設定ファイルの `dryRun: true`。進行役は GitHub への書き込み（コメント・ラベル・Project の欄・PR）をすべて手元の記録に「書くつもりだった内容」として残し、実際には書かない。読むことと AI のセッションは行う（段階 4 の最初と、新しい段階に入るときに使う）
-- 進行役が途中で死んだら、次回の実行が GitHub の状態から復旧する（FLOW-4 の「次の段」の決め方）。復旧できない組み合わせ（PR はあるが worktree が無い、など）はその Issue を `needs-human`。Issue に紐づかない worktree の残骸は `check` の fail（SETUP-2）
+- 進行役が途中で死んだら、次回の実行が GitHub の状態から復旧する（FLOW-4 の「次の段」の決め方）。復旧できない組み合わせ（GitHub の状態から次の段を決められないもの）はその Issue を `needs-human`。作業場所はセッションごとに作り直すので、作業場所の有無は復旧の判定に使わない（[ADR-20261013-001][adr-workspace]）。Issue に紐づかない作業場所の残骸は `check` の fail（SETUP-2、UNDECIDED-27）
 
 [f04]: ./04-external-text-and-markers.md
 [f06]: ./06-setup-and-stages.md
+[adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md

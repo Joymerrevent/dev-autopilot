@@ -18,7 +18,8 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行役は毎回の実行の最初に同じ点検を回し、
   fail が 1 つでもあれば作業に入らず止まる（fail-closed）。見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、`gh` の認証の権限、
   SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
-  worktree の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail
+  作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
+  AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行役の clone へ fetch すると失敗すること
 - SETUP-3 **設定ファイルの正本は 1 つ**（STRUCT-2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
 - SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
 
@@ -69,3 +70,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [f07]: ./07-structure.md
 [f08]: ./08-review-skill.md
 [f10]: ./10-verified-facts.md
+[adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
