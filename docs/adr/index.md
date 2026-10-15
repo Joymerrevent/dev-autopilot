@@ -8,6 +8,7 @@
 | 番号 | タイトル | status | 作成日 |
 | --- | --- | --- | --- |
 | ADR-20261013-001 | [AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない][adr-20261013-001-fresh-clone-per-ai-session] | accepted | 2026-10-13 |
+| ADR-20261015-001 | [AI の読み取りは自分のセッションのフォルダに絞り、秘密は進行役だけが読むファイルに置き、手動実行は launchd のジョブを起こす][adr-20261015-001-read-allowlist-and-secret-file] | accepted | 2026-10-15 |
 
 <!--
 行の例（表の最後に足す）:
@@ -22,3 +23,4 @@
 [stages]: ../requirements/06-setup-and-stages.md
 [req]: ../requirements/README.md
 [adr-20261013-001-fresh-clone-per-ai-session]: ./adr-20261013-001-fresh-clone-per-ai-session.md
+[adr-20261015-001-read-allowlist-and-secret-file]: ./adr-20261015-001-read-allowlist-and-secret-file.md
