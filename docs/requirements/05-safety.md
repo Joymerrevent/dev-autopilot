@@ -24,7 +24,7 @@
 開発リポは sandbox を使わないので、同じ OS ユーザーで動く作業 AI は `~/.ssh` の鍵と `gh` の設定を Bash から読め、worktree が共有する `.git` の hook を書き換えて進行役の push 時に実行させることもできる。
 さらに GitHub の deploy key は認証専用で署名の検証に使えないので、「リポに絞った鍵 1 本で push も署名も」は成り立たない。隔離と鍵は次のように分ける。
 
-- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
+- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
   書き込みはその Issue の worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す。
   ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行役は AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）と `TMPDIR` をセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）。

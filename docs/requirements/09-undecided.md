@@ -54,7 +54,7 @@
 ### 安全と設定
 
 - UNDECIDED-16 **欠番**（[ADR-20261015-001][adr-read] で決めた）：~~**AI の読み取り範囲と秘密の置き場。** Read の許可を worktree に絞りホーム全体を `denyRead` にするか。PAT・鍵・deploy key の置き場。手動実行を `launchctl kickstart` にするか（SAFE-2 の (e)。[05-safety.md][f05]）~~
-- UNDECIDED-17 **まだ値が決まっていない設定。** 実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場の値をどこで決めるか（設定の項目の一覧は STRUCT-2。[07-structure.md][f07]）
+- UNDECIDED-17 **欠番**（[ADR-20261015-005][adr-settings] で決めた）：~~**まだ値が決まっていない設定。** 実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場の値をどこで決めるか（設定の項目の一覧は STRUCT-2。[07-structure.md][f07]）~~
 - UNDECIDED-25 **欠番**（[ADR-20261015-002][adr-store] で決めた）：~~**依存の store をセッションの間で共有するか。** AI のセッションは作業場所の中で依存を導入する（IMPL-1）。pnpm の store をセッションの間で共有すると、前のセッションが細工したものを次のセッションが読む経路になりうる（objects と同じ種類の論点。[ADR-20261013-001][adr-workspace]）。
   手元の Mac（APFS）では store と `node_modules` のファイルを共有しなかったが、専用マシンのファイルシステムでは確かめていない。セッションごとに空の store を使うと、`pnpm install` は 1.1 秒から 3.0 秒になった（FACT-21。[10-verified-facts.md][f10]）~~
 
@@ -100,3 +100,4 @@
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [adr-intake]: ../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
+[adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md

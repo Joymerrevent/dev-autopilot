@@ -10,7 +10,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   外部に影響が出る操作（ラベル・Project の欄・ruleset の作成）は 1 回の承認でまとめて行い、作った後に実物を読み戻して確かめる
   - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。FACT-15）と単一選択欄「Agent」、
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
-    deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（`.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く）、
+    deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに作り、起動の定義（launchd の plist）がマシンの設定のパスを進行役に渡す。[ADR-20261015-005][adr-settings]）、
     cron（macOS は launchd の plist）の定義、worktree の置き場、記録と lock の置き場、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と、秘密の置き場への保管（SAFE-15）、専用マシンの用意、利用枠の確認、
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
@@ -21,8 +21,9 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行役の clone へ fetch すると失敗すること。
   AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと。
-  依存の store も試す（[ADR-20261015-002][adr-store] の確認方法）：sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すこと、安全設定の `allowRead` と `allowWrite` に共有の store が無いこと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いこと
-- SETUP-3 **設定ファイルの正本は 1 つ**（STRUCT-2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる
+  依存の store も試す（[ADR-20261015-002][adr-store] の確認方法）：sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すこと、安全設定の `allowRead` と `allowWrite` に共有の store が無いこと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いこと。
+  設定も確かめる（[ADR-20261015-005][adr-settings] の確認方法）：すべての項目がリポの設定かマシンの設定の一方にだけあること、リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと、マシンの設定の実体のパスが同期フォルダの下に無いこと
+- SETUP-3 **設定の正本は項目ごとに 1 つ**（リポの設定かマシンの設定のどちらか。STRUCT-2）。導入が書き、点検が読み、進行役が使う。人が直接編集してもよいが、点検が整合を確かめる（[ADR-20261015-005][adr-settings]）
 - SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
 
 ## いまのリポジトリに無いもの（準備の作業）
@@ -75,3 +76,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
+[adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md

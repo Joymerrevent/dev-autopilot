@@ -37,17 +37,18 @@ dev-autopilot/
 ## 守ること
 
 - STRUCT-1 **business-os の中身を import しない。** `plugin/hooks/lib` や `plugin/scripts/lib` の関数が要るなら、dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない
-- STRUCT-2 **リポ固有の値はすべて設定ファイル 1 つに出す。** 置き場は business-os 側（例：`.claude/dev-autopilot.json`）で、dev-autopilot のコードには書かない。
-  項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。基本設計では要件番号から項目への対応表にする
+- STRUCT-2 **設定の値はコードに書かず、リポの設定とマシンの設定の 2 つに出す。** リポの設定は business-os 側（例：`.claude/dev-autopilot.json`。commit する）で、マシンに依らない値を持つ。マシンの設定は commit せず、リポの外の同期されないフォルダに置き、下の一覧で「マシン」と書いた項目を持つ（[ADR-20261015-005][adr-settings]）。
+  項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`dev-autopilot/docs/design/`）に置く。
+  要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
   - リポと Project：owner / repo、base ブランチ、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
   - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
-  - 進行役の実行：`enabled`、`dryRun`、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（絶対パス。STRUCT-3）、worktree の置き場、記録と lock の置き場、cron の間隔（launchd の plist と二重になるので `check` がずれを検出する）
+  - 進行役の実行：`enabled`、`dryRun`、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、cron の間隔（launchd の plist と二重になるので `check` がずれを検出する）
   - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（IMPL-14、SETUP-12）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受け入れ AI の拒否後のモデル、Agent ツールを許すか（IMPL-14）、批評者の確信度のしきい値（IMPL-22）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、進行役が実行するパスの一覧（IMPL-15）、漏えい検査の見本の置き場
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
-  - 安全：進行役のアカウント名（IMPL-20）、sandbox の `--settings` の置き場と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダを含む。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
+  - 安全：進行役のアカウント名（IMPL-20）、sandbox の `--settings` の置き場（マシン）と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **起動は Plugin として。** 進行役は `claude -p --plugin-dir <進行役専用 clone の絶対パス>/dev-autopilot/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
   `--plugin-dir` は AI の worktree の中ではなく、進行役が実行している専用 clone（AI が書けない）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
   分離したら `--plugin-dir` が Marketplace からの導入（`source` は `./plugin`）に変わるだけで、呼び方は変わらない。
@@ -97,3 +98,4 @@ dev-autopilot/
 [f04]: ./04-external-text-and-markers.md
 [f05]: ./05-safety.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
