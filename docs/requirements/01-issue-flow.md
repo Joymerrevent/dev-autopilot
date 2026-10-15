@@ -24,10 +24,10 @@
 
 - FLOW-6 Issue ごとに worktree を分け、同時に複数の Issue を進められる
 - FLOW-7 競合の正は人が入れる Issue 依存（blocked by）。進行役はそれに従う
-- FLOW-8 競合の予測は AI にさせない。作業 AI の commit が出た時点で、進行役がその PR の変更ファイルを他の進行中の dev-autopilot の PR の変更ファイルと機械で比べ、重なりがあれば「待つ」ではなく Issue に「警告のコメント」を 1 回書く（FLOW-2）
+- FLOW-8 競合の予測は AI にさせない。作業 AI の commit が出た時点で、進行役がその PR の変更ファイルを他の進行中の dev-autopilot の PR の変更ファイルと機械で比べ、重なりがあれば「待つ」ではなく Issue に「警告のコメント」を 1 回書く（FLOW-2。1 回かどうかは `note` の印（`kind=overlap`）で判定する）
 - FLOW-9 先行の PR がマージされたら、依存していた PR を `develop` に載せ直してから続ける
 - FLOW-10 依存で待つ Issue は Status・Agent 欄・ラベルを変えない（`Blocked` にしない。`Blocked` は人が引き取るまで触らない意味で使う）。GitHub の Issue 依存（blocked by）の表示が印になる。
-  進行役は待たせた理由を記録に残し、Issue には 1 回だけコメントする（同じ理由で毎回コメントしない）。先行が閉じたら次回の実行で自動で続ける。
+  進行役は待たせた理由を記録に残し、Issue には 1 回だけコメントする（同じ理由で毎回コメントしない。1 回かどうかは `note` の印（`kind=wait`）で判定する）。先行が閉じたら次回の実行で自動で続ける。
   作業中（`In Progress` 以降）に人が依存を足したときも同じで、その Issue のレビューと対応ループを止めて待ち、worktree と PR は残す。先行がマージされたら FLOW-9 のとおり載せ直してから続ける
 
 ## 間隔の運用
@@ -93,6 +93,8 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - 進行役が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人がマイルストーンを付けたら受け入れ（TEXT-12）が下書きを用意し、人が `agent-ready` を付けるかを決める（IMPL-26）
 - 段階による違い：段階 5 では FLOW-21 の Agent 欄が `human`（人がレビュー）、段階 7 では FLOW-24 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
 - Status と Agent 欄の更新はすべて進行役が GraphQL で行い、AI のセッションは触らない（IMPL-5、「[Issue と PR の本文の扱い][f04]」）。更新は冪等で、すでにその値なら何もしない
+- 進行役は Status と Agent 欄を変えた人を確かめない（値を最後に変えた人を API で取れるか確かめていない。UNDECIDED-29）。Status は、印と PR の状態から決まる値と違えば、人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる（TEXT-10）。ほかの違いは想定外の Status として `needs-human`（SAFE-4）。Agent 欄は、止める向き（`human`・`paused`）にも再開の向きにも従う（Project に書ける人がリポの push 以上の人に限られることを運用の前提にする。[ADR-20261015-004][adr-markers]）
+- 人は進行役のコメントを編集しない（印が無効になり `needs-human` になる。IMPL-20）。誤りは新しいコメントで補う
 
 ## 運用の規則
 
@@ -107,3 +109,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [f06]: ./06-setup-and-stages.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md

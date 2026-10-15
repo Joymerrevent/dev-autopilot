@@ -28,6 +28,8 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
   - `/verify-issue` は、人が手で深く確かめたいとき（hook・雛形・第三者のツールの再現）の補助として残す。最初の手順で検疫のモジュールを呼ぶ
 - TEXT-10 コラボレータの判定は `GET /repos/<owner>/<repo>/collaborators/<user>/permission`（push 以上）で、文を渡す直前に 1 人ずつ引く（一覧を取って持ち回らない）。
   判定の対象は、Issue の著者、作業指示コメントの投稿者だけでなく、`agent-ready` を付けた人（Issue の timeline）とコメントを編集した人（`userContentEdits`）も含む（triage 権限でもラベルは付けられるため）。満たさなければそのラベルと編集は無効として扱い、`needs-human`。
+  `needs-human` を外した人（`UnlabeledEvent` の `actor`）と `plan:fable` / `plan:opus` を付けた人（`LabeledEvent` の `actor`）も確かめる。push 未満の人が外した `needs-human` は付け直して `note kind=stop reason=unauthorized-resume` を投稿し、push 未満の人が付けた `plan:*` は無いものとして扱う。
+  渡す文（本文、作業指示コメント、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻（`LabeledEvent` の `createdAt`）より後なら、`intake-final` を投稿せず `needs-human` にする（人は文を直してから `agent-ready` を付け直す。[ADR-20261015-004][adr-markers]）
   進行役のアカウント（SETUP-13）もコラボレータだが、その投稿は常に AI の出力として扱う（TEXT-1、IMPL-20）
 - TEXT-11 **渡す直前の検疫**。進行役は、AI に渡す文（Issue の本文、作業指示コメント、承認された下書き、計画コメント（IMPL-10）、PR のコメント、再レビューの入力に含める文）を、**書いた人を問わず、渡す直前に毎回**、機械の検査に通す。
   検査は TEXT-9 の「指示の混入の検査」と同じ TypeScript のモジュール（`dev-autopilot/src/` に 1 つ。`intake` Skill も同じものを呼ぶ。正本は 1 つ）で、見えない文字（ゼロ幅・制御文字）、HTML コメント、長い base64 や難読化した文字列、URL、指示の形の語、欄の区切りを模した文字列を探す。
@@ -72,16 +74,17 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 ## 印と固定の見出しの一覧
 
 進行役が GitHub のコメントに書く機械で読む印と、人が書く固定の見出しの正本。印の形の実装の正本は `src/marker.ts`（「[分離を見越した構成][f07]」）で、本節と一致させる。
-印は 1 行の HTML コメント `<!-- dev-autopilot: <種類> <欄>=<値> ... sig=<HMAC> -->`。`sig` は `sig` 以外のすべての欄を進行役の鍵で署名したもの（IMPL-20）。印の真正性は IMPL-20 の 3 条件で確かめる。
+印は 1 行の HTML コメント `<!-- dev-autopilot: <種類> <欄>=<値> ... sig=<HMAC> -->`。`sig` は、`sig` 以外のすべての欄に、印の種類・リポ（`owner/repo`）・置き場の Issue か PR の番号を加えたものを、進行役の鍵で署名したもの（種類・リポ・番号は欄として書かない。IMPL-20、[ADR-20261015-004][adr-markers]）。進行役が投稿するコメントは、すべて署名付きの印を 1 つ持つ。印の真正性は IMPL-20 の 3 条件で確かめる。
 
 | 種類 | 置き場 | 欄 | 人の編集 | 読む人 | 根拠 |
 |---|---|---|---|---|---|
 | `intake` | Issue の受け入れの下書きコメント | `body=pass\|replace`（参考の表示）、`brief=<sha256>`、`plan=opus\|fable`、`quarantine=none\|found`（`found` のときは `body=` `brief=` `plan=` を持たない。[ADR-20261015-003][adr-intake]） | 許す（人が直す前提。未編集の条件を掛けない） | 人。進行役は `plan=` と `quarantine=` だけ読む | TEXT-12 |
 | `intake-final` | `agent-ready` の後に進行役が新しく投稿するコメント | `brief=<sha256>`（渡す文のハッシュ）、`source=body\|instruction\|draft`、`plan=opus\|fable`（ラベルで上書き済みの値） | 許さない | 進行役（TEXT-4 のハッシュの照合、計画役のモデル） | TEXT-12、FLOW-1 |
 | `plan` | Issue の計画コメント | `head=<base の SHA>`、`plan=<sha256>`（計画のハッシュ）、`model=<別名>` | 許さない | 進行役（作業 AI に渡す前の照合） | IMPL-10 |
-| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評者が落とした 🔴） | 許さない | 進行役（収束の判定、マージの判定） | IMPL-18、IMPL-22 |
+| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評者が落とした 🔴 の、PR ごとの累計） | 許さない | 進行役（収束の判定、マージの判定） | IMPL-18、IMPL-22 |
 | `fix` | PR の対応コメント | `round=<n>`、`head=<SHA>` | 許さない | 進行役（対応済みのラウンドの判定） | IMPL-23 |
 | `merge` | PR のマージ判定のコメント | `head=<SHA>`、`merge=ready\|human`、`reasons=<満たさない条件の記号>` | 許さない | 人（マージの判断）、進行役（一致の集計） | MERGE-3 |
+| `note` | Issue か PR の、進行役のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由） | `kind=wait\|overlap\|remind\|stop`、必要なら `reason=<短い記号>` | 許さない | 進行役（「1 回だけ書く」の判定：同じ `kind` と `reason` の有効な印があれば書かない） | FLOW-8、FLOW-10、MERGE-3、[ADR-20261015-004][adr-markers] |
 
 人が書く固定の見出し（進行役は、push 以上の権限を持つ人が書き、印を持たないコメントだけを読む。FLOW-14）：
 
@@ -100,3 +103,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [f07]: ./07-structure.md
 [f08]: ./08-review-skill.md
 [adr-intake]: ../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
+[adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
