@@ -12,8 +12,9 @@
   - `agent-ready` を付けた人が push 以上の権限を持つ（Issue の timeline で確かめる。TEXT-10）
 - FLOW-2 候補を着手前の予測で待たせない。待たせるのは人が入れた依存だけ。触る範囲の重なりは着手後に実際の変更ファイルで見て、警告のコメントに留める（FLOW-8）
 - FLOW-3 1 回の実行で着手する件数に上限を持つ（最初は 1 件）。進行中の Issue（`In Progress` 以降で `Done` でない）の数にも上限を持つ（WIP の上限。段階 8 までは 1）。上限に達していれば新しい Issue に着手しない
-- FLOW-4 **1 回の実行で進める範囲**。進行役は Issue ごとに 1 回の実行で 1 段だけ進める。段は、受け入れ、計画、実装と PR の作成、レビュー（批評を含む）、修正、マージの判定、マージ後の片付け。
-  進行中の Issue は、毎回の実行で GitHub の状態（Status、PR の有無と draft、最新の印の種類と `head`、必須チェックの結果）から「次の段」を決定的に決めて再開する。手元の記録は使わない（「運用の規則」）。
+- FLOW-4 **1 回の実行で進める範囲**。進行役は、AI のセッションを起動する重い段（受け入れ、計画、実装と PR の作成、レビュー（批評を含む）、修正）を、Issue ごとに 1 回の実行で 1 つだけ進める。
+  AI のセッションを起動しない軽い段（承認の確定、収束、マージの判定、載せ直し、催促、片付け）は、重い段の前後に同じ実行で続けてよい。CI の結果が要る段（収束、マージの判定）は CI の結果が出ている実行でだけ進め、push した実行では push した Issue を次の実行まで進めない（[ADR-20261015-006][adr-flow]）。
+  進行中の Issue は、毎回の実行で GitHub の状態（Status、PR の有無と draft、最新の印の種類と `head`、必須チェックの結果）から「次の段」を決定的に決めて再開する。手元の記録は判定に使わない（上限の数え上げにだけ使う。「運用の規則」）。
   CI は実行の中で待たず、次回の実行で結果を読む（IMPL-27）。1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次回に回す（lock を長く持たない）。
   1 日 1 回の間隔では 1 Issue に 1 週間ほどかかる。間隔を狭める判断は FLOW-12
 - FLOW-5 実行の記録（選んだ Issue、待たせた Issue と理由、使った時間）を追跡しないフォルダに残す。
@@ -58,8 +59,8 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
 | FLOW-18 | `agent-ready` を検出し、下書きのハッシュで印を更新し、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行役 | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
 | FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
-| FLOW-20 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。段階 5〜7 ではこの実行では実装に入らず、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
-| FLOW-21 | draft PR を作る（段階 5 ではレビュー AI が無いので Agent 欄は `human`。人がレビューする） | 進行役 | `In Review` | `reviewer`（段階 6 以降） | 変えない | IMPL-6、IMPL-7 |
+| FLOW-20 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。計画を投稿した実行では、どの段階でも実装に入らない（重い段は 1 回の実行で 1 つ。FLOW-4）。段階 5〜7 では、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
+| FLOW-21 | draft PR を作る（段階 5 ではレビュー AI が無いので、人がレビューする。Agent 欄は空） | 進行役 | `In Review` | `reviewer`（段階 6 以降。段階 5 は空） | 変えない | IMPL-6、IMPL-7 |
 | FLOW-22 | 対応ループ：🔴 🟡 があれば作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行役 | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
 | FLOW-23 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
 | FLOW-24 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 7 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
@@ -72,7 +73,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| FLOW-29 | ADR の起票が要る、基線が赤、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（UNDECIDED-27） | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-9、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
+| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（UNDECIDED-27） | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
 | FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受け入れ AI の拒否。3 回未満。次回に持ち越す） | 進行役 | 変えない | 変えない | 変えない | IMPL-14 の表 |
 | FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
 | FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
@@ -90,15 +91,19 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 - `needs-human` を付けるときは、どの契機でも Status を `Blocked` にする（`Todo` のままだと翌日また選ばれるため）
 - 進行役は Agent 欄を `human` と `paused` にしない。この 2 つは人の意思表示で、進行役は読むだけ。`human` の Issue と PR には進行役は触らない
+- 例外として、片付け（FLOW-27、MERGE-7）は `needs-human`・`human`・`paused` の除外より先に判定する。PR がマージされていれば Issue を閉じて作業場所を消し、Agent 欄とラベルは書き換えない（マージは人の最後の操作なので、人の意思表示に反しない。[ADR-20261015-006][adr-flow]）
 - 進行役が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人がマイルストーンを付けたら受け入れ（TEXT-12）が下書きを用意し、人が `agent-ready` を付けるかを決める（IMPL-26）
-- 段階による違い：段階 5 では FLOW-21 の Agent 欄が `human`（人がレビュー）、段階 7 では FLOW-24 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
+- 段階による違い：段階 5 では FLOW-21 の Agent 欄が空（人がレビューする番。Status `In Review` と設定の `stage` で表し、`/dev-autopilot` の状態の表示で「人の番」と出す。[ADR-20261015-006][adr-flow]）、段階 7 では FLOW-24 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
 - Status と Agent 欄の更新はすべて進行役が GraphQL で行い、AI のセッションは触らない（IMPL-5、「[Issue と PR の本文の扱い][f04]」）。更新は冪等で、すでにその値なら何もしない
 - 進行役は Status と Agent 欄を変えた人を確かめない（値を最後に変えた人を API で取れるか確かめていない。UNDECIDED-29）。Status は、印と PR の状態から決まる値と違えば、人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる（TEXT-10）。ほかの違いは想定外の Status として `needs-human`（SAFE-4）。Agent 欄は、止める向き（`human`・`paused`）にも再開の向きにも従う（Project に書ける人がリポの push 以上の人に限られることを運用の前提にする。[ADR-20261015-004][adr-markers]）
 - 人は進行役のコメントを編集しない（印が無効になり `needs-human` になる。IMPL-20）。誤りは新しいコメントで補う
 
 ## 運用の規則
 
-- 状態の正は GitHub に置く（PR の有無と draft、印、Status、Agent 欄、ラベル）。進行役は毎回そこから状態を組み立て、手元の記録は補助にする。各手順は「すでに済んでいれば何もしない」（PR があれば作らない、コメントがあれば足さない）
+- 状態の正は GitHub に置く（PR の有無と draft、印、Status、Agent 欄、ラベル）。進行役は毎回そこから状態を組み立てる。各手順は「すでに済んでいれば何もしない」（PR があれば作らない、コメントがあれば足さない）
+- 手元の記録は判定に使わず、実行をまたぐ上限の数え上げにだけ使う：同じ Issue で続いた実行の失敗の回数、受け入れ AI が拒否した Issue の次のモデル、Issue ごとの累計の利用枠、1 日の利用枠（[ADR-20261015-006][adr-flow]）
+- 記録を失ったときは、上限が黙って効かなくなる側に倒さない。`setup` は記録のフォルダに、作った日時を書いた印のファイルを置く。印のファイルが無ければ `check` は fail にする（人が `setup` をやり直して、失ったことを認める）。
+  進行中の Issue（`In Progress` 以降、または計画の印がある）に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受け入れ AI は `haiku` で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
 - 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、`launchctl kickstart`（`-k` なし。`-k` は動いている進行役を殺す）で定期の実行と同じ launchd のジョブを起こし（[ADR-20261015-001][adr-read]）、同じ lock を取る。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
   lock で見送った実行と、Mac のスリープで launchd が起動しなかった日は記録に残し、`check` が warn に出す（段階 4 の「7 回の実行」はこれらを除いて数える）
 - 止める合図：設定ファイルの `enabled: false`（全体）、Project の Agent 欄 `paused`（その Issue）。進行役は毎回の最初に読む
@@ -110,3 +115,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
+[adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md

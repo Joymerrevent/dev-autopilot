@@ -11,13 +11,13 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。FACT-15）と単一選択欄「Agent」、
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
     deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに作り、起動の定義（launchd の plist）がマシンの設定のパスを進行役に渡す。[ADR-20261015-005][adr-settings]）、
-    cron（macOS は launchd の plist）の定義、worktree の置き場、記録と lock の置き場、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
+    cron（macOS は launchd の plist）の定義、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と、秘密の置き場への保管（SAFE-15）、専用マシンの用意、利用枠の確認、
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
     処理対象にする Issue の承認（受け入れの下書きを読んで `agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行役は毎回の実行の最初に同じ点検を回し、
   fail が 1 つでもあれば作業に入らず止まる（fail-closed）。見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、`gh` の認証の権限、
-  SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
+  SSH 鍵で署名できるか、`claude` と Node の版、Skill の有無、前回の実行の記録と記録の印のファイル（無ければ fail。「[運用の規則][f01]」）、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行役の clone へ fetch すると失敗すること。
   AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと。
