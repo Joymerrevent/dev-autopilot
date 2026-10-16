@@ -33,7 +33,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 準備が済んでも、行は消さない。「対応」の欄には、済んだ後も有効な要件（例：SETUP-14 の、Issue のフォームに欄を足さないこと）があり、行の番号はほかのファイルから参照されるため。
 済んだ行は、「足りないもの」の欄の頭に `済み（YYYY-MM-DD に確認）：` と書き添える。
 
-| # | 足りないもの | 対応 |
+| 番号 | 足りないもの | 対応 |
 |---|---|---|
 | SETUP-5 | Project の Status が Todo / In Progress / Done の 3 つ | In Review・Ready to Merge・Blocked を足す。更新は GraphQL の `updateProjectV2ItemFieldValue` で行える（公式文書で確認） |
 | SETUP-6 | AI を担当者にできない（コラボレータは 1 人） | Project に単一選択欄「Agent」を足す。Assignee は人のまま |

@@ -112,17 +112,18 @@
 
 工程ごとに、どの役がどのモデルと effort で動き、どこで切り替わるかの一覧。値はすべて設定ファイルの初期値（STRUCT-2）で、本節が役ごとのモデルの正本。
 「[決まっていること][f00]」の表はここを参照する。実機で使われたモデルは記録の `modelUsage` の欄（FLOW-5）と突き合わせる。モデルは別名で書く（版番号を書かない。「[決まっていること][f00]」）。
+表の「順」は工程の並び。「番号」は要件の番号で、ほかの文書は番号で工程を指す（振り直さない。[README][readme] の「要件を変えるとき」）。
 
-| # | 工程 | 役 | モデル / effort | 切り替わる条件 | 根拠 |
-|---|---|---|---|---|---|
-| IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受け入れ AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
-| IMPL-30 | 計画の難しさの判定 | 受け入れ AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
-| IMPL-31 | 計画 | 計画役 | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、1 回だけ `fable` / high で計画し直す。2 回目の自己申告は無視して記録に残す | IMPL-10 |
-| IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
-| IMPL-33 | レビュー | レビュー AI | `opus` / xhigh（段階 6 で `fable` / high と比べて決め直す） | 設定で変える。往復の途中では変えない | IMPL-19、[段階 6][f06] |
-| IMPL-34 | 批評（🔴 🟡 の再検証。進行役が別に起こす独立セッション） | 批評者 | `opus` / high | 変えない | IMPL-22、REVIEW-2 |
-| IMPL-35 | 修正（2 ラウンド目以降） | 作業 AI | 1 ラウンド目が `sonnet` なら `opus` / high に 1 段上げる。`opus` で始めていればそのまま | 上げたことを記録と Issue のコメントに残す。往復 3 回で `needs-human`。再計画は人が指示する（自動では計画役に戻さない） | IMPL-24、IMPL-25 |
-| IMPL-36 | 再レビューと再批評 | レビュー AI、批評者 | IMPL-33・IMPL-34 と同じ | 載せ直しで差分が変わらなければレビューを回さず印を付け直す | IMPL-21、MERGE-6 |
+| 順 | 番号 | 工程 | 役 | モデル / effort | 切り替わる条件 | 根拠 |
+|---|---|---|---|---|---|---|
+| 1 | IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受け入れ AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
+| 2 | IMPL-30 | 計画の難しさの判定 | 受け入れ AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
+| 3 | IMPL-31 | 計画 | 計画役 | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、1 回だけ `fable` / high で計画し直す。2 回目の自己申告は無視して記録に残す | IMPL-10 |
+| 4 | IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
+| 5 | IMPL-33 | レビュー | レビュー AI | `opus` / xhigh（段階 6 で `fable` / high と比べて決め直す） | 設定で変える。往復の途中では変えない | IMPL-19、[段階 6][f06] |
+| 6 | IMPL-34 | 批評（🔴 🟡 の再検証。進行役が別に起こす独立セッション） | 批評者 | `opus` / high | 変えない | IMPL-22、REVIEW-2 |
+| 7 | IMPL-35 | 修正（2 ラウンド目以降） | 作業 AI | 1 ラウンド目が `sonnet` なら `opus` / high に 1 段上げる。`opus` で始めていればそのまま | 上げたことを記録と Issue のコメントに残す。往復 3 回で `needs-human`。再計画は人が指示する（自動では計画役に戻さない） | IMPL-24、IMPL-25 |
+| 8 | IMPL-36 | 再レビューと再批評 | レビュー AI、批評者 | IMPL-33・IMPL-34 と同じ | 載せ直しで差分が変わらなければレビューを回さず印を付け直す | IMPL-21、MERGE-6 |
 
 決まり：
 
@@ -145,3 +146,4 @@
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
+[readme]: ./README.md

@@ -48,29 +48,29 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - Project の Agent 欄：空 / `worker` / `reviewer` / `human` / `paused`。「いま動いている役、または次に動く役」を表す（SETUP-6、IMPL-7）
 - ラベル：`agent-ready`（人が処理対象にした）、`needs-human`（人が引き取るまで進行役は触らない）、`from-review`（🟢 を起票した Issue）（SETUP-8）、`plan:fable` / `plan:opus`（人が計画役のモデルを上書きする。無ければ受け入れの印に従う。IMPL-10）
 
-表の読み方：Status・Agent 欄・ラベルの列は遷移の後の値。「変えない」はその遷移で触らない欄。番号は正常な順が FLOW-15〜FLOW-27、止まる遷移が FLOW-28〜FLOW-34。
+表の読み方：Status・Agent 欄・ラベルの列は遷移の後の値。「変えない」はその遷移で触らない欄。「順」は正常な順の並び。「番号」は要件の番号で、ほかの文書は番号で遷移を指す（振り直さない。[README][readme] の「要件を変えるとき」）。番号は正常な順が FLOW-15〜FLOW-27、止まる遷移が FLOW-28〜FLOW-34。
 
 正常な順（上から下へ）：
 
-| # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
-|---|---|---|---|---|---|---|
-| FLOW-15 | Issue が起票され、Project に入る | 自動（Project の自動追加。SETUP-1） | `Todo` | 空 | 無し | SETUP-1 |
-| FLOW-16 | 受け入れ：検疫、作業指示の下書き、依存とマイルストーンの候補を「受け入れの下書き」コメントに書く（検疫で見つかったら、検疫の結果と印だけを書いて `needs-human`。TEXT-12） | 進行役 | 変えない | 変えない | 変えない | TEXT-12 |
-| FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
-| FLOW-18 | `agent-ready` を検出し、下書きのハッシュで印を更新し、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行役 | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
-| FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
-| FLOW-20 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。計画を投稿した実行では、どの段階でも実装に入らない（重い段は 1 回の実行で 1 つ。FLOW-4）。段階 5〜7 では、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
-| FLOW-21 | draft PR を作る（段階 5 ではレビュー AI が無いので、人がレビューする。Agent 欄は空） | 進行役 | `In Review` | `reviewer`（段階 6 以降。段階 5 は空） | 変えない | IMPL-6、IMPL-7 |
-| FLOW-22 | 対応ループ：🔴 🟡 があれば作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行役 | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
-| FLOW-23 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
-| FLOW-24 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 7 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
-| FLOW-25 | 人が別の PR をマージし base が進んだ。載せ直して、差分が同じなら印を付け直し（Status はそのまま）、変わったら FLOW-22 に戻る（Status を `In Review` に戻す） | 進行役 | `Ready to Merge` か `In Review` | 空か `reviewer` | 変えない | MERGE-5、MERGE-6 |
-| FLOW-26 | 印を見てマージする | 人 | 変えない（進行役が次回の実行で検出するまで） | 変えない | 変えない | MERGE-1、MERGE-5 |
-| FLOW-27 | マージを検出し、Issue を閉じ、作業場所（clone と worktree）をフォルダごと消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
+| 順 | 番号 | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
+|---|---|---|---|---|---|---|---|
+| 1 | FLOW-15 | Issue が起票され、Project に入る | 自動（Project の自動追加。SETUP-1） | `Todo` | 空 | 無し | SETUP-1 |
+| 2 | FLOW-16 | 受け入れ：検疫、作業指示の下書き、依存とマイルストーンの候補を「受け入れの下書き」コメントに書く（検疫で見つかったら、検疫の結果と印だけを書いて `needs-human`。TEXT-12） | 進行役 | 変えない | 変えない | 変えない | TEXT-12 |
+| 3 | FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
+| 4 | FLOW-18 | `agent-ready` を検出し、下書きのハッシュで印を更新し、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行役 | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
+| 5 | FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行役 | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
+| 6 | FLOW-20 | 計画役（印とラベルで決めたモデル）が計画を返し、進行役が `plan` の印付きで Issue にコメントする。計画を投稿した実行では、どの段階でも実装に入らない（重い段は 1 回の実行で 1 つ。FLOW-4）。段階 5〜7 では、次回の実行まで人が止められる（Agent 欄 `paused` か `needs-human`） | 進行役 | 変えない | 変えない | 変えない | IMPL-10 |
+| 7 | FLOW-21 | draft PR を作る（段階 5 ではレビュー AI が無いので、人がレビューする。Agent 欄は空） | 進行役 | `In Review` | `reviewer`（段階 6 以降。段階 5 は空） | 変えない | IMPL-6、IMPL-7 |
+| 8 | FLOW-22 | 対応ループ：🔴 🟡 があれば作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行役 | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
+| 9 | FLOW-23 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行役 | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
+| 10 | FLOW-24 | マージの可否を判定し、印（`merge=ready` / `merge=human`）を PR に書く（段階 7 は記録にだけ残し印を書かない。shadow 判定） | 進行役 | 変えない | 変えない | 変えない | MERGE-3、「[段階][f06]」 |
+| 11 | FLOW-25 | 人が別の PR をマージし base が進んだ。載せ直して、差分が同じなら印を付け直し（Status はそのまま）、変わったら FLOW-22 に戻る（Status を `In Review` に戻す） | 進行役 | `Ready to Merge` か `In Review` | 空か `reviewer` | 変えない | MERGE-5、MERGE-6 |
+| 12 | FLOW-26 | 印を見てマージする | 人 | 変えない（進行役が次回の実行で検出するまで） | 変えない | 変えない | MERGE-1、MERGE-5 |
+| 13 | FLOW-27 | マージを検出し、Issue を閉じ、作業場所（clone と worktree）をフォルダごと消す。Issue を閉じると Project が `Done` にする | 進行役 | `Done` | 空 | 変えない | MERGE-7 |
 
 止まる遷移（どの段階からでも起きうる）：
 
-| # | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
+| 番号 | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か振動 | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-24 |
 | FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、進行役が実行するパスへの変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（UNDECIDED-27） | 進行役 | `Blocked` | 変えない | `needs-human` | IMPL-8、IMPL-14、IMPL-15、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
@@ -116,3 +116,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[readme]: ./README.md
