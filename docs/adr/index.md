@@ -15,6 +15,7 @@
 | ADR-20261015-005 | [要件が決めていない設定の値は構造仕様に初期値として書いて設定ファイルで変え、マシンごとの値はリポの外の設定に置く][adr-20261015-005-settings-values-and-machine-settings] | accepted | 2026-10-15 |
 | ADR-20261015-006 | [1 回の実行では重い段を 1 つだけ進め、基線が緑でなければ新しい着手だけ止め、進行役は Agent 欄に人の値を書かず、手元の記録は上限の数え上げにだけ使う][adr-20261015-006-run-stages-baseline-agent-field-and-local-records] | accepted | 2026-10-15 |
 | ADR-20261016-001 | [CI が赤なら修正に回し、結果が出ていなければ待ち、merge=ready は 1 回の実行で 1 件にして残りは次の実行に回し、PR と Issue はブランチ名と署名付きの印で結びつける][adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link] | accepted | 2026-10-16 |
+| ADR-20261016-002 | [受付 AI はすべての Issue で作業指示の下書きを書き、AI に渡す文は人が承認した下書きか作業指示コメントだけにする][adr-20261016-002-intake-ai-drafts-every-issue] | accepted | 2026-10-16 |
 
 <!--
 行の例（表の最後に足す）:
@@ -36,3 +37,4 @@
 [adr-20261015-005-settings-values-and-machine-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [adr-20261015-006-run-stages-baseline-agent-field-and-local-records]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link]: ./adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
+[adr-20261016-002-intake-ai-drafts-every-issue]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
