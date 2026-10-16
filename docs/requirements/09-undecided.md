@@ -109,8 +109,8 @@
   段階 2 で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。段階 3 の点検で確かめる~~
 - UNDECIDED-28 **欠番**（FACT-26 で確かめた。エージェント定義の `tools` に書けば使え、作業フォルダの外は Read と同じく拒否される）：~~**計画役の道具の Grep と Glob が使えるか。** 計画役は読むだけの道具（Read・Grep・Glob）で動く前提（「[登場するもの][f00]」）だが、Claude Code 2.1.285 の `-p` のセッションの道具の一覧に Grep と Glob が無かった（FACT-24。[10-verified-facts.md][f10]）。
   エージェント定義の `tools` に書いたときに使えるかを、段階 3 で確かめる。使えなければ、計画役がファイルを探す手段を決める~~
-- UNDECIDED-29 **Project の欄の値を最後に変えた人を API で取れるか。** GraphQL の `ProjectV2ItemFieldSingleSelectValue` は `creator`（「項目を作った人」）と `updatedAt` しか持たず、値を最後に変えた人を指すかが型の定義から分からない（[ADR-20261015-004][adr-markers]）。
-  捨てる Project で、別の人が値を書き換えたときに `creator` が変わるかを確かめる（FACT-15 と同じやり方）。取れるなら、Status と Agent 欄を戻した人の権限も確かめる形にできる
+- UNDECIDED-29 **欠番**（FACT-27 と FACT-28 で確かめた。値の `creator` は値を最初に入れた人で、Agent 欄の変更はタイムラインにも出ないため、値を最後に変えた人は API で取れない。Status と Agent 欄を変えた人を確かめない形（[ADR-20261015-004][adr-markers]）のままにする）：~~**Project の欄の値を最後に変えた人を API で取れるか。** GraphQL の `ProjectV2ItemFieldSingleSelectValue` は `creator`（「項目を作った人」）と `updatedAt` しか持たず、値を最後に変えた人を指すかが型の定義から分からない（[ADR-20261015-004][adr-markers]）。
+  捨てる Project で、別の人が値を書き換えたときに `creator` が変わるかを確かめる（FACT-15 と同じやり方）。取れるなら、Status と Agent 欄を戻した人の権限も確かめる形にできる~~
 - UNDECIDED-44 **作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか。** IMPL-14 は、時間の上限でプロセスグループごと止め、そこまでの消費を `stream-json` から数えるとする。
   段階 2 で確かめたのは、モデルが長いコマンドを実行していない状態でのプロセスグループの停止だけ（FACT-14。[10-verified-facts.md][f10]）。作業中の `claude` を止める試験を、段階 3（`setup` と `check` を作る段階）で行う
 - UNDECIDED-45 **skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、分離した dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。

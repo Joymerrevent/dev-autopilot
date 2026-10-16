@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -87,6 +87,9 @@ decision-makers: メンテナ
   - Status：進行役は、印と PR の状態から決まる Status と、Project の Status を比べる。違っていれば、人が戻す手順（「[止まった状態から戻す手順][flow]」：`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる。ほかの違いは、想定外の Status として `needs-human`（SAFE-4）
   - Agent 欄：止める向き（`human`・`paused` にする）は、操作した人を問わず従う。再開の向き（`paused` から戻す、`human` から `worker` に戻す）は今のまま従う。Project に書ける人がリポの push 以上の人に限られることを、運用の前提にする（UNDECIDED-29 で確かめる）
 
+  > **［2026-10-16 追記］** UNDECIDED-29 を確かめた。Project の欄の値の `creator` は値を最初に入れた人で、値を変えても変わらない。Issue のタイムラインの Status の変更のイベントは変えた人を持つが、Agent 欄の変更では出ず、Status でも抜けがある（[FACT-27 と FACT-28][facts]）。
+  > 値を最後に変えた人は API で取れないため、Status と Agent 欄を操作した人を確かめない形と、Project に書ける人をリポの push 以上の人に限る運用の前提は変わらない。
+
 ### 影響（Consequences）
 
 - 良い点: 1 回だけ書くコメントの重複を、GitHub だけで止められる
@@ -169,3 +172,4 @@ decision-makers: メンテナ
 [merge]: ../requirements/03-merge.md
 [safety]: ../requirements/05-safety.md
 [setup]: ../requirements/06-setup-and-stages.md
+[facts]: ../requirements/10-verified-facts.md

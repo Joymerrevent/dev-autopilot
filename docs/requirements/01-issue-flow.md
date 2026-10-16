@@ -95,7 +95,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - 進行役が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人がマイルストーンを付けたら受け入れ（TEXT-12）が下書きを用意し、人が `agent-ready` を付けるかを決める（IMPL-26）
 - 段階による違い：段階 5 では FLOW-21 の Agent 欄が空（人がレビューする番。Status `In Review` と設定の `stage` で表し、`/dev-autopilot` の状態の表示で「人の番」と出す。[ADR-20261015-006][adr-flow]）、段階 7 では FLOW-24 の印を書かない（shadow）。段階ごとの振る舞いは設定の `stage` で切り替える（STRUCT-2）
 - Status と Agent 欄の更新はすべて進行役が GraphQL で行い、AI のセッションは触らない（IMPL-5、「[Issue と PR の本文の扱い][f04]」）。更新は冪等で、すでにその値なら何もしない
-- 進行役は Status と Agent 欄を変えた人を確かめない（値を最後に変えた人を API で取れるか確かめていない。UNDECIDED-29）。Status は、印と PR の状態から決まる値と違えば、人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる（TEXT-10）。ほかの違いは想定外の Status として `needs-human`（SAFE-4）。Agent 欄は、止める向き（`human`・`paused`）にも再開の向きにも従う（Project に書ける人がリポの push 以上の人に限られることを運用の前提にする。[ADR-20261015-004][adr-markers]）
+- 進行役は Status と Agent 欄を変えた人を確かめない（値を最後に変えた人は API で取れない。FACT-27 と FACT-28。[10-verified-facts.md][f10]）。Status は、印と PR の状態から決まる値と違えば、人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる（TEXT-10）。ほかの違いは想定外の Status として `needs-human`（SAFE-4）。Agent 欄は、止める向き（`human`・`paused`）にも再開の向きにも従う（Project に書ける人がリポの push 以上の人に限られることを運用の前提にする。[ADR-20261015-004][adr-markers]）
 - 人は進行役のコメントを編集しない（印が無効になり `needs-human` になる。IMPL-20）。誤りは新しいコメントで補う。受け入れの下書き（`intake` の印）だけは、人が直してよい（TEXT-12）
 
 ## 運用の規則
@@ -112,6 +112,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 [f04]: ./04-external-text-and-markers.md
 [f06]: ./06-setup-and-stages.md
+[f10]: ./10-verified-facts.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md

@@ -87,6 +87,17 @@ macOS、Claude Code 2.1.285、haiku で確かめた。試験用の Plugin（エ�
 |---|---|---|---|
 | FACT-26 | エージェント定義の `tools` に Grep と Glob を書いたときに使えるか。作業フォルダの外を読めるか | **使える。** `--output-format stream-json` の初期化の記録で、セッションの道具の一覧が `Read` `Grep` `Glob` になり、3 つとも作業フォルダの中で使えた。FACT-24 で道具の一覧に無かったのは、道具を指定しない既定のセッションの一覧。**作業フォルダの外は、Read と同じく `-p` で自動で拒否された**：Grep と Glob で、作業フォルダの外のフォルダ、ホーム、`~/.zshrc` を試すと、「Claude requested permissions to read from …, but you haven't granted it」で拒否され、`permission_denials` に記録された | 実行 |
 
+## Project の欄の値を確かめた事実（2026-10-16）
+
+Organization に作った非公開の捨てるリポ（Issue 2 件）と、ロードマップの Project を `copyProjectV2` で複製した捨てる Project（組み込みのワークフローも複製された）で確かめた。
+値を書き換えたのは、人のトークンの GraphQL（`updateProjectV2ItemFieldValue` と `clearProjectV2ItemFieldValue`）と、Project の組み込みのワークフロー（Item added to project が `Todo`、Item closed が `Done` を入れる）の 2 者。
+UNDECIDED-29 を確かめるために行い、試験の後に捨てる Project を削除した（捨てるリポの削除はメンテナが行う）。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-27 | Project の単一選択の欄の値（`ProjectV2ItemFieldSingleSelectValue`）の `creator` が、値を最後に変えた人を指すか | **指さない。`creator` は値を最初に入れた人。** ワークフローが入れた Status を人が変えても、値の `id`・`creator`・`createdAt` は変わらず、`updatedAt` だけが進んだ。人が入れた値をワークフローが `Done` に変えても、`creator` は人のままだった。値を消すと値そのものが消え、入れ直すと新しい `id` の値ができて、`creator` は入れ直した人になった。値を最後に変えた人は、値からは取れない | 実行 |
+| FACT-28 | Issue のタイムラインの Status の変更のイベント（`ProjectV2ItemStatusChangedEvent`）で、値を最後に変えた人を取れるか | **取れるのは Status だけで、抜けがあるため正本にできない。** イベントは `actor`・`previousStatus`・`status` を持ち、試験では Status の 4 回の変更すべてに正しい `actor` で、1〜3 秒遅れて出た。一方、独自の単一選択の欄（Agent 欄に当たる）を変えてもイベントは出なかった。ロードマップの Project（19 項目）を読むと、値の `updatedAt` が進んだのにイベントが 1 件も無い項目があった（#37・#44・#45 など）。ワークフローによる変更でも `wasAutomated` は `false` だった | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
