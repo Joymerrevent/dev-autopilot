@@ -74,6 +74,9 @@ decision-makers: メンテナ
   - `intake` の印：`quarantine=found` と `sig`。`body=` `brief=` `plan=` は持たない
 - `needs-human` を付ける。受け入れの印があるので、次の実行で受け入れは走らない
 - 人が `## 作業指示` を書いて `agent-ready` を付けたら、進行役は作業指示コメントだけを渡す文にする（`intake-final` の `source=instruction`）。`quarantine=found` の Issue では、本文（`source=body`）と下書き（`source=draft`）を渡す文にしない。作業指示コメントも、渡す直前に検疫を通す（TEXT-11）
+
+  > **［2026-10-16 追記］** [ADR-20261016-002][adr-draft] で、Issue の本文を著者を問わず AI に渡さない形にしたので、`intake-final` の `source=body` の値と、`intake` の印の `body=` の欄は無くなった。検疫で見つかった Issue に作業指示コメントだけを渡す決定は変わらない。
+
 - 計画役のモデルは、`plan=` が無いので既定の `opus` になる。人はラベル `plan:fable` で上書きできる（IMPL-10）
 
 ### 影響（Consequences）
@@ -141,3 +144,4 @@ decision-makers: メンテナ
 [flow]: ../requirements/01-issue-flow.md
 [impl]: ../requirements/02-implement-review-fix.md
 [setup]: ../requirements/06-setup-and-stages.md
+[adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md

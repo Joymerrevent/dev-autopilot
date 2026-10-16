@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # 進行役の投稿にはすべて署名付きの印を付け、人の操作は操作した人の権限と時刻を確かめてから従う
 
+> **Amended by [ADR-20261016-002][adr-draft]（2026-10-16）**: 決定 2 の時刻の規則の対象から、Issue の本文を外した（Issue の本文は、著者を問わず AI に渡さなくなったため）。時刻の規則の対象は、作業指示コメントと直した下書きの 2 つになる。ほかの決定は据え置く。
+
 要件の UNDECIDED-11 と UNDECIDED-13（[決めていないこと][undecided]の「受け入れと印」）を決める。
 どちらも「GitHub の上の合図を、どの条件で信じるか」の論点で、問いは 2 つある：進行役の投稿の印をどこまで広げるか、人の操作のどこまでを権限で確かめるか。
 
@@ -173,3 +175,4 @@ decision-makers: メンテナ
 [safety]: ../requirements/05-safety.md
 [setup]: ../requirements/06-setup-and-stages.md
 [facts]: ../requirements/10-verified-facts.md
+[adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
