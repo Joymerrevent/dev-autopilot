@@ -4,7 +4,7 @@
 
 - SAFE-1 AI のセッション（5 役。「[登場するもの][f00]」）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行役の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから PAT と鍵が見えない」ことを試す）、道具はエージェント定義で絞る（SETUP-18、IMPL-5）。
   push・PR・コメント・Project の更新は進行役だけが行う。進行役も `gh pr merge` を呼ばず、`develop` と `main` への直 push と force push はしない（ruleset でも止める。SETUP-9、MERGE-5）
-- SAFE-2 **進行役・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたこと][f11]」）**。5 つの経路を塞ぐ：
+- SAFE-2 **進行役・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）**。5 つの経路を塞ぐ：
   (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。段階 2 で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行役専用 clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
   (b) 進行役が AI の作業場所（親の clone と worktree）で git を実行するのは、AI のセッションを起動する前の clone と worktree の作成だけ。起動した後は、進行役の clone へ取り込む fetch の取り出し元にするだけで、消すときは git を使わずフォルダごと消す（SAFE-12）。
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` に触れる diff は push しない（IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
@@ -25,7 +25,7 @@
 さらに GitHub の deploy key は認証専用で署名の検証に使えないので、「リポに絞った鍵 1 本で push も署名も」は成り立たない。隔離と鍵は次のように分ける。
 
 - SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
-  書き込みはその Issue の worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
+  書き込みは自分のセッションの worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す。
   ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行役は AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）と `TMPDIR` をセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）。
   pnpm の store はセッションの一時フォルダの下（`$XDG_DATA_HOME/pnpm/store`）に置き、セッションの間で共有しない。共有の store（人の store も、dev-autopilot 用に別に作る store も）を `allowRead` と `allowWrite` に足さず、`PNPM_HOME` は渡さない（渡すと store の場所が変わる。FACT-25。[ADR-20261015-002][adr-store]）
@@ -35,10 +35,10 @@
   AI のセッションの git では自動 gc を止め、書く場所を増やさない
 - SAFE-12 git は、gitdir に `commondir` のファイルがあると、指す先のフォルダの `config`（`core.fsmonitor` `core.sshCommand` `diff.external` など）を読む。普通の clone の `.git/commondir` でも、進行役の `git fetch` が指す先の `core.fsmonitor` を実行した（FACT-20）。
   sandbox は worktree の `commondir`（`.git/worktrees/<名前>/commondir`）を保護する（FACT-9）が、保護の一覧は Claude Code の版で変わりうるうえ、親 clone の `.git/commondir` の作成のように確かめていない経路がある。
-  sandbox の保護に重ねる守りとして、進行役は AI のセッションを起動した後の作業場所（親の clone と worktree）で git を実行しない。進行役は、AI の worktree のブランチを「進行役の clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（SAFE-2 の (b)。「[2026-10-11 のレビューで決めたこと][f11]」）。
+  sandbox の保護に重ねる守りとして、進行役は AI のセッションを起動した後の作業場所（親の clone と worktree）で git を実行しない。進行役は、AI の worktree のブランチを「進行役の clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（SAFE-2 の (b)。「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。
   AI の作業場所は AI のセッションごとに作り直し、消すときは git を使わずフォルダごと消す。消す前に `commondir` と `gitdir` をファイルとして読み、作ったときの中身と違えば、消さずに `needs-human` にする（[ADR-20261013-001][adr-workspace]）。
   段階 2 の攻撃の再現では、進行役の clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
-- SAFE-13 **進行役は AI の作業場所の clone の refs を使わない。** refs と packed-refs を AI が書けるので、base は進行役の clone で fetch した `origin/develop`、PR の head は GitHub の API が返す SHA だけを基準にする。載せ直し（MERGE-5）と push は fetch の直後に行い、push する SHA が API の head か自分の merge の結果と一致することを確かめる
+- SAFE-13 **進行役は AI の作業場所の clone の refs を使わない。** refs と packed-refs を AI が書けるので、base は進行役の clone で fetch した `origin/develop`、PR の head は GitHub の API が返す SHA だけを基準にする。載せ直し（MERGE-5）と push は fetch の直後に行い、API の head（初回は base）が push する SHA の祖先であること（fast-forward で届くこと）を確かめる（自分の merge の結果も、API の head から fast-forward で届く）
 - SAFE-14 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
   作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）
 - SAFE-15 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行役だけが使う）。

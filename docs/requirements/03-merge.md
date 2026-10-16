@@ -9,7 +9,7 @@
   - 変更したファイルがすべて MERGE-4 の許可一覧にあり、diff の状態がすべて追加（A）か変更（M）で、mode が `100644`（新規でもシンボリックリンクと実行属性付きは `merge=human`）。
     変更ファイルの一覧は API でなく、進行役が自分の clone で `git diff --raw <base>...<head>` を取って作る（API のページ送りの漏れを「一覧に無い」と読まないため）
   - 変更したファイルに、方針に係るパス（下の一覧）が 1 つも無い
-- MERGE-3 判定の結果は進行役が PR のコメントに印として書く（形は IMPL-18 と同じ。`merge=ready` か `merge=human`、満たさない条件、head の SHA）。`ready` なら Ready to Merge にして人に渡す。`human` なら理由を添えて Ready to Merge のまま人に渡す。
+- MERGE-3 判定の結果は進行役が PR のコメントに印として書く（形は IMPL-18 と同じ。`merge=ready` か `merge=human`、満たさない条件、head の SHA）。`ready` なら Status を Ready to Merge のまま（FLOW-23）人に渡す。`human` なら理由を添えて、Ready to Merge のまま人に渡す。
   判定の時点で CI が緑でなければ（IMPL-27）、判定を次の実行に回し、`merge` の印を書かない（`merge=human` にしない。[ADR-20261016-001][adr-pr]）。
   人は印を見てマージし、印と違う判断をしたとき（`ready` をマージしない、`human` をマージする）はその理由を PR にコメントする。この一致・不一致が判定の信頼度の記録になる（FLOW-13、[段階 8][f06] の出口）。
   **一致・不一致の数え方**：`merge=human` の PR が人にマージされたら不一致（進行役が次回の実行で検出する）。`merge=ready` の PR は、人が「## 判定と違う判断」の見出しでコメントしたら不一致、マージされたら一致。
