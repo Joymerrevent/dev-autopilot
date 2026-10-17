@@ -245,11 +245,11 @@ decision-makers: メンテナ
     前で動いたとき（3 回目。`--forward-subagent-text` なし）は、2 つのメッセージのうち道具を呼んだ 1 つだけが出た。途中の記録（`task_progress` と `task_notification`）は、`total_tokens`・`tool_uses`・`duration_ms` だけを持ち、モデルと入力・出力の内訳を持たない
   - サブエージェントをバックグラウンドで動かすかは、同じ指示でも回ごとに違った（1 回目と 2 回目はバックグラウンド、3 回目は前）。バックグラウンドの回は、親がサブエージェントの答えを待たずにターンを終え、`result` が 2 つ出た（1 つ目は「サブエージェントはまだ動いている」という返事）。プロセスは 2 つ目の `result` の後に終わった
   - 初期化の記録の道具の一覧では、Agent ツールは `Task` という名前で出た
-- 本 ADR の決定と関わらない発見（実機の確かめの途中で分かった。要件の直し方は、本 ADR と別に決める）
+- 本 ADR の決定と関わらない発見（実機の確かめの途中で分かった。要件の直し方は、本 ADR と別に決める。[dev-autopilot の PR #5][da-pr-5] で FACT-29・FACT-30 と UNDECIDED-47・UNDECIDED-48 として足した）
   - IMPL-14 は「`assistant` のイベントごとの `model` と `usage` を足し上げる」とし、FACT-14 は途中で止めても消費を集計できるとしている。
     上の確かめのとおり、`assistant` のイベントの `usage` は同じメッセージで重複し、`output_tokens` は最後の値でないので、そのまま足すと入力を多く、出力を少なく数える。サブエージェントを使わない案でも起きる
-  - `--setting-sources local` で起動したセッションでも、初期化の記録の `mcp_servers` に、ログインしている claude.ai のアカウントのコネクタ（メール、カレンダーなど。`source` は `claudeai`）が出た回があった（2 回目。3 回目は空）。
-    試験では、親の道具がエージェント定義の `tools` で `Task` と `Read` に絞られていたので、コネクタの道具は道具の一覧に無かった。コネクタの案内の文が、親の最後の返事に混ざった
+  - `--setting-sources local` で起動したセッションでも、初期化の記録の `mcp_servers` に、ログインしている claude.ai のアカウントのコネクタ（メール、カレンダーなど。`source` は `claudeai`）が、3 回のうち 2 回出た（1 回目と 2 回目。3 回目は空）。
+    試験では、親の道具がエージェント定義の `tools` で `Task` と `Read` に絞られていたので、どの回もコネクタの道具は道具の一覧に無かった。認証が要るコネクタの案内の文が、2 回（2 回目と 3 回目）、親の最後の返事に混ざった
 - 2026-10-17 に、business-os の `develop` の `CLAUDE.md` と `docs/` を GitHub の API で読んだ：正典は `docs/adr/`（35 件）、構造仕様は `docs/design/architecture.md`
 - 要件への反映（承認の後に、別の PR で行う）
   - 「[登場するもの][overview]」：レビュー AI の行を、軸ごとの 3 つのセッションに改める。5 役に共通の説明に、Agent ツールをどの役にも与えないことを書く
@@ -284,3 +284,4 @@ decision-makers: メンテナ
 [doc-cli]: https://code.claude.com/docs/en/cli-reference
 [doc-permissions]: https://code.claude.com/docs/en/permissions
 [doc-headless]: https://code.claude.com/docs/en/headless
+[da-pr-5]: https://github.com/Joymerrevent/dev-autopilot/pull/5
