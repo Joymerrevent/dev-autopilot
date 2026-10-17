@@ -22,7 +22,8 @@ decision-makers: メンテナ
 - そのため、AI の振る舞いがおかしいと気づいて急いで止めたいときに、PR を作ってマージするまで止まらない。止める合図は実行の最初にしか読まないので、動いている実行（AI のセッションは 1 回 45 分まで。IMPL-13）も止まらない
 - 進行ボットがどの版のリポの設定を読むか（人の作業コピー、既定のブランチ、base ブランチ）が書かれていない。当てる先の business-os は、既定のブランチ（`main`）と PR を向ける base ブランチ（`develop`）が違う
 - 2026-10-17 に GitHub の公式文書を読んだ（補足情報）。リポの変数（Actions の変数）は、fine-grained PAT の「Variables」の読み取りの権限で読める。変えられるのは、org のリポなら write 以上の人、個人のリポならコラボレータで、GitHub の画面から PR なしで変えられる
-- 同じ日に、試験用のリポで確かめた（補足情報）。Actions を止めたリポでも、変数を読めて変えられた。org のリポでは、変数を変えた人と日時が org の監査ログに残った
+- 同じ日に、試験用のリポで確かめた（補足情報）。Actions を止めたリポでも、変数を読めて変えられた。org のリポでは、変数を変えた人と日時が org の監査ログに残った。
+  「Variables」の読み取りだけを与えた fine-grained PAT は、変数を読めて、作成・更新・削除は 403 で拒否された
 
 課題：人が急いで止めたいときに、PR を待たず、動いている実行も含めて止まる合図をどこに置くか。書かずに試す合図をどこに置くか。進行ボットはどの版のリポの設定を読むか。
 
@@ -178,7 +179,8 @@ decision-makers: メンテナ
   - 変数を作り（`POST /repos/{owner}/{repo}/actions/variables`）、読めた。リポの Actions を止めても（`PUT /repos/{owner}/{repo}/actions/permissions` の `enabled=false`）、変数を読めて変えられた。試験の後に Actions の設定を元に戻し、変数を消した
   - org の監査ログ（GitHub の画面）に、`repo.update_actions_variable` のイベントが、変えた人と「via the API」と一緒に出た。変えた後の値は出ない。監査ログの API は GitHub Enterprise Cloud だけで、Team のプランでは 404 だった
 - 公式文書（[org の監査ログの見方][gh-audit-review]、[org の監査ログのイベント][gh-audit]）：監査ログは過去 180 日のイベントを持ち、見られるのは org の owner だけ。リポの変数の作成・更新・削除は `repo.create_actions_variable`・`repo.update_actions_variable`・`repo.remove_actions_variable` のイベントになる
-- 確かめていないこと：fine-grained PAT の Variables: read で実際に読めて、変えられないか（PAT はメンテナが作るので、段階 3 で `check` を作るときに試す）。write の権限だけの人が変えられるか（公式文書に書いてある。試すには別のアカウントが要る）
+  - メンテナが作った fine-grained PAT（対象は試験用のリポだけ、権限は Variables の読み取りだけ、期限 1 日）で試した。変数の値と一覧を読めた。変数の更新・作成・削除は、どれも 403（`Resource not accessible by personal access token`）で拒否され、値は変わらなかった。対象に入れていない別のリポの変数の一覧も 403 だった
+- 確かめていないこと：write の権限だけの人が変数を変えられるか（公式文書に書いてある。試すには別のアカウントが要る）
 - 急いで止める手段の最後の手段（人がマシンで、定期の実行の登録を外し、動いている進行ボットを止める）は、今のまま残る
 - 要件への反映（承認の後に、別の PR で行う）
   - 01-issue-flow.md：「運用の規則」の止める合図（リポの変数、途中でも読む、止めた回を数えない）と、書かずに試す合図（リポの設定のまま）
