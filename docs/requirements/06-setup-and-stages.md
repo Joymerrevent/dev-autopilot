@@ -9,25 +9,30 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 - SETUP-1 **導入（`/dev-autopilot setup`）**：足りないものを作る。何度実行しても同じ結果になる（冪等）。まず「何を作るか」の一覧を出し、人が承認してから作る。
   外部に影響が出る操作（ラベル・Project の欄・ruleset の作成）は 1 回の承認でまとめて行い、作った後に実物を読み戻して確かめる。
   利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ、当てる先のリポで開いた Claude Code で `setup` を実行する（STRUCT-3、[ADR-20261017-003][adr-plugin] の決定 4）。`setup` は dev-autopilot 自身のリポでは何も作らずに止まる。
+  `setup` は GitHub の準備とマシンの準備に分ける（[ADR-20261017-004][adr-human] の決定 2）。GitHub の準備（ラベル、Project の欄、ruleset、リポの設定）は人の `gh` のログイン（人の権限）で行う。マシンの準備（下の一覧のそれ以外）は GitHub の認証を使わず、秘密のファイルを読まない。
+  人の `gh` のログインを持たない専用マシンでは、GitHub の準備は人の手元のマシンで行い、専用マシンではマシンの準備だけを行う。進行ボットの PAT には、ruleset を作る管理の権限を持たせない。
   Plugin を更新した後に `setup` を実行し直すと、進行ボットのプログラムの写しを新しい版で作り直す（進行ボットが動いていない間に限る。実行の lock を取る）
   - Plugin が作れるもの：ラベル（`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`）、Project の Status の選択肢（In Review・Ready to Merge・Blocked。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える。FACT-15）と単一選択欄「Agent」、
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
-    deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに作り、OS ごとの起動の定義（macOS は launchd の plist）がマシンの設定のパスを進行ボットに渡す。[ADR-20261015-005][adr-settings]）、
+    deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに、OS ごとの決まった場所に当てる先のリポ（owner/repo）ごとに作り（STRUCT-2）、OS ごとの起動の定義（macOS は launchd の plist）がマシンの設定のパスを進行ボットに渡す。[ADR-20261015-005][adr-settings]）、
     進行ボットのプログラムの写し（インストールされた Plugin の版を、置き場の中の版ごとのフォルダに写す。STRUCT-3）、
     定期の実行の登録（macOS は launchd の plist、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と印の署名の鍵（IMPL-20）の作成、どちらも秘密の置き場への保管（SAFE-15）、専用マシンの用意、利用枠の確認、
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
     処理対象にする Issue の承認（受け入れの下書きを読んで `agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行ボットは毎回の実行の最初に同じ点検を回し、
-  fail が 1 つでもあれば作業に入らず止まる（fail-closed）。見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、`gh` の認証の権限、
+  fail が 1 つでもあれば作業に入らず止まる（fail-closed）。人が呼ぶ `check` は進行ボットを直接起動せず、定期の実行と同じジョブを起こす。GitHub の点検（ラベル、Project の欄、ruleset、PAT の権限）は進行ボットが自分の PAT で行い、人のセッションは実行の記録を読んで表示する（点検だけで動かす仕組みは基本設計で決める。[ADR-20261017-004][adr-human] の決定 2）。
+  見るもの：ラベルと Project の欄の存在、ruleset、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、進行ボットの PAT の権限、
   `claude` と Node の版（Node 24 が要る）、インストールされた Plugin の版と進行ボットのプログラムの写しの版の一致（違えば warn。STRUCT-3）、Skill の有無、前回の実行の記録と記録の印のファイル（無ければ fail。「[運用の規則][f01]」）、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行ボットの clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行ボットの clone へ fetch すると失敗すること。
-  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・進行ボットのプログラムの写し・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、OS ごとの起動の定義（macOS は launchd の plist）に秘密の値が無いこと。
+  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・進行ボットのプログラムの写しの `src/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、
+  写しの `skills/` は sandbox の中と Read ツールの両方から読めて書けないこと、置き場の実体のパスが `/tmp/claude-<uid>/` の下に無いこと（[ADR-20261017-004][adr-human] の確認方法）、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、OS ごとの起動の定義（macOS は launchd の plist）に秘密の値が無いこと。
   依存の store も試す（[ADR-20261015-002][adr-store] の確認方法）：sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すこと、安全設定の `allowRead` と `allowWrite` に共有の store が無いこと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いこと。
-  設定も確かめる（[ADR-20261015-005][adr-settings] の確認方法）：すべての項目がリポの設定かマシンの設定の一方にだけあること、リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと、マシンの設定の実体のパスが同期フォルダの下に無いこと
-  進行ボットのプログラムの写しと clone も試す（[ADR-20261016-003][adr-move]、[ADR-20261017-003][adr-plugin] の確認方法）：進行ボットのプログラムの写しと `<置き場>/controller/` が別のフォルダで、どちらも sandbox の中から読めず書けないこと、
-  定期の実行が写しから動くこと、Plugin を更新しても写しが変わらないこと
+  設定も確かめる（[ADR-20261015-005][adr-settings] の確認方法）：すべての項目がリポの設定かマシンの設定の一方にだけあること、リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと、マシンの設定の実体のパスが同期フォルダの下に無いこと、人が呼ぶ Skill が origin から引いたマシンの設定の場所と、定期の実行の定義が渡す場所が同じこと（[ADR-20261017-004][adr-human] の決定 3）。
+  進行ボットのプログラムの写しと clone も試す（[ADR-20261016-003][adr-move]、[ADR-20261017-003][adr-plugin] の確認方法）：進行ボットのプログラムの写しと `<置き場>/controller/` が別のフォルダで、`<置き場>/controller/` は sandbox の中から読めず書けず、写しは書けず `src/` を読めないこと、
+  定期の実行が写しから動くこと、Plugin を更新しても写しが変わらないこと。
+  MCP の道具が無いことも試す（[ADR-20261017-005][adr-mcp] の決定 4）：AI のセッションと同じ起動の形（安全設定・環境変数・起動の引数）で短いセッションを起こし、初期化の記録の道具の一覧に `mcp__` で始まる道具が無く、MCP のサーバーの一覧が空であること（外れたら fail。確かめる回数は利用枠との兼ね合いで基本設計で決める）
 - SETUP-3 **設定の正本は項目ごとに 1 つ**（リポの設定かマシンの設定のどちらか。STRUCT-2）。導入が書き、点検が読み、進行ボットが使う。人が直接編集してもよいが、点検が整合を確かめる（[ADR-20261015-005][adr-settings]）
 - SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、ほかのリポに当てるときに `setup` が動く保証が無くなる
 
@@ -84,3 +89,5 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md

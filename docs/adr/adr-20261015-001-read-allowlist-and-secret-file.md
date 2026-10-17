@@ -12,6 +12,9 @@ decision-makers: メンテナ
 >
 > **Amended by [ADR-20261017-003][adr-plugin]（2026-10-17）**: 決定 3 の「手動実行は launchd のジョブを起こす」を、OS ごとの定期の実行の仕組みで同じジョブを起こす形に改めた（macOS は `launchctl kickstart`（`-k` なし）、Linux は登録した仕組みで同じジョブを起こす操作）。
 > 重ねる守りの `deny` の Read の「進行ボットのプログラムの clone」は、プログラムの写しを指すように改めた。人のセッションから進行ボットを直接起動しないことと、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261017-004][adr-human]（2026-10-17）**: 決定 1 の AI が読める範囲（sandbox の `allowRead` と、`permissions.allow` の Read）に、進行ボットのプログラムの写しの `skills/` を足した。重ねる守りの `deny` の Read は、写しの全体から写しの `src/` に狭めた。
+> 置き場を Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）の下に置かないことを足した。秘密を読めないこと、ホームと別のセッションを読めないことと、ほかの決定は据え置く。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -221,3 +224,4 @@ decision-makers: メンテナ
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-move]: ./adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-human]: ./adr-20261017-004-plugin-skills-read-and-human-skills-auth.md

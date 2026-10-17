@@ -70,11 +70,11 @@
 - UNDECIDED-17 **欠番**（[ADR-20261015-005][adr-settings] で決めた）：~~**まだ値が決まっていない設定。** 実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場の値をどこで決めるか（設定の項目の一覧は STRUCT-2。[07-structure.md][f07]）~~
 - UNDECIDED-25 **欠番**（[ADR-20261015-002][adr-store] で決めた）：~~**依存の store をセッションの間で共有するか。** AI のセッションは作業場所の中で依存を導入する（IMPL-1）。pnpm の store をセッションの間で共有すると、前のセッションが細工したものを次のセッションが読む経路になりうる（objects と同じ種類の論点。[ADR-20261013-001][adr-workspace]）。
   手元の Mac（APFS）では store と `node_modules` のファイルを共有しなかったが、専用マシンのファイルシステムでは確かめていない。セッションごとに空の store を使うと、`pnpm install` は 1.1 秒から 3.0 秒になった（FACT-21。[10-verified-facts.md][f10]）~~
-- UNDECIDED-36 **AI のセッションが Plugin を読めるか。** Plugin は、進行ボットのプログラムの写し（`devAutopilotPath`。置き場の中。[ADR-20261017-003][adr-plugin] の決定 2）を `--plugin-dir` で指す（STRUCT-3）。一方、[ADR-20261015-001][adr-read] で、AI のセッションは置き場を読めなくした。
-  エージェント定義の読み込みは確かめた（FACT-2、FACT-26）が、レビュー AI が Skill の参照ファイルを Read で読むことと、`review/scripts/` を sandbox の中の Bash で実行することは、拒否されるはず（確かめていない）。Plugin の置き場か、読み取りの許可を決める（[07-structure.md][f07]、[05-safety.md][f05]）
-- UNDECIDED-37 **人が呼ぶ `setup` と `check` の認証と、マシンの設定の見つけ方。** `setup` と `check` は人の Claude Code のセッションから動き、GitHub への書き込み（ラベル・Project の欄・ruleset）と、PAT の権限の確かめを行う。
+- UNDECIDED-36 **欠番**（[ADR-20261017-004][adr-human] で決めた）：~~**AI のセッションが Plugin を読めるか。** Plugin は、進行ボットのプログラムの写し（`devAutopilotPath`。置き場の中。[ADR-20261017-003][adr-plugin] の決定 2）を `--plugin-dir` で指す（STRUCT-3）。一方、[ADR-20261015-001][adr-read] で、AI のセッションは置き場を読めなくした。
+  エージェント定義の読み込みは確かめた（FACT-2、FACT-26）が、レビュー AI が Skill の参照ファイルを Read で読むことと、`review/scripts/` を sandbox の中の Bash で実行することは、拒否されるはず（確かめていない）。Plugin の置き場か、読み取りの許可を決める（[07-structure.md][f07]、[05-safety.md][f05]）~~
+- UNDECIDED-37 **欠番**（[ADR-20261017-004][adr-human] で決めた）：~~**人が呼ぶ `setup` と `check` の認証と、マシンの設定の見つけ方。** `setup` と `check` は人の Claude Code のセッションから動き、GitHub への書き込み（ラベル・Project の欄・ruleset）と、PAT の権限の確かめを行う。
   ADR-20261015-001 は人のセッションに秘密を扱わせないとし、専用マシンには人の `gh` のログインを置かない（「[決まっていること][f00]」）。
-  どの認証で動くかと、人が呼ぶ Skill がマシンの設定（`devAutopilotPath` や記録の置き場。[ADR-20261015-005][adr-settings]）をどう見つけるかが決まっていない（[06-setup-and-stages.md][f06]、[07-structure.md][f07]）
+  どの認証で動くかと、人が呼ぶ Skill がマシンの設定（`devAutopilotPath` や記録の置き場。[ADR-20261015-005][adr-settings]）をどう見つけるかが決まっていない（[06-setup-and-stages.md][f06]、[07-structure.md][f07]）~~
 - UNDECIDED-38 **全体を止める合図と、書かずに試す合図の置き場。** 止める合図（`enabled: false`）と書かずに試す合図（`dryRun: true`）は設定ファイルに持つ（「運用の規則」）。
   [ADR-20261015-005][adr-settings] の割り振りでは、どちらもリポの設定になり、変えるのに PR が要る。急いで止めたいときに PR を待つことになり、進行ボットがどの版のリポの設定を読むかも書かれていない（[01-issue-flow.md][f01]、[07-structure.md][f07]）
 - UNDECIDED-47 **途中で止めた回の消費の数え方。** IMPL-14 は、`stream-json` の `assistant` のイベントごとの `model` と `usage` を足し上げ、進行ボットが途中で止めた回も、そこまでの消費を記録に残すとする。
@@ -82,11 +82,17 @@
   出力を少なく数えると、1 Issue の累計の利用枠が上限（IMPL-14）を超えても `needs-human` にならず、上限が黙って効かなくなる。
   正しい値は最後の `result` の `modelUsage` にあるが、時間の上限で止めた回には最後の `result` が出ない。`--include-partial-messages` の `message_delta` は、親のメッセージの出力の最後の値を持つ（FACT-29）が、途中で止めたときに出るかは確かめていない（UNDECIDED-44）。
   数え方（`message_delta` を使う、最後の `result` が無い回は 1 セッションの費用の上限（`--max-budget-usd`）まで使ったとみなす、など）を決める（[02-implement-review-fix.md][f02]、[10-verified-facts.md][f10]）
-- UNDECIDED-48 **AI のセッションに claude.ai のコネクタを読み込ませないか。** AI の 5 役は GitHub に書けない（SAFE-1）。
+- UNDECIDED-48 **欠番**（[ADR-20261017-005][adr-mcp] で決めた）：~~**AI のセッションに claude.ai のコネクタを読み込ませないか。** AI の 5 役は GitHub に書けない（SAFE-1）。
   一方、`--setting-sources local` で起動したセッションにも、ログインしている claude.ai のアカウントのコネクタ（メールの送信などの道具を持つもの）が入った回があった（FACT-30）。
   試験では、エージェント定義の `tools` で道具を絞っていたので、コネクタの道具は道具の一覧に無かった。要件と安全設定（SAFE-2 の (e)、SAFE-10）は MCP のコネクタに触れておらず、エージェント定義の道具の絞り込みだけに頼っている。
   AI のセッションでコネクタを読み込ませないか、読み込ませないならどの手段で止めるか（設定の `disableClaudeAiConnectors`、環境変数 `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config`、安全設定の `permissions.deny` に `mcp__*` を入れる、専用マシンの `claude` にコネクタの無いアカウントでログインする、など）を決める。
-  手段ごとに、dev-autopilot の起動の形で効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）
+  手段ごとに、dev-autopilot の起動の形で効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
+- UNDECIDED-50 **sandbox の中の一時フォルダが、セッションの間で共有される。** SAFE-10 と [ADR-20261015-001][adr-read] の決定 1 は、AI のセッションの `TMPDIR` をセッションの一時フォルダに向けるとする。
+  一方、Claude Code は sandbox の中のコマンドの `$TMPDIR` をユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）に置き換え、sandbox の中のコマンドはユーザーごとの一時フォルダに既定で書ける（FACT-34）。
+  同じユーザーで動くすべての AI のセッションから書けるので、前のセッションが置いたファイルを次のセッションが読む経路になりうる（objects と依存の store と同じ種類の論点。[ADR-20261013-001][adr-workspace]、[ADR-20261015-002][adr-store]）。
+  手元の Mac で試す間（SAFE-18）は、人の Claude Code のセッションの作業用のフォルダも同じ一時フォルダの下にある。
+  セッションごとに一時フォルダを分けるか、分けるならどの手段で分けるか（進行ボットがセッションごとに `CLAUDE_CODE_TMPDIR` を渡す、など）を決める。
+  `CLAUDE_CODE_TMPDIR` はパスが長いと既定の場所の下の短いパスに置き換わる（FACT-34）ので、dev-autopilot の置き場のパスで効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）
 
 ## 基本設計の中で決めてよいもの
 
@@ -126,8 +132,8 @@
 - UNDECIDED-44 **作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか。** IMPL-14 は、時間の上限でプロセスグループごと止め、そこまでの消費を `stream-json` から数えるとする。
   段階 2 で確かめたのは、モデルが長いコマンドを実行していない状態でのプロセスグループの停止だけ（FACT-14。[10-verified-facts.md][f10]）。作業中の `claude` を止める試験を、段階 3（`setup` と `check` を作る段階）で行う。
   同じ試験で、止めたときに `--include-partial-messages` の `message_delta` がどこまで出るかも確かめる（消費の数え方は UNDECIDED-47）
-- UNDECIDED-45 **skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。
-  Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）
+- UNDECIDED-45 **欠番**（FACT-33 で確かめた。skills CLI は `plugin/skills/` の下の Skill を見つける）：~~**skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。
+  Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）~~
 - UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
   sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
   worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
@@ -154,3 +160,5 @@
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
