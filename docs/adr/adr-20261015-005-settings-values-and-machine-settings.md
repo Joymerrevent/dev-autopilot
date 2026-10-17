@@ -10,6 +10,8 @@ decision-makers: メンテナ
 
 > **Amended by [ADR-20261017-002][adr-review]（2026-10-17）**: 決定 1 のうち、設定の項目「Agent ツールを許すか」（初期値は「許さない」）を無くした。Agent ツールはどの役にも与えず、AI の道具はエージェント定義の `tools` だけで決める（当てる先のリポの設定に同じことを決める項目を置くと、正本が 2 つになるため）。安全の境界を緩める変更を ADR で決めるという決定と、ほかの決定は据え置く。
 >
+> **Amended by [ADR-20261017-003][adr-plugin]（2026-10-17）**: 決定 2 のうち、マシンの設定のパスを渡す「起動の定義（launchd の plist）」を、OS ごとの起動の定義に改めた。マシンの設定の `devAutopilotPath` は、進行ボットのプログラムの写しを指す。ほかの決定は据え置く。
+>
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-005 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-17（[決めていないこと][undecided]の「まだ値が決まっていない設定」）を決める。
@@ -165,3 +167,4 @@ STRUCT-2 は、リポ固有の値をすべて設定ファイル 1 つ（例：bu
 [struct]: ../requirements/07-structure.md
 [adr-read]: ./adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-review]: ./adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md

@@ -9,6 +9,9 @@ decision-makers: メンテナ
 # AI の読み取りは自分のセッションのフォルダに絞り、秘密は進行役だけが読むファイルに置き、手動実行は launchd のジョブを起こす
 
 > **Amended by [ADR-20261016-003][adr-move]（2026-10-17）**: 重ねる守りの `deny` の Read に、進行ボットのプログラムの clone（`devAutopilotPath`）を足した。進行ボットのプログラムを、`<置き場>/controller/`（business-os の clone）とは別の clone に置くようになったため。ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261017-003][adr-plugin]（2026-10-17）**: 決定 3 の「手動実行は launchd のジョブを起こす」を、OS ごとの定期の実行の仕組みで同じジョブを起こす形に改めた（macOS は `launchctl kickstart`（`-k` なし）、Linux は登録した仕組みで同じジョブを起こす操作）。
+> 重ねる守りの `deny` の Read の「進行ボットのプログラムの clone」は、プログラムの写しを指すように改めた。人のセッションから進行ボットを直接起動しないことと、ほかの決定は据え置く。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -217,3 +220,4 @@ decision-makers: メンテナ
 [safety]: ../requirements/05-safety.md
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-move]: ./adr-20261016-003-move-to-own-repository-before-basic-design.md
+[adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
