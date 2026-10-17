@@ -36,7 +36,7 @@
   置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）。Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）の下にも置かない（sandbox の中のコマンドが既定で書ける。FACT-32。[ADR-20261017-004][adr-human]）。
   `TMPDIR` は、セッションごとの短い一時フォルダ（例：`/tmp/dap/<セッションの短い ID>`。根は dev-autopilot 専用で、ホーム・置き場・`/tmp/claude-<uid>/` の外）に向け、`CLAUDE_CODE_TMPDIR` にも同じパスを渡す。
   Claude Code は後ろに `/claude-<uid>/` を足して、sandbox の中のコマンドの `$TMPDIR` にする（`TMPDIR` だけを渡しても、Claude Code はユーザーごとの一時フォルダに置き換える。FACT-34）。
-  `<CLAUDE_CODE_TMPDIR>/claude-<uid>` が長いと、Claude Code は黙ってユーザーごとの一時フォルダに戻すので（FACT-37）、進行ボットは起動の前に長さを数え、設定の上限（初期値 44。STRUCT-2）を超えたら起動しない。
+  `<CLAUDE_CODE_TMPDIR>/claude-<uid>` が長いと、Claude Code は黙ってユーザーごとの一時フォルダに戻すので（FACT-37）、進行ボットは起動の前に長さ（バイト数）を数え、設定の上限（初期値 44。STRUCT-2）を超えたら起動しない。
   短い一時フォルダは毎回新しく作り（すでにあれば起動しない）、根は無ければ権限 700 で作る。根が自分の持ち物で、シンボリックリンクでなく、権限が 700 であることを毎回確かめ、外れたら起動しない（`/tmp` はすべての OS ユーザーが書けるため。SAFE-4。[ADR-20261017-006][adr-tmp]）。
   pnpm の store はセッションの一時フォルダの下（`$XDG_DATA_HOME/pnpm/store`）に置き、セッションの間で共有しない。共有の store（人の store も、dev-autopilot 用に別に作る store も）を `allowRead` と `allowWrite` に足さず、`PNPM_HOME` は渡さない（渡すと store の場所が変わる。FACT-25。[ADR-20261015-002][adr-store]）
 - SAFE-11 AI は worktree で作業する。worktree の gitdir と objects は親 clone の `.git/` にあり、worktree のフォルダだけでは `git commit` が通らない。
