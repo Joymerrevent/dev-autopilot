@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # dev-autopilot を基本設計の前に別のリポジトリへ移し、ほかのリポへの適用と配布は段階 8 の後に決める
 
+> **Amended by [ADR-20261017-001][adr-history]（2026-10-17）**: 決定 1 のうち「履歴は引き継がない」を改め、履歴を引き継いだ（メッセージの PR の番号を business-os の参照に書き換え、メンテナの鍵で署名を付け直した）。そのため、確認方法の「最初の commit の本文に、写した元の business-os の commit の SHA がある」と、影響の悪い点の「新しいリポの `git log` と `git blame` は、写した commit から始まる」は当てはまらない。ほかの決定は据え置く。
+
 dev-autopilot を、business-os の中のフォルダ（`dev-autopilot/`）から別のリポジトリへ移す時期を決める。要件の「[分離の時期の目安][structure]」（段階 8 の後に分離する）を改める。
 business-os の ADR 20261008-01（[`dev-autopilot/` を business-os に置く橋渡しの ADR][bos-adr]）は、決定 7 で分離の時期と方法を dev-autopilot 側に任せているので、dev-autopilot 側の ADR で決める。
 要件の UNDECIDED-42（`review` Skill の評価の置き場。[決めていないこと][undecided]の「基本設計の中で決めてよいもの」）も、同じ決定で答えが出る。
@@ -214,3 +216,4 @@ business-os の中に置いたままにすると、3 つの問題がある。
 [adr-read]: ./adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [bos-adr]: https://github.com/Joymerrevent/business-os/blob/9d37a83bd3b44b059ad3478ce8797254d4c45e72/docs/adr/20261008-01-dev-autopilot-folder.md
+[adr-history]: ./adr-20261017-001-carry-history-into-own-repository.md
