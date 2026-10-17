@@ -70,7 +70,7 @@
 - UNDECIDED-17 **欠番**（[ADR-20261015-005][adr-settings] で決めた）：~~**まだ値が決まっていない設定。** 実行時間、受け入れの件数、費用の上限、再試行の間隔、Agent ツール、確信度のしきい値、置き場の値をどこで決めるか（設定の項目の一覧は STRUCT-2。[07-structure.md][f07]）~~
 - UNDECIDED-25 **欠番**（[ADR-20261015-002][adr-store] で決めた）：~~**依存の store をセッションの間で共有するか。** AI のセッションは作業場所の中で依存を導入する（IMPL-1）。pnpm の store をセッションの間で共有すると、前のセッションが細工したものを次のセッションが読む経路になりうる（objects と同じ種類の論点。[ADR-20261013-001][adr-workspace]）。
   手元の Mac（APFS）では store と `node_modules` のファイルを共有しなかったが、専用マシンのファイルシステムでは確かめていない。セッションごとに空の store を使うと、`pnpm install` は 1.1 秒から 3.0 秒になった（FACT-21。[10-verified-facts.md][f10]）~~
-- UNDECIDED-36 **AI のセッションが Plugin を読めるか。** Plugin は、進行ボットのプログラムの clone（`devAutopilotPath`。[ADR-20261016-003][adr-move] の決定 3）の中を `--plugin-dir` で指す（STRUCT-3）。一方、[ADR-20261015-001][adr-read] で、AI のセッションは置き場を読めなくした。
+- UNDECIDED-36 **AI のセッションが Plugin を読めるか。** Plugin は、進行ボットのプログラムの写し（`devAutopilotPath`。置き場の中。[ADR-20261017-003][adr-plugin] の決定 2）を `--plugin-dir` で指す（STRUCT-3）。一方、[ADR-20261015-001][adr-read] で、AI のセッションは置き場を読めなくした。
   エージェント定義の読み込みは確かめた（FACT-2、FACT-26）が、レビュー AI が Skill の参照ファイルを Read で読むことと、`review/scripts/` を sandbox の中の Bash で実行することは、拒否されるはず（確かめていない）。Plugin の置き場か、読み取りの許可を決める（[07-structure.md][f07]、[05-safety.md][f05]）
 - UNDECIDED-37 **人が呼ぶ `setup` と `check` の認証と、マシンの設定の見つけ方。** `setup` と `check` は人の Claude Code のセッションから動き、GitHub への書き込み（ラベル・Project の欄・ruleset）と、PAT の権限の確かめを行う。
   ADR-20261015-001 は人のセッションに秘密を扱わせないとし、専用マシンには人の `gh` のログインを置かない（「[決まっていること][f00]」）。
@@ -93,11 +93,12 @@
 - UNDECIDED-18 レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
 - UNDECIDED-19 実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）
 - UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。段階 6（レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
-- UNDECIDED-21 クラウドの仕組みを、手元の cron の代わりか補助に使うか。2026-10-07 の公式の仕様で分かっている範囲：
+- UNDECIDED-21 クラウドの仕組みを、利用者のマシンの定期の実行の代わりか補助に使うか。メンテナは将来、GitHub Actions などのクラウドでも動かしたい。
+  広げるときは、進行ボットの本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（[ADR-20261017-003][adr-plugin] の決定 3。STRUCT-8）。2026-10-07 の公式の仕様で分かっている範囲：
   - Routine（`/schedule`）：Anthropic のクラウドで動き、GitHub のリポを clone して作業できる。起動は時刻・GitHub の webhook・API。最短 1 時間間隔。Routine 同士の連鎖は未サポート。利用枠を消費する
   - GitHub Actions の claude-code-action：PR のイベントで起動でき、`/code-review --comment` で行にコメントを書ける。レビュー AI だけをここに寄せる案がある
   - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（「[隔離と鍵の分け方][f05]」）の代わりに、使い捨てのクラウドの sandbox で動かす案。
-    鍵と認証情報をクラウドに置くことになり、「手元の cron で始め、クラウドの仕組みを土台にしない」（「[決まっていること][f00]」）と衝突する。段階 8 の出口を越えて専用マシンへの移行を決めるときの候補に留める
+    鍵と認証情報をクラウドに置くことになり、今は利用者のマシンで動かす形（「[決まっていること][f00]」の配り方と実行環境）とは別の守りが要る。段階 8 の出口を越えて専用マシンへの移行を決めるときの候補に留める
   - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行ボットの判定を手元とクラウドで二重に持たないこと
 - UNDECIDED-22 検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）
 - UNDECIDED-27 作業場所の残骸の決め方。[ADR-20261013-001][adr-workspace] では、セッションのフォルダ（`sessions/<セッションの名前>/`）は同じ名前で作り直すか片付ける（FLOW-27）まで残るので、作業中の Issue のフォルダがあるのは普通の状態になる。
@@ -108,7 +109,7 @@
   進行ボットが雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める
 - UNDECIDED-41 振動の数え方。IMPL-24 は「同じ指摘が 2 ラウンド続けて出たら振動」、「[レビューの Skill][f08]」の方針は「同じ指摘が 2 回出たら振動」とする。間を空けて再び出た指摘を振動に数えるかを決める
 - UNDECIDED-42 **欠番**（[ADR-20261016-003][adr-move] で、評価を dev-autopilot のリポに置くと決めた）：~~`review` Skill の評価の置き場。「[レビューの Skill][f08]」は評価を business-os の `pnpm eval:cases` の仕組みの上に置くとし、STRUCT-4 は検査を dev-autopilot 自身が持つとする。分離のときに評価も移すかを決める~~
-- UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:intake` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`src/` のコマンドを実行する）を決める
+- UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:intake` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める
 - UNDECIDED-46 業務の固有名詞の混入を探す検査。business-os の中にあった間は、business-os の `check:leak`（メールアドレス・電話番号・法人格・金額・許可リストに無いドメインを探す）が dev-autopilot の文書も見ていた。dev-autopilot のリポの gitleaks は秘密の値だけを探すので、固有名詞の混入を探す検査が無い（「[決まっていること][f00]」の置き場所の行）。検査を足すか、足すならどう足すか（gitleaks の独自の規則、TypeScript の検査など）を決める
 
 ## 確かめること
@@ -127,6 +128,9 @@
   同じ試験で、止めたときに `--include-partial-messages` の `message_delta` がどこまで出るかも確かめる（消費の数え方は UNDECIDED-47）
 - UNDECIDED-45 **skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。
   Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）
+- UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
+  sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
+  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
@@ -149,3 +153,4 @@
 [f08]: ./08-review-skill.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md

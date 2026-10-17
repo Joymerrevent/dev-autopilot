@@ -89,7 +89,7 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 段階 3 の一部として先に進め、dev-autopilot の ADR や進行ボットの実装を待たない。
 
 - 範囲は上の REVIEW-1〜7。REVIEW-8〜13 はその中で解消する
-- 印の形（IMPL-18）の正本は進行ボットの `src/marker.ts`（「[分離を見越した構成][f07]」）に置き、印は進行ボットが付け、`review` Skill は本文と件数を出力契約で返すだけで印を出さない（REVIEW-3、IMPL-20）。2 か所に定義を持たない
+- 印の形（IMPL-18）の正本は進行ボットの `plugin/src/marker.ts`（「[分離を見越した構成][f07]」）に置き、印は進行ボットが付け、`review` Skill は本文と件数を出力契約で返すだけで印を出さない（REVIEW-3、IMPL-20）。2 か所に定義を持たない
 - 直したスキルで、いまの PR の形（business-os の PR [#77][bos-pr-77] の R1 → 対応 → R2）がそのまま出ることを、1 件の PR で手動で確かめてから段階 6 に入る
 
 [f03]: ./03-merge.md

@@ -104,8 +104,9 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - 手元の記録は判定に使わず、実行をまたぐ上限の数え上げにだけ使う：同じ Issue で続いた実行の失敗の回数、受付 AI が拒否した Issue の次のモデル、Issue ごとの累計の利用枠、1 日の利用枠（[ADR-20261015-006][adr-flow]）
 - 記録を失ったときは、上限が黙って効かなくなる側に倒さない。`setup` は記録のフォルダに、作った日時を書いた印のファイルを置く。印のファイルが無ければ `check` は fail にする（人が `setup` をやり直して、失ったことを認める）。
   進行中の Issue（`In Progress` 以降、または計画の印がある）に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受付 AI は `haiku`（完全な ID。IMPL-29）で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
-- 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、`launchctl kickstart`（`-k` なし。`-k` は動いている進行ボットを殺す）で定期の実行と同じ launchd のジョブを起こし（[ADR-20261015-001][adr-read]）、同じ lock を取る。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
-  lock で見送った実行と、Mac のスリープで launchd が起動しなかった日は記録に残し、`check` が warn に出す（段階 4 の「7 回の実行」はこれらを除いて数える）
+- 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、定期の実行と同じジョブを起こし（macOS は `launchctl kickstart`（`-k` なし。`-k` は動いている進行ボットを殺す）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin]）、同じ lock を取る。
+  `setup` が進行ボットのプログラムの写しを作り直すときも、同じ lock を取る（STRUCT-3）。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
+  lock で見送った実行と、マシンのスリープや停止で定期の実行が起動しなかった日は記録に残し、`check` が warn に出す（段階 4 の「7 回の実行」はこれらを除いて数える）
 - 止める合図：設定ファイルの `enabled: false`（全体）、Project の Agent 欄 `paused`（その Issue）。進行ボットは毎回の最初に読む
 - 書かずに試す合図：設定ファイルの `dryRun: true`。進行ボットは GitHub への書き込み（コメント・ラベル・Project の欄・PR）をすべて手元の記録に「書くつもりだった内容」として残し、実際には書かない。読むことと AI のセッションは行う（段階 4 の最初と、新しい段階に入るときに使う）
 - 進行ボットが途中で死んだら、次回の実行が GitHub の状態から復旧する（FLOW-4 の「次の段」の決め方）。復旧できない組み合わせ（GitHub の状態から次の段を決められないもの）はその Issue を `needs-human`。作業場所はセッションごとに作り直すので、作業場所の有無は復旧の判定に使わない（[ADR-20261013-001][adr-workspace]）。Issue に紐づかない作業場所の残骸は `check` の fail（SETUP-2、UNDECIDED-27）
@@ -118,4 +119,5 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-markers]: ../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-draft]: ../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
+[adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [readme]: ./README.md

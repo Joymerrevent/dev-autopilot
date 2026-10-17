@@ -11,7 +11,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | 項目 | 決定 |
 |---|---|
 | 置き場所 | 独立したリポ（Joymerrevent/dev-autopilot）で作る（[ADR-20261016-003][adr-move]）。進行ボットが当てる先は、段階 8 の後に決めるまで business-os だけ（「[分離を見越した構成][f07]」）。文書とコードには業務の固有名詞と秘密を置かない（秘密は gitleaks で検査する。固有名詞の混入を探す検査は無い。UNDECIDED-46） |
-| 実行環境 | いまは手元の cron（macOS では launchd）。将来は専用マシンで同じものを回す。クラウドの仕組みは土台にせず、検討事項に残す（「[決めていないこと][f09]」） |
+| 配り方と実行環境 | 誰でも、Plugin を当てる先のリポに入れて `setup` を実行すれば、進行ボットを含めてすべて動く。進行ボットは Plugin に同封し、`setup` が Plugin の版を利用者のマシンに写し、OS ごとの定期の実行が写しから動かす（[ADR-20261017-003][adr-plugin]、「[分離を見越した構成][f07]」の STRUCT-3・8）。今は macOS（launchd）と Linux（systemd のユーザーのタイマーか cron）。手元の Mac で始め、将来は専用マシンでも同じものを回す。GitHub Actions などのクラウドと Windows でも動かしたいが、今は対応せず、広げるときに別の ADR で決める（クラウドの論点は「[決めていないこと][f09]」の UNDECIDED-21） |
 | 人の関所 | Issue が起票されたら、受け入れ（検疫・作業指示の下書き・依存とマイルストーンの候補）は進行ボットが自動で用意し、人は下書きを読んで `agent-ready` を付ける 1 操作で処理対象にする（TEXT-12）。PR のマージの実行は人だけが行う。開発の PR は進行ボットがマージの可否を判定して人に渡す。方針に係る PR（「[マージ][f03]」の一覧）は判定の対象外。実行を進行ボットに移すかは、判定の信頼度を測ってから別に決める |
 | マイルストーン | リリースごとにマイルストーンを組む。着手する Issue はマイルストーンの中から選ぶ（FLOW-1）。受け入れはマイルストーンの有無を問わない（TEXT-12） |
 | 名前 | dev-autopilot。自動で動くのは「開発」。人が行き先（処理対象の Issue）を決め、AI が操縦し、異常時は人が操縦を取る。呼び方は `/dev-autopilot` |
@@ -24,12 +24,12 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 ## 登場するもの
 
 AI の役は 5 つで、一覧はこの表が正本。5 役すべてに共通：`claude -p --output-format stream-json` を進行ボットが子プロセスとして起動し（途中で止めた回の消費も数えるため。IMPL-14）、「[隔離と鍵の分け方][f05]」の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行ボットの鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
-ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボットのプログラムの clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
+ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボットのプログラムの写し（[ADR-20261017-003][adr-plugin]）の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
 サブエージェントを起こす Agent ツールは、どの役にも与えない（エージェント定義の `tools` に書かず、`permissions` の deny にも入れる。[ADR-20261017-002][adr-review]）。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
-| 進行ボット | cron が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。AI と共有しない、進行ボットのプログラムの clone（dev-autopilot のリポの clone。SAFE-16）から実行する | AI ではない。判定は決定的な処理で行う |
+| 進行ボット | 定期の実行（macOS は launchd、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。Plugin に同封し、`setup` がマシンの置き場に写した、AI と共有しない進行ボットのプログラムの写し（SAFE-16。STRUCT-3）から実行する | AI ではない。判定は決定的な処理で行う |
 | 計画 AI | `claude -p --agent <計画用>` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
 | 作業 AI | `claude -p --agent <作業用>` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行ボットが固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
 | レビュー AI | `claude -p --agent <レビュー用>` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行ボットが PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
@@ -50,3 +50,4 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
