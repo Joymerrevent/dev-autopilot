@@ -172,6 +172,8 @@ decision-makers: メンテナ
 
 - 良い点: 登録の処理が 1 通りで済む
 - 悪い点: cron には、登録したジョブを手で起こす操作が無い。手動実行で進行ボットを直接起動すると、人のセッションの環境を受け継ぐ（ADR-20261015-001 の決定 3 が避けたこと）
+- 悪い点: cron は、マシンがスリープしている間の実行を飛ばす。launchd（`StartCalendarInterval`）は、次に起きたときに 1 回にまとめて実行する（補足情報）。
+  棚卸しは最初は 1 日 1 回（「[決まっていること][overview]」の棚卸しの間隔）なので、閉じていることがあるノート PC で cron を使うと、その日の実行がまるごと飛ぶ
 
 ### 案 3-C：当面は macOS だけにする
 
@@ -200,6 +202,11 @@ decision-makers: メンテナ
   - `${CLAUDE_PLUGIN_DATA}`（`~/.claude/plugins/data/<id>/`）は版をまたいで残るが、Plugin を最後の場所から外すと既定で消える
   - 自動の更新は、Anthropic 以外の marketplace では既定で切れていて、設定か `/plugin` の切り替えで入れられる。`claude plugin update` でも版が上がる
   - プロジェクトの範囲で入れると、入れる設定はリポの `.claude/settings.json` に書かれ、commit される
+- 2026-10-17 に、手元の macOS の man ページ（`crontab(1)`・`crontab(5)`・`cron(8)`・`launchd.plist(5)`）を読んだ。読んだこと：
+  - cron と crontab は macOS（Darwin）で正式に動くが、役割は launchd に取り込まれていて、launchd の方が柔軟だと注記されている（`crontab(1)` と `crontab(5)`）
+  - 「cron はコンピュータがスリープしている間の実行を飛ばすが、launchd は次に起きたときにジョブを実行する。複数回ぶんを逃していたら、起きたときに 1 回にまとめる」（`launchd.plist(5)` の `StartCalendarInterval`）。
+    一方、`StartInterval`（N 秒ごと）は、スリープしている間の発火を逃す
+  - Linux の systemd のタイマーと cron のスリープの扱いは、手元に Linux の man ページが無いので確かめていない。Linux でどちらにするかを基本設計で決めるときに確かめる
 - 写しの置き場を `${CLAUDE_PLUGIN_DATA}` にする形も考えた。Plugin を外すと写しも消え、置き場の規則（ADR-20261015-001、SAFE-10）とも別の場所になるので、マシンの置き場の中にした
 - 本 ADR で決めずに残すもの
   - UNDECIDED-36（AI のセッションが Plugin を読めるか）：Plugin の場所が写しに変わるだけで、写しも置き場の中にあり、論点は残る
