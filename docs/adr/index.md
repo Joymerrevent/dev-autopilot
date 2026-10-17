@@ -21,7 +21,7 @@
 | ADR-20261017-002 | [レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない][adr-20261017-002-review-axis-sessions-pr-comments-and-canon] | accepted | 2026-10-17 |
 | ADR-20261017-003 | [進行ボットを Plugin に同封し、Plugin を入れたプロジェクトで setup が利用者のマシンに版を写して定期の実行を登録する][adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot] | accepted | 2026-10-17 |
 | ADR-20261017-004 | [AI のセッションには写しの skills/ だけを読ませ、setup の GitHub の準備は人の gh で行い、check と /dev-autopilot は進行ボットのジョブを起こし、マシンの設定は OS ごとの決まった場所に当てる先のリポごとに置く][adr-20261017-004-plugin-skills-read-and-human-skills-auth] | accepted | 2026-10-17 |
-| ADR-20261017-005 | [AI のセッションは MCP のサーバーを読み込まず、claude.ai のコネクタを設定・環境変数・起動の引数と道具の deny で重ねて止める][adr-20261017-005-ai-sessions-load-no-mcp-servers] | proposed | 2026-10-17 |
+| ADR-20261017-005 | [AI のセッションは MCP のサーバーを読み込まず、claude.ai のコネクタを設定・環境変数・起動の引数と道具の deny で重ねて止める][adr-20261017-005-ai-sessions-load-no-mcp-servers] | accepted | 2026-10-17 |
 
 <!--
 行の例（表の最後に足す）:
