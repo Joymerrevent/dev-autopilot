@@ -75,8 +75,8 @@
 - UNDECIDED-37 **欠番**（[ADR-20261017-004][adr-human] で決めた）：~~**人が呼ぶ `setup` と `check` の認証と、マシンの設定の見つけ方。** `setup` と `check` は人の Claude Code のセッションから動き、GitHub への書き込み（ラベル・Project の欄・ruleset）と、PAT の権限の確かめを行う。
   ADR-20261015-001 は人のセッションに秘密を扱わせないとし、専用マシンには人の `gh` のログインを置かない（「[決まっていること][f00]」）。
   どの認証で動くかと、人が呼ぶ Skill がマシンの設定（`devAutopilotPath` や記録の置き場。[ADR-20261015-005][adr-settings]）をどう見つけるかが決まっていない（[06-setup-and-stages.md][f06]、[07-structure.md][f07]）~~
-- UNDECIDED-38 **全体を止める合図と、書かずに試す合図の置き場。** 止める合図（`enabled: false`）と書かずに試す合図（`dryRun: true`）は設定ファイルに持つ（「運用の規則」）。
-  [ADR-20261015-005][adr-settings] の割り振りでは、どちらもリポの設定になり、変えるのに PR が要る。急いで止めたいときに PR を待つことになり、進行ボットがどの版のリポの設定を読むかも書かれていない（[01-issue-flow.md][f01]、[07-structure.md][f07]）
+- UNDECIDED-38 **欠番**（[ADR-20261017-007][adr-stop] で決めた）：~~**全体を止める合図と、書かずに試す合図の置き場。** 止める合図（`enabled: false`）と書かずに試す合図（`dryRun: true`）は設定ファイルに持つ（「運用の規則」）。
+  [ADR-20261015-005][adr-settings] の割り振りでは、どちらもリポの設定になり、変えるのに PR が要る。急いで止めたいときに PR を待つことになり、進行ボットがどの版のリポの設定を読むかも書かれていない（[01-issue-flow.md][f01]、[07-structure.md][f07]）~~
 - UNDECIDED-47 **途中で止めた回の消費の数え方。** IMPL-14 は、`stream-json` の `assistant` のイベントごとの `model` と `usage` を足し上げ、進行ボットが途中で止めた回も、そこまでの消費を記録に残すとする。
   一方、`assistant` のイベントは 1 つのメッセージで同じ `usage` を繰り返して持ち、`output_tokens` はストリームの始めの値なので、そのまま足すと入力を多く、出力を少なく数える（FACT-29）。
   出力を少なく数えると、1 Issue の累計の利用枠が上限（IMPL-14）を超えても `needs-human` にならず、上限が黙って効かなくなる。
@@ -163,3 +163,4 @@
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
+[adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
