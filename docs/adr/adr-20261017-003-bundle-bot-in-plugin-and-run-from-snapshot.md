@@ -44,9 +44,11 @@ decision-makers: メンテナ
 
 問い 1：進行ボットのコードを、Plugin のどこに入れるか
 
-- 案 1-A：`src/` を `plugin/` の下に移す（`plugin/src/`）。Plugin の root は今のまま `plugin/`
-- 案 1-B：リポの root を Plugin の root にする（marketplace の `source` を `./` にする）
-- 案 1-C：構成は今のまま、配る前に `src/` を `plugin/` の下へ写す手順を持つ
+- 案 1-A：`src/` を `plugin/` の下に移す（`plugin/src/`）。単体テストは `plugin/` の外（`test/unit/`）に置き、単体テストがあることと `plugin/` にテストが無いことを CI で確かめる
+- 案 1-B：`src/` を `plugin/src/` に移し、単体テストも今のとおり対象のコードの隣に置いて同封する
+- 案 1-C：`src/` と単体テストはリポの root のまま、ビルドした JS を `plugin/` に入れる
+- 案 1-D：リポの root を Plugin の root にする（marketplace の `source` を `./` にする）
+- 案 1-E：構成は今のまま、配る前に `src/` を `plugin/` の下へ写す手順を持つ
 
 問い 2：利用者のマシンで、進行ボットをどこから動かすか
 
@@ -68,13 +70,18 @@ decision-makers: メンテナ
 ## 決定（Decision Outcome）
 
 採用した選択肢:「案 1-A」「案 2-A」「案 3-A」「案 4-A」。
-理由: Plugin のインストールと `setup` だけで動き、配る範囲は `plugin/` に閉じたまま。進行ボットとエージェント定義・Skill は写した 1 つの版から使い、Plugin が更新されても、人が `setup` を実行するまで、動いている進行ボットのコードは変わらない。
+理由: Plugin のインストールと `setup` だけで動き、配る範囲は `plugin/` に閉じたまま、単体テストは同封しない。進行ボットとエージェント定義・Skill は写した 1 つの版から使い、Plugin が更新されても、人が `setup` を実行するまで、動いている進行ボットのコードは変わらない。
 進行ボットの本体は登録の仕組みに依らないので、Linux と、将来のクラウドと Windows に広げられる。
 
-### 決定 1：進行ボットのコードを `plugin/` の下に移し、Plugin に同封する
+### 決定 1：進行ボットのコードを `plugin/` の下に移して同封し、単体テストは `plugin/` の外に置いて CI で確かめる
 
-- `src/`（進行ボット）を `plugin/src/` に移す。Plugin の root は今のまま `plugin/` で、marketplace の `source` はここを向く
-- 単体テストは今のとおり対象のコードの隣に置く（STRUCT-4）ので、Plugin に同封される。結合テスト（`test/`）・前提データ（`fixtures/`）・文書（`docs/`）は `plugin/` の外のままで、配らない
+- `src/`（進行ボット）を `plugin/src/` に移す。Plugin の root は今のまま `plugin/` で、marketplace の `source` はここを向く。
+  進行ボットは今のとおり TypeScript で書き、Node 24 が直接実行する（ビルドしない）
+- 単体テストは、Plugin に同封しないように `plugin/` の外の `test/unit/` に、`plugin/src/` と同じ形の路で置く（例：`plugin/src/select.ts` の単体テストは `test/unit/select.test.ts`）。STRUCT-4 の「単体テストは対象のコードの隣に置く」を改める。
+  結合テストと前提データ（`fixtures/`）と文書（`docs/`）も、今のとおり `plugin/` の外で、配らない。`test/` の中の単体テストと結合テストの分け方は、基本設計で決める
+- テストが対象のコードの隣でなくなるので、CI で次の 2 つを確かめる（TypeScript の検査。bash を足さない）。どちらかが外れたら CI を落とす
+  - `plugin/src/` のコードのファイルごとに、`test/unit/` に同じ路の単体テストがあること。単体テストを持たないファイル（型の定義だけのファイルなど）は、理由を添えた例外の一覧に書いたものだけを認める
+  - `plugin/` の中に、テストのファイル（`*.test.ts` など）が無いこと
 - 進行ボットの実行に要る npm の依存は持たないか、持つなら Claude Code の依存の導入で入る形（`plugin/` に `package.json` と npm のロックファイルを置き、登録所の版を固定し、lifecycle script に頼らない）にする。どちらにするかは基本設計で決める。
   開発の道具（検査・テスト）の依存は、今のとおりリポの root の `package.json` と pnpm に置く
 - 07-structure.md の「配布物は `plugin/` に閉じ、進行ボットの `src/`・テスト・前提データ・文書は配らない」を、「配布物は `plugin/` に閉じ、進行ボットも配る」に改める
@@ -109,17 +116,19 @@ decision-makers: メンテナ
 
 - 良い点: Plugin を入れたプロジェクトで `setup` を実行すれば、進行ボットを含めて動く（メンテナの要件）
 - 良い点: 配る範囲は `plugin/` に閉じたまま。進行ボットとエージェント定義・Skill は同じ写しから使うので、版がずれない
+- 良い点: 配る進行ボットのコードは、レビューした TypeScript のファイルそのもので、ビルドで作ったものではない。単体テストは同封されない
 - 良い点: Plugin の更新で、動いている進行ボットのコードが人の気づかないうちに入れ替わらない。版を上げる操作が `setup` の 1 つにまとまる
 - 良い点: 進行ボットの本体が登録の仕組みに依らないので、Linux・クラウド・Windows に広げるときに本体を書き換えない
 - 悪い点: 利用者のマシンに Node 24 が要る。`setup` と `check` で確かめる
 - 悪い点: Plugin を更新しても、`setup` を実行するまで進行ボットは古い版で動く。人が呼ぶ Skill（インストールされた版）と進行ボット（写しの版）がずれる間がある（`check` の warn で知らせる）
-- 悪い点: 単体テストのファイルが Plugin に同封される
+- 悪い点: 単体テストが対象のコードの隣でなくなる（STRUCT-4 を改める）。単体テストの書き忘れを、CI の検査で止める必要がある
 - 悪い点: OS ごとの登録と手動実行の処理を 2 通り持つ。Linux の sandbox の振る舞いは確かめ直しが要る
 - 悪い点: 要件と図の書き直しが広い（要件への反映の一覧）
 
 ### 確認方法（Confirmation）
 
-- 構造仕様を書くときに、構成（`plugin/src/`）、プログラムの写しの場所と作り方、OS ごとの登録が、決定 1〜4 のとおりかをレビューで確かめる
+- 構造仕様を書くときに、構成（`plugin/src/` と `test/unit/`）、プログラムの写しの場所と作り方、OS ごとの登録が、決定 1〜4 のとおりかをレビューで確かめる
+- 進行ボットのコードを書き始める PR で、決定 1 の CI の 2 つの検査を入れる。検査そのものを vitest で検査する（単体テストの無いファイルを足すと落ちる、`plugin/` に `*.test.ts` を置くと落ちる、例外の一覧に書いたファイルは通る）
 - 段階 3（`setup` と `check` を作る段階）で、次を確かめる
   - marketplace から入れた Plugin に `plugin/src/` が写り、`setup` が写しを作って、定期の実行が写しから動くこと（macOS と Linux）
   - Plugin を更新しても写しが変わらず、`check` が版のずれを warn にすること
@@ -129,19 +138,31 @@ decision-makers: メンテナ
 
 ## 選択肢ごとの長所と短所（Pros and Cons of the Options）
 
-### 案 1-A：`src/` を `plugin/` の下に移す
+### 案 1-A：`src/` を `plugin/src/` に移し、単体テストは `plugin/` の外に置いて CI で確かめる
 
 - 良い点: 配る範囲を `plugin/` に閉じたまま、進行ボットも配れる（business-os の ADR 20261009-02 と同じ考え方を保つ）
+- 良い点: 単体テストを同封しない。配るのはレビューした TypeScript のファイルそのもので、ビルドの手順も、生成されたファイルも要らない
 - 悪い点: `src/` を移し、検査の設定（tsconfig、vitest）の対象を直す
-- 悪い点: 単体テストのファイルも同封される
+- 悪い点: 単体テストが対象のコードの隣でなくなる。書き忘れを止める CI の検査と、例外の一覧を持つ
 
-### 案 1-B：リポの root を Plugin の root にする
+### 案 1-B：`src/` を `plugin/src/` に移し、単体テストも隣に置いて同封する
+
+- 良い点: 単体テストを対象のコードの隣に置ける（STRUCT-4 のまま）
+- 悪い点: 単体テストのファイルが Plugin に同封される。Claude Code の Plugin には、写すときにファイルを除く設定が無い（補足情報）
+
+### 案 1-C：ビルドした JS を `plugin/` に入れる
+
+- 良い点: 単体テストを対象のコードの隣に置いたまま、同封しない。npm の依存をビルドの成果物に取り込めるので、Claude Code の依存の導入の条件（npm か Bun のロックファイル）に合わせなくてよい
+- 悪い点: 「TypeScript で書き、Node 24 が直接実行する」（開発ガイドの 3、07-structure.md）を改め、ビルドの道具を足す
+- 悪い点: 配るのは生成されたファイルになる。成果物を commit するなら、ビルドし直して差分が無いことを CI で確かめる必要があり、PR に生成されたファイルの差分が出る。リリースのときに作るなら、リリースの仕組みが要る
+
+### 案 1-D：リポの root を Plugin の root にする
 
 - 良い点: 構成を変えずに済む
 - 悪い点: `docs/`・`test/`・`fixtures/`・`.github/`、開発用の `.claude/` と `CLAUDE.md` まで Plugin に写る
 - 悪い点: リポの root の `package.json`（開発の道具の依存と pnpm のロックファイル）が Plugin の `package.json` になり、Claude Code の依存の導入の条件（npm か Bun のロックファイル）に合わない
 
-### 案 1-C：配る前に `src/` を `plugin/` の下へ写す
+### 案 1-E：配る前に `src/` を `plugin/` の下へ写す
 
 - 良い点: 開発の構成を変えずに済む
 - 悪い点: 写す手順が要り、写し忘れや食い違いで、配った版と検査した版がずれうる
@@ -173,7 +194,7 @@ decision-makers: メンテナ
 - 良い点: 登録の処理が 1 通りで済む
 - 悪い点: cron には、登録したジョブを手で起こす操作が無い。手動実行で進行ボットを直接起動すると、人のセッションの環境を受け継ぐ（ADR-20261015-001 の決定 3 が避けたこと）
 - 悪い点: cron は、マシンがスリープしている間の実行を飛ばす。launchd（`StartCalendarInterval`）は、次に起きたときに 1 回にまとめて実行する（補足情報）。
-  棚卸しは最初は 1 日 1 回（「[決まっていること][overview]」の棚卸しの間隔）なので、閉じていることがあるノート PC で cron を使うと、その日の実行がまるごと飛ぶ
+  棚卸しは最初は 1 日 1 回（「[決まっていること][overview]」の棚卸しの間隔）なので、閉じていることがあるノート PC で cron を使うと、閉じていた日の実行がまるごと飛ぶ
 
 ### 案 3-C：当面は macOS だけにする
 
@@ -198,6 +219,8 @@ decision-makers: メンテナ
   - marketplace から入れた Plugin は、`~/.claude/plugins/cache/<marketplace>/<plugin>/<版>/` に写されて読み込まれる。`${CLAUDE_PLUGIN_ROOT}` は入れた版の場所を指し、版が上がると変わる
   - Plugin を更新するか外すと、前の版のフォルダに印が付き、14 日後に消える（すでに古い版を読み込んだセッションは動き続ける）
   - Plugin のフォルダの外のファイルは写されない。Plugin の部品は、Plugin のフォルダの外を指せない
+  - Plugin を写すときに、ファイルを除く設定（`.gitignore` のような除外の一覧）は無い（Plugin の読み込み・参照・部品・marketplace の参照・公開のページを、ignore と exclude の語で探した）。
+    リポの中のフォルダ・`github`・`url`・`git-subdir` から入れると、指したフォルダの中身がそのまま写る。除けるのは、npm で配るときに npm の側（`package.json` の `files` か `.npmignore`）で中身を決めるときと、zip（`archive`）を自分で作るときだけ
   - Plugin の `package.json` の依存は、Plugin の root に `package.json` と npm か Bun のロックファイルがあるときだけ、写した版のフォルダに入る（pnpm のロックファイルでは入らない）。登録所の版を固定した依存だけで、lifecycle script は動かず、60 秒で打ち切られる
   - `${CLAUDE_PLUGIN_DATA}`（`~/.claude/plugins/data/<id>/`）は版をまたいで残るが、Plugin を最後の場所から外すと既定で消える
   - 自動の更新は、Anthropic 以外の marketplace では既定で切れていて、設定か `/plugin` の切り替えで入れられる。`claude plugin update` でも版が上がる
@@ -213,7 +236,7 @@ decision-makers: メンテナ
   - UNDECIDED-37（人が呼ぶ `setup` と `check` の認証と、マシンの設定の見つけ方）：Plugin がプロジェクトに入るので、人が呼ぶ Skill はプロジェクトのセッションに出るが、認証と見つけ方は残る
   - UNDECIDED-21（クラウドの仕組み）と Windows：決定 3 のとおり、広げるときに別の ADR で決める
 - 要件への反映（承認の後に、別の PR で行う）
-  - 07-structure.md：構成（`src/` を `plugin/src/` に）、STRUCT-3（写しから起動し、`--plugin-dir` は写しを指す）、STRUCT-4（`tsconfig` と `vitest` の対象）、STRUCT-7（進行ボットも同封する）、「分離の時期の目安」の言い方
+  - 07-structure.md：構成（`src/` を `plugin/src/` に）、STRUCT-3（写しから起動し、`--plugin-dir` は写しを指す）、STRUCT-4（単体テストは `test/unit/` に `plugin/src/` と同じ形の路で置くこと、CI の 2 つの検査、`tsconfig` と `vitest` の対象）、STRUCT-7（進行ボットも同封する）、「分離の時期の目安」の言い方
   - 05-safety.md：SAFE-16 の「進行ボットのプログラムの clone」を写しに改める。SAFE-2 の (a) の Plugin の渡し方
   - 06-setup-and-stages.md：SETUP-1（Plugin をプロジェクトの範囲で入れてから `setup` を実行する流れ、写しと OS ごとの登録を作ること）、SETUP-2（Node 24、版のずれ、写しを読めないことの確かめ）
   - 00-overview.md：「決まっていること」の実行環境（今は macOS と Linux の利用者のマシン、将来はクラウドと Windows）と、「登場するもの」の進行ボットの行
