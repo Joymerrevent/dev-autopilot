@@ -23,6 +23,7 @@
 | ADR-20261017-004 | [AI のセッションには写しの skills/ だけを読ませ、setup の GitHub の準備は人の gh で行い、check と /dev-autopilot は進行ボットのジョブを起こし、マシンの設定は OS ごとの決まった場所に当てる先のリポごとに置く][adr-20261017-004-plugin-skills-read-and-human-skills-auth] | accepted | 2026-10-17 |
 | ADR-20261017-005 | [AI のセッションは MCP のサーバーを読み込まず、claude.ai のコネクタを設定・環境変数・起動の引数と道具の deny で重ねて止める][adr-20261017-005-ai-sessions-load-no-mcp-servers] | accepted | 2026-10-17 |
 | ADR-20261017-006 | [AI のセッションの一時フォルダは、セッションごとの短いパスを CLAUDE_CODE_TMPDIR で渡し、共有の一時フォルダとほかのセッションの一時フォルダを読めなくする][adr-20261017-006-per-session-short-tmpdir] | accepted | 2026-10-17 |
+| ADR-20261017-007 | [全体を止める合図はリポの変数に置いて実行の途中でも読み、書かずに試す合図はリポの設定に残し、リポの設定は base ブランチの先端から読む][adr-20261017-007-stop-switch-in-repo-variable] | proposed | 2026-10-17 |
 
 <!--
 行の例（表の最後に足す）:
@@ -52,3 +53,4 @@
 [adr-20261017-004-plugin-skills-read-and-human-skills-auth]: ./adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-20261017-005-ai-sessions-load-no-mcp-servers]: ./adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-20261017-006-per-session-short-tmpdir]: ./adr-20261017-006-per-session-short-tmpdir.md
+[adr-20261017-007-stop-switch-in-repo-variable]: ./adr-20261017-007-stop-switch-in-repo-variable.md
