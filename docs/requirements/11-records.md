@@ -64,7 +64,7 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したらマ�
 
 ### 使ってよい理由
 
-- 読む前に「実行して確かめる」を払う手順で、PR #68 #71 #77 では実際に 1 回目で重い指摘が出て、2 回目で収束している
+- 読む前に「実行して確かめる」を払う手順で、business-os の PR [#68][bos-pr-68] [#71][bos-pr-71] [#77][bos-pr-77] では実際に 1 回目で重い指摘が出て、2 回目で収束している
 - 壊れ方の表（breakage-matrix）を機械的に当てるので、レビュー AI の気分で指摘の網が変わりにくい。fail-open を最重視する点はこのリポの設計哲学と同じ
 - 指摘ごとに重要度（🔴 🟡 🟢）・失敗シナリオ・証拠レベルを必ず書かせる。重要度の定義（🔴 通してはいけない、🟡 通す前に直したい、🟢 あとでよい）が印（IMPL-18）の判定にそのまま使える
 - 止めどきの規則（🟢 だけになったら直さずに記録して終わる）と「見送った 🟢 は Issue に起票する」が、すでにスキルに書いてある。IMPL-26 はスキルの規則をそのまま機械にしたもの
@@ -131,3 +131,6 @@ dev-autopilot と同じ形（別の AI がレビューし、収束したらマ�
 [f06]: ./06-setup-and-stages.md
 [f08]: ./08-review-skill.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
+[bos-pr-68]: https://github.com/Joymerrevent/business-os/pull/68
+[bos-pr-71]: https://github.com/Joymerrevent/business-os/pull/71
+[bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77

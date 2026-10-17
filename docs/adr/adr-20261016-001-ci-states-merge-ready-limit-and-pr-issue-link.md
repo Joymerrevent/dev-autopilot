@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # CI が赤なら修正に回し、結果が出ていなければ待ち、merge=ready は 1 回の実行で 1 件にして残りは次の実行に回し、PR と Issue はブランチ名と署名付きの印で結びつける
+
+> **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261016-001 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-9、UNDECIDED-10、UNDECIDED-12（[決めていないこと][undecided]の「レビューとマージ」と「受け入れと印」）を決める。
 どれも進行役が PR をどう扱うかの論点で、問いは 3 つある：レビューが pass なのに CI が緑でないとき、2 件目以降の `merge=ready`、PR と Issue の結びつけ。

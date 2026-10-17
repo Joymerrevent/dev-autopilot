@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 要件が決めていない設定の値は構造仕様に初期値として書いて設定ファイルで変え、マシンごとの値はリポの外の設定に置く
+
+> **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-005 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-17（[決めていないこと][undecided]の「まだ値が決まっていない設定」）を決める。
 問いは 2 つある：要件が値を決めていない設定の値をどこで決めるか、マシンごとに違う値（置き場のパスなど）をどこに置くか。

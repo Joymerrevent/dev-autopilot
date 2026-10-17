@@ -60,7 +60,7 @@
 - IMPL-17 結果は、いまの PR と同じ形で PR のコメントに書く（行に付けるレビューコメントにしない）。
   1 回目は「## レビュー結果（基点: `develop`）」、2 回目以降は「`## 再レビュー結果 R<n>（対象: <範囲>）`」。
   冒頭の判定は「**通してよい。ブロッカーなし。**」か「**🟡 `<n>` 件を直してから通したい**」。末尾にラウンドの表（| ラウンド | 指摘 | 最も重い種類 |）を置く。
-  参考：#77 #71 #68 のコメント（2026-10-06〜07、R1 → 対応 → R2 で 0 件 → マージ）
+  参考：business-os の PR [#77][bos-pr-77] [#71][bos-pr-71] [#68][bos-pr-68] のコメント（2026-10-06〜07、R1 → 対応 → R2 で 0 件 → マージ）
 - IMPL-18 進行ボットが機械で読むために、人が読む本文に加えて固定の印を 1 行足す（`review` の印。欄は「[印と固定の見出しの一覧][f04]」の表が正本。`sig` は IMPL-20）。
   `verdict` を pass にするのは、次の 5 つをすべて満たすときだけ（「🔴 🟡 が 0 件」だけでは、無いものを pass と読む）：
   (1) レビュー AI と批評 AI の出力契約が完全に解析できた、(2) レビューが収束した（「未収束」でない）、(3) `is_error` が偽、(4) 重要度ごとの件数がすべて数値で返った、(5) 実際に使われたモデル（`modelUsage`）が設定と一致した。
@@ -149,3 +149,6 @@
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [readme]: ./README.md
+[bos-pr-68]: https://github.com/Joymerrevent/business-os/pull/68
+[bos-pr-71]: https://github.com/Joymerrevent/business-os/pull/71
+[bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77
