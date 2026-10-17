@@ -23,3 +23,5 @@ pnpm-debug.log*
 # Misc
 .cache/
 tmp/
+# 手元の一時ファイル（試験用のトークンなどを置くことがある）。markdownlint も .gitignore に従って読まない
+.tmp/
