@@ -149,6 +149,10 @@ STRUCT-2 は、リポ固有の値をすべて設定ファイル 1 つ（例：bu
   - 07-structure.md か README：値の決まり方（決定 1。初期値は構造仕様、今の値は設定ファイル、安全の境界を緩める変更は ADR）を書く
   - 09-undecided.md：UNDECIDED-17 を欠番にする（元の文を取り消し線で残す）
 
+## パスの注記
+
+- `dev-autopilot/docs/design/` → `docs/design/`（2026-10-17・別のリポへの移動による。ADR-20261016-003）
+
 [undecided]: ../requirements/09-undecided.md
 [overview]: ../requirements/00-overview.md
 [flow]: ../requirements/01-issue-flow.md

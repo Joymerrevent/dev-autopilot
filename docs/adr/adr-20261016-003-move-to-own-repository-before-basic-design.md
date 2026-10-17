@@ -193,6 +193,12 @@ business-os の中に置いたままにすると、3 つの問題がある。
   - [ADR-20261015-005][adr-settings] と [ADR 一覧][adr-index]：本文の `dev-autopilot/` のパスに、パスの注記を足す
   - business-os 側（business-os の PR）：ADR 20261008-01 を置き換える ADR、CLAUDE.md、`docs/design/architecture.md`、business-os の ADR の一覧
 
+## パスの注記
+
+- `dev-autopilot/docs/design/` → `docs/design/`、`dev-autopilot/src/` → `src/`、`dev-autopilot/plugin/` → `plugin/`（2026-10-17・決定 1 の移動による）。
+  本文のほかの `dev-autopilot/` は、business-os の中のフォルダを指すので、business-os のパスのまま
+- ADR 一覧（`docs/adr/index.md`）の `dev-autopilot/` は、business-os の commit に固定したリンクの中だけにあり、注記は要らなかった
+
 [structure]: ../requirements/07-structure.md
 [undecided]: ../requirements/09-undecided.md
 [overview]: ../requirements/00-overview.md

@@ -19,7 +19,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）、fine-grained PAT（進行ボット用）、印の署名の鍵（IMPL-20）だけを置く（「[隔離と鍵の分け方][f05]」） |
 | AI のセッションの隔離 | AI の 5 役（「登場するもの」）すべての `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。進行ボット・次のセッション・CI は、AI が書いた worktree の中身（設定・gitdir・CI 定義・スクリプト）を信頼して実行しない（「[安全側に倒す設計][f05]」、「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。詳細は「[隔離と鍵の分け方][f05]」 |
 | モデル | 役ごとに別名で書き、版番号を書かない（`fable` `opus` `sonnet`。CLI の `--model` が別名を受け、最新の版に解ける。`haiku` だけは完全な ID（「[モデルの流れ][f02]」））。effort も役ごとに設定に持つ（`--effort`）。工程ごとのモデルと effort と切り替えの条件は「[モデルの流れ][f02]」の表が正本。要点は、作業 AI に `fable` を使わない、どの役にも `fable` を既定にしない、モデルを上げるのは計画 AI の自己申告と作業 AI の 2 ラウンド目の 2 か所だけ |
-| エージェント | 計画用・作業用・レビュー用・批評 AI・受付用の 5 つのエージェント定義を `dev-autopilot/plugin/agents/` に置く（「[分離を見越した構成][f07]」）。business-os の配布物 `plugin/agents/` には入れない |
+| エージェント | 計画用・作業用・レビュー用・批評 AI・受付用の 5 つのエージェント定義を `plugin/agents/` に置く（「[分離を見越した構成][f07]」）。business-os の配布物 `plugin/agents/` には入れない |
 
 ## 登場するもの
 

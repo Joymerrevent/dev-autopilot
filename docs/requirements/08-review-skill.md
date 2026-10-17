@@ -82,7 +82,7 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 | REVIEW-12 | 修正する側とレビューする側が同じ人である前提で書かれている（§6「修正したら通し直す」） | dev-autopilot では修正は作業 AI。レビュー AI の §6 は「作業 AI の修正に同じ手順を通す」と読み替える。REVIEW-9 の節に書く |
 | REVIEW-13 | `per-commit-gates.sh` が bash。このリポは bash を足さない規則で、`check:shell` が落ちる | TypeScript に書き直して `review` Skill の `scripts/` に置く（置き場は STRUCT-7 の単体導入のため Skill の中） |
 
-スキルの修正（v2 への組み直し）は dev-autopilot の作業に含める。v2 の正本は `dev-autopilot/plugin/skills/review/` に置き（SETUP-19、STRUCT-7）、
+スキルの修正（v2 への組み直し）は dev-autopilot の作業に含める。v2 の正本は `plugin/skills/review/` に置き（SETUP-19、STRUCT-7）、
 `~/.claude/skills/change-review` は今の版のまま手動のレビューに残す。
 段階 3 の一部として先に進め、dev-autopilot の ADR や進行ボットの実装を待たない。
 
