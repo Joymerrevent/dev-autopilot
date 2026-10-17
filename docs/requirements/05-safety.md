@@ -29,11 +29,15 @@
 開発リポは sandbox を使わないので、同じ OS ユーザーで動く作業 AI は `~/.ssh` の鍵と `gh` の設定を Bash から読め、worktree が共有する `.git` の hook を書き換えて進行ボットの push 時に実行させることもできる。
 さらに GitHub の deploy key は認証専用で署名の検証に使えないので、「リポに絞った鍵 1 本で push も署名も」は成り立たない。隔離と鍵は次のように分ける。
 
-- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、写しの `skills/`（Skill の参照ファイルとスクリプトのため。FACT-32。[ADR-20261017-004][adr-human]）と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
-  書き込みは自分のセッションの worktree と一時フォルダと、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
+- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）・短い一時フォルダの根・Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`。[ADR-20261017-006][adr-tmp]）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、自分の短い一時フォルダと、写しの `skills/`（Skill の参照ファイルとスクリプトのため。FACT-32。[ADR-20261017-004][adr-human]）と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
+  書き込みは自分のセッションの worktree と一時フォルダ（置き場の中の一時フォルダと、短い一時フォルダの下の `claude-<uid>/`）と、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す。
-  ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行ボットは AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）と `TMPDIR` をセッションの一時フォルダに向ける（ただし、sandbox の中のコマンドの `$TMPDIR` は、Claude Code がユーザーごとの一時フォルダに置き換える。FACT-34。扱いは UNDECIDED-50）。commit の作者も環境変数で渡す（FACT-22）。claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS=false` も渡す（SAFE-1）。
+  ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行ボットは AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）を置き場の中のセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS=false` も渡す（SAFE-1）。
   置き場は `~/.claude/` の下に置かない（sandbox が書き込みを止める。FACT-23）。Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）の下にも置かない（sandbox の中のコマンドが既定で書ける。FACT-32。[ADR-20261017-004][adr-human]）。
+  `TMPDIR` は、セッションごとの短い一時フォルダ（例：`/tmp/dap/<セッションの短い ID>`。根は dev-autopilot 専用で、ホーム・置き場・`/tmp/claude-<uid>/` の外）に向け、`CLAUDE_CODE_TMPDIR` にも同じパスを渡す。
+  Claude Code は後ろに `/claude-<uid>/` を足して、sandbox の中のコマンドの `$TMPDIR` にする（`TMPDIR` だけを渡しても、Claude Code はユーザーごとの一時フォルダに置き換える。FACT-34）。
+  `<CLAUDE_CODE_TMPDIR>/claude-<uid>` が長いと、Claude Code は黙ってユーザーごとの一時フォルダに戻すので（FACT-37）、進行ボットは起動の前に長さを数え、設定の上限（初期値 44。STRUCT-2）を超えたら起動しない。
+  短い一時フォルダは毎回新しく作り（すでにあれば起動しない）、根は無ければ権限 700 で作る。根が自分の持ち物で、シンボリックリンクでなく、権限が 700 であることを毎回確かめ、外れたら起動しない（`/tmp` はすべての OS ユーザーが書けるため。SAFE-4。[ADR-20261017-006][adr-tmp]）。
   pnpm の store はセッションの一時フォルダの下（`$XDG_DATA_HOME/pnpm/store`）に置き、セッションの間で共有しない。共有の store（人の store も、dev-autopilot 用に別に作る store も）を `allowRead` と `allowWrite` に足さず、`PNPM_HOME` は渡さない（渡すと store の場所が変わる。FACT-25。[ADR-20261015-002][adr-store]）
 - SAFE-11 AI は worktree で作業する。worktree の gitdir と objects は親 clone の `.git/` にあり、worktree のフォルダだけでは `git commit` が通らない。
   作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許すので、`allowWrite` の列挙は要らない（段階 2 で `git commit` が通ることを確認）。
@@ -42,7 +46,7 @@
 - SAFE-12 git は、gitdir に `commondir` のファイルがあると、指す先のフォルダの `config`（`core.fsmonitor` `core.sshCommand` `diff.external` など）を読む。普通の clone の `.git/commondir` でも、進行ボットの `git fetch` が指す先の `core.fsmonitor` を実行した（FACT-20）。
   sandbox は worktree の `commondir`（`.git/worktrees/<名前>/commondir`）を保護する（FACT-9）が、保護の一覧は Claude Code の版で変わりうるうえ、親 clone の `.git/commondir` の作成のように確かめていない経路がある。
   sandbox の保護に重ねる守りとして、進行ボットは AI のセッションを起動した後の作業場所（親の clone と worktree）で git を実行しない。進行ボットは、AI の worktree のブランチを「進行ボットの clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（SAFE-2 の (b)。「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。
-  AI の作業場所は AI のセッションごとに作り直し、消すときは git を使わずフォルダごと消す。消す前に `commondir` と `gitdir` をファイルとして読み、作ったときの中身と違えば、消さずに `needs-human` にする（[ADR-20261013-001][adr-workspace]）。
+  AI の作業場所は AI のセッションごとに作り直し、消すときは git を使わずフォルダごと消す。セッションごとの短い一時フォルダ（SAFE-10）も、作業場所と一緒にフォルダごと消す（[ADR-20261017-006][adr-tmp]）。消す前に `commondir` と `gitdir` をファイルとして読み、作ったときの中身と違えば、消さずに `needs-human` にする（[ADR-20261013-001][adr-workspace]）。
   段階 2 の攻撃の再現では、進行ボットの clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
 - SAFE-13 **進行ボットは AI の作業場所の clone の refs を使わない。** refs と packed-refs を AI が書けるので、base は進行ボットの clone で fetch した `origin/develop`、PR の head は GitHub の API が返す SHA だけを基準にする。載せ直し（MERGE-5）と push は fetch の直後に行い、API の head（初回は base）が push する SHA の祖先であること（fast-forward で届くこと）を確かめる（自分の merge の結果も、API の head から fast-forward で届く）
 - SAFE-14 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
@@ -69,3 +73,4 @@
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
+[adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
