@@ -1,0 +1,10 @@
+{
+  "name": "dev-autopilot",
+  "private": true,
+  "description": "Issue の実装・レビュー・マージの判定までを AI で回す自律開発ループ（Claude Code の Plugin。開発中）",
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=24"
+  }
+}
