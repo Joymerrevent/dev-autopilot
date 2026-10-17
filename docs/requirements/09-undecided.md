@@ -77,6 +77,16 @@
   どの認証で動くかと、人が呼ぶ Skill がマシンの設定（`devAutopilotPath` や記録の置き場。[ADR-20261015-005][adr-settings]）をどう見つけるかが決まっていない（[06-setup-and-stages.md][f06]、[07-structure.md][f07]）
 - UNDECIDED-38 **全体を止める合図と、書かずに試す合図の置き場。** 止める合図（`enabled: false`）と書かずに試す合図（`dryRun: true`）は設定ファイルに持つ（「運用の規則」）。
   [ADR-20261015-005][adr-settings] の割り振りでは、どちらもリポの設定になり、変えるのに PR が要る。急いで止めたいときに PR を待つことになり、進行ボットがどの版のリポの設定を読むかも書かれていない（[01-issue-flow.md][f01]、[07-structure.md][f07]）
+- UNDECIDED-47 **途中で止めた回の消費の数え方。** IMPL-14 は、`stream-json` の `assistant` のイベントごとの `model` と `usage` を足し上げ、進行ボットが途中で止めた回も、そこまでの消費を記録に残すとする。
+  一方、`assistant` のイベントは 1 つのメッセージで同じ `usage` を繰り返して持ち、`output_tokens` はストリームの始めの値なので、そのまま足すと入力を多く、出力を少なく数える（FACT-29）。
+  出力を少なく数えると、1 Issue の累計の利用枠が上限（IMPL-14）を超えても `needs-human` にならず、上限が黙って効かなくなる。
+  正しい値は最後の `result` の `modelUsage` にあるが、時間の上限で止めた回には最後の `result` が出ない。`--include-partial-messages` の `message_delta` は、親のメッセージの出力の最後の値を持つ（FACT-29）が、途中で止めたときに出るかは確かめていない（UNDECIDED-44）。
+  数え方（`message_delta` を使う、最後の `result` が無い回は 1 セッションの費用の上限（`--max-budget-usd`）まで使ったとみなす、など）を決める（[02-implement-review-fix.md][f02]、[10-verified-facts.md][f10]）
+- UNDECIDED-48 **AI のセッションに claude.ai のコネクタを読み込ませないか。** AI の 5 役は GitHub に書けない（SAFE-1）。
+  一方、`--setting-sources local` で起動したセッションにも、ログインしている claude.ai のアカウントのコネクタ（メールの送信などの道具を持つもの）が入った回があった（FACT-30）。
+  試験では、エージェント定義の `tools` で道具を絞っていたので、コネクタの道具は道具の一覧に無かった。要件と安全設定（SAFE-2 の (e)、SAFE-10）は MCP のコネクタに触れておらず、エージェント定義の道具の絞り込みだけに頼っている。
+  AI のセッションでコネクタを読み込ませないか、読み込ませないならどの手段で止めるか（設定の `disableClaudeAiConnectors`、環境変数 `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config`、安全設定の `permissions.deny` に `mcp__*` を入れる、専用マシンの `claude` にコネクタの無いアカウントでログインする、など）を決める。
+  手段ごとに、dev-autopilot の起動の形で効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）
 
 ## 基本設計の中で決めてよいもの
 
@@ -113,7 +123,8 @@
 - UNDECIDED-29 **欠番**（FACT-27 と FACT-28 で確かめた。値の `creator` は値を最初に入れた人で、Agent 欄の変更はタイムラインにも出ないため、値を最後に変えた人は API で取れない。Status と Agent 欄を変えた人を確かめない形（[ADR-20261015-004][adr-markers]）のままにする）：~~**Project の欄の値を最後に変えた人を API で取れるか。** GraphQL の `ProjectV2ItemFieldSingleSelectValue` は `creator`（「項目を作った人」）と `updatedAt` しか持たず、値を最後に変えた人を指すかが型の定義から分からない（[ADR-20261015-004][adr-markers]）。
   捨てる Project で、別の人が値を書き換えたときに `creator` が変わるかを確かめる（FACT-15 と同じやり方）。取れるなら、Status と Agent 欄を戻した人の権限も確かめる形にできる~~
 - UNDECIDED-44 **作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか。** IMPL-14 は、時間の上限でプロセスグループごと止め、そこまでの消費を `stream-json` から数えるとする。
-  段階 2 で確かめたのは、モデルが長いコマンドを実行していない状態でのプロセスグループの停止だけ（FACT-14。[10-verified-facts.md][f10]）。作業中の `claude` を止める試験を、段階 3（`setup` と `check` を作る段階）で行う
+  段階 2 で確かめたのは、モデルが長いコマンドを実行していない状態でのプロセスグループの停止だけ（FACT-14。[10-verified-facts.md][f10]）。作業中の `claude` を止める試験を、段階 3（`setup` と `check` を作る段階）で行う。
+  同じ試験で、止めたときに `--include-partial-messages` の `message_delta` がどこまで出るかも確かめる（消費の数え方は UNDECIDED-47）
 - UNDECIDED-45 **skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。
   Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）
 
