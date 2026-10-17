@@ -15,6 +15,9 @@ decision-makers: メンテナ
 >
 > **Amended by [ADR-20261017-004][adr-human]（2026-10-17）**: 決定 1 の AI が読める範囲（sandbox の `allowRead` と、`permissions.allow` の Read）に、進行ボットのプログラムの写しの `skills/` を足した。重ねる守りの `deny` の Read は、写しの全体から写しの `src/` に狭めた。
 > 置き場を Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）の下に置かないことを足した。秘密を読めないこと、ホームと別のセッションを読めないことと、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261017-006][adr-tmp]（2026-10-17）**: 決定 1 のうち、`TMPDIR` をセッションの一時フォルダに向けるところを、セッションごとの短いパスの一時フォルダを `CLAUDE_CODE_TMPDIR` と `TMPDIR` で渡す形に改めた（sandbox の中の `$TMPDIR` は、Claude Code がユーザーごとの一時フォルダに置き換えるため）。
+> AI が読める範囲から、Claude Code のユーザーごとの一時フォルダとほかのセッションの一時フォルダを外した。XDG の 4 つをセッションの一時フォルダに向けることと、ほかの決定は据え置く。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -225,3 +228,4 @@ decision-makers: メンテナ
 [adr-move]: ./adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-human]: ./adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[adr-tmp]: ./adr-20261017-006-per-session-short-tmpdir.md
