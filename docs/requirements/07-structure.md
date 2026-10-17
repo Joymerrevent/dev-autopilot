@@ -19,7 +19,7 @@ dev-autopilot は、独立したリポ（Joymerrevent/dev-autopilot）で、ほ�
     agents/
       planner.md               計画 AI（読むだけ。計画を出力契約で返す）
       worker.md                作業 AI（モデルは設定で）
-      reviewer.md              レビュー AI
+      reviewer.md              レビュー AI（進行ボットがレビューの軸ごとに別のセッションで起こす。Agent ツールは持たない。ADR-20261017-002）
       critic.md                批評 AI（レビューの指摘の再検証。進行ボットが別に起こす独立セッション。IMPL-22）
       intake.md                受付 AI（道具なし。作業指示の下書きと計画の難しさの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
   src/                         進行ボット（TypeScript、Node 24 が直接実行。bash を置かない）。Plugin としては配らず、cron が直接動かす
@@ -47,8 +47,8 @@ dev-autopilot は、独立したリポ（Joymerrevent/dev-autopilot）で、ほ�
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
   - 進行ボットの実行：`enabled`、`dryRun`、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、cron の間隔（launchd の plist と二重になるので `check` がずれを検出する）
   - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（IMPL-14、SETUP-12）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）
-  - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、Agent ツールを許すか（IMPL-14）、批評 AI の確信度のしきい値（IMPL-22）
-  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、進行ボットが実行するパスの一覧（IMPL-15）、漏えい検査の見本の置き場
+  - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
+  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行ボット・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、漏えい検査の見本の置き場
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
   - 安全：進行ボットのアカウント名（IMPL-20）、sandbox の `--settings` の置き場（マシン）と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **起動は Plugin として。** 進行ボットは `claude -p --plugin-dir <進行ボットのプログラムの clone の絶対パス>/plugin --agent dev-autopilot:worker` のように、`plugin/` を Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
@@ -105,3 +105,4 @@ dev-autopilot は、独立したリポ（Joymerrevent/dev-autopilot）で、ほ�
 [adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-history]: ../adr/adr-20261017-001-carry-history-into-own-repository.md
+[adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md

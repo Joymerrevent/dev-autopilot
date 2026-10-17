@@ -7,9 +7,11 @@
 - SAFE-2 **進行ボット・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）**。5 つの経路を塞ぐ：
   (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。段階 2 で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行ボットのプログラムの clone の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
   (b) 進行ボットが AI の作業場所（親の clone と worktree）で git を実行するのは、AI のセッションを起動する前の clone と worktree の作成だけ。起動した後は、進行ボットの clone へ取り込む fetch の取り出し元にするだけで、消すときは git を使わずフォルダごと消す（SAFE-12）。
-  (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` に触れる diff は push しない（IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
+  (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）に触れる diff は push しない
+  （IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない。次のセッションが、作業 AI の書き換えた正典を規則として読まない。[ADR-20261017-002][adr-review]）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行ボットはリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `src/` で行う（IMPL-15）。
-  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけで、`Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Read ツールは worktree の中だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22。[ADR-20261015-001][adr-read]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)` と `Read(//<進行ボットのプログラムの clone>/**)`、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` だけで、`Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Read ツールは worktree の中だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22。[ADR-20261015-001][adr-read]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)` と `Read(//<進行ボットのプログラムの clone>/**)`、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）。
+  `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）
   sandbox の `--settings` のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる。一時フォルダはセッションごとに別のものを作る
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
 - SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。UNDECIDED-27）では、作業を増やさずに記録して止める（fail-closed）
@@ -58,3 +60,4 @@
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
+[adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md

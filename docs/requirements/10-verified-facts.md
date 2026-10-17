@@ -100,15 +100,16 @@ UNDECIDED-29 を確かめるために行い、試験の後に捨てる Project �
 
 ## サブエージェントの消費の出方を調べる途中で確かめた事実（2026-10-17）
 
-macOS、Claude Code 2.1.285 で確かめた。ADR-20261017-002（レビュー AI の入力と道具。[dev-autopilot の PR #4][da-pr-4] で起票中）の材料として、サブエージェントの消費が `stream-json` の記録にどう出るかを調べた。
+macOS、Claude Code 2.1.285 で確かめた。[ADR-20261017-002][adr-review]（レビュー AI の入力と道具）の材料として、サブエージェントの消費が `stream-json` の記録にどう出るかを調べた。
 試験用の Plugin（親のエージェントは `tools: Agent, Read` で、サブエージェントを 1 つ起こす。サブエージェントは `tools: Read` でファイルを 1 つ読む）を、
 `claude -p --setting-sources local --plugin-dir <Plugin> --agent <親> --model claude-haiku-5-5 --output-format stream-json --verbose` で 3 回起動した。2 回目は `--forward-subagent-text`、3 回目は `--include-partial-messages` を足した。
-sandbox は掛けず、環境変数は絞っていない。
+サブエージェントの `model` は、1 回目と 2 回目が `haiku`、3 回目が `sonnet`。sandbox は掛けず、環境変数は絞っていない。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
 | FACT-29 | `stream-json` の `assistant` のイベントの `usage` を足し上げて、セッションの消費を数えられるか | **数えられない。** 1 つのメッセージ（同じ `message.id`）が中身の区切り（thinking・text）ごとに別のイベントに分かれ、どのイベントも同じ `usage` を持つ（そのまま足すと、入力とキャッシュを重ねて数える）。`usage.output_tokens` はストリームの始めの値（`stop_reason` が null）で、最後の値ではない。3 回目の親のメッセージ 2 つでは、イベントの `output_tokens` の和が 25、最後の `result` の `modelUsage` が 485 だった。`--include-partial-messages` を付けると `stream_event` の `message_delta` が出て、親の `output_tokens` の和は 485 で `modelUsage` と一致した。サブエージェントのメッセージは `stream_event` として出なかった。最後の `result` の `modelUsage` と `total_cost_usd` は、サブエージェントの消費を含めたセッション全体の値だった。途中で止めたときに `message_delta` が出るかは確かめていない（UNDECIDED-44） | 実行 |
 | FACT-30 | `--setting-sources local` で起動したセッションに、ログインしている claude.ai のアカウントのコネクタが入るか | **入った回があった。** 3 回のうち 2 回（1 回目と 2 回目）、初期化の記録の `mcp_servers` に claude.ai のコネクタが 4 つ出た（`source` は `claudeai`。メールと文書の 2 つが `connected`、残りの 2 つが `needs-auth`）。3 回目は `mcp_servers` が空だった。親の道具はエージェント定義の `tools` で `Task` と `Read` に絞っていたので、どの回もコネクタの道具は道具の一覧に無かった。認証が要るコネクタの案内の文が、2 回（2 回目と 3 回目）、親の最後の返事に混ざった。公式文書（[MCP][doc-mcp]）は、Claude Code が claude.ai から取ってくるコネクタを止める手段として、設定の `disableClaudeAiConnectors`、環境変数 `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config` を挙げている。dev-autopilot の起動の形（`--setting-sources local` と `--settings` の安全設定、許可した名前だけの環境変数）で効くかは確かめていない（UNDECIDED-48） | 実行 |
+| FACT-31 | サブエージェントの消費とモデルが、`stream-json` の記録にどう出るか。サブエージェントはどう動くか | **最後の `result` にだけ揃って出る。** `modelUsage` は、サブエージェントのモデルが親と違えば別の項目に出た（3 回目：親の `claude-haiku-5-5` とサブエージェントの `claude-sonnet-5-5`）。サブエージェントの `model` に親と同じ系統の別名（`haiku`）を書くと、親のモデル（`claude-haiku-5-5`）で動き、同じ項目に足された（公式文書のモデルの決まり方のとおり）。途中の記録では数え切れない：サブエージェントの `assistant` のイベントは、バックグラウンドで動いた回（1 回目と 2 回目）はすべてのメッセージが `parent_tool_use_id` 付きで出たが、前で動いた回（3 回目。`--forward-subagent-text` なし）は 2 つのメッセージのうち道具を呼んだ 1 つだけが出た。`task_progress` と `task_notification` は `total_tokens`・`tool_uses`・`duration_ms` だけを持ち、モデルと入力・出力の内訳を持たない。サブエージェントのメッセージは `stream_event` として出ない（FACT-29）。サブエージェントをバックグラウンドで動かすかは、同じ指示でも回ごとに違った。バックグラウンドの回は、親がサブエージェントの答えを待たずにターンを終え、`result` が 2 つ出た（1 つ目は「サブエージェントはまだ動いている」という返事）。プロセスは 2 つ目の `result` の後に終わった。初期化の記録の道具の一覧では、Agent ツールは `Task` という名前で出た | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
@@ -118,5 +119,5 @@ sandbox は掛けず、環境変数は絞っていない。
 [bos-issue-44]: https://github.com/Joymerrevent/business-os/issues/44
 [bos-pr-45]: https://github.com/Joymerrevent/business-os/pull/45
 [bos-issue-80]: https://github.com/Joymerrevent/business-os/issues/80
-[da-pr-4]: https://github.com/Joymerrevent/dev-autopilot/pull/4
 [doc-mcp]: https://code.claude.com/docs/en/mcp
+[adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md

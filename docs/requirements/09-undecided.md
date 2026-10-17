@@ -44,12 +44,12 @@
 
 - UNDECIDED-9 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**pass なのに CI が緑でないとき。** pass なのに CI が赤・無い・保留のときの扱い。赤を修正に回して往復に数えるか、無い・保留は待つか（IMPL-27。[02-implement-review-fix.md][f02]）~~
 - UNDECIDED-10 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**2 件目以降の `merge=ready`。** 1 回の実行で `merge=ready` 1 件を超えた PR の扱い（`human` にすると一致の記録が汚れる）（MERGE-5。[03-merge.md][f03]）~~
-- UNDECIDED-32 **レビュー AI のサブエージェントと Agent ツール。** REVIEW-1 は 3 つの軸を並列のサブエージェントで見るとするが、「[登場するもの][f00]」のレビュー AI の道具に Agent が無い。
-  [ADR-20261015-005][adr-settings] は、Agent ツールを許すことを、安全の境界を緩める変更として ADR で決めるとしている。設定の「Agent ツールを許すか」（IMPL-14、STRUCT-2）が役ごとかも決まっていない（[08-review-skill.md][f08]）
-- UNDECIDED-33 **コラボレータの PR のコメントを AI に渡すか。** TEXT-1 と REVIEW-6 は、コラボレータのコメントは渡す、PR のコメントも同じ、とする。一方、渡す文の範囲は `agent-ready` の時点で確定し、後から足されたコメントは渡さない（TEXT-1）。
-  再レビューの入力（IMPL-21）と修正の入力（IMPL-23）にも、コラボレータのコメントは無い。PR のコメントはすべて `agent-ready` の後に付くので、渡すのか、渡すならどの役のどの入力かが決まらない（[04-external-text-and-markers.md][f04]、[08-review-skill.md][f08]）
-- UNDECIDED-34 **レビュー AI に渡す規約の正典を、base から取るか。** 「AI が読む文」の表は「規約の正典は base ブランチから渡す」とするが、レビュー AI の作業場所は PR の head で作る（IMPL-16）。
-  作業 AI は head の `docs/adr/**` などを書き換えうる（IMPL-15 の push を止めるパスに入っていない。マージの判定では `merge=human`）。レビュー AI が書き換えられた規約を読まないようにするか、どう渡すかが決まっていない（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）
+- UNDECIDED-32 **欠番**（[ADR-20261017-002][adr-review] で、進行ボットが軸ごとに別のセッションを起こし、Agent ツールはどの役にも与えず、設定の項目も無くすと決めた）：~~**レビュー AI のサブエージェントと Agent ツール。** REVIEW-1 は 3 つの軸を並列のサブエージェントで見るとするが、「[登場するもの][f00]」のレビュー AI の道具に Agent が無い。
+  [ADR-20261015-005][adr-settings] は、Agent ツールを許すことを、安全の境界を緩める変更として ADR で決めるとしている。設定の「Agent ツールを許すか」（IMPL-14、STRUCT-2）が役ごとかも決まっていない（[08-review-skill.md][f08]）~~
+- UNDECIDED-33 **欠番**（[ADR-20261017-002][adr-review] で、PR のコメントはどの役にも渡さないと決めた）：~~**コラボレータの PR のコメントを AI に渡すか。** TEXT-1 と REVIEW-6 は、コラボレータのコメントは渡す、PR のコメントも同じ、とする。一方、渡す文の範囲は `agent-ready` の時点で確定し、後から足されたコメントは渡さない（TEXT-1）。
+  再レビューの入力（IMPL-21）と修正の入力（IMPL-23）にも、コラボレータのコメントは無い。PR のコメントはすべて `agent-ready` の後に付くので、渡すのか、渡すならどの役のどの入力かが決まらない（[04-external-text-and-markers.md][f04]、[08-review-skill.md][f08]）~~
+- UNDECIDED-34 **欠番**（[ADR-20261017-002][adr-review] で、規約の正典に触れる diff を push せず、レビュー AI は作業場所の head の正典を読むと決めた）：~~**レビュー AI に渡す規約の正典を、base から取るか。** 「AI が読む文」の表は「規約の正典は base ブランチから渡す」とするが、レビュー AI の作業場所は PR の head で作る（IMPL-16）。
+  作業 AI は head の `docs/adr/**` などを書き換えうる（IMPL-15 の push を止めるパスに入っていない。マージの判定では `merge=human`）。レビュー AI が書き換えられた規約を読まないようにするか、どう渡すかが決まっていない（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）~~
 
 ### 受け入れと印
 
@@ -148,3 +148,4 @@
 [adr-draft]: ../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [f08]: ./08-review-skill.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
+[adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
