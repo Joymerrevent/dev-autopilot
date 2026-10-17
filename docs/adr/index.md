@@ -18,7 +18,7 @@
 | ADR-20261016-002 | [受付 AI はすべての Issue で作業指示の下書きを書き、AI に渡す文は人が承認した下書きか作業指示コメントだけにする][adr-20261016-002-intake-ai-drafts-every-issue] | accepted | 2026-10-16 |
 | ADR-20261016-003 | [dev-autopilot を基本設計の前に別のリポジトリへ移し、ほかのリポへの適用と配布は段階 8 の後に決める][adr-20261016-003-move-to-own-repository-before-basic-design] | accepted | 2026-10-16 |
 | ADR-20261017-001 | [dev-autopilot の履歴を新しいリポへ引き継ぎ、PR の番号を business-os の参照に書き換えて、メンテナの鍵で署名を付け直す][adr-20261017-001-carry-history-into-own-repository] | accepted | 2026-10-17 |
-| ADR-20261017-002 | [レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない][adr-20261017-002-review-axis-sessions-pr-comments-and-canon] | proposed | 2026-10-17 |
+| ADR-20261017-002 | [レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない][adr-20261017-002-review-axis-sessions-pr-comments-and-canon] | accepted | 2026-10-17 |
 
 <!--
 行の例（表の最後に足す）:
