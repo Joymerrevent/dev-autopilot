@@ -87,12 +87,12 @@
   試験では、エージェント定義の `tools` で道具を絞っていたので、コネクタの道具は道具の一覧に無かった。要件と安全設定（SAFE-2 の (e)、SAFE-10）は MCP のコネクタに触れておらず、エージェント定義の道具の絞り込みだけに頼っている。
   AI のセッションでコネクタを読み込ませないか、読み込ませないならどの手段で止めるか（設定の `disableClaudeAiConnectors`、環境変数 `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config`、安全設定の `permissions.deny` に `mcp__*` を入れる、専用マシンの `claude` にコネクタの無いアカウントでログインする、など）を決める。
   手段ごとに、dev-autopilot の起動の形で効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
-- UNDECIDED-50 **sandbox の中の一時フォルダが、セッションの間で共有される。** SAFE-10 と [ADR-20261015-001][adr-read] の決定 1 は、AI のセッションの `TMPDIR` をセッションの一時フォルダに向けるとする。
+- UNDECIDED-50 **欠番**（[ADR-20261017-006][adr-tmp] で決めた）：~~**sandbox の中の一時フォルダが、セッションの間で共有される。** SAFE-10 と [ADR-20261015-001][adr-read] の決定 1 は、AI のセッションの `TMPDIR` をセッションの一時フォルダに向けるとする。
   一方、Claude Code は sandbox の中のコマンドの `$TMPDIR` をユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`）に置き換え、sandbox の中のコマンドはユーザーごとの一時フォルダに既定で書ける（FACT-34）。
   同じユーザーで動くすべての AI のセッションから書けるので、前のセッションが置いたファイルを次のセッションが読む経路になりうる（objects と依存の store と同じ種類の論点。[ADR-20261013-001][adr-workspace]、[ADR-20261015-002][adr-store]）。
   手元の Mac で試す間（SAFE-18）は、人の Claude Code のセッションの作業用のフォルダも同じ一時フォルダの下にある。
   セッションごとに一時フォルダを分けるか、分けるならどの手段で分けるか（進行ボットがセッションごとに `CLAUDE_CODE_TMPDIR` を渡す、など）を決める。
-  `CLAUDE_CODE_TMPDIR` はパスが長いと既定の場所の下の短いパスに置き換わる（FACT-34）ので、dev-autopilot の置き場のパスで効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）
+  `CLAUDE_CODE_TMPDIR` はパスが長いと既定の場所の下の短いパスに置き換わる（FACT-34）ので、dev-autopilot の置き場のパスで効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
 
 ## 基本設計の中で決めてよいもの
 
@@ -136,7 +136,7 @@
   Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）~~
 - UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
   sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
-  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
+  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
@@ -162,3 +162,4 @@
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
+[adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
