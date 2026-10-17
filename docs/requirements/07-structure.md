@@ -42,6 +42,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行�
 
 - STRUCT-1 **business-os の中身を import しない。** `plugin/hooks/lib` や `plugin/scripts/lib` の関数が要るなら、dev-autopilot 側に持つ。逆に business-os が dev-autopilot を import することもしない
 - STRUCT-2 **設定の値はコードに書かず、リポの設定とマシンの設定の 2 つに出す。** リポの設定は business-os 側（例：`.claude/dev-autopilot.json`。commit する）で、マシンに依らない値を持つ。マシンの設定は commit せず、リポの外の同期されないフォルダに置き、下の一覧で「マシン」と書いた項目を持つ（[ADR-20261015-005][adr-settings]）。
+  マシンの設定は、OS ごとの決まった場所に、当てる先のリポ（owner/repo）ごとに置く（例：macOS は `~/Library/Application Support/dev-autopilot/<owner>/<repo>/`、Linux は `$XDG_CONFIG_HOME/dev-autopilot/<owner>/<repo>/`。場所の値は構造仕様の表で決める）。
+  人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行ボットに渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
   要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
   - リポと Project：owner / repo、base ブランチ、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
@@ -52,16 +54,16 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行�
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行ボット・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、漏えい検査の見本の置き場
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
-  - 安全：進行ボットのアカウント名（IMPL-20）、sandbox の `--settings` の置き場（マシン）と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
+  - 安全：進行ボットのアカウント名（IMPL-20）、sandbox の `--settings` の置き場（マシン）と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数と、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）を含む。「[安全側に倒す設計][f05]」）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **Plugin を入れたプロジェクトで、写しから動かす。** 利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ（入れる設定は当てる先のリポの `.claude/settings.json` に commit される）、当てる先のリポで開いた Claude Code で `setup` を実行する（SETUP-1）。
   `setup` は、インストールされた Plugin の版（`${CLAUDE_PLUGIN_ROOT}` の中身）を、マシンの置き場の中の版ごとのフォルダ（例：`<置き場>/program/<版>/`）に写す。写しを「進行ボットのプログラムの写し」と呼び、マシンの設定の `devAutopilotPath` は写しを指す（[ADR-20261017-003][adr-plugin] の決定 2・4）。
   進行ボットは、写しの `src/main.ts` を定期の実行から起こされ、`claude -p --plugin-dir <写しの絶対パス> --agent dev-autopilot:worker` のように、写しを Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
-  `--plugin-dir` は AI の worktree の中ではなく、写し（AI が読めず書けない。SAFE-16）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
+  `--plugin-dir` は AI の worktree の中ではなく、写し（AI が書けず、読めるのは `skills/` だけ。SAFE-16）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
   進行ボット（`plugin/src/`）と、AI のセッションに読ませるエージェント定義と Skill は、同じ写しから使う（版がずれないようにするため。STRUCT-7 で同封した理由と同じ）。
   版を上げるのは、人が `setup` を実行したときだけ。Plugin が更新されても（自動の更新を含む）、写しは変わらない。写しを作り直すのは、進行ボットが動いていない間に限る（実行の lock を取る）。
   配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行ボットも配る。テスト・前提データ・文書は配らない。
   `/dev-autopilot` の手動の 1 回実行は、進行ボットを直接起動せず、定期の実行と同じジョブを起こす（macOS は `launchctl kickstart`（`-k` なし）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin] の決定 3）。
-  人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行ボットのコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。Plugin のパスを手順に埋め込まない。
+  人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行ボットのコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。Plugin のパスを手順に埋め込まない。
   `setup` は、dev-autopilot 自身のリポでは何も作らずに止まる（「分離の時期の目安」）
 - STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行ボットの本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーか cron で、`setup` が登録する（Linux でどちらにするかは基本設計で決める。[ADR-20261017-003][adr-plugin] の決定 3）。
   進行ボットの本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。
@@ -93,10 +95,10 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行�
 - STRUCT-7 **Skill と進行ボットは Plugin に同封し、ほかの人に配るときは `review` だけ同じフォルダから単体でも入れられるようにする。** 別に公開して組み合わせる形は採らない
   - 同封する理由：進行ボット・agent・Skill は出力契約や引数で結びついていて、版がずれると黙って壊れる。Plugin の 1 つの版で一緒に検査し、一緒に配る（進行ボットの同封は [ADR-20261017-003][adr-plugin] の決定 1）
   - 単体で使う価値があるのは `review`（人が手でレビューするときの change-review v2）だけ。`setup` `check` `intake` `dev-autopilot` は進行ボットと設定ファイルが無いと意味を持たない
-  - skills CLI は、リポの `skills/<名前>/` を `<owner>/<repo>@<名前>` で単体導入できる。dev-autopilot のリポの `plugin/skills/review/` を指せるので（skills CLI が `plugin/` の下の Skill を見つけるかは確かめていない。UNDECIDED-45）、
+  - skills CLI は、リポの `skills/<名前>/` を `<owner>/<repo>@<名前>` で単体導入できる。dev-autopilot のリポの `plugin/skills/review/` を指せるので（skills CLI は `plugin/skills/` の下の Skill を見つける。FACT-33）、
     単体で配るために別の場所へ写す必要は無い（正本は 1 つのまま）
   - そのため `review` は、Plugin の中からも単体からも動くように書く：手順の本体は単体で成り立たせ、dev-autopilot 向けの部分（無人の入力、出力契約、agent の名前）は引数で渡されたときだけ使う。印は進行ボットが付け、Skill は印を出さない（REVIEW-3）。
-    `${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない
+    `${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない。同封したファイル（参照ファイルとスクリプト）は `${CLAUDE_SKILL_DIR}` で指す（`SKILL.md` のあるフォルダに置き換わるので、Plugin の中からも単体でも同じに動く。[ADR-20261017-004][adr-human] の決定 1）
   - 配るまでの間は、`~/.claude/skills/change-review` を今の版のまま残して手動のレビューに使う。v2 を手でも使いたくなったら、
     dev-autopilot のリポの `plugin/skills/review/` を skills CLI（`--copy` 付き）で入れる
 
@@ -121,3 +123,5 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行�
 [adr-history]: ../adr/adr-20261017-001-carry-history-into-own-repository.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md

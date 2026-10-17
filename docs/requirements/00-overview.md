@@ -26,6 +26,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 AI の役は 5 つで、一覧はこの表が正本。5 役すべてに共通：`claude -p --output-format stream-json` を進行ボットが子プロセスとして起動し（途中で止めた回の消費も数えるため。IMPL-14）、「[隔離と鍵の分け方][f05]」の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行ボットの鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
 ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボットのプログラムの写し（[ADR-20261017-003][adr-plugin]）の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
 サブエージェントを起こす Agent ツールは、どの役にも与えない（エージェント定義の `tools` に書かず、`permissions` の deny にも入れる。[ADR-20261017-002][adr-review]）。
+MCP のサーバー（ログインしている claude.ai のアカウントのコネクタを含む）は、どの役にも読み込ませない（SAFE-1。[ADR-20261017-005][adr-mcp]）。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
@@ -51,3 +52,4 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
