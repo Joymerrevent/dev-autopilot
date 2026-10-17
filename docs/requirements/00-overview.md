@@ -25,14 +25,15 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 
 AI の役は 5 つで、一覧はこの表が正本。5 役すべてに共通：`claude -p --output-format stream-json` を進行ボットが子プロセスとして起動し（途中で止めた回の消費も数えるため。IMPL-14）、「[隔離と鍵の分け方][f05]」の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行ボットの鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
 ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボットのプログラムの clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
+サブエージェントを起こす Agent ツールは、どの役にも与えない（エージェント定義の `tools` に書かず、`permissions` の deny にも入れる。[ADR-20261017-002][adr-review]）。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
 | 進行ボット | cron が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。AI と共有しない、進行ボットのプログラムの clone（dev-autopilot のリポの clone。SAFE-16）から実行する | AI ではない。判定は決定的な処理で行う |
 | 計画 AI | `claude -p --agent <計画用>` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
 | 作業 AI | `claude -p --agent <作業用>` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行ボットが固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
-| レビュー AI | `claude -p --agent <レビュー用>` を、進行ボットが PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごとに新しいセッション。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
-| 批評 AI | `claude -p --agent <批評用>` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行ボットが別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力はレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行ボットがレビューの印に統合する（IMPL-22） |
+| レビュー AI | `claude -p --agent <レビュー用>` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行ボットが PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
+| 批評 AI | `claude -p --agent <批評用>` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行ボットが別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力は 3 つの軸のレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行ボットがレビューの印に統合する（IMPL-22） |
 | 受付 AI | `claude -p --agent <受付用>` を道具なしで起動する | Issue ごとに新しいセッション（コラボレータの Issue でも走る。検疫で見つかった Issue では起動しない）。読めるのは Issue の文だけ。作業指示の下書きと計画の難しさの判定を出力契約で返す（TEXT-12） |
 | 人 | メンテナ | 処理対象の承認（受け入れの下書きを読んで `agent-ready` を付ける）、PR のマージの実行（進行ボットの判定を見て行う）、ループが止まったときの対処 |
 
@@ -48,3 +49,4 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 [f11]: ./11-records.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
+[adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
