@@ -22,6 +22,7 @@ decision-makers: メンテナ
 - そのため、AI の振る舞いがおかしいと気づいて急いで止めたいときに、PR を作ってマージするまで止まらない。止める合図は実行の最初にしか読まないので、動いている実行（AI のセッションは 1 回 45 分まで。IMPL-13）も止まらない
 - 進行ボットがどの版のリポの設定を読むか（人の作業コピー、既定のブランチ、base ブランチ）が書かれていない。当てる先の business-os は、既定のブランチ（`main`）と PR を向ける base ブランチ（`develop`）が違う
 - 2026-10-17 に GitHub の公式文書を読んだ（補足情報）。リポの変数（Actions の変数）は、fine-grained PAT の「Variables」の読み取りの権限で読める。変えられるのは、org のリポなら write 以上の人、個人のリポならコラボレータで、GitHub の画面から PR なしで変えられる
+- 同じ日に、試験用のリポで確かめた（補足情報）。Actions を止めたリポでも、変数を読めて変えられた。org のリポでは、変数を変えた人と日時が org の監査ログに残った
 
 課題：人が急いで止めたいときに、PR を待たず、動いている実行も含めて止まる合図をどこに置くか。書かずに試す合図をどこに置くか。進行ボットはどの版のリポの設定を読むか。
 
@@ -96,10 +97,9 @@ decision-makers: メンテナ
 - 良い点: 合図が無い・読めない・値が違うときは止まる。`setup` の直後も、人が `run` にするまで動かない
 - 良い点: 書き込みを始める向きの変更（`dryRun` を切る）は PR に残る
 - 良い点: 進行ボットが読む設定の版が、base ブランチの先端に決まる。最初の導入でも、既定のブランチへのリリースを待たない
-- 悪い点: 止める合図はリポの設定と別の場所にあり、変えた記録は変数の `updated_at` だけで、誰が変えたかは残らない
+- 悪い点: 止める合図はリポの設定と別の場所にあり、PR の記録には残らない。誰がいつ変えたかは、org のリポなら org の監査ログ（owner だけが見られる。180 日）に残るが、個人のリポでは変数の `updated_at` しか残らない
 - 悪い点: 合図を読む API の呼び出しが、実行の途中にも増える
 - 悪い点: base ブランチの名前が、マシンごとの設定になる。手元の Mac から専用マシンに移るときに、もう一度書く（`check` が確かめる）
-- 悪い点: Actions を使わない設定のリポで、変数を読めるかは確かめていない（読めなければ止まる側に倒れる。段階 3 で確かめる）
 
 ### 確認方法（Confirmation）
 
@@ -113,7 +113,8 @@ decision-makers: メンテナ
 
 - 良い点: GitHub の画面から PR なしで変えられ、専用マシンに入らなくてよい。変えられる人は push 以上の人で、Agent 欄と同じ前提に収まる
 - 良い点: 進行ボットの PAT は読み取りだけで済み、AI のセッションは GitHub に書けない
-- 悪い点: 誰が変えたかの記録が残らない。実行の途中の API の呼び出しが増える
+- 良い点: Actions を止めたリポでも読める（2026-10-17 に確かめた）。org のリポでは、誰が変えたかが org の監査ログに残る
+- 悪い点: PR の記録に残らず、個人のリポでは誰が変えたかが残らない。実行の途中の API の呼び出しが増える
 
 ### 案 1-B：マシンの設定に置く
 
@@ -143,7 +144,7 @@ decision-makers: メンテナ
 ### 案 2-B：止める合図と同じ変数に 3 つの値で置く
 
 - 良い点: 1 か所で、書かずに試す側へも急いで戻せる
-- 悪い点: 実際に書き始める変更が PR を通らず、誰が変えたかも残らない
+- 悪い点: 実際に書き始める変更が PR を通らず、レビューされない
 
 ### 案 3-A：base ブランチの先端を読み、base ブランチの名前はマシンの設定に移す
 
@@ -173,7 +174,11 @@ decision-makers: メンテナ
   - [リポの変数の REST API][gh-rest-variables]：変数の読み取り（`GET /repos/{owner}/{repo}/actions/variables/{name}`）は、リポのコラボレータが行える
   - [fine-grained PAT に要る権限][gh-fg-perms]：変数の読み取りは「Variables」の read、作成・更新・削除は write
   - [変数の使い方][gh-variables]：org のリポの変数を作るには write の権限が要り、個人のリポではコラボレータであることが要る。リポの Settings の「Secrets and variables」の「Actions」から変えられる。environment の変数は、org のリポでは admin の権限が要る
-- 確かめていないこと：Actions を使わない設定のリポで、変数の API が使えるか。fine-grained PAT の Variables: read で実際に読めるか。段階 3 で `check` を作るときに試す
+- 2026-10-17 に、試験用のリポ（private、中身なし）で確かめた。メンテナの `gh`（OAuth のトークン）を使った
+  - 変数を作り（`POST /repos/{owner}/{repo}/actions/variables`）、読めた。リポの Actions を止めても（`PUT /repos/{owner}/{repo}/actions/permissions` の `enabled=false`）、変数を読めて変えられた。試験の後に Actions の設定を元に戻し、変数を消した
+  - org の監査ログ（GitHub の画面）に、`repo.update_actions_variable` のイベントが、変えた人と「via the API」と一緒に出た。変えた後の値は出ない。監査ログの API は GitHub Enterprise Cloud だけで、Team のプランでは 404 だった
+- 公式文書（[org の監査ログの見方][gh-audit-review]、[org の監査ログのイベント][gh-audit]）：監査ログは過去 180 日のイベントを持ち、見られるのは org の owner だけ。リポの変数の作成・更新・削除は `repo.create_actions_variable`・`repo.update_actions_variable`・`repo.remove_actions_variable` のイベントになる
+- 確かめていないこと：fine-grained PAT の Variables: read で実際に読めて、変えられないか（PAT はメンテナが作るので、段階 3 で `check` を作るときに試す）。write の権限だけの人が変えられるか（公式文書に書いてある。試すには別のアカウントが要る）
 - 急いで止める手段の最後の手段（人がマシンで、定期の実行の登録を外し、動いている進行ボットを止める）は、今のまま残る
 - 要件への反映（承認の後に、別の PR で行う）
   - 01-issue-flow.md：「運用の規則」の止める合図（リポの変数、途中でも読む、止めた回を数えない）と、書かずに試す合図（リポの設定のまま）
@@ -195,3 +200,5 @@ decision-makers: メンテナ
 [gh-rest-variables]: https://docs.github.com/en/rest/actions/variables
 [gh-fg-perms]: https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens
 [gh-variables]: https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables
+[gh-audit-review]: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/reviewing-the-audit-log-for-your-organization
+[gh-audit]: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/audit-log-events-for-your-organization
