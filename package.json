@@ -18,7 +18,7 @@
     "prepare": "simple-git-hooks"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm exec lint-staged",
+    "pre-commit": "pnpm exec lint-staged && gitleaks git --pre-commit --staged --redact --no-banner",
     "commit-msg": "pnpm exec commitlint --edit \"$1\""
   },
   "lint-staged": {
