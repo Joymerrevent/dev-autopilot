@@ -1,0 +1,64 @@
+name: Commitlint
+
+# PR のコミットメッセージと PR のタイトルを Conventional Commits で検査する。
+# ローカルの commit-msg フックは飛ばせるため、CI でも担保する。
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commitlint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commitlint:
+    name: commitlint
+    runs-on: ubuntu-latest
+    steps:
+      # PR 範囲のコミットを検査するため全履歴を取得する
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # 検査の範囲を決める。develop 向けの PR は base..head の新しいコミットを検査する。
+      # main 向けのリリース PR は、base..head だと develop の全履歴を検査し直すことになり、
+      # 当時の squash のタイトル（共有された履歴で直せない）で落ちうる。develop に入ったコミットは
+      # それぞれの PR で検査済みのため、範囲を develop に無いリリース固有のコミット（origin/develop..head）に絞る
+      - name: Determine lint range
+        id: range
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "${BASE_REF}" = "main" ]; then
+            git fetch --no-tags origin develop
+            echo "from=$(git rev-parse origin/develop)" >> "${GITHUB_OUTPUT}"
+          else
+            echo "from=${BASE_SHA}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Lint PR commits
+        env:
+          FROM_SHA: ${{ steps.range.outputs.from }}
+          TO_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm exec commitlint --from "${FROM_SHA}" --to "${TO_SHA}" --verbose
+
+      # squash マージでは PR のタイトルがコミットの subject になるため、タイトルも検査する。
+      # タイトルは env 経由で渡し、run への直接展開（スクリプトインジェクション）を避ける
+      - name: Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "${PR_TITLE}" | pnpm exec commitlint --verbose

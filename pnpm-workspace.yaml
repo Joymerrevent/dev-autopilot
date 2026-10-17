@@ -4,3 +4,8 @@
 # 解決候補から外し、悪性リリースが発見・削除されるまでの時間を稼ぐ。
 # 範囲内に条件を満たす版が無いときは解決を失敗させる（minimumReleaseAgeStrict の既定）。
 minimumReleaseAge: 10080
+
+# simple-git-hooks は依存としての postinstall を走らせない。フックの設置はルートの
+# `prepare`（`pnpm install` 時に実行）が行う。
+ignoredBuiltDependencies:
+  - simple-git-hooks
