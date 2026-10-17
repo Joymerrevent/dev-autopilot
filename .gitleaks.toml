@@ -1,0 +1,5 @@
+# gitleaks の設定。既定の規則をそのまま使う。
+title = "dev-autopilot"
+
+[extend]
+useDefault = true

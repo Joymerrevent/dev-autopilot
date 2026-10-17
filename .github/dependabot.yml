@@ -1,0 +1,58 @@
+# npm 依存 ＋ GitHub Actions のバージョン更新を自動 PR 化する（dependabot レシピの npm 変種が配布）。
+# 脆弱性の自動修正 PR（security updates）はリポジトリ設定のトグルで別途有効化して併用する。
+version: 2
+updates:
+  # npm 依存。minor/patch は dev/prod ごとにまとめて PR ノイズを抑える（major は個別 PR）。
+  - package-ecosystem: "npm"
+    directory: "/"
+    # git-flow のため、依存更新の PR は develop に向ける
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    # サプライチェーン対策の熟成期間。公開直後の版は PR にせず、レジストリから
+    # 悪性リリースが発見・削除されるまでの時間を稼ぐ（防御の本体は「時間」）。
+    # cooldown が効くのは version updates だけで、security updates は素通りする＝
+    # 「新しいだけの更新は待つ／脆弱性の修正は即受ける」。
+    # pnpm の minimumReleaseAge（pnpm-workspace.yaml・分単位。7 日 = 10080）と日数を揃えること。
+    # 揃っていないと、Dependabot が上げた版を pnpm install が「新しすぎる」と拒否する。
+    cooldown:
+      default-days: 7
+      # major は破壊的変更を伴い追従・切り戻しコストが大きい。エコシステムの様子見を長めに取る。
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 7
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+      prod-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+
+  # GitHub Actions のバージョン更新（files/.github/dependabot.yml と同じ内容）。
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+    # github-actions は semver 別の日数指定に非対応のため default-days のみ（major も 7 日）。
+    cooldown:
+      default-days: 7
+    # minor/patch は 1 PR にまとめ、major は個別 PR（npm 側と同方針）。
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    commit-message:
+      prefix: "ci"

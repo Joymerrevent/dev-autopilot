@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Test / coverage
+coverage/
+
+# Environment & secrets
+.env
+.env.*
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code: 個人設定は手元限り
+.claude/settings.local.json
+
+# Misc
+.cache/
+tmp/

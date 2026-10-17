@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+# 既定は読み取りのみ。書き込み等が要るジョブだけ job 単位で足す（最小権限）。
+permissions:
+  contents: read
+
+# 同一 ref の重複実行は打ち切る（必要なのは後発 push の結果だけ）。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # gitleaks はリリースのバイナリを版固定で入れ、チェックサムを確かめる
+  # （公式の gitleaks-action は組織アカウントでライセンスキーを求めるため使わない）
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256_LINUX_X64: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+
+# ci-node-pnpm レシピの「小規模なら単一ジョブに畳む」形。型検査・テスト・ビルドがまだ無いため、
+# 静的な検査を 1 つのジョブ ci にまとめる。branch protection の必須チェックは ci にする。
+# test や build を足すときは、レシピの ci.yml（changes・static・test・build と集約ゲート ci）に戻す。
+# アクションは SHA ピン＋バージョンコメント（タグの付け替え対策。更新は Dependabot が行う）。
+jobs:
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # gitleaks が履歴を検査するため全履歴を取得する
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      # 2 行目以降は前が落ちても走らせる。1 回の CI で直すべき箇所を全部出すため。cancelled() は除外する。
+      - run: pnpm format:check
+      - run: pnpm lint
+        if: ${{ !cancelled() }}
+      - name: Install gitleaks
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256_LINUX_X64}  ${RUNNER_TEMP}/${archive}" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/gitleaks"
+          tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}/gitleaks" gitleaks
+          echo "${RUNNER_TEMP}/gitleaks" >> "${GITHUB_PATH}"
+      # 成否は終了コードで見る。全履歴の秘密を検査する
+      - name: Scan history for secrets
+        if: ${{ !cancelled() }}
+        run: gitleaks git --redact --no-banner .

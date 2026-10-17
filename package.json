@@ -1,0 +1,40 @@
+{
+  "name": "dev-autopilot",
+  "private": true,
+  "description": "Issue の実装・レビュー・マージの判定までを AI で回す自律開発ループ（Claude Code の Plugin。開発中）",
+  "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "pnpm run \"/^lint:(?!fix$)[^:]+$/\"",
+    "lint:fix": "pnpm run \"/^lint:[^:]+:fix$/\"",
+    "lint:md": "markdownlint-cli2",
+    "lint:md:fix": "markdownlint-cli2 --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged && gitleaks git --pre-commit --staged --redact --no-banner",
+    "commit-msg": "pnpm exec commitlint --edit \"$1\""
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,json,jsonc,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint-cli2 --fix"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "lint-staged": "^17.6.0",
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.9.9",
+    "simple-git-hooks": "^2.14.0"
+  }
+}

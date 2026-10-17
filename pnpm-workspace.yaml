@@ -1,0 +1,11 @@
+# pnpm の設定ファイル。単一パッケージのため packages: は置かない。
+
+# サプライチェーン対策の熟成期間（分）。10080 分 = 7 日。公開から 7 日未満の版は
+# 解決候補から外し、悪性リリースが発見・削除されるまでの時間を稼ぐ。
+# 範囲内に条件を満たす版が無いときは解決を失敗させる（minimumReleaseAgeStrict の既定）。
+minimumReleaseAge: 10080
+
+# simple-git-hooks は依存としての postinstall を走らせない。フックの設置はルートの
+# `prepare`（`pnpm install` 時に実行）が行う。
+ignoredBuiltDependencies:
+  - simple-git-hooks
