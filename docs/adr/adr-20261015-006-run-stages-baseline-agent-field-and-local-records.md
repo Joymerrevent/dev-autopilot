@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 1 回の実行では重い段を 1 つだけ進め、基線が緑でなければ新しい着手だけ止め、進行役は Agent 欄に人の値を書かず、手元の記録は上限の数え上げにだけ使う
+
+> **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-006 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-5〜8（[決めていないこと][undecided]の「流れと段」）を決める。
 問いは 4 つある：1 回の実行で進める段の数え方、基線が赤のときの扱い、段階 5（計画と実装を動かし、レビューは人が行う段階。段階は dev-autopilot を少しずつ動かす導入の順番で、正本は「[段階][setup]」の表）の Agent 欄、手元の記録を使うかどうか。

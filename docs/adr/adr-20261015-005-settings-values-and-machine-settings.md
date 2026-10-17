@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 要件が決めていない設定の値は構造仕様に初期値として書いて設定ファイルで変え、マシンごとの値はリポの外の設定に置く
+
+> **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-005 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-17（[決めていないこと][undecided]の「まだ値が決まっていない設定」）を決める。
 問いは 2 つある：要件が値を決めていない設定の値をどこで決めるか、マシンごとに違う値（置き場のパスなど）をどこに置くか。
@@ -146,6 +148,10 @@ STRUCT-2 は、リポ固有の値をすべて設定ファイル 1 つ（例：bu
   - SAFE-10：マシンの設定を `denyRead` に入れることを書き足す
   - 07-structure.md か README：値の決まり方（決定 1。初期値は構造仕様、今の値は設定ファイル、安全の境界を緩める変更は ADR）を書く
   - 09-undecided.md：UNDECIDED-17 を欠番にする（元の文を取り消し線で残す）
+
+## パスの注記
+
+- `dev-autopilot/docs/design/` → `docs/design/`（2026-10-17・別のリポへの移動による。ADR-20261016-003）
 
 [undecided]: ../requirements/09-undecided.md
 [overview]: ../requirements/00-overview.md

@@ -31,7 +31,7 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
 - dev-autopilot への反映：`setup` が安全設定を書くとき、`denyRead` と `denyWrite` の各パスを実体に解決してから書く（リンクの場合は両方のパスを書く）。
   `check` は「設定に書いてある」ではなく「sandbox の中で実際に読めないこと」を、読み取りを試して確かめる（fail-open を機械で検出する）
 - business-os への反映：`plugin/templates/settings.json.tmpl` の `denyRead` の `~/.config/gh/**` `~/.aws/**` が、`~/.config` をリンクにしている利用者では効かない。
-  利用者向けの不具合なので Issue #80 に起票した（2026-10-08）
+  利用者向けの不具合なので business-os の Issue [#80][bos-issue-80] に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の署名鍵も、同期されないパスに置く
 
 FACT-6〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行ボットの clone と worktree 2 つ）と捨てる Project と、人が発行した PAT で実機確認した。段階 2 の未確認は残っていない。
@@ -96,9 +96,13 @@ UNDECIDED-29 を確かめるために行い、試験の後に捨てる Project �
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
 | FACT-27 | Project の単一選択の欄の値（`ProjectV2ItemFieldSingleSelectValue`）の `creator` が、値を最後に変えた人を指すか | **指さない。`creator` は値を最初に入れた人。** ワークフローが入れた Status を人が変えても、値の `id`・`creator`・`createdAt` は変わらず、`updatedAt` だけが進んだ。人が入れた値をワークフローが `Done` に変えても、`creator` は人のままだった。値を消すと値そのものが消え、入れ直すと新しい `id` の値ができて、`creator` は入れ直した人になった。値を最後に変えた人は、値からは取れない | 実行 |
-| FACT-28 | Issue のタイムラインの Status の変更のイベント（`ProjectV2ItemStatusChangedEvent`）で、値を最後に変えた人を取れるか | **取れるのは Status だけで、抜けがあるため正本にできない。** イベントは `actor`・`previousStatus`・`status` を持ち、試験では Status の 4 回の変更すべてに正しい `actor` で、1〜3 秒遅れて出た。一方、独自の単一選択の欄（Agent 欄に当たる）を変えてもイベントは出なかった。ロードマップの Project（19 項目）を読むと、値の `updatedAt` が進んだのにイベントが 1 件も無い項目があった（#37・#44・#45 など）。ワークフローによる変更でも `wasAutomated` は `false` だった | 実行 |
+| FACT-28 | Issue のタイムラインの Status の変更のイベント（`ProjectV2ItemStatusChangedEvent`）で、値を最後に変えた人を取れるか | **取れるのは Status だけで、抜けがあるため正本にできない。** イベントは `actor`・`previousStatus`・`status` を持ち、試験では Status の 4 回の変更すべてに正しい `actor` で、1〜3 秒遅れて出た。一方、独自の単一選択の欄（Agent 欄に当たる）を変えてもイベントは出なかった。ロードマップの Project（19 項目）を読むと、値の `updatedAt` が進んだのにイベントが 1 件も無い項目があった（business-os の [#37][bos-issue-37]・[#44][bos-issue-44]・[#45][bos-pr-45] など）。ワークフローによる変更でも `wasAutomated` は `false` だった | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [pnpm-store]: https://pnpm.io/settings/store
+[bos-issue-37]: https://github.com/Joymerrevent/business-os/issues/37
+[bos-issue-44]: https://github.com/Joymerrevent/business-os/issues/44
+[bos-pr-45]: https://github.com/Joymerrevent/business-os/pull/45
+[bos-issue-80]: https://github.com/Joymerrevent/business-os/issues/80

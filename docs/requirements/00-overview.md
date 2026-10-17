@@ -10,7 +10,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 
 | 項目 | 決定 |
 |---|---|
-| 置き場所 | いまは business-os の中に開発専用として作る。配布物（`plugin/` の下。`plugin/.claude-plugin/` `plugin/skills/` `plugin/agents/` `plugin/hooks/` `plugin/scripts/`）には入れない。利用者向けの文書には書かない。業務の固有名詞と秘密を置かない（`check:leak` の対象）。将来は別リポジトリに分離する前提で、1 つのフォルダに閉じて作る（「[分離を見越した構成][f07]」） |
+| 置き場所 | 独立したリポ（Joymerrevent/dev-autopilot）で作る（[ADR-20261016-003][adr-move]）。進行ボットが当てる先は、段階 8 の後に決めるまで business-os だけ（「[分離を見越した構成][f07]」）。文書とコードには業務の固有名詞と秘密を置かない（秘密は gitleaks で検査する。固有名詞の混入を探す検査は無い。UNDECIDED-46） |
 | 実行環境 | いまは手元の cron（macOS では launchd）。将来は専用マシンで同じものを回す。クラウドの仕組みは土台にせず、検討事項に残す（「[決めていないこと][f09]」） |
 | 人の関所 | Issue が起票されたら、受け入れ（検疫・作業指示の下書き・依存とマイルストーンの候補）は進行ボットが自動で用意し、人は下書きを読んで `agent-ready` を付ける 1 操作で処理対象にする（TEXT-12）。PR のマージの実行は人だけが行う。開発の PR は進行ボットがマージの可否を判定して人に渡す。方針に係る PR（「[マージ][f03]」の一覧）は判定の対象外。実行を進行ボットに移すかは、判定の信頼度を測ってから別に決める |
 | マイルストーン | リリースごとにマイルストーンを組む。着手する Issue はマイルストーンの中から選ぶ（FLOW-1）。受け入れはマイルストーンの有無を問わない（TEXT-12） |
@@ -19,16 +19,16 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）、fine-grained PAT（進行ボット用）、印の署名の鍵（IMPL-20）だけを置く（「[隔離と鍵の分け方][f05]」） |
 | AI のセッションの隔離 | AI の 5 役（「登場するもの」）すべての `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。進行ボット・次のセッション・CI は、AI が書いた worktree の中身（設定・gitdir・CI 定義・スクリプト）を信頼して実行しない（「[安全側に倒す設計][f05]」、「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。詳細は「[隔離と鍵の分け方][f05]」 |
 | モデル | 役ごとに別名で書き、版番号を書かない（`fable` `opus` `sonnet`。CLI の `--model` が別名を受け、最新の版に解ける。`haiku` だけは完全な ID（「[モデルの流れ][f02]」））。effort も役ごとに設定に持つ（`--effort`）。工程ごとのモデルと effort と切り替えの条件は「[モデルの流れ][f02]」の表が正本。要点は、作業 AI に `fable` を使わない、どの役にも `fable` を既定にしない、モデルを上げるのは計画 AI の自己申告と作業 AI の 2 ラウンド目の 2 か所だけ |
-| エージェント | 計画用・作業用・レビュー用・批評 AI・受付用の 5 つのエージェント定義を `dev-autopilot/plugin/agents/` に置く（「[分離を見越した構成][f07]」）。business-os の配布物 `plugin/agents/` には入れない |
+| エージェント | 計画用・作業用・レビュー用・批評 AI・受付用の 5 つのエージェント定義を `plugin/agents/` に置く（「[分離を見越した構成][f07]」）。business-os の配布物 `plugin/agents/` には入れない |
 
 ## 登場するもの
 
 AI の役は 5 つで、一覧はこの表が正本。5 役すべてに共通：`claude -p --output-format stream-json` を進行ボットが子プロセスとして起動し（途中で止めた回の消費も数えるため。IMPL-14）、「[隔離と鍵の分け方][f05]」の sandbox を掛け、`gh` の認証・`GH_TOKEN`・進行ボットの鍵を渡さず（環境変数は許可した名前だけで組み立てる）、
-ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボット専用 clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
+ユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。Plugin は進行ボットのプログラムの clone の絶対パスで渡す。「[安全側に倒す設計][f05]」）。道具の制限はエージェント定義の `tools`（道具なしは `tools: []`。段階 2 で確認）と `permissions` の allow と deny（SAFE-2 の (e)）で行い、GitHub への書き込みは一切できない。
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
-| 進行ボット | cron が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。AI と共有しない専用 clone から実行する | AI ではない。判定は決定的な処理で行う |
+| 進行ボット | cron が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。AI と共有しない、進行ボットのプログラムの clone（dev-autopilot のリポの clone。SAFE-16）から実行する | AI ではない。判定は決定的な処理で行う |
 | 計画 AI | `claude -p --agent <計画用>` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
 | 作業 AI | `claude -p --agent <作業用>` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行ボットが固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
 | レビュー AI | `claude -p --agent <レビュー用>` を、進行ボットが PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごとに新しいセッション。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
@@ -47,3 +47,4 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 [f09]: ./09-undecided.md
 [f11]: ./11-records.md
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
+[adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md

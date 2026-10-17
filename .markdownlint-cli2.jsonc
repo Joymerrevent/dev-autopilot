@@ -1,5 +1,5 @@
 {
-  // markdownlint-cli2 設定（md-lint-format レシピの設定に、MD060 と MD033 の無効化を足したもの）。
+  // markdownlint-cli2 設定（md-lint-format レシピの設定に、MD060 の無効化を足したもの）。
   // ここは構造/内容を lint する。Markdown の整形に Prettier は使わない（.prettierignore を参照）。
   "config": {
     "default": true,
@@ -9,8 +9,6 @@
     "MD036": false,
     // 表の列揃えは強制しない（移した文書は business-os の設定の下で、揃えずに書いてある）
     "MD060": false,
-    // 本文の <n> などの書き方を許容。<n> は GitHub の表示で消えるため、文書を直してから true に戻す
-    "MD033": false,
     // リンクは参照スタイル（[text][label] ＋末尾に [label]: URL）に統一。
     // inline [text](url) は禁止。裸 URL は autolink <url> でよい。
     "MD054": {

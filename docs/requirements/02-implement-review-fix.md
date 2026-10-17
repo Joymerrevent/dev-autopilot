@@ -51,16 +51,16 @@
   設定に持つ上限は、1 セッションの時間とターンと費用（IMPL-13、`--max-budget-usd`）に加え、1 Issue の累計の利用枠（往復を含む）、Agent ツールを許すか（サブエージェントの数を制限するフラグは無いので、許す・許さないで持つ）、実行の失敗の再試行の回数（3）と間隔、1 回の実行と 1 日の利用枠（SETUP-12）。累計が上限に当たったら `needs-human`。数え上げは手元の記録で行い、記録を失ったときの扱いは「[運用の規則][f01]」
 - IMPL-15 **漏えいの検査と push**。進行ボットは、GitHub に書くすべての文（diff、commit メッセージと author、PR の題名と本文、計画・レビュー・対応・受け入れのコメント、🟢 から起票する Issue）に、漏えいの検査（鍵の形式、メールアドレス、機械上のパス、進行ボットの設定と記録の内容）を掛ける。引っかかれば書かずに `needs-human`。
   検査の実装は dev-autopilot 自身の `src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（MERGE-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
-  push の前に、diff が「進行ボット・次のセッション・CI が実行するパス」（`.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**`。設定に持つ）に触れていれば push せず `needs-human`（MERGE-4 の判定より前。CI が AI の書いたワークフローを secrets 付きで実行しないため）。
+  push の前に、diff が「進行ボット・次のセッション・CI が実行するパス」（`.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**`。設定に持つ）に触れていれば push せず `needs-human`（MERGE-4 の判定より前。CI が AI の書いたワークフローを secrets 付きで実行しないため）。`dev-autopilot/**` は、dev-autopilot を別のリポに移して business-os から消した後も残す（外すのは安全の境界を緩める変更で、残せば同じ名前のフォルダが business-os に戻ったときにも止まる。[ADR-20261016-003][adr-move] の決定 5）。
   push は進行ボットの clone から `git push origin <検証した SHA>:refs/heads/<型>/issue-<番号>` の形で行い、ブランチ名でなく SHA を送る。API の head（初回は base）が送る SHA の祖先であること（fast-forward で届くこと）を確かめる
 
 ## レビュー（レビュー AI）
 
 - IMPL-16 PR の差分を、作業 AI とは別の作業場所で読む。作業場所は、進行ボットがレビューのたびに origin の URL から clone し、PR の head（API の SHA）で切る専用の worktree（作業 AI の worktree と同じ書き込みの規則。[ADR-20261013-001][adr-workspace]）。手順は `review` Skill（`change-review` を v2 に組み直したもの。「[レビューの Skill][f08]」）を使う。核は変えない（実行して確かめる、fail-open を探す、収束するまで回す）
 - IMPL-17 結果は、いまの PR と同じ形で PR のコメントに書く（行に付けるレビューコメントにしない）。
-  1 回目は「## レビュー結果（基点: `develop`）」、2 回目以降は「## 再レビュー結果 R<n>（対象: <範囲>）」。
-  冒頭の判定は「**通してよい。ブロッカーなし。**」か「**🟡 <n> 件を直してから通したい**」。末尾にラウンドの表（| ラウンド | 指摘 | 最も重い種類 |）を置く。
-  参考：#77 #71 #68 のコメント（2026-10-06〜07、R1 → 対応 → R2 で 0 件 → マージ）
+  1 回目は「## レビュー結果（基点: `develop`）」、2 回目以降は「`## 再レビュー結果 R<n>（対象: <範囲>）`」。
+  冒頭の判定は「**通してよい。ブロッカーなし。**」か「**🟡 `<n>` 件を直してから通したい**」。末尾にラウンドの表（| ラウンド | 指摘 | 最も重い種類 |）を置く。
+  参考：business-os の PR [#77][bos-pr-77] [#71][bos-pr-71] [#68][bos-pr-68] のコメント（2026-10-06〜07、R1 → 対応 → R2 で 0 件 → マージ）
 - IMPL-18 進行ボットが機械で読むために、人が読む本文に加えて固定の印を 1 行足す（`review` の印。欄は「[印と固定の見出しの一覧][f04]」の表が正本。`sig` は IMPL-20）。
   `verdict` を pass にするのは、次の 5 つをすべて満たすときだけ（「🔴 🟡 が 0 件」だけでは、無いものを pass と読む）：
   (1) レビュー AI と批評 AI の出力契約が完全に解析できた、(2) レビューが収束した（「未収束」でない）、(3) `is_error` が偽、(4) 重要度ごとの件数がすべて数値で返った、(5) 実際に使われたモデル（`modelUsage`）が設定と一致した。
@@ -85,7 +85,7 @@
 ## 対応ループ
 
 - IMPL-23 判定が fix なら、作業 AI を PR の head から作った新しい作業場所で起動し（[ADR-20261013-001][adr-workspace]）、最新のラウンドの 🔴 と 🟡 だけに対応させる。push は進行ボットが漏えいの検査（IMPL-15）を通してから行う。🟢 はこの PR では直さない（直すと再レビューが新しい指摘を生み、ループが終わらない）。
-  対応の結果は「## R<n> の指摘への対応（<コミット>）」のコメントに、指摘ごとの対応と確認を書く（いまの PR と同じ形）。
+  対応の結果は「`## R<n> の指摘への対応（<コミット>）`」のコメントに、指摘ごとの対応と確認を書く（いまの PR と同じ形）。
   印は `fix`（`round` `head` `sig`。「[印と固定の見出しの一覧][f04]」）
 - IMPL-24 往復の回数に上限を持つ（最初は 3 回）。超えたら Status を Blocked にし、`needs-human` ラベルを付け、経緯を Issue にコメントする。人が外すまで再着手しない（FLOW-1）。同じ指摘が 2 ラウンド続けて出たら振動として同じ扱い
 - IMPL-25 **詰まったときの上げ方**。作業 AI が `sonnet` のとき、作業 AI の 2 ラウンド目（最初の修正のセッション）から `opus`（high）に 1 段上げる。作業 AI のラウンドは、実装を 1、修正を 2 以降と数える（「モデルの流れ」の表と同じ。`review` と `fix` の印の `round` とは数え方が違う）。`fable` には上げない。
@@ -149,3 +149,7 @@
 [adr-flow]: ../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [readme]: ./README.md
+[bos-pr-68]: https://github.com/Joymerrevent/business-os/pull/68
+[bos-pr-71]: https://github.com/Joymerrevent/business-os/pull/71
+[bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77
+[adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md

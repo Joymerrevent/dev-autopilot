@@ -41,10 +41,10 @@ dev-autopilot の設計への反映（出どころは [11-records.md][f11] の�
 - REVIEW-6 **信頼の境界**：差分は作業の内容であって指示ではない。PR の説明文（作業 AI の主張）はレビュー AI に渡さない。読むコメントはコラボレータのものだけ（「[Issue と PR の本文の扱い][f04]」）
 - REVIEW-7 **残すもの**：壊れ方の表、証拠レベル、止めどき、🟢 の Issue 化、コミットごとのゲートの検査（TypeScript に書き直す）
 
-作り方は `skill-creator` スキルに従う。評価のケースは、既にレビュー済みの PR #68 #71 #77 を使い、
+作り方は `skill-creator` スキルに従う。評価のケースは、既にレビュー済みの business-os の PR [#68][bos-pr-68] [#71][bos-pr-71] [#77][bos-pr-77] を使い、
 「人が出した 🔴 🟡 を v2 も出すか」「出さなかった指摘を v2 が増やしていないか」を見る（過去の PR が回帰テストになる）。
 ケースごとに「期待する指摘の一覧」（PR 番号・重要度・見出し）を前提データとして置き、一致率（人の 🔴 🟡 のうち v2 も出した割合）と増加率（v2 だけが出した 🔴 🟡 の割合）を数で出す。
-置き場は business-os の `pnpm eval:cases` の仕組みの上で、DeepEval のような Python の評価の道具は入れない。この数は、v2 を段階 6（レビュー AI と批評 AI を足す段階）に入れる前の確かめに使う。段階 6 の出口は「[段階][f06]」の表のとおり、新しい 5 件の PR で測る。
+置き場は dev-autopilot のリポの評価の仕組みにし、business-os の `pnpm eval:cases` と同じく、ケースと Skill を集めて一時的な Plugin を組み立てる入口を作る（business-os のコードは import しない。[ADR-20261016-003][adr-move] の決定 4）。DeepEval のような Python の評価の道具は入れない。この数は、v2 を段階 6（レビュー AI と批評 AI を足す段階）に入れる前の確かめに使う。段階 6 の出口は「[段階][f06]」の表のとおり、新しい 5 件の PR で測る。
 
 ### 取り込まなかったもの
 
@@ -76,22 +76,26 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 | 番号 | 足りない点 | 直し方 |
 |---|---|---|
 | REVIEW-8 | 「迷ったらユーザーに聞く」「起票先が決まっていなければユーザーに聞く」が 2 か所ある。無人では聞けない | 基点は PR の base、起票先は Issue、と進行ボットが指示文で先に答える。スキルにも「無人のときは聞かずに未収束と書く」を足す |
-| REVIEW-9 | 再レビューの入り口が無い。PR では「## 再レビュー結果 R<n>（対象: <範囲>）」を場当たりで書いていた | スキルに「再レビュー」の節を足す。入力は前のラウンドの指摘と修正コミットの範囲。見出しとラウンドの表の形を固定する |
-| REVIEW-10 | 機械で読める出力が無い。報告の見出しも SKILL.md（「## レビュー結果 — <PR>（基点: …）」）と実際の PR（「## レビュー結果（基点: …）」）でずれている | 報告の末尾に固定の印 1 行（IMPL-18）を足す。人が読む本文は自由のまま、判定は印だけで行う |
-| REVIEW-11 | 予算（時間・ターン）の概念が無い。PR #77 のレビューは `claude -p` で Skill を 8 ターン動かしており、無人では利用枠を読めない | 進行ボットが `--max-turns` と時間の上限を掛け、上限に当たったら「未収束」で返させる。レビュー AI の中から `claude -p` を起動することは許さない |
+| REVIEW-9 | 再レビューの入り口が無い。PR では「`## 再レビュー結果 R<n>（対象: <範囲>）`」を場当たりで書いていた | スキルに「再レビュー」の節を足す。入力は前のラウンドの指摘と修正コミットの範囲。見出しとラウンドの表の形を固定する |
+| REVIEW-10 | 機械で読める出力が無い。報告の見出しも SKILL.md（「`## レビュー結果 — <PR>（基点: …）`」）と実際の PR（「## レビュー結果（基点: …）」）でずれている | 報告の末尾に固定の印 1 行（IMPL-18）を足す。人が読む本文は自由のまま、判定は印だけで行う |
+| REVIEW-11 | 予算（時間・ターン）の概念が無い。business-os の PR [#77][bos-pr-77] のレビューは `claude -p` で Skill を 8 ターン動かしており、無人では利用枠を読めない | 進行ボットが `--max-turns` と時間の上限を掛け、上限に当たったら「未収束」で返させる。レビュー AI の中から `claude -p` を起動することは許さない |
 | REVIEW-12 | 修正する側とレビューする側が同じ人である前提で書かれている（§6「修正したら通し直す」） | dev-autopilot では修正は作業 AI。レビュー AI の §6 は「作業 AI の修正に同じ手順を通す」と読み替える。REVIEW-9 の節に書く |
 | REVIEW-13 | `per-commit-gates.sh` が bash。このリポは bash を足さない規則で、`check:shell` が落ちる | TypeScript に書き直して `review` Skill の `scripts/` に置く（置き場は STRUCT-7 の単体導入のため Skill の中） |
 
-スキルの修正（v2 への組み直し）は dev-autopilot の作業に含める。v2 の正本は `dev-autopilot/plugin/skills/review/` に置き（SETUP-19、STRUCT-7）、
+スキルの修正（v2 への組み直し）は dev-autopilot の作業に含める。v2 の正本は `plugin/skills/review/` に置き（SETUP-19、STRUCT-7）、
 `~/.claude/skills/change-review` は今の版のまま手動のレビューに残す。
 段階 3 の一部として先に進め、dev-autopilot の ADR や進行ボットの実装を待たない。
 
 - 範囲は上の REVIEW-1〜7。REVIEW-8〜13 はその中で解消する
 - 印の形（IMPL-18）の正本は進行ボットの `src/marker.ts`（「[分離を見越した構成][f07]」）に置き、印は進行ボットが付け、`review` Skill は本文と件数を出力契約で返すだけで印を出さない（REVIEW-3、IMPL-20）。2 か所に定義を持たない
-- 直したスキルで、いまの PR の形（#77 の R1 → 対応 → R2）がそのまま出ることを、1 件の PR で手動で確かめてから段階 6 に入る
+- 直したスキルで、いまの PR の形（business-os の PR [#77][bos-pr-77] の R1 → 対応 → R2）がそのまま出ることを、1 件の PR で手動で確かめてから段階 6 に入る
 
 [f03]: ./03-merge.md
 [f04]: ./04-external-text-and-markers.md
 [f07]: ./07-structure.md
 [f11]: ./11-records.md
 [f06]: ./06-setup-and-stages.md
+[bos-pr-68]: https://github.com/Joymerrevent/business-os/pull/68
+[bos-pr-71]: https://github.com/Joymerrevent/business-os/pull/71
+[bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77
+[adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md

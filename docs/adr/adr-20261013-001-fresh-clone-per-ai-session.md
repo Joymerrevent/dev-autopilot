@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-13
-updated: 2026-10-16
+updated: 2026-10-17
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない
+
+> **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261013-001 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-1〜4（[決めていないこと][undecided]の「AI の作業場所」）を決める。
 確かめることの UNDECIDED-24 は、本 ADR の決定で確かめる必要が無くなる。
