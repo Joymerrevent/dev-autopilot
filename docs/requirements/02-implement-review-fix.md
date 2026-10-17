@@ -39,6 +39,7 @@
   |---|---|---|
   | 利用枠切れ（HTTP 429） | 実行の失敗。持ち越し | 本項 |
   | 時間の上限（45 分）に進行ボットが止めた | 実行の失敗。持ち越し | IMPL-13 |
+  | 全体の止める合図（リポの変数）で進行ボットが止めた | 実行の失敗に数えない。持ち越し（合図が `run` に戻った後に続ける） | 「[運用の規則][f01]」、[ADR-20261017-007][adr-stop] |
   | ターンの上限（`--max-turns`）に当たった | 実行の失敗。持ち越し | IMPL-13 |
   | `claude` の異常終了、出力契約が解析できない・欠けている | 実行の失敗。持ち越し | IMPL-5 |
   | 依存の導入でレジストリにつながらない | 実行の失敗。持ち越し | IMPL-1 |
@@ -161,3 +162,4 @@
 [bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
