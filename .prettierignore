@@ -1,0 +1,8 @@
+# 依存・ロックファイル
+node_modules
+coverage
+pnpm-lock.yaml
+
+# Markdown は markdownlint が見る。Prettier で整形すると日本語の表や文書が大きく書き換わり、
+# business-os から引き継いだ履歴（git blame）が整形の commit で埋まるため対象外
+*.md
