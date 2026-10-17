@@ -20,11 +20,12 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   `claude` と Node の版、Skill の有無、前回の実行の記録と記録の印のファイル（無ければ fail。「[運用の規則][f01]」）、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と署名の鍵が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ `needs-human`、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは UNDECIDED-27）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行ボットの clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から進行ボットの clone へ fetch すると失敗すること。
-  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと。
+  AI の読み取りと秘密の置き場も実際に試す（[ADR-20261015-001][adr-read] の確認方法）：sandbox の中からホームのファイル・`<置き場>/controller/`・進行ボットのプログラムの clone・別のセッション・秘密の置き場を読めず、自分のセッションの clone と worktree は読めること、SAFE-10 の環境変数で `git commit` と `pnpm install` が通ること、Read ツールで worktree の外を読むと拒否されること、秘密の置き場の権限（700・600）と実体のパスが同期フォルダの下に無いこと、launchd の plist に秘密の値が無いこと。
   依存の store も試す（[ADR-20261015-002][adr-store] の確認方法）：sandbox の中の `pnpm store path` がセッションの一時フォルダの下を返すこと、安全設定の `allowRead` と `allowWrite` に共有の store が無いこと、子プロセスに渡す環境変数の名前に `PNPM_HOME` が無いこと。
   設定も確かめる（[ADR-20261015-005][adr-settings] の確認方法）：すべての項目がリポの設定かマシンの設定の一方にだけあること、リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと、マシンの設定の実体のパスが同期フォルダの下に無いこと
+  進行ボットの 2 つの clone も試す（[ADR-20261016-003][adr-move] の確認方法）：進行ボットのプログラムの clone と `<置き場>/controller/` が別のフォルダで、どちらも sandbox の中から読めず書けないこと
 - SETUP-3 **設定の正本は項目ごとに 1 つ**（リポの設定かマシンの設定のどちらか。STRUCT-2）。導入が書き、点検が読み、進行ボットが使う。人が直接編集してもよいが、点検が整合を確かめる（[ADR-20261015-005][adr-settings]）
-- SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、分離後に `setup` が別のリポで動く保証が無くなる
+- SETUP-4 **business-os への導入は、この仕組みの最初の利用者として `setup` で行う**。手で作らない。手で作ると、ほかのリポに当てるときに `setup` が動く保証が無くなる
 
 ## いまのリポジトリに無いもの（準備の作業）
 
@@ -41,7 +42,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 | SETUP-8 | 処理対象を示すラベルが無い | `agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus` を `setup` が足す。名前は設定ファイルに持ち、ここに書いた名前は初期値 |
 | SETUP-9 | `develop` にブランチ保護が無い | ruleset で PR 必須にする（自律セッションの直 push を仕組みで止める） |
 | SETUP-10 | 済み（2026-10-16 に確認）：コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（SAFE-14）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
-| SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | 開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。中身は「[分離を見越した構成][f07]」の構成 |
+| SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | ~~開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。~~ dev-autopilot は別のリポに移した（[ADR-20261016-003][adr-move]）ので、そのリポの root に `src/` と `tsconfig.json` を置く。中身は「[分離を見越した構成][f07]」の構成 |
 | SETUP-12 | `claude -p` の実行は利用枠を消費する | 1 回の実行・1 日あたりの上限を設定に持つ |
 | SETUP-13 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（IMPL-18）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む） |
 | SETUP-14 | Issue のフォームに受け入れ条件の欄が無い | 外から入る Issue は報告・提案の形で、作業の定義ではない。コラボレータの作業指示コメント（TEXT-1）で補う。フォームには足さない（外の人が書く欄にしない） |
@@ -77,3 +78,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
+[adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md

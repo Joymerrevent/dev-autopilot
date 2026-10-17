@@ -44,7 +44,7 @@ dev-autopilot の設計への反映（出どころは [11-records.md][f11] の�
 作り方は `skill-creator` スキルに従う。評価のケースは、既にレビュー済みの business-os の PR [#68][bos-pr-68] [#71][bos-pr-71] [#77][bos-pr-77] を使い、
 「人が出した 🔴 🟡 を v2 も出すか」「出さなかった指摘を v2 が増やしていないか」を見る（過去の PR が回帰テストになる）。
 ケースごとに「期待する指摘の一覧」（PR 番号・重要度・見出し）を前提データとして置き、一致率（人の 🔴 🟡 のうち v2 も出した割合）と増加率（v2 だけが出した 🔴 🟡 の割合）を数で出す。
-置き場は business-os の `pnpm eval:cases` の仕組みの上で、DeepEval のような Python の評価の道具は入れない。この数は、v2 を段階 6（レビュー AI と批評 AI を足す段階）に入れる前の確かめに使う。段階 6 の出口は「[段階][f06]」の表のとおり、新しい 5 件の PR で測る。
+置き場は dev-autopilot のリポの評価の仕組みにし、business-os の `pnpm eval:cases` と同じく、ケースと Skill を集めて一時的な Plugin を組み立てる入口を作る（business-os のコードは import しない。[ADR-20261016-003][adr-move] の決定 4）。DeepEval のような Python の評価の道具は入れない。この数は、v2 を段階 6（レビュー AI と批評 AI を足す段階）に入れる前の確かめに使う。段階 6 の出口は「[段階][f06]」の表のとおり、新しい 5 件の PR で測る。
 
 ### 取り込まなかったもの
 
@@ -98,3 +98,4 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 [bos-pr-68]: https://github.com/Joymerrevent/business-os/pull/68
 [bos-pr-71]: https://github.com/Joymerrevent/business-os/pull/71
 [bos-pr-77]: https://github.com/Joymerrevent/business-os/pull/77
+[adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
