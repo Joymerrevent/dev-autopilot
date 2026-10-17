@@ -46,7 +46,7 @@ decision-makers: メンテナ
 
 - 安全の境界（AI の道具・読み書きの範囲）を、確かめていない Claude Code の振る舞いや、版で変わる既定に頼って緩めないこと
 - 集約・数え上げ・pass の条件の判定を、AI でなく進行ボットの決定的な処理で行うこと（「[登場するもの][overview]」の、進行ボットを AI にしない理由）
-- 利用枠とモデルの確かめ（IMPL-14 の数え上げ、IMPL-18 の (5)）を、今の仕組みのまま回せること
+- 利用枠の数え上げ（IMPL-14）とモデルの確かめ（IMPL-18 の (5)）を、AI のセッションごとに行えること（`stream-json` からの数え方そのものは、UNDECIDED-47 で別に決める）
 - AI に渡す文の範囲を、`agent-ready` の時点で確定したまま保つこと（TEXT-1、TEXT-4）
 - 作業 AI の出力を、次のセッション（レビュー AI と修正のセッション）が規則として信頼しないこと（SAFE-2）
 - `review` Skill が、人が手で使うとき（STRUCT-7 の単体導入）にも同じ手順で動くこと
@@ -127,8 +127,8 @@ decision-makers: メンテナ
 
 - 良い点: Agent ツールを開けないので、安全の境界は今のまま。サブエージェントの入れ子の深さや道具の受け継ぎのような、版で変わる振る舞いに頼らない
 - 良い点: 軸ごとの出力を進行ボットが機械で束ねる。差分に紛れた指示が 1 つの軸のセッションを惑わせても、ほかの軸の指摘は消えない
-- 良い点: 軸のセッションごとに、今の仕組み（`stream-json` の数え上げ、`modelUsage` の確かめ、時間とターンと費用の上限）がそのまま効く。
-  途中で止めた回の数え上げには、案に関わらず直す点がある（補足情報の「本 ADR の決定と関わらない発見」）
+- 良い点: 軸のセッションごとに、今の仕組み（`modelUsage` の確かめ、時間とターンと費用の上限）がそのまま効き、消費もセッションごとの記録で数えられる。
+  途中で止めた回の消費の数え方は、案に関わらず UNDECIDED-47 で決める
 - 良い点: AI に渡す文の範囲が `agent-ready` の時点で確定したまま変わらず、対応ループの入力を印から再現できる
 - 良い点: 作業 AI が正典を書き換えて自分の変更を通す経路が、レビュー AI の指示の守り方でなく、push の前の機械の検査で止まる
 - 悪い点: 1 ラウンドのセッションが 2 つ（レビューと批評）から 4 つ（3 つの軸と批評）になり、作業場所の clone と依存の導入が軸の数だけ増える（clone は約 3 秒、sandbox の中の `pnpm install` は空の store で約 9 秒。FACT-21、FACT-22）。
@@ -245,11 +245,8 @@ decision-makers: メンテナ
     前で動いたとき（3 回目。`--forward-subagent-text` なし）は、2 つのメッセージのうち道具を呼んだ 1 つだけが出た。途中の記録（`task_progress` と `task_notification`）は、`total_tokens`・`tool_uses`・`duration_ms` だけを持ち、モデルと入力・出力の内訳を持たない
   - サブエージェントをバックグラウンドで動かすかは、同じ指示でも回ごとに違った（1 回目と 2 回目はバックグラウンド、3 回目は前）。バックグラウンドの回は、親がサブエージェントの答えを待たずにターンを終え、`result` が 2 つ出た（1 つ目は「サブエージェントはまだ動いている」という返事）。プロセスは 2 つ目の `result` の後に終わった
   - 初期化の記録の道具の一覧では、Agent ツールは `Task` という名前で出た
-- 本 ADR の決定と関わらない発見（実機の確かめの途中で分かった。要件の直し方は、本 ADR と別に決める。[dev-autopilot の PR #5][da-pr-5] で FACT-29・FACT-30 と UNDECIDED-47・UNDECIDED-48 として足した）
-  - IMPL-14 は「`assistant` のイベントごとの `model` と `usage` を足し上げる」とし、FACT-14 は途中で止めても消費を集計できるとしている。
-    上の確かめのとおり、`assistant` のイベントの `usage` は同じメッセージで重複し、`output_tokens` は最後の値でないので、そのまま足すと入力を多く、出力を少なく数える。サブエージェントを使わない案でも起きる
-  - `--setting-sources local` で起動したセッションでも、初期化の記録の `mcp_servers` に、ログインしている claude.ai のアカウントのコネクタ（メール、カレンダーなど。`source` は `claudeai`）が、3 回のうち 2 回出た（1 回目と 2 回目。3 回目は空）。
-    試験では、親の道具がエージェント定義の `tools` で `Task` と `Read` に絞られていたので、どの回もコネクタの道具は道具の一覧に無かった。認証が要るコネクタの案内の文が、2 回（2 回目と 3 回目）、親の最後の返事に混ざった
+- 本 ADR の決定と関わらない発見：実機の確かめの途中で、`assistant` のイベントの `usage` が同じメッセージで重複し、`output_tokens` が最後の値でないこと（FACT-29）と、`--setting-sources local` のセッションにも claude.ai のコネクタが入る回があること（FACT-30）が分かった。
+  どちらも [実機で確かめた事実][facts] に足し、決め方を [決めていないこと][undecided] の UNDECIDED-47・UNDECIDED-48 に回した（[dev-autopilot の PR #5][da-pr-5]）
 - 2026-10-17 に、business-os の `develop` の `CLAUDE.md` と `docs/` を GitHub の API で読んだ：正典は `docs/adr/`（35 件）、構造仕様は `docs/design/architecture.md`
 - 要件への反映（承認の後に、別の PR で行う）
   - 「[登場するもの][overview]」：レビュー AI の行を、軸ごとの 3 つのセッションに改める。5 役に共通の説明に、Agent ツールをどの役にも与えないことを書く
@@ -266,6 +263,7 @@ decision-makers: メンテナ
   - 09-undecided.md：UNDECIDED-32、UNDECIDED-33、UNDECIDED-34 を欠番にする（元の文を取り消し線で残す）
 
 [undecided]: ../requirements/09-undecided.md
+[facts]: ../requirements/10-verified-facts.md
 [overview]: ../requirements/00-overview.md
 [flow]: ../requirements/01-issue-flow.md
 [impl]: ../requirements/02-implement-review-fix.md
