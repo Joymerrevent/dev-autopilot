@@ -20,6 +20,7 @@
 | ADR-20261017-001 | [dev-autopilot の履歴を新しいリポへ引き継ぎ、PR の番号を business-os の参照に書き換えて、メンテナの鍵で署名を付け直す][adr-20261017-001-carry-history-into-own-repository] | accepted | 2026-10-17 |
 | ADR-20261017-002 | [レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない][adr-20261017-002-review-axis-sessions-pr-comments-and-canon] | accepted | 2026-10-17 |
 | ADR-20261017-003 | [進行ボットを Plugin に同封し、Plugin を入れたプロジェクトで setup が利用者のマシンに版を写して定期の実行を登録する][adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot] | accepted | 2026-10-17 |
+| ADR-20261017-005 | [AI のセッションは MCP のサーバーを読み込まず、claude.ai のコネクタを設定・環境変数・起動の引数と道具の deny で重ねて止める][adr-20261017-005-ai-sessions-load-no-mcp-servers] | proposed | 2026-10-17 |
 
 <!--
 行の例（表の最後に足す）:
@@ -46,3 +47,4 @@
 [adr-20261017-001-carry-history-into-own-repository]: ./adr-20261017-001-carry-history-into-own-repository.md
 [adr-20261017-002-review-axis-sessions-pr-comments-and-canon]: ./adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[adr-20261017-005-ai-sessions-load-no-mcp-servers]: ./adr-20261017-005-ai-sessions-load-no-mcp-servers.md
