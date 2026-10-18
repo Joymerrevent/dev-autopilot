@@ -2,7 +2,7 @@
 
 dev-autopilot は、人が処理対象にした Issue を AI が実装し、別の AI がレビューし、指摘が無くなるまで直し、マージしてよいかを判定して人に渡す自律開発ループ（Claude Code の Plugin。開発中）。
 目的と前提は [00-overview.md][overview] にある。今は要件・ADR・図と検査の設定だけで、コードはまだ無い。
-当てる先は、段階 8 の後に決めるまで business-os（Joymerrevent/business-os）だけ（[07-structure.md][structure] の「分離の時期の目安」）。
+当てる先は、マージ判定工程（段階 8）の後に決めるまで business-os（Joymerrevent/business-os）だけ（[07-structure.md][structure] の「分離の時期の目安」）。
 
 **業務の固有名詞・人名・秘密を書かない。** 固有名詞の混入を探す検査はまだ無い（UNDECIDED-46）ので、書く前に確かめる。
 
