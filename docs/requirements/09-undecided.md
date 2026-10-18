@@ -37,8 +37,8 @@
   IMPL-13 を変え、未完成の作業を GitHub に push することになる。段階 5 で上限に当たった回数を記録してから決める（[02-implement-review-fix.md][f02]）
 - UNDECIDED-30 **欠番**（[ADR-20261018-002][adr-redo] で決めた）：~~**計画のやり直しを同じ実行で行うか。** 計画 AI の `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、計画の工程で AI のセッションが 2 つになる。
   次の実行に回すなら、自己申告があったことと 1 回上げたことを GitHub に残す仕組み（`plan` の印の欄など）が要る。手元の記録は判定に使わない（[ADR-20261015-006][adr-flow]。[02-implement-review-fix.md][f02]）~~
-- UNDECIDED-31 **作業 AI のモデルを上げた件数を、どの段階で数えるか。** IMPL-25 と段階の表は、段階 5（計画と実装を動かし、レビューは人が行う段階）で「`sonnet` で始めて `opus` で通った件数」を数えるとする。
-  モデルを上げるのは修正のセッション（作業 AI の 2 ラウンド目以降）で、修正のセッションは段階 7（対応ループを足す段階）で足すので、段階 5 には上げる場面が無い（[02-implement-review-fix.md][f02]、[06-setup-and-stages.md][f06]）
+- UNDECIDED-31 **欠番**（[ADR-20261018-003][adr-model] で決めた）：~~**作業 AI のモデルを上げた件数を、どの段階で数えるか。** IMPL-25 と段階の表は、段階 5（計画と実装を動かし、レビューは人が行う段階）で「`sonnet` で始めて `opus` で通った件数」を数えるとする。
+  モデルを上げるのは修正のセッション（作業 AI の 2 ラウンド目以降）で、修正のセッションは段階 7（対応ループを足す段階）で足すので、段階 5 には上げる場面が無い（[02-implement-review-fix.md][f02]、[06-setup-and-stages.md][f06]）~~
 
 ### レビューとマージ
 
@@ -52,7 +52,7 @@
   作業 AI は head の `docs/adr/**` などを書き換えうる（IMPL-15 の push を止めるパスに入っていない。マージの判定では `merge=human`）。レビュー AI が書き換えられた規約を読まないようにするか、どう渡すかが決まっていない（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）~~
 - UNDECIDED-51 **計画をレビューするか（誰が、いつ）。** 計画 AI の計画は、進行ボットが印を付けて Issue にコメントするだけで、AI はレビューしない（IMPL-10。レビュー AI が見るのは PR の差分だけ。REVIEW-1）。
   段階 5〜7（計画と実装を AI に任せ、レビュー AI と対応ループを順に足す段階）では、人が計画を読んで止めることができるが、読むのは決まりではない。段階 8（進行ボットがマージしてよいかを判定し始める段階）以降は、計画は記録として残るだけになる（IMPL-10、FLOW-20）。
-  計画が誤っていると、実装と修正の手直しが大きくなり、往復の回数と利用枠が増える。PR の出来が悪いときに、原因が作業 AI のモデルなのか計画なのかを分けられず、最初の実装に使うモデルの比べ方（UNDECIDED-31）も狂う。
+  計画が誤っていると、実装と修正の手直しが大きくなり、往復の回数と利用枠が増える。PR の出来が悪いときに、原因が作業 AI のモデルなのか計画なのかを分けられず、最初の実装に使うモデルの比べ方（[ADR-20261018-003][adr-model]）も狂う。
   計画を誰がレビューするか（AI、人、両方）、いつ行うか（計画を投稿する前か、段階 5〜7 だけか、段階 8 以降もか）、レビューで問題が見つかったときにどうするか（計画し直す回数）を決める（[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）
 
 ### 受け入れと印
@@ -121,6 +121,7 @@
 - UNDECIDED-42 **欠番**（[ADR-20261016-003][adr-move] で、評価を dev-autopilot のリポに置くと決めた）：~~`review` Skill の評価の置き場。「[レビューの Skill][f08]」は評価を business-os の `pnpm eval:cases` の仕組みの上に置くとし、STRUCT-4 は検査を dev-autopilot 自身が持つとする。分離のときに評価も移すかを決める~~
 - UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:intake` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める
 - UNDECIDED-46 業務の固有名詞の混入を探す検査。business-os の中にあった間は、business-os の `check:leak`（メールアドレス・電話番号・法人格・金額・許可リストに無いドメインを探す）が dev-autopilot の文書も見ていた。dev-autopilot のリポの gitleaks は秘密の値だけを探すので、固有名詞の混入を探す検査が無い（「[決まっていること][f00]」の置き場所の行）。検査を足すか、足すならどう足すか（gitleaks の独自の規則、TypeScript の検査など）を決める
+- UNDECIDED-52 Issue の種類の分け方。最初の実装で使うモデルは Issue の種類ごとに決める（IMPL-25、[ADR-20261018-003][adr-model]）が、要件は Issue をどう種類に分けるか（ブランチの型（IMPL-2）か、別の分け方か）を書いていない。段階 5 の記録の欄を決めるときに決める
 
 ## 確かめること
 
@@ -170,3 +171,4 @@
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
+[adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
