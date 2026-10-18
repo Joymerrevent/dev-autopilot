@@ -97,7 +97,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 12 | 計画の印（`plan`）が無い | 計画（重い）。計画を投稿した実行では、実装に入らない（[FLOW-20][flow]、[IMPL-10][impl]） |
 | 13 | 計画の印があり、結びつく PR が無い | 実装と PR の作成（重い）。渡す文のハッシュが `intake-final` の印と同じで、基線が緑のときだけ（[FLOW-21][flow]、[TEXT-4][text]、[IMPL-9][impl]）。ハッシュが違えば `needs-human` にする（[TEXT-4][text]） |
 | 14 | PR の head に、まだ `review` の印が無い | 計画・実装工程（段階 5）なら何もしない（人がレビューする番）。レビュー工程（段階 6）以降なら、レビュー（重い）（[FLOW-21、FLOW-22][flow]、[ADR-20261015-006][adr-flow] の決定 3） |
-| 15 | 最新の `review` の印が `fix` か、CI が赤で、そのラウンドの `fix` の印がまだ無い | 修正工程（段階 7）以降なら、修正（重い）。往復の回数が上限（`limits.roundTrips`）を超えるか、振動なら、修正せずに `needs-human` にする（[FLOW-22][flow]、[FLOW-28][flow]、[IMPL-23、IMPL-24][impl]）。渡す文のハッシュが `intake-final` の印と違えば、修正せずに `needs-human` にする（[TEXT-4][text]）。レビュー工程（段階 6）では AI は直さず、人の番にする（Agent 欄を空にする） |
+| 15 | 最新の `review` の印が `fix` か、CI が赤で、そのラウンドの `fix` の印がまだ無い | 修正工程（段階 7）以降なら、修正（重い）。往復の回数が上限（`limits.roundTrips`）を超えるか、同じ指摘の再発（直したはずの指摘が再び出た）なら、修正せずに `needs-human` にする（[FLOW-22][flow]、[FLOW-28][flow]、[IMPL-23、IMPL-24][impl]）。渡す文のハッシュが `intake-final` の印と違えば、修正せずに `needs-human` にする（[TEXT-4][text]）。レビュー工程（段階 6）では AI は直さず、人の番にする（Agent 欄を空にする） |
 | 16 | 最新の `review` の印が `pass` で、CI の結果がまだ出ていない | 待つ。次の実行で読み直す（[IMPL-27][impl]） |
 | 17 | 最新の `review` の印が `pass` で、CI が緑。Status が `In Review` | 収束（軽い）：🟢 を Issue にしてから、PR を ready にし、Status を `Ready to Merge` にする（[FLOW-23][flow]、[IMPL-26、IMPL-27][impl]） |
 | 18 | Status が `Ready to Merge` で、base ブランチが PR の head より先に進んでいる | 載せ直し（軽い）。基線が緑のときだけ。差分の patch-id が同じなら印を付け直し、変わったら Status を `In Review` に戻して再レビューに回す。衝突したら修正のセッション（重い）で解く（[FLOW-25][flow]、[MERGE-6][merge]） |

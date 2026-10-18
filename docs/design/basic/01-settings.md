@@ -114,7 +114,7 @@
 | `limits.startsPerRun` | 1 回の実行で新しく着手する Issue の数の上限 | 1 件（[FLOW-3][flow]） | 進行 Bot は、1 回の実行で着手する件数に上限を持つ（[FLOW-3][flow]） |
 | `limits.wip` | 進行中の Issue（`In Progress` から `Done` の前まで）の数の上限 | 1 件（マージ判定工程（段階 8）まで。[FLOW-3][flow]） | 進行中の Issue の数にも上限を持ち、上限に達していれば新しい Issue に着手しない（[FLOW-3][flow]） |
 | `limits.intakePerRun` | 1 回の実行で受け入れる Issue の数の上限 | 5 件（暫定） | 1 回の実行で受け入れる件数に上限を持つ。初回の実行で未処理の Issue すべてに走らないためと、外の人が Issue を大量に立てたときの利用枠の歯止め（[TEXT-12][text]）。5 件は [ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
-| `limits.roundTrips` | レビューと修正の往復の回数の上限。超えたら `needs-human` | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が続く振動も同じ扱い（[IMPL-24][impl]） |
+| `limits.roundTrips` | レビューと修正の往復の回数の上限。超えたら `needs-human` | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が再び出たとき（同じ指摘の再発）も同じ扱い（[IMPL-24][impl]） |
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
 | `limits.session.costUsd` | AI のセッション 1 回の費用の上限（`--max-budget-usd`）。途中で止めた回は、この値をその回の費用とみなす | メンテナが決める（USD） | 費用の上限を `--max-budget-usd` でも掛ける（[IMPL-14][impl]）。途中で止めた回は費用が分からないので、この値をその回の費用とみなす（[ADR-20261018-001][adr-usage]） |
