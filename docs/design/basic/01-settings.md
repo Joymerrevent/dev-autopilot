@@ -77,7 +77,7 @@
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `repository.owner`、`repository.name` | 当てる先のリポの owner と名前 | `setup` が origin から書く | [STRUCT-2][struct]。`check` が origin と一致することを確かめる |
+| `repository.owner`、`repository.name` | 当てる先のリポの owner と名前 | `setup` が origin から書く | 当てる先のリポを設定に持つ（[STRUCT-2][struct]）。`check` が、設定の値と origin が一致することを確かめる |
 | `project.number` | Issue を並べる GitHub の Project の番号 | `setup` が使う Project の番号を書く | 進行 Bot は、設定した Project の Issue を読んで候補を選ぶ（[FLOW-1][flow]）。Status と Agent 欄は `setup` が足す（[SETUP-5、SETUP-6][setup]） |
 | `project.statusField.id`、`project.statusField.options` | Project の Status の欄の ID と、選択肢（`todo` `inProgress` `inReview` `readyToMerge` `blocked` `done`）ごとの ID | `setup` が足した欄と選択肢の ID を書く | `setup` が Status に In Review・Ready to Merge・Blocked を足し、進行 Bot が Status を変える（[SETUP-5][setup]、[Issue の状態の遷移][flow]） |
 | `project.agentField.id`、`project.agentField.options` | Project の Agent 欄の ID と、選択肢（`worker` `reviewer` `human` `paused`）ごとの ID | `setup` が足した欄と選択肢の ID を書く | AI を担当者にできないので、`setup` が Project に単一選択の Agent 欄を足し、進行 Bot が担い手を Agent 欄で示す（[SETUP-6][setup]） |
@@ -101,11 +101,11 @@
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `run.dryRun` | GitHub に書かずに試すか（`true` なら、書くつもりだった内容を手元の記録にだけ残す） | `true`（受け入れ工程（段階 4）の最初。[運用の規則][flow]） | [運用の規則][flow]、[ADR-20261017-007][adr-stop]。`false` にする（書き始める）のは PR で行う |
-| `run.stage` | 今の段階の番号（段階ごとの振る舞いを切り替える） | `4`（受け入れ工程。暫定） | [Issue の状態の遷移][flow]の段階による違い。Issue の流れは受け入れ工程（段階 4）から動く（[段階の表][stages]） |
-| `run.intervalHours` | 定期の実行の間隔 | 24 時間（1 日 1 回。[FLOW-12][flow]） | [FLOW-11][flow]。OS ごとの登録と二重になるので、`check` がずれを確かめる（[STRUCT-2][struct]） |
-| `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの Issue は次の実行に回す | 180 分（暫定） | [FLOW-4][flow]。重い工程 1 つ（1 セッションは最大 45 分）の後にも、軽い工程とほかの Issue の重い工程を進める余地を持たせる。[ADR-20261015-005][adr-settings] の補足情報の候補の値 |
-| `run.stopSignalPollSeconds` | AI のセッションが動いている間に、全体を止める合図を読む間隔 | 60 秒（暫定） | [運用の規則][flow]（間隔は基本設計で決める）。止めると決めてから AI のセッションが止まるまでを 1 分ほどに抑える。1 セッションの間に読む回数は数十回で、GitHub の API の上限（1 時間に 5,000 回）に比べて少ない |
+| `run.dryRun` | GitHub に書かずに試すか（`true` なら、書くつもりだった内容を手元の記録にだけ残す） | `true`（受け入れ工程（段階 4）の最初。[運用の規則][flow]） | GitHub への書き込みをすべて手元の記録に残して試す合図で、受け入れ工程（段階 4）の最初と新しい段階に入るときに使う（[運用の規則][flow]、[ADR-20261017-007][adr-stop]）。`false` にする（書き始める）のは、安全の境界を緩める向きの変更なので PR に残す |
+| `run.stage` | 今の段階の番号（段階ごとの振る舞いを切り替える） | `4`（受け入れ工程。暫定） | 段階ごとの振る舞い（計画・実装工程（段階 5）では Agent 欄が空、修正工程（段階 7）では判定の印を書かない、など）を、設定の `stage` で切り替える（[Issue の状態の遷移][flow]）。Issue の流れは受け入れ工程（段階 4）から動く（[段階の表][stages]） |
+| `run.intervalHours` | 定期の実行の間隔 | 24 時間（1 日 1 回。[FLOW-12][flow]） | 間隔と件数の上限は、リポの設定 1 つで変える（[FLOW-11][flow]）。間隔は OS ごとの定期の実行の登録にも書くので、`check` がずれを確かめる（[STRUCT-2][struct]） |
+| `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの Issue は次の実行に回す | 180 分（暫定） | 1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次の実行に回す。lock を長く持たないため（[FLOW-4][flow]）。180 分は、重い工程 1 つ（1 セッションは最大 45 分）の後にも、軽い工程とほかの Issue の重い工程を進める余地を持たせる値で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
+| `run.stopSignalPollSeconds` | AI のセッションが動いている間に、全体を止める合図を読む間隔 | 60 秒（暫定） | AI のセッションが動いている間も、全体を止める合図を一定の間隔で読む。間隔は基本設計で決める（[運用の規則][flow]）。60 秒にすると、止めると決めてから AI のセッションが止まるまでが 1 分ほどになる。1 セッションの間に読む回数は数十回で、GitHub の API の上限（1 時間に 5,000 回）に比べて少ない |
 
 #### 上限
 
@@ -113,7 +113,7 @@
 | --- | --- | --- | --- |
 | `limits.startsPerRun` | 1 回の実行で新しく着手する Issue の数の上限 | 1 件（[FLOW-3][flow]） | 進行 Bot は、1 回の実行で着手する件数に上限を持つ（[FLOW-3][flow]） |
 | `limits.wip` | 進行中の Issue（`In Progress` から `Done` の前まで）の数の上限 | 1 件（マージ判定工程（段階 8）まで。[FLOW-3][flow]） | 進行中の Issue の数にも上限を持ち、上限に達していれば新しい Issue に着手しない（[FLOW-3][flow]） |
-| `limits.intakePerRun` | 1 回の実行で受け入れる Issue の数の上限 | 5 件（暫定） | [TEXT-12][text]（初回の実行で未処理の Issue すべてに走らない。外の人が Issue を大量に立てたときの歯止め）。[ADR-20261015-005][adr-settings] の補足情報の候補の値 |
+| `limits.intakePerRun` | 1 回の実行で受け入れる Issue の数の上限 | 5 件（暫定） | 1 回の実行で受け入れる件数に上限を持つ。初回の実行で未処理の Issue すべてに走らないためと、外の人が Issue を大量に立てたときの利用枠の歯止め（[TEXT-12][text]）。5 件は [ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
 | `limits.roundTrips` | レビューと修正の往復の回数の上限。超えたら `needs-human` | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が続く振動も同じ扱い（[IMPL-24][impl]） |
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
@@ -121,11 +121,11 @@
 | `limits.issueCostUsd` | 1 Issue の累計の費用の上限（往復を含む）。超えたら `needs-human` | メンテナが決める（USD） | 1 Issue の累計の利用枠（往復を含む）に上限を持ち、費用で数える。当たったら `needs-human`（[IMPL-14][impl]、[ADR-20261018-001][adr-usage]） |
 | `limits.runCostUsd` | 1 回の実行の費用の上限 | メンテナが決める（USD） | `claude -p` の実行は利用枠を消費するので、1 回の実行の上限を持つ（[SETUP-12][setup]、[IMPL-14][impl]） |
 | `limits.dailyCostUsd` | 1 日の費用の上限 | メンテナが決める（USD） | 1 日の利用枠にも上限を持ち、費用で数える（[SETUP-12][setup]、[IMPL-14][impl]） |
-| `limits.stopGraceSeconds` | AI のセッションを途中で止めるとき、`SIGTERM` を送ってから `SIGKILL` を送るまでの猶予 | 10 秒（暫定） | [IMPL-14][impl]。試験では `SIGTERM` の後 1 秒ほどで終わった（[ADR-20261018-001][adr-usage]）ので、10 倍の余裕を見る |
+| `limits.stopGraceSeconds` | AI のセッションを途中で止めるとき、`SIGTERM` を送ってから `SIGKILL` を送るまでの猶予 | 10 秒（暫定） | 途中で止めるときは `SIGTERM` を送り、猶予の間に終わらなければ `SIGKILL` を送る。猶予は設定に持つ（[IMPL-14][impl]）。試験では `SIGTERM` の後 1 秒ほどで終わった（[ADR-20261018-001][adr-usage]）ので、10 倍の余裕を見る |
 | `limits.retry.count` | 同じ Issue で実行の失敗が続いたとき、`needs-human` にするまでの回数 | 3 回（[IMPL-14][impl]） | 実行の失敗（利用枠切れ・時間の上限など、作業の中身と無関係の失敗）は次回に持ち越し、同じ Issue で続いたら `needs-human` にする（[IMPL-14][impl]） |
-| `limits.retry.intervalRuns` | 実行の失敗の後、何回目の定期の実行で再試行するか | 1（次の定期の実行。暫定） | [IMPL-14][impl]。実行の中で待たない（lock を長く持たない。[FLOW-4][flow]）。[ADR-20261015-005][adr-settings] の補足情報の候補（再試行は次の実行） |
+| `limits.retry.intervalRuns` | 実行の失敗の後、何回目の定期の実行で再試行するか | 1（次の定期の実行。暫定） | 実行の失敗の再試行の間隔を設定に持つ（[IMPL-14][impl]）。実行の中で待つと lock を長く持つので、次の定期の実行で再試行する（[FLOW-4][flow]）。[ADR-20261015-005][adr-settings] の補足情報が挙げた候補（再試行は次の実行） |
 | `limits.remindDays` | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま経ったとき、進行 Bot が 1 回だけ催促するまでの日数 | 7 日（[MERGE-3][merge]） | 人が動かない PR は、判定の信頼度の記録（マージ判定工程（段階 8）の 10 件）に数えられないので、1 回だけ催促する（[MERGE-3][merge]） |
-| `limits.ciStaleHours` | CI の結果が `cancelled` `skipped` `neutral` `stale` のまま変わらないとき、`needs-human` にするまで待つ時間 | 48 時間（暫定） | [IMPL-27][impl]。1 日 1 回の間隔（[FLOW-12][flow]）で、人が再実行する機会を、間隔 1 回分より長く取る |
+| `limits.ciStaleHours` | CI の結果が `cancelled` `skipped` `neutral` `stale` のまま変わらないとき、`needs-human` にするまで待つ時間 | 48 時間（暫定） | CI の結果が `cancelled` などのまま、完了から設定の時間が経っても変わらなければ `needs-human` にする（[IMPL-27][impl]）。48 時間は、1 日 1 回の間隔（[FLOW-12][flow]）で、人が再実行する機会を間隔 1 回分より長く取る値 |
 
 #### モデル
 
@@ -138,24 +138,24 @@
 | `models.plan` | 計画 AI（既定） | `opus` / xhigh（[IMPL-31][impl]） | 計画 AI は既定で `opus`。受け入れの印かラベルが `fable` なら `models.planHard` で計画する（[IMPL-31][impl]） |
 | `models.planHard` | 計画 AI（受け入れの判定かラベルで `fable` にしたとき、計画 AI が自己申告して計画し直すとき） | `fable` / high（[IMPL-31][impl]） | `opus` が設計判断などを含むと自己申告したら、同じ実行で 1 回だけ `fable` で計画し直す（[IMPL-31][impl]、[ADR-20261018-002][adr-redo]） |
 | `models.work` | 作業 AI の最初の実装 | `opus` / high（[IMPL-32][impl]） | 作業 AI は `opus` で始め、計画・実装工程（段階 5）で人が手直しせずにマージできた種類から `sonnet` に仮に下げる（[IMPL-25、IMPL-32][impl]） |
-| `models.workByType` | Issue の種類ごとの、作業 AI の最初の実装 | 空（種類の分け方は UNDECIDED-52 で決める） | 最初の実装に使うモデルは、Issue の種類ごとに決める（[IMPL-25][impl]、[ADR-20261018-003][adr-model]）。種類の分け方が決まるまで空 |
+| `models.workByType` | Issue の種類ごとの、作業 AI の最初の実装 | 空（Issue の種類の分け方を決めるまで。UNDECIDED-52） | 最初の実装に使うモデルは、Issue の種類ごとに決める（[IMPL-25][impl]、[ADR-20261018-003][adr-model]）。種類の分け方が決まるまで空 |
 | `models.workRaised` | 最初の実装が `sonnet` だった Issue で、修正のときに上げる先 | `opus` / high（[IMPL-35][impl]） | 最初の実装が `sonnet` なら、修正のときに `opus` に 1 段上げる。`fable` には上げない（[IMPL-32、IMPL-35][impl]） |
 | `models.review` | レビュー AI（3 つの軸とも同じ値） | `opus` / xhigh（[IMPL-33][impl]） | 3 つの軸とも同じ値で始め、軸ごとに分けるかはレビュー工程（段階 6）で決める（[IMPL-33][impl]）。モデルは設定で変えられるようにする（[IMPL-19][impl]） |
 | `models.reviewComparison` | レビュー工程（段階 6）で比べるためだけに回すレビュー AI（印を書かない） | `fable` / high（[IMPL-33][impl]） | レビュー工程（段階 6）で、同じ PR を `fable` でも回して比べ、既定のモデルを決める。比較の実行は印を書かない（[IMPL-19、IMPL-33][impl]、[段階の表][stages]） |
 | `models.critic` | 批評 AI | `opus` / high（[IMPL-34][impl]） | 批評 AI は、🔴 と 🟡 を別のセッションで再検証する。値は変えない（[IMPL-22、IMPL-34][impl]） |
-| `models.planReview` | 計画をレビューするレビュー AI | `opus` / xhigh（`models.review` と同じ。暫定） | [IMPL-37][impl]（基本設計で決める）。同じレビュー AI の役で、計画の誤りを見つけるには PR のレビューと同じ深さが要る。修正工程（段階 7）を終えるときに、人の判断と比べて見直す（[IMPL-10][impl]、[ADR-20261018-004][adr-planrev]） |
-| `review.criticConfidenceThreshold` | 批評 AI が付けた確信度が、この値より低い 🟡 を 🟢 に下げる | 80（0〜100。暫定） | [IMPL-22][impl]。Anthropic 公式 Plugin が確信度 80 未満の指摘を捨てる線（[レビューの Skill][review-skill]）。[ADR-20261015-005][adr-settings] の補足情報の候補の値 |
+| `models.planReview` | 計画をレビューするレビュー AI | `opus` / xhigh（`models.review` と同じ。暫定） | 計画のレビューのモデルと effort は、基本設計で決める（[IMPL-37][impl]）。同じレビュー AI の役で、計画の誤りを見つけるには PR のレビューと同じ深さが要るので、`models.review` と同じ値で始める。修正工程（段階 7）を終えるときに、人の判断と比べて見直す（[IMPL-10][impl]、[ADR-20261018-004][adr-planrev]） |
+| `review.criticConfidenceThreshold` | 批評 AI が付けた確信度が、この値より低い 🟡 を 🟢 に下げる | 80（0〜100。暫定） | 批評 AI が付けた確信度がしきい値（設定）未満の 🟡 は、🟢 に下げる（[IMPL-22][impl]）。80 は、Anthropic 公式 Plugin が確信度 80 未満の指摘を捨てる線（[レビューの Skill][review-skill]）で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
 
 #### 検査と判定
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
 | `checks.qualityGate` | AI が作業場所で実行する品質ゲートのコマンド | `pnpm check`（[STRUCT-2][struct]） | 作業 AI は、CI のログを受け取らず、自分の作業場所で品質ゲートを実行して確かめる（[IMPL-27][impl]）。守る規約に「品質ゲートが緑」を含む（[IMPL-4][impl]） |
-| `checks.required` | CI が緑かを判定する必須チェックの一覧（チェックの名前、チェックを出した app、base 側のワークフローのパス） | 空。`check` が fail にするので、人が当てる先のリポの必須チェックを書く（business-os の例：`check (ubuntu-latest)` `check (windows-latest)` `commitlint`。[IMPL-27][impl]） | [IMPL-27][impl]（空を「すべて success」と読まない） |
-| `merge.allowPaths` | 進行 Bot が `merge=ready` と判定してよいパスの許可一覧。一覧に無いパスを 1 つでも触れば `merge=human` | business-os：`docs/usage/**`、`.changeset/*.md`（[MERGE-4][merge]）。ほかのリポは空（すべて `merge=human`） | [MERGE-4][merge]。パスを足すのは ADR |
-| `merge.policyPaths` | 方針に係るパスの一覧。1 つでも触れば判定の対象外（`merge=human`） | business-os：`docs/adr/**` `docs/design/**` `ROADMAP.md` `CLAUDE.md` `.claude/**` `dev-autopilot/**` `.claude-plugin/**` `.github/**` `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`、`check:*` の実装（`plugin/scripts/check-repo.ts` など）、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`（[MERGE-4][merge] の「許可一覧に含めない」の例。パスのほかに、`release/*` ブランチと `main` 向けの PR も対象外）。ほかのリポは空（許可一覧にパスを足すときに一緒に決める） | 方針に係るパスに触れる PR は、進行 Bot の判定の対象外（[MERGE-2][merge]、[SAFE-9][safety]）。一覧は設定に持つ（[STRUCT-2][struct]） |
-| `push.blockedPaths` | diff が触れていたら push せず `needs-human` にするパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス） | `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、当てる先のリポの規約の正典のパス（business-os は `docs/adr/**` `docs/design/**`）（[IMPL-15][impl]） | [IMPL-15][impl]。パスを外すのは ADR |
-| `leakCheck.samplesPath` | 漏えい検査の見本の置き場 | 未定 | [STRUCT-2][struct] の一覧にある。要件が何を指すか（実行の中で読むものか、テストの前提データか）を確かめてから決める |
+| `checks.required` | CI が緑かを判定する必須チェックの一覧（チェックの名前、チェックを出した app、base 側のワークフローのパス） | 空。`check` が fail にするので、人が当てる先のリポの必須チェックを書く（business-os の例：`check (ubuntu-latest)` `check (windows-latest)` `commitlint`。[IMPL-27][impl]） | CI が緑かは、設定に列挙した必須チェックがすべて `success` かで判定する。一覧が空なら点検を fail にし、空を「すべて success」と読まない（[IMPL-27][impl]） |
+| `merge.allowPaths` | 進行 Bot が `merge=ready` と判定してよいパスの許可一覧。一覧に無いパスを 1 つでも触れば `merge=human` | business-os：`docs/usage/**`、`.changeset/*.md`（[MERGE-4][merge]）。ほかのリポは空（すべて `merge=human`） | 進行 Bot が「マージしてよい」と判定してよいパスは、拒否一覧ではなく許可一覧で設定に持つ（[MERGE-4][merge]）。パスを足すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
+| `merge.policyPaths` | 方針に係るパスの一覧。1 つでも触れば判定の対象外（`merge=human`） | business-os：`docs/adr/**` `docs/design/**` `ROADMAP.md` `CLAUDE.md` `.claude/**` `dev-autopilot/**` `.claude-plugin/**` `.github/**` `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`、`check:*` の実装（`plugin/scripts/check-repo.ts` など）、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`（要件が「許可一覧に含めない」の例として挙げた一覧。[MERGE-4][merge]。パスのほかに、`release/*` ブランチと `main` 向けの PR も対象外）。ほかのリポは空（許可一覧にパスを足すときに一緒に決める） | 方針に係るパスに触れる PR は、進行 Bot の判定の対象外（[MERGE-2][merge]、[SAFE-9][safety]）。一覧は設定に持つ（[STRUCT-2][struct]） |
+| `push.blockedPaths` | diff が触れていたら push せず `needs-human` にするパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス） | `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、当てる先のリポの規約の正典のパス（business-os は `docs/adr/**` `docs/design/**`）（[IMPL-15][impl]） | push の前に、diff がこの一覧のパスに触れていれば、push せず `needs-human` にする。一覧は設定に持つ（[IMPL-15][impl]）。パスを外すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
+| `leakCheck.samplesPath` | 漏えい検査の見本の置き場 | 未定 | 設定の項目の一覧にある（[STRUCT-2][struct]）が、要件は「見本」が何か（実行の中で読むものか、テストの前提データか）を書いていない。確かめてから決める |
 
 #### 規約
 
@@ -170,25 +170,25 @@
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
 | `safety.botAccount` | 進行 Bot が投稿に使う GitHub のアカウント名。印はこのアカウントの投稿だけを読む | `setup` が人の `gh` のログイン名を書く（最初はメンテナのアカウント。[SETUP-13][setup]） | 進行 Bot は、このアカウントが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。アカウントは最初はメンテナの 1 つで始める（[SETUP-13][setup]） |
-| `safety.network.allowedDomains` | AI のセッションの sandbox から通信してよい先 | `registry.npmjs.org`（暫定） | [SAFE-10][safety]（外への通信は npm のレジストリなどの許可した先だけ）。先を足すのは ADR |
-| `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前（ほかの名前は渡さない） | `GIT_CONFIG_GLOBAL` `NPM_CONFIG_USERCONFIG` `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` `TMPDIR` `CLAUDE_CODE_TMPDIR` `ENABLE_CLAUDEAI_MCP_SERVERS`（[SAFE-10][safety]）。commit の作者を渡す名前と、起動に要るほかの名前は、AI のセッションの文書で決める | [SAFE-1、SAFE-10][safety]。名前を足すのは ADR（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
-| `safety.sandbox.denyRead` | AI のセッションの sandbox で読ませないパスのうち、足す分 | 空 | [SAFE-10][safety]。SAFE-10 が決めたパスは、進行 Bot がマシンの置き場から組み立てて必ず入れる。設定は足す分だけを持つ |
-| `safety.sandbox.denyWrite` | AI のセッションの sandbox で書かせないパスのうち、足す分 | 空 | [SAFE-10][safety]。`denyRead` と同じ |
+| `safety.network.allowedDomains` | AI のセッションの sandbox から通信してよい先 | `registry.npmjs.org`（暫定） | AI のセッションの外への通信は、npm のレジストリなどの許可した先だけにする（[SAFE-10][safety]）。先を足すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
+| `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前（ほかの名前は渡さない） | `GIT_CONFIG_GLOBAL` `NPM_CONFIG_USERCONFIG` `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` `TMPDIR` `CLAUDE_CODE_TMPDIR` `ENABLE_CLAUDEAI_MCP_SERVERS`（[SAFE-10][safety]）。commit の作者を渡す名前と、起動に要るほかの名前は、AI のセッションの文書で決める | 子プロセスの環境変数は許可した名前だけで組み立て、`gh` の認証と `GH_TOKEN` を渡さない（[SAFE-1][safety]）。渡す名前は要件が挙げている（[SAFE-10][safety]）。名前を足すのは ADR で決める（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
+| `safety.sandbox.denyRead` | AI のセッションの sandbox で読ませないパスのうち、足す分 | 空 | 読み取りは自分のセッションのフォルダだけにし、`denyRead` に入れるパスは要件が決めている（[SAFE-10][safety]）。進行 Bot は要件が決めたパスをマシンの置き場から組み立てて必ず入れ、設定には足す分だけを持つ（設定で消せないようにするため） |
+| `safety.sandbox.denyWrite` | AI のセッションの sandbox で書かせないパスのうち、足す分 | 空 | 書き込みは、自分のセッションの worktree と一時フォルダなどに限る（[SAFE-10][safety]）。`denyRead` と同じく、設定には足す分だけを持つ |
 
 ### マシンの設定の項目
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 無し。`setup` のマシンの準備で人が指定する | [ADR-20261017-007][adr-stop] の決定 4（リポの設定を読む前に要る） |
+| `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 無し。`setup` のマシンの準備で人が指定する | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
 | `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | `setup` が `<paths.workspace>/program/<版>/` を書く | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
 | `paths.workspace` | 置き場（進行 Bot の clone、セッションごとのフォルダ、プログラムの写し、安全設定のファイル） | 「[マシンの中の置き場][places]」 | AI のセッションごとに origin から clone し直す。進行 Bot の clone は `controller/`、セッションのフォルダは `sessions/<セッションの名前>/` に置く（[ADR-20261013-001][adr-workspace]） |
 | `paths.records` | 実行の記録と lock の置き場 | 「[マシンの中の置き場][places]」 | 実行の記録を追跡しないフォルダに残す（[FLOW-5][flow]）。記録と lock の置き場はマシンの設定に置く（[ADR-20261015-005][adr-settings]） |
 | `paths.secrets` | 秘密の置き場（PAT、deploy key、印の署名の鍵） | 「[マシンの中の置き場][places]」 | PAT・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2） |
-| `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | `<paths.workspace>/sandbox-settings/` | [SAFE-10][safety]（安全設定のファイルは AI が書けない場所に置く）。ファイルの作り方は AI のセッションの文書で決める（UNDECIDED-40） |
+| `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | `<paths.workspace>/sandbox-settings/` | 安全設定のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる（[SAFE-10][safety]）。ファイルの作り方は AI のセッションの文書で決める（UNDECIDED-40） |
 | `safety.sandbox.toolDirs` | sandbox の `allowRead` に足す、ホームの中にある道具のフォルダ | `setup` が、`node` `pnpm` `git` の実体のうちホームの中にあるもののフォルダを書く（暫定） | sandbox はホーム（`~/`）を読ませないので、ホームの中にある道具のフォルダを `allowRead` に足す（[SAFE-10][safety]） |
 | `sessionTmp.root` | セッションごとの短い一時フォルダを作る根 | 「[マシンの中の置き場][places]」 | セッションごとの短い一時フォルダを、ホーム・置き場・`/tmp/claude-<uid>/` の外の、dev-autopilot 専用の短い根の下に作る（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]） |
-| `sessionTmp.idLength` | 短い一時フォルダの名前（セッションの短い ID）の文字数 | 8 文字（暫定） | [ADR-20261017-006][adr-tmp]（根と ID の長さは設定の表で決める）。`<根>/<ID>/claude-<uid>` を 44 バイト以内に収める |
-| `sessionTmp.maxBytes` | `<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限。超えたら AI のセッションを起動しない | 44 バイト（[SAFE-10][safety]） | [SAFE-10][safety]、[ADR-20261017-006][adr-tmp]。Claude Code の振る舞いで決まる値で、Claude Code はマシンごとに入れるので、マシンの設定に置く |
+| `sessionTmp.idLength` | 短い一時フォルダの名前（セッションの短い ID）の文字数 | 8 文字（暫定） | 根と ID の長さの値は、設定の表で決める（[ADR-20261017-006][adr-tmp]）。8 文字にすると、`<根>/<ID>/claude-<uid>` が 44 バイト以内に収まる（uid は 19 桁まで） |
+| `sessionTmp.maxBytes` | `<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限。超えたら AI のセッションを起動しない | 44 バイト（[SAFE-10][safety]） | `<CLAUDE_CODE_TMPDIR>/claude-<uid>` が長いと、Claude Code は黙ってユーザーごとの一時フォルダに戻すので、進行 Bot は起動の前に長さを数え、上限を超えたら起動しない（[SAFE-10][safety]、[ADR-20261017-006][adr-tmp]）。Claude Code の振る舞いで決まる値で、Claude Code はマシンごとに入れるので、マシンの設定に置く |
 
 ## `check` が設定について確かめること
 
