@@ -6,6 +6,8 @@
 
 ## 1 回の実行の流れ
 
+![1 回の実行の流れ][fig-run-flow]
+
 | 順 | すること | うまくいかないとき |
 | --- | --- | --- |
 | 1 | 定期の実行の定義が渡したパスから、マシンの設定を読む（[ADR-20261015-005][adr-settings]） | 作業に入らず止まる（[SAFE-4][safety]） |
@@ -26,6 +28,8 @@
 
 1 回の実行の中で、Issue を次の順に進める。同じ組の中は、Issue の番号の小さい順にする。マージの判定だけは PR の番号の小さい順にする（[MERGE-5][merge]）。
 
+![Issue を進める順][fig-issue-order]
+
 | 順 | 組 | 理由 |
 | --- | --- | --- |
 | 1 | 片付け（結びついた PR がマージされた Issue） | 進行中の Issue の数の上限（`limits.wip`）を先に空け、依存していた PR の載せ直しにつなぐ（[MERGE-7][merge]） |
@@ -39,6 +43,8 @@
 ## 状態の組み立て
 
 進行 Bot は、毎回の実行で次のものを読み、Issue ごとの状態を組み立て直す。判定には GitHub の状態と印だけを使い、手元の記録は上限の数え上げにだけ使う（[ADR-20261015-006][adr-flow] の決定 4）。
+
+![状態の組み立て][fig-state-assembly]
 
 | 読むもの | 読む先 | 判定での使い方 |
 | --- | --- | --- |
@@ -57,6 +63,8 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 ### 止める・待つ・触らない（先に見る）
 
+![次の工程：止める・待つ・触らない][fig-stops]
+
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
 | 1 | 結びついた PR がマージされた | 片付け（軽い）：Issue を閉じ、作業場所を消し、依存していた PR を載せ直す。Agent 欄とラベルは書き換えない。順 2 の除外より先に見る（[FLOW-27][flow]、[MERGE-7][merge]、[ADR-20261015-006][adr-flow] の決定 3） |
@@ -72,6 +80,8 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 ### 着手まで（Status が `Todo`）
 
+![次の工程：着手まで][fig-before-start]
+
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
 | 9 | 受け入れの印（`intake`）が無い。`from-review` の Issue は、マイルストーンが付くまで除く | 受け入れ（重い）。1 回の実行の件数の上限（`limits.intakePerRun`）まで（[FLOW-16][flow]、[TEXT-12][text]、[IMPL-26][impl]） |
@@ -79,6 +89,8 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 11 | `intake-final` の印があり、候補の条件をすべて満たす（[FLOW-1][flow]） | 着手（軽い）：Status を `In Progress`、Agent 欄を `worker` にし、続けて計画（重い）に進む。基線が緑で、着手の件数と進行中の Issue の数が上限の内のときだけ（[FLOW-19][flow]、[FLOW-20][flow]、[FLOW-3][flow]、[IMPL-9][impl]） |
 
 ### 作業中（Status が `In Progress` から `Ready to Merge`）
+
+![次の工程：作業中][fig-in-progress]
 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
@@ -101,6 +113,8 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 UNDECIDED-27（作業場所の残骸の決め方）を決める。セッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）は、同じ名前で作り直すか片付けるまで残るので、作業中の Issue のフォルダがあるのは普通の状態（[ADR-20261013-001][adr-workspace]）。
 セッションの名前は、役と、Issue か PR の番号を略さずに書く（例：`work-issue-<番号>`、`review-pr-<番号>-round-<ラウンド>`。役ごとの名前の一覧は、AI のセッションの文書で決める）。進行 Bot は、名前から役と番号を読み、次の表で見分ける。
 
+![作業場所の残骸の見分け方][fig-residue]
+
 | フォルダ | 扱い |
 | --- | --- |
 | 名前から Issue か PR を引け、その Issue が作業中（閉じておらず、結びつく PR がマージも閉じもされていない） | 普通の状態。作り直すか片付けるまで残す（[ADR-20261013-001][adr-workspace]） |
@@ -121,3 +135,10 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [text]: ../../requirements/04-external-text-and-markers.md
 [safety]: ../../requirements/05-safety.md
 [setup]: ../../requirements/06-setup-and-stages.md
+[fig-run-flow]: ./diagrams/02-run-flow.drawio.svg
+[fig-issue-order]: ./diagrams/02-issue-order.drawio.svg
+[fig-state-assembly]: ./diagrams/02-state-assembly.drawio.svg
+[fig-stops]: ./diagrams/02-next-step-stops.drawio.svg
+[fig-before-start]: ./diagrams/02-next-step-before-start.drawio.svg
+[fig-in-progress]: ./diagrams/02-next-step-in-progress.drawio.svg
+[fig-residue]: ./diagrams/02-workspace-residue.drawio.svg
