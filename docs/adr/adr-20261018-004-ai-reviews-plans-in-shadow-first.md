@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 created: 2026-10-18
 updated: 2026-10-18
 author: Claude Code（メンテナの依頼で起票）
