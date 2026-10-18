@@ -77,11 +77,11 @@
   どの認証で動くかと、人が呼ぶ Skill がマシンの設定（`devAutopilotPath` や記録の置き場。[ADR-20261015-005][adr-settings]）をどう見つけるかが決まっていない（[06-setup-and-stages.md][f06]、[07-structure.md][f07]）~~
 - UNDECIDED-38 **欠番**（[ADR-20261017-007][adr-stop] で決めた）：~~**全体を止める合図と、書かずに試す合図の置き場。** 止める合図（`enabled: false`）と書かずに試す合図（`dryRun: true`）は設定ファイルに持つ（「運用の規則」）。
   [ADR-20261015-005][adr-settings] の割り振りでは、どちらもリポの設定になり、変えるのに PR が要る。急いで止めたいときに PR を待つことになり、進行ボットがどの版のリポの設定を読むかも書かれていない（[01-issue-flow.md][f01]、[07-structure.md][f07]）~~
-- UNDECIDED-47 **途中で止めた回の消費の数え方。** IMPL-14 は、`stream-json` の `assistant` のイベントごとの `model` と `usage` を足し上げ、進行ボットが途中で止めた回も、そこまでの消費を記録に残すとする。
+- UNDECIDED-47 **欠番**（[ADR-20261018-001][adr-usage] で決めた）：~~**途中で止めた回の消費の数え方。** IMPL-14 は、`stream-json` の `assistant` のイベントごとの `model` と `usage` を足し上げ、進行ボットが途中で止めた回も、そこまでの消費を記録に残すとする。
   一方、`assistant` のイベントは 1 つのメッセージで同じ `usage` を繰り返して持ち、`output_tokens` はストリームの始めの値なので、そのまま足すと入力を多く、出力を少なく数える（FACT-29）。
   出力を少なく数えると、1 Issue の累計の利用枠が上限（IMPL-14）を超えても `needs-human` にならず、上限が黙って効かなくなる。
   正しい値は最後の `result` の `modelUsage` にあるが、時間の上限で止めた回には最後の `result` が出ない。`--include-partial-messages` の `message_delta` は、親のメッセージの出力の最後の値を持つ（FACT-29）が、途中で止めたときに出るかは確かめていない（UNDECIDED-44）。
-  数え方（`message_delta` を使う、最後の `result` が無い回は 1 セッションの費用の上限（`--max-budget-usd`）まで使ったとみなす、など）を決める（[02-implement-review-fix.md][f02]、[10-verified-facts.md][f10]）
+  数え方（`message_delta` を使う、最後の `result` が無い回は 1 セッションの費用の上限（`--max-budget-usd`）まで使ったとみなす、など）を決める（[02-implement-review-fix.md][f02]、[10-verified-facts.md][f10]）~~
 - UNDECIDED-48 **欠番**（[ADR-20261017-005][adr-mcp] で決めた）：~~**AI のセッションに claude.ai のコネクタを読み込ませないか。** AI の 5 役は GitHub に書けない（SAFE-1）。
   一方、`--setting-sources local` で起動したセッションにも、ログインしている claude.ai のアカウントのコネクタ（メールの送信などの道具を持つもの）が入った回があった（FACT-30）。
   試験では、エージェント定義の `tools` で道具を絞っていたので、コネクタの道具は道具の一覧に無かった。要件と安全設定（SAFE-2 の (e)、SAFE-10）は MCP のコネクタに触れておらず、エージェント定義の道具の絞り込みだけに頼っている。
@@ -129,14 +129,14 @@
   エージェント定義の `tools` に書いたときに使えるかを、段階 3 で確かめる。使えなければ、計画役がファイルを探す手段を決める~~
 - UNDECIDED-29 **欠番**（FACT-27 と FACT-28 で確かめた。値の `creator` は値を最初に入れた人で、Agent 欄の変更はタイムラインにも出ないため、値を最後に変えた人は API で取れない。Status と Agent 欄を変えた人を確かめない形（[ADR-20261015-004][adr-markers]）のままにする）：~~**Project の欄の値を最後に変えた人を API で取れるか。** GraphQL の `ProjectV2ItemFieldSingleSelectValue` は `creator`（「項目を作った人」）と `updatedAt` しか持たず、値を最後に変えた人を指すかが型の定義から分からない（[ADR-20261015-004][adr-markers]）。
   捨てる Project で、別の人が値を書き換えたときに `creator` が変わるかを確かめる（FACT-15 と同じやり方）。取れるなら、Status と Agent 欄を戻した人の権限も確かめる形にできる~~
-- UNDECIDED-44 **作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか。** IMPL-14 は、時間の上限でプロセスグループごと止め、そこまでの消費を `stream-json` から数えるとする。
+- UNDECIDED-44 **欠番**（FACT-38 と FACT-39 で確かめ、止め方を [ADR-20261018-001][adr-usage] で決めた）：~~**作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか。** IMPL-14 は、時間の上限でプロセスグループごと止め、そこまでの消費を `stream-json` から数えるとする。
   段階 2 で確かめたのは、モデルが長いコマンドを実行していない状態でのプロセスグループの停止だけ（FACT-14。[10-verified-facts.md][f10]）。作業中の `claude` を止める試験を、段階 3（`setup` と `check` を作る段階）で行う。
-  同じ試験で、止めたときに `--include-partial-messages` の `message_delta` がどこまで出るかも確かめる（消費の数え方は UNDECIDED-47）
+  同じ試験で、止めたときに `--include-partial-messages` の `message_delta` がどこまで出るかも確かめる（消費の数え方は UNDECIDED-47）~~
 - UNDECIDED-45 **欠番**（FACT-33 で確かめた。skills CLI は `plugin/skills/` の下の Skill を見つける）：~~**skills CLI が `plugin/skills/` の下の Skill を単体で入れられるか。** STRUCT-7 は、dev-autopilot のリポの `review` Skill を、skills CLI で単体導入できるとする。
   Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）~~
 - UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
   sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
-  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
+  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
@@ -164,3 +164,4 @@
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md

@@ -32,13 +32,14 @@
 - IMPL-11 PR は進行ボットが draft で作り、収束して Ready to Merge になったときに進行ボットが ready にする（Copilot coding agent と OpenHands の形。途中の PR を人が誤ってマージしない）
 - IMPL-12 テストを消す・skip する・期待値を緩める・lint を抑止する変更は、作業指示が明示していない限り禁止する。レビュー AI はこれを 🔴 として探す（Anthropic の harness：「テストを消したり編集したりするのは許されない」）
 - IMPL-13 1 回のセッションの上限を設定に持つ。初期値は 45 分・200 ターン（Copilot は 59 分、GitHub Agentic Workflows は 20 分・500 ターンが既定）。
-  時間の上限は `claude` に無いので進行ボットが子プロセスをプロセスグループごと止める（sandbox の中の孫プロセスも残さない）。ターンは `--max-turns`。上限に当たったら途中の状態を commit せず、作業場所は作り直すか片付けるまで残す。途中の状態は次のセッションに引き継がない（[ADR-20261013-001][adr-workspace]。引き継ぐかは UNDECIDED-26）。扱いは IMPL-14 の表
+  時間の上限は `claude` に無いので、進行ボットが止める（止め方は IMPL-14。止めた後に AI のコマンドを残さない）。ターンは `--max-turns`。上限に当たったら途中の状態を commit せず、作業場所は作り直すか片付けるまで残す。途中の状態は次のセッションに引き継がない（[ADR-20261013-001][adr-workspace]。引き継ぐかは UNDECIDED-26）。扱いは IMPL-14 の表
 - IMPL-14 **実行の失敗と作業の失敗**。「実行の失敗」は作業の中身と無関係に起きる失敗で、その Issue は `needs-human` を付けずに次回へ持ち越す。同じ Issue で 3 回続いたら `needs-human`（FLOW-29）。「作業の失敗」は AI の作業の結果が条件を満たさないことで、「対応ループ」の往復で扱う
 
   | 契機 | 扱い | 根拠 |
   |---|---|---|
   | 利用枠切れ（HTTP 429） | 実行の失敗。持ち越し | 本項 |
   | 時間の上限（45 分）に進行ボットが止めた | 実行の失敗。持ち越し | IMPL-13 |
+  | 止めた後に、AI のコマンドの残りが止まったと確かめられない | `needs-human`（作業場所を消さず、次の AI のセッションを起動しない） | 本項、[ADR-20261018-001][adr-usage] |
   | 全体の止める合図（リポの変数）で進行ボットが止めた | 実行の失敗に数えない。持ち越し（合図が `run` に戻った後に続ける） | 「[運用の規則][f01]」、[ADR-20261017-007][adr-stop] |
   | ターンの上限（`--max-turns`）に当たった | 実行の失敗。持ち越し | IMPL-13 |
   | `claude` の異常終了、出力契約が解析できない・欠けている | 実行の失敗。持ち越し | IMPL-5 |
@@ -48,10 +49,15 @@
   | レビューの fix | 作業の失敗。往復（上限 3 回） | IMPL-24 |
   | CI の赤（`failure`、`timed_out`） | 作業の失敗。往復（上限 3 回） | IMPL-27 |
 
-  記録には `is_error` `num_turns` `usage` `modelUsage` を残し、1 Issue あたりの利用枠はここから取る。出力は `--output-format stream-json` で受け、`assistant` のイベントごとの `model` と `usage` を足し上げる（進行ボットが途中で止めた回も、そこまでの消費が記録に残る。`assistant` のイベントが `model` と `usage` を持つことは段階 2 で確かめた。作業中の `claude` を途中で止める試験はしていない。UNDECIDED-44）。
-  ただし、`assistant` のイベントの `usage` は同じメッセージで重複し、`output_tokens` は最後の値でないので、そのまま足し上げても正しく数えられない（FACT-29。数え方は UNDECIDED-47）。
-  子プロセスは `setpgrp` で別のプロセスグループに起こし、時間の上限ではグループごと `SIGTERM` で止める（孫プロセスが残らないことは、段階 2 で、モデルが長いコマンドを実行していない状態で確かめた。UNDECIDED-44）。費用の上限は `--max-budget-usd` でも掛ける。
-  設定に持つ上限は、1 セッションの時間とターンと費用（IMPL-13、`--max-budget-usd`）に加え、1 Issue の累計の利用枠（往復を含む）、実行の失敗の再試行の回数（3）と間隔、1 回の実行と 1 日の利用枠（SETUP-12）。累計が上限に当たったら `needs-human`。数え上げは手元の記録で行い、記録を失ったときの扱いは「[運用の規則][f01]」
+  記録には `is_error` `num_turns` `usage` `modelUsage` を残し、1 Issue あたりの利用枠はここから取る（[ADR-20261018-001][adr-usage]）。出力は `--output-format stream-json` と `--include-partial-messages` で受け、メッセージごとの `message_delta` の `usage`（最後のトークン数）を記録に残す。
+  `assistant` のイベントの `usage` は同じメッセージで重複し、`output_tokens` は最後の値でないので、足し上げに使わない（FACT-29）。
+  正常に終わった回（`result` があり、`terminal_reason` が中断（`aborted_` で始まる値）でない）は、`result` の `total_cost_usd` を費用とし、`modelUsage` をモデルごとのトークンとして記録する。
+  途中で止めた回（`result` が無いか、`terminal_reason` が中断）は、費用をその回の 1 セッションの費用の上限（`--max-budget-usd`）とみなす（`stream-json` のイベントは費用を持たない）。トークンは、書き終えたメッセージの `message_delta` と、書いている途中のメッセージの `message_start` から数え、出力が分からないメッセージがあったことを記録に残す。
+  上限とみなすと、ほとんどの場合は多めに数える。ただし、書いている途中で止めたメッセージ 1 つ分は少なく数えうる（`--max-budget-usd` もメッセージの間で確かめるので、上限をメッセージ 1 つ分超えうる。FACT-39）。
+  子プロセスは `setpgrp` で別のプロセスグループに起こす。途中で止めるとき（時間の上限、全体の止める合図。[ADR-20261017-007][adr-stop]）は、`claude` のプロセスグループに `SIGTERM` を送り、猶予（設定に持つ。STRUCT-2）の間に終わらなければ `SIGKILL` を送る。
+  `claude` が終わった後、そのセッションの Bash のコマンドのプロセスグループが残っていないかを確かめ、残っていれば `SIGKILL` で止める（コマンドは `claude` と別のプロセスグループで動き、`SIGTERM` を無視したコマンドと `SIGKILL` の後のコマンドは残る。FACT-38）。
+  残りの見つけ方は基本設計で決める。残りが止まったと確かめられなければ `needs-human`（上の表）。`SIGINT` は使わない（書いている途中で止めると、`result` がその回の費用を 0 と数える。FACT-38）。費用の上限は `--max-budget-usd` でも掛ける。
+  設定に持つ上限は、1 セッションの時間とターンと費用（IMPL-13、`--max-budget-usd`）に加え、1 Issue の累計の利用枠（往復を含む）、実行の失敗の再試行の回数（3）と間隔、1 回の実行と 1 日の利用枠（SETUP-12）。1 Issue の累計の利用枠と 1 日の利用枠は、費用（Claude Code が出す USD 換算の値）で数え、トークンはモデルごとに記録に残す（[ADR-20261018-001][adr-usage]）。累計が上限に当たったら `needs-human`。数え上げは手元の記録で行い、記録を失ったときの扱いは「[運用の規則][f01]」
 - IMPL-15 **漏えいの検査と push**。進行ボットは、GitHub に書くすべての文（diff、commit メッセージと author、PR の題名と本文、計画・レビュー・対応・受け入れのコメント、🟢 から起票する Issue）に、漏えいの検査（鍵の形式、メールアドレス、機械上のパス、進行ボットの設定と記録の内容）を掛ける。引っかかれば書かずに `needs-human`。
   検査の実装は dev-autopilot 自身の `plugin/src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（MERGE-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
   push の前に、diff が「進行ボット・次のセッション・CI が実行するか、規則として読むパス」（`.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）。設定に持つ）に触れていれば push せず `needs-human`
@@ -163,3 +169,4 @@
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
