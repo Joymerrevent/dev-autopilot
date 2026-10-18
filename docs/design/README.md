@@ -15,7 +15,7 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 | ファイル | 話題 |
 | --- | --- |
 | [basic/01-settings.md][b01] | 設定（リポの設定とマシンの設定の項目ごとの置き場・初期値・根拠） |
-| basic/02-flow-and-judgment.md（まだ無い） | 状態遷移と判定（Issue の状態の遷移、収束とマージの判定の表、印の種類） |
+| [basic/02-flow-and-judgment.md][b02] | 状態遷移と判定（1 回の実行の流れ、Issue ごとの次の工程、作業場所の残骸。収束とマージの判定の表と印の種類は書いている途中） |
 | basic/03-ai-sessions.md（まだ無い） | AI のセッション（起動の形、セッションごとの安全設定、止め方、モデルと effort） |
 
 ## 読み方
@@ -23,6 +23,7 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 - 根拠は、要件の番号（FLOW-1 など）と ADR の番号（ADR-20261015-005 など）で示す。用語は[要件の読み方][req-read]と同じ（進行 Bot、AI の 5 役、工程、段階、印、渡す文）
 - 設計は、要件と ADR に従う。食い違っていたら要件と ADR が正しく、設計を直す。詳細設計は基本設計に従う
 - 設定の項目の初期値と根拠は [basic/01-settings.md][b01] の表にまとめる。要件が決めた初期値は要件が正本で、表はその写し（ADR-20261018-005）。要件が決めていない初期値は表が正本。今の値の正本は設定ファイル（STRUCT-2）
+- 節の図は、同じ節の表の写しで、正本は表。図は draw.io の `.drawio.svg` で `basic/diagrams/` に置き、文書の名前の番号を頭に付ける（例：`02-run-flow.drawio.svg`）。書き出しと後処理は、[要件の図の直し方][diagrams]と同じ
 
 ## 設計を変えるとき
 
@@ -30,6 +31,7 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
   決めた項目は、同じ PR で要件の番号を欠番にし、どの文書で決めたかを添える（例：`- UNDECIDED-19 **欠番**（基本設計の「設定」で決めた）：~~元の文~~`。書き方は[要件を変えるとき][req-change]と同じ）
 - 要件の形を変える判断と、安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、設計の中で決めない。ADR を `proposed` で起票し、メンテナが `accepted` にしてから設計を直す（STRUCT-2、ADR-20261015-005）
 - 設計を書く中で、要件の誤りや足りない点に気づいたら、要件を直す PR を別に出す。設計に要件の文を写さず、番号で指す
+- 表を直したら、同じ PR で同じ節の図も直す
 
 [req]: ../requirements/README.md
 [req-read]: ../requirements/README.md#読み方
@@ -37,3 +39,5 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 [adr]: ../adr/README.md
 [undecided]: ../requirements/09-undecided.md
 [b01]: ./basic/01-settings.md
+[b02]: ./basic/02-flow-and-judgment.md
+[diagrams]: ../diagrams/README.md
