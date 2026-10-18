@@ -15,6 +15,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261017-007][adr-stop]（2026-10-18）**: 決定 2 の割り振りのうち、止める合図（`enabled`）をリポの設定から外し、当てる先のリポの変数に置いた（PR なしで急いで止めるため）。
 > base ブランチの名前をリポの設定からマシンの設定に移した（進行ボットがリポの設定を base ブランチの先端から読むので、読む前に要るため）。ほかの項目の割り振りと、項目ごとに置き場を 1 つにすることと、ほかの決定は据え置く。
 >
+> **Amended by [ADR-20261018-005][adr-table]（2026-10-18）**: 決定 1 のうち、「要件が初期値を決めている項目は、表に値を写さず、要件の番号を指す」を改めた。表には要件が決めた初期値も値で書き、出典の要件へリンクする。値の正本は要件のままで、要件の初期値を変える PR では表も直す（番号だけでは表を読んでも初期値が分からないため）。決定 1 のほかの項目と決定 2 は据え置く。
+>
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-005 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-17（[決めていないこと][undecided]の「まだ値が決まっていない設定」）を決める。
@@ -172,3 +174,4 @@ STRUCT-2 は、リポ固有の値をすべて設定ファイル 1 つ（例：bu
 [adr-review]: ./adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-table]: ./adr-20261018-005-settings-table-shows-required-values.md

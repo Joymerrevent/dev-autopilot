@@ -101,7 +101,7 @@
 ## 基本設計の中で決めてよいもの
 
 - UNDECIDED-18 レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
-- UNDECIDED-19 実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）
+- UNDECIDED-19 **欠番**（基本設計の「[設定][design-settings]」の「マシンの中の置き場」で決めた）：~~実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）~~
 - UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
 - UNDECIDED-21 クラウドの仕組みを、利用者のマシンの定期の実行の代わりか補助に使うか。メンテナは将来、GitHub Actions などのクラウドでも動かしたい。
   広げるときは、進行 Bot の本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（[ADR-20261017-003][adr-plugin] の決定 3。STRUCT-8）。2026-10-07 の公式の仕様で分かっている範囲：
@@ -173,3 +173,4 @@
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
 [adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
 [adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
+[design-settings]: ../design/basic/01-settings.md
