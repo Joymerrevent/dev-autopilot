@@ -29,6 +29,7 @@
 | ADR-20261018-003 | [作業 AI が最初の実装に `sonnet` を使ってよいかは、まず人が手直ししたかで仮に決め、AI のレビューと AI の修正の結果で見直す][adr-20261018-003-count-model-raise-at-stage-7] | accepted | 2026-10-18 |
 | ADR-20261018-004 | [計画は AI がレビューする。人が計画を読む間は結果を記録だけに残して人の判断と比べ、計画を止めるのに使うかは、その結果を見て決める][adr-20261018-004-ai-reviews-plans-in-shadow-first] | accepted | 2026-10-18 |
 | ADR-20261018-005 | [設定の表には、要件が決めた初期値も値で書いて要件へリンクし、要件の値を変えるときは同じ PR で表も直す][adr-20261018-005-settings-table-shows-required-values] | accepted | 2026-10-18 |
+| ADR-20261019-001 | [振動は、review の印に足す 🔴 🟡 の指摘の ID で見分け、間を空けて再び出た指摘も振動に数える][adr-20261019-001-oscillation-by-finding-ids] | proposed | 2026-10-19 |
 
 <!--
 行の例（表の最後に足す）:
@@ -64,3 +65,4 @@
 [adr-20261018-003-count-model-raise-at-stage-7]: ./adr-20261018-003-count-model-raise-at-stage-7.md
 [adr-20261018-004-ai-reviews-plans-in-shadow-first]: ./adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [adr-20261018-005-settings-table-shows-required-values]: ./adr-20261018-005-settings-table-shows-required-values.md
+[adr-20261019-001-oscillation-by-finding-ids]: ./adr-20261019-001-oscillation-by-finding-ids.md
