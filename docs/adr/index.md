@@ -27,6 +27,7 @@
 | ADR-20261018-001 | [AI のセッションは SIGTERM で止めて残ったコマンドも止め、途中で止めた回の費用は 1 セッションの費用の上限とみなし、利用枠は費用で数える][adr-20261018-001-stop-session-and-count-usage] | accepted | 2026-10-18 |
 | ADR-20261018-002 | [計画 AI の自己申告で計画し直すときは、次回の実行に回さずに続けて行い、やり直した計画だけを投稿する][adr-20261018-002-plan-redo-in-same-run] | accepted | 2026-10-18 |
 | ADR-20261018-003 | [作業 AI が最初の実装に `sonnet` を使ってよいかは、まず人が手直ししたかで仮に決め、AI のレビューと AI の修正の結果で見直す][adr-20261018-003-count-model-raise-at-stage-7] | accepted | 2026-10-18 |
+| ADR-20261018-004 | [計画は AI がレビューする。人が計画を読む間は結果を記録だけに残して人の判断と比べ、計画を止めるのに使うかは、その結果を見て決める][adr-20261018-004-ai-reviews-plans-in-shadow-first] | accepted | 2026-10-18 |
 
 <!--
 行の例（表の最後に足す）:
@@ -60,3 +61,4 @@
 [adr-20261018-001-stop-session-and-count-usage]: ./adr-20261018-001-stop-session-and-count-usage.md
 [adr-20261018-002-plan-redo-in-same-run]: ./adr-20261018-002-plan-redo-in-same-run.md
 [adr-20261018-003-count-model-raise-at-stage-7]: ./adr-20261018-003-count-model-raise-at-stage-7.md
+[adr-20261018-004-ai-reviews-plans-in-shadow-first]: ./adr-20261018-004-ai-reviews-plans-in-shadow-first.md
