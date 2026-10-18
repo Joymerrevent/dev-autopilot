@@ -35,8 +35,8 @@
 - UNDECIDED-26 **上限で止まった作業を引き継ぐか。** IMPL-13 は上限に当たったセッションの途中の状態を commit せず、[ADR-20261013-001][adr-workspace] では次のセッションを GitHub にある状態（push 済みの commit と計画）から始める。
   1 セッションに収まらない大きさの作業は、3 回とも止まって `needs-human` になる（IMPL-14）。引き継ぐ案として、止まったセッションでも AI が commit した分だけを進行ボットの clone へ取り込み、IMPL-15 の検査を通して作業ブランチへ push し、次のセッションを取り込んだ commit から始める形がある。
   IMPL-13 を変え、未完成の作業を GitHub に push することになる。段階 5 で上限に当たった回数を記録してから決める（[02-implement-review-fix.md][f02]）
-- UNDECIDED-30 **計画のやり直しを同じ実行で行うか。** 計画 AI の `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、計画の工程で AI のセッションが 2 つになる。
-  次の実行に回すなら、自己申告があったことと 1 回上げたことを GitHub に残す仕組み（`plan` の印の欄など）が要る。手元の記録は判定に使わない（[ADR-20261015-006][adr-flow]。[02-implement-review-fix.md][f02]）
+- UNDECIDED-30 **欠番**（[ADR-20261018-002][adr-redo] で決めた）：~~**計画のやり直しを同じ実行で行うか。** 計画 AI の `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、計画の工程で AI のセッションが 2 つになる。
+  次の実行に回すなら、自己申告があったことと 1 回上げたことを GitHub に残す仕組み（`plan` の印の欄など）が要る。手元の記録は判定に使わない（[ADR-20261015-006][adr-flow]。[02-implement-review-fix.md][f02]）~~
 - UNDECIDED-31 **作業 AI のモデルを上げた件数を、どの段階で数えるか。** IMPL-25 と段階の表は、段階 5（計画と実装を動かし、レビューは人が行う段階）で「`sonnet` で始めて `opus` で通った件数」を数えるとする。
   モデルを上げるのは修正のセッション（作業 AI の 2 ラウンド目以降）で、修正のセッションは段階 7（対応ループを足す段階）で足すので、段階 5 には上げる場面が無い（[02-implement-review-fix.md][f02]、[06-setup-and-stages.md][f06]）
 
@@ -165,3 +165,4 @@
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
+[adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md

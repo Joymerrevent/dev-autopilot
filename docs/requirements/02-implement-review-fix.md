@@ -28,6 +28,9 @@
     作業 AI に渡す直前に TEXT-11 の検疫を通す。計画は作業指示とリポを読んだ AI の文であり、作業指示に紛れた指示を運びうるため、作業指示と同じ扱いにする。人が計画を止めるときは Agent 欄を `paused` にするか `needs-human` を付ける
   - 計画 AI のモデルは受け入れの印 `plan=opus|fable`（TEXT-12）と人のラベル（`plan:fable` / `plan:opus`。ラベルが優先）で決まる。既定は `opus`（xhigh）。
     計画 AI の `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と出力契約で自己申告したら、進行ボットは 1 回だけ `fable`（high）で計画し直す（2 回目の自己申告は無視し、記録に残す）。
+    計画し直すのは、次回の実行に回さず、同じ回の実行で続けて行う。計画の工程で起動する計画 AI のセッションは最大 2 つになるが、工程は 1 つのまま（FLOW-4）。`opus` の計画は投稿せず、投稿するのは `fable` の計画だけ（`plan` の印の `model` は `fable`）。
+    進行ボットは計画コメントに、計画し直したことと自己申告の項目（出力契約の決まった値）を固定の文で書き添え、AI が自由に書いた文は書き添えない。モデルを上げたことは、`intake-final` の印の `plan=opus` と `plan` の印の `model=fable` の組み合わせで分かる。
+    `fable` のセッションを起動する前にも、全体の止める合図と 1 日の利用枠を確かめ、起動できなければ計画を投稿せずに終わる。`opus` と `fable` のセッションの間で実行が終わったら、次回の実行で計画を `opus` からやり直す（[ADR-20261018-002][adr-redo]）。
     モデルの判定を誤ったときの害は利用枠の増減と計画の質だけ。計画の内容が作業 AI に届く経路は、上の印と検疫で守る
 - IMPL-11 PR は進行ボットが draft で作り、収束して Ready to Merge になったときに進行ボットが ready にする（Copilot coding agent と OpenHands の形。途中の PR を人が誤ってマージしない）
 - IMPL-12 テストを消す・skip する・期待値を緩める・lint を抑止する変更は、作業指示が明示していない限り禁止する。レビュー AI はこれを 🔴 として探す（Anthropic の harness：「テストを消したり編集したりするのは許されない」）
@@ -134,7 +137,7 @@
 |---|---|---|---|---|---|---|
 | 1 | IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受付 AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
 | 2 | IMPL-30 | 計画の難しさの判定 | 受付 AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
-| 3 | IMPL-31 | 計画 | 計画 AI | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、1 回だけ `fable` / high で計画し直す。2 回目の自己申告は無視して記録に残す | IMPL-10 |
+| 3 | IMPL-31 | 計画 | 計画 AI | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、同じ回の実行で続けて、1 回だけ `fable` / high で計画し直す（投稿するのはやり直した計画だけ）。2 回目の自己申告は無視して記録に残す | IMPL-10、[ADR-20261018-002][adr-redo] |
 | 4 | IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
 | 5 | IMPL-33 | レビュー（3 つの軸を、軸ごとに別のセッションで） | レビュー AI | `opus` / xhigh（段階 6 で `fable` / high と比べて決め直す）。3 つの軸とも同じ値で始め、軸ごとに分けるかは段階 6 で決める | 設定で変える。往復の途中では変えない | IMPL-16、IMPL-19、[段階 6][f06] |
 | 6 | IMPL-34 | 批評（🔴 🟡 の再検証。進行ボットが別に起こす独立セッション） | 批評 AI | `opus` / high | 変えない | IMPL-22、REVIEW-2 |
@@ -170,3 +173,4 @@
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
+[adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
