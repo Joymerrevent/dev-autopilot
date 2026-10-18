@@ -7,12 +7,12 @@
   AI のセッションは MCP のサーバー（ログインしている claude.ai のアカウントのコネクタを含む）を 1 つも読み込まない。進行ボットは、安全設定の `disableClaudeAiConnectors: true`、子プロセスの環境変数の `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config`（`--mcp-config` は渡さない）の 3 つを重ね、
   重ねる守りとして安全設定の `permissions.deny` に `mcp__*` を入れる。`check` は、AI のセッションと同じ起動の形で、道具の一覧に MCP の道具が無いことを試す（SETUP-2。FACT-35。[ADR-20261017-005][adr-mcp]）。AI の役に MCP の道具を与えるのは、安全の境界を緩める変更として ADR で決める
 - SAFE-2 **進行ボット・次のセッション・CI は、AI が書いた worktree の中身を信頼して実行しない（「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）**。5 つの経路を塞ぐ：
-  (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。段階 2 で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行ボットのプログラムの写し（SAFE-16）の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
+  (a) AI のセッションはユーザー設定とプロジェクト設定から切り離して起動する（`--setting-sources local`。実機の試し（段階 2）で、既定の `-p` はプロジェクトの hook を実行し `CLAUDE.md` を読むこと、`local` ならユーザーの hook もプロジェクトの hook も `CLAUDE.md` も読まれないことを確認した。`--settings` の安全設定は効く）。Plugin は進行ボットのプログラムの写し（SAFE-16）の絶対パスで渡す（AI が改変した agent 定義と Skill を読まない）。
   (b) 進行ボットが AI の作業場所（親の clone と worktree）で git を実行するのは、AI のセッションを起動する前の clone と worktree の作成だけ。起動した後は、進行ボットの clone へ取り込む fetch の取り出し元にするだけで、消すときは git を使わずフォルダごと消す（SAFE-12）。
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）に触れる diff は push しない
   （IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない。次のセッションが、作業 AI の書き換えた正典を規則として読まない。[ADR-20261017-002][adr-review]）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行ボットはリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `plugin/src/` で行う（IMPL-15）。
-  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（段階 2 で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行ボットのプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（実機の試し（段階 2）で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行ボットのプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。
   Read ツールは worktree の中と写しの `skills/` だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22、FACT-32。[ADR-20261015-001][adr-read]、[ADR-20261017-004][adr-human]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)` と `Read(//<進行ボットのプログラムの写し>/src/**)`（写しの全体を `deny` にすると、`deny` は `allow` より強いので `skills/` も読めない）、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）。
   `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）。MCP の道具を取り除く `mcp__*` も入れる（SAFE-1）
   sandbox の `--settings` のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる。一時フォルダはセッションごとに別のものを作る
@@ -40,14 +40,14 @@
   短い一時フォルダは毎回新しく作り（すでにあれば起動しない）、根は無ければ権限 700 で作る。根が自分の持ち物で、シンボリックリンクでなく、権限が 700 であることを毎回確かめ、外れたら起動しない（`/tmp` はすべての OS ユーザーが書けるため。SAFE-4。[ADR-20261017-006][adr-tmp]）。
   pnpm の store はセッションの一時フォルダの下（`$XDG_DATA_HOME/pnpm/store`）に置き、セッションの間で共有しない。共有の store（人の store も、dev-autopilot 用に別に作る store も）を `allowRead` と `allowWrite` に足さず、`PNPM_HOME` は渡さない（渡すと store の場所が変わる。FACT-25。[ADR-20261015-002][adr-store]）
 - SAFE-11 AI は worktree で作業する。worktree の gitdir と objects は親 clone の `.git/` にあり、worktree のフォルダだけでは `git commit` が通らない。
-  作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許すので、`allowWrite` の列挙は要らない（段階 2 で `git commit` が通ることを確認）。
-  `.git/worktrees/<名前>/gitdir` は `denyWrite` にする（段階 2 で、sandbox は `commondir` `config.worktree` と親の `config` `hooks/**` を既定で保護するが `gitdir` は書けたため）。
+  作業フォルダが worktree のとき sandbox は親 `.git` への書き込みを既定で許すので、`allowWrite` の列挙は要らない（実機の試し（段階 2）で `git commit` が通ることを確認）。
+  `.git/worktrees/<名前>/gitdir` は `denyWrite` にする（実機の試し（段階 2）で、sandbox は `commondir` `config.worktree` と親の `config` `hooks/**` を既定で保護するが `gitdir` は書けたため）。
   AI のセッションの git では自動 gc を止め、書く場所を増やさない
 - SAFE-12 git は、gitdir に `commondir` のファイルがあると、指す先のフォルダの `config`（`core.fsmonitor` `core.sshCommand` `diff.external` など）を読む。普通の clone の `.git/commondir` でも、進行ボットの `git fetch` が指す先の `core.fsmonitor` を実行した（FACT-20）。
   sandbox は worktree の `commondir`（`.git/worktrees/<名前>/commondir`）を保護する（FACT-9）が、保護の一覧は Claude Code の版で変わりうるうえ、親 clone の `.git/commondir` の作成のように確かめていない経路がある。
   sandbox の保護に重ねる守りとして、進行ボットは AI のセッションを起動した後の作業場所（親の clone と worktree）で git を実行しない。進行ボットは、AI の worktree のブランチを「進行ボットの clone」（下）へ fetch してから merge・patch-id・diff・漏えい検査・push を行う（SAFE-2 の (b)。「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。
   AI の作業場所は AI のセッションごとに作り直し、消すときは git を使わずフォルダごと消す。セッションごとの短い一時フォルダ（SAFE-10）も、作業場所と一緒にフォルダごと消す（[ADR-20261017-006][adr-tmp]）。消す前に `commondir` と `gitdir` をファイルとして読み、作ったときの中身と違えば、消さずに `needs-human` にする（[ADR-20261013-001][adr-workspace]）。
-  段階 2 の攻撃の再現では、進行ボットの clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
+  実機の試し（段階 2）の攻撃の再現では、進行ボットの clone からの fetch と親 clone での `git worktree list` / `remove` は差し替え先の config を読まなかった。worktree の中で git を実行したときだけ発火した
 - SAFE-13 **進行ボットは AI の作業場所の clone の refs を使わない。** refs と packed-refs を AI が書けるので、base は進行ボットの clone で fetch した `origin/develop`、PR の head は GitHub の API が返す SHA だけを基準にする。載せ直し（MERGE-5）と push は fetch の直後に行い、API の head（初回は base）が push する SHA の祖先であること（fast-forward で届くこと）を確かめる（自分の merge の結果も、API の head から fast-forward で届く）
 - SAFE-14 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
   作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）

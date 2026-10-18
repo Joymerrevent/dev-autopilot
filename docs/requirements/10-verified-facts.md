@@ -1,6 +1,6 @@
 # 実機で確かめた事実
 
-## 段階 2 で実機で確かめた事実（2026-10-08〜11）
+## 実機の試し（段階 2）で確かめた事実（2026-10-08〜11）
 
 macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、business-os のローカル clone（未信頼の作業場所）から確かめた。入れ子の Plugin は `tmp/` に作った偽物（名札・agent 1 体・Skill 1 つ）。
 
@@ -34,8 +34,8 @@ macOS、Claude Code 2.1.285、haiku、`claude -p --output-format json` で、bus
   利用者向けの不具合なので business-os の Issue [#80][bos-issue-80] に起票した（2026-10-08）
 - 人への注意：`~/.ssh` の実体がクラウドの同期フォルダにある。dev-autopilot 用の鍵も人の署名鍵も、同期されないパスに置く
 
-FACT-6〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行ボットの clone と worktree 2 つ）と捨てる Project と、人が発行した PAT で実機確認した。段階 2 の未確認は残っていない。
-「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は段階 3 の出口。
+FACT-6〜17 は 2026-10-11 に、手で書いた安全設定と偽の入れ子 Plugin（scratchpad の実験場。親 clone と進行ボットの clone と worktree 2 つ）と捨てる Project と、人が発行した PAT で実機確認した。実機の試し（段階 2）の未確認は残っていない。
+「`setup` が書いた安全設定で実体のパスの解決と読み取りの検査が動くこと」は導入と点検の実装（段階 3）の出口。
 
 ## 要件の見直しの途中で確かめた事実（2026-10-12）
 
