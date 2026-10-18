@@ -173,4 +173,4 @@
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
 [adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
 [adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
-[design-settings]: ../design/01-settings.md
+[design-settings]: ../design/basic/01-settings.md

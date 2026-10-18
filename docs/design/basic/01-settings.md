@@ -9,7 +9,7 @@
 - 要件が初期値を決めていない項目は、表に初期値と根拠を書き、「暫定」と添える。段階の出口の記録（FLOW-5、FLOW-13）で見直す
 - 「メンテナが決める」と書いた項目は、要件にも ADR にも根拠になる値が無く、利用枠の使い方などメンテナの事情で決まる。値が空のままなら `check` は fail にし、進行 Bot を動かさない
 - `setup` は、表の初期値で設定ファイルを作る。今の値の正本は設定ファイルで、表は初期値と根拠の正本
-- リポの設定の値は PR で変える。マシンの設定の値は、そのマシンで人が書き換える。安全の境界を緩める変更は、値の変更でも ADR で決める（[基本設計を変えるとき][design-change]）
+- リポの設定の値は PR で変える。マシンの設定の値は、そのマシンで人が書き換える。安全の境界を緩める変更は、値の変更でも ADR で決める（[設計を変えるとき][design-change]）
 
 ## リポの設定
 
@@ -173,20 +173,20 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 - 「メンテナが決める」の項目と `checks.required` が空でないこと
 - 定期の実行の定義が渡すマシンの設定のパスと、人が呼ぶ Skill が origin から見つけるパスが一致すること。定期の実行の間隔が `run.intervalHours` と一致すること
 
-[adr-settings]: ../adr/adr-20261015-005-settings-values-and-machine-settings.md
-[adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
-[adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
-[adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
-[adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
-[adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
-[adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
-[adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
-[adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
-[design-change]: ./README.md#基本設計を変えるとき
+[adr-settings]: ../../adr/adr-20261015-005-settings-values-and-machine-settings.md
+[adr-stop]: ../../adr/adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-human]: ../../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[adr-read]: ../../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-tmp]: ../../adr/adr-20261017-006-per-session-short-tmpdir.md
+[adr-usage]: ../../adr/adr-20261018-001-stop-session-and-count-usage.md
+[adr-model]: ../../adr/adr-20261018-003-count-model-raise-at-stage-7.md
+[adr-planrev]: ../../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
+[adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
+[design-change]: ../README.md#設計を変えるとき
 [places]: #マシンの中の置き場
-[flow]: ../requirements/01-issue-flow.md
-[flow-rules]: ../requirements/01-issue-flow.md
-[markers]: ../requirements/04-external-text-and-markers.md
-[models]: ../requirements/02-implement-review-fix.md
-[review-skill]: ../requirements/08-review-skill.md
-[stages]: ../requirements/06-setup-and-stages.md
+[flow]: ../../requirements/01-issue-flow.md
+[flow-rules]: ../../requirements/01-issue-flow.md
+[markers]: ../../requirements/04-external-text-and-markers.md
+[models]: ../../requirements/02-implement-review-fix.md
+[review-skill]: ../../requirements/08-review-skill.md
+[stages]: ../../requirements/06-setup-and-stages.md
