@@ -53,6 +53,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 - 選ぶ判断が要るもの（[09-undecided.md][f09] の「ADR で決めること」など）は、[ADR][adr] を `proposed` で起票し、メンテナが `accepted` にしてから、関係するファイルを直す
 - 記述の誤りや言い回しは、PR で直接直す
 - [図][diagrams]が写している要件を変えたら、同じ PR で図も直す。どの図がどの要件を写しているかは、[図の一覧][diagrams]の表にある
+- 設定の初期値を決めている要件を変えたら、同じ PR で[基本設計の設定の表][design-settings]も直す（表は要件が決めた初期値を写している。[ADR-20261018-005][adr-table]）
 - 要件の番号は振り直さない。ADR や基本設計は番号で根拠を示すので、振り直すと参照が壊れずに別の要件を指す。
   要件を消すときは、番号の行（箇条か表の行）と元の文を残し、元の文に取り消し線（`~~…~~`）を引く。番号のすぐ後に「欠番」と書き、消した理由か決めた ADR を添える（例：`- UNDECIDED-24 **欠番**（ADR-<番号> で決めた）：~~元の文~~`）。元の文を残すのは、何が書いてあって何を決めたのかを、要件のファイルだけで読めるようにするため。
   足すときは、欠番を含めてファイルの中でいちばん大きい番号の次を使う（節の途中に置くときも、番号は変えない）。欠番の番号は、別の要件に使い回さない
@@ -77,5 +78,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 [adr]: ../adr/README.md
 [adr-index]: ../adr/index.md
 [diagrams]: ../diagrams/README.md
+[design-settings]: ../design/basic/01-settings.md
+[adr-table]: ../adr/adr-20261018-005-settings-table-shows-required-values.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
 [req]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/requirements.md
