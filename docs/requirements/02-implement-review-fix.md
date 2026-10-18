@@ -106,7 +106,9 @@
   印は `fix`（`round` `head` `sig`。「[印と固定の見出しの一覧][f04]」）
 - IMPL-24 往復の回数に上限を持つ（最初は 3 回）。超えたら Status を Blocked にし、`needs-human` ラベルを付け、経緯を Issue にコメントする。人が外すまで再着手しない（FLOW-1）。同じ指摘が 2 ラウンド続けて出たら振動として同じ扱い
 - IMPL-25 **詰まったときの上げ方**。作業 AI が `sonnet` のとき、作業 AI の 2 ラウンド目（最初の修正のセッション）から `opus`（high）に 1 段上げる。作業 AI のラウンドは、実装を 1、修正を 2 以降と数える（「モデルの流れ」の表と同じ。`review` と `fix` の印の `round` とは数え方が違う）。`fable` には上げない。
-  3 回で `needs-human` にする規則（IMPL-24）は変えず、再計画は人が指示する（自動では計画 AI に戻さない。fail-closed）。上げたことは記録と Issue のコメントに残し、段階 5 で「`sonnet` で始めて `opus` で通った件数」を数えて開始モデルを種類ごとに決める
+  3 回で `needs-human` にする規則（IMPL-24）は変えず、再計画は人が指示する（自動では計画 AI に戻さない。fail-closed）。上げたことは記録と Issue のコメントに残す。
+  最初の実装で使うモデルは、段階 5（計画と実装を AI に任せ、レビューと PR のマージは人が行う段階）では、`sonnet` と `opus` の PR を人が手直しせずにマージできたかで比べて、Issue の種類ごとに仮に決める。
+  段階 6 で最初の AI のレビューの結果（`review` の印の `round=1` の `verdict` と、重さごとの指摘の件数）、段階 7 で AI が直した回数（往復の回数）と、修正で `opus` に切り替えた件数と、切り替えた後に Ready to Merge まで進んだ件数を材料に足し、段階 7 を終えるときに種類ごとに見直す（[ADR-20261018-003][adr-model]）
 - IMPL-26 🟢 は進行ボットが Issue にする（`change-review` の「見送りは記録とセット」の規則）。1 件 1 Issue、題名は指摘の見出し、本文に PR 番号・ラウンド・失敗シナリオ・推奨を写し、ラベル `from-review` を付ける。本文は AI の出力として扱い、作業 AI には渡さない（Issue の本文は著者を問わず渡さない。TEXT-1、IMPL-20）。
   マイルストーンは付けない。人がマイルストーンを付けるまで受け入れ（TEXT-12）も走らせない（🟢 の Issue が毎日増えて人の読む量を超えないため）。同じ見出しの open な Issue があれば作らずにコメントで PR 番号を足す（重複を防ぐ）。
   Issue を作ってから PR を Ready to Merge にする（先にマージすると、Issue 化に失敗したとき指摘が消える）
@@ -138,7 +140,7 @@
 | 1 | IMPL-29 | 受け入れ（検疫は TypeScript で AI を使わない。下書きの作成） | 受付 AI | `claude-haiku-5-5` / medium（別名 `haiku` は Haiku 4.5 に解けるので、haiku だけは完全な ID で書く。段階 2 で確認） | 拒否（`stop_reason: refusal`）で止まったら実行の失敗として扱い、次回の実行は `sonnet` で試す | TEXT-11、TEXT-12、IMPL-14 |
 | 2 | IMPL-30 | 計画の難しさの判定 | 受付 AI | 同上（同じセッション） | 印に `plan=opus` か `plan=fable` を書く。人はラベル `plan:fable` / `plan:opus` で上書きし、ラベルが優先 | TEXT-12、IMPL-10 |
 | 3 | IMPL-31 | 計画 | 計画 AI | 既定 `opus` / xhigh。印かラベルが `fable` なら `fable` / high | `opus` が「設計判断・アーキテクチャの選択・原因不明の障害解析を含む」と自己申告したら、同じ回の実行で続けて、1 回だけ `fable` / high で計画し直す（投稿するのはやり直した計画だけ）。2 回目の自己申告は無視して記録に残す | IMPL-10、[ADR-20261018-002][adr-redo] |
-| 4 | IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で問題なく回る種類から `sonnet` / high へ下げる | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
+| 4 | IMPL-32 | 実装（1 ラウンド目） | 作業 AI | `opus` / high から始める。段階 5 で人が手直しせずにマージできた種類から `sonnet` / high へ仮に下げ、段階 7 を終えるときに見直す（IMPL-25） | 上限は `opus`。`fable` には上げない | 「[決まっていること][f00]」、[段階 5][f06] |
 | 5 | IMPL-33 | レビュー（3 つの軸を、軸ごとに別のセッションで） | レビュー AI | `opus` / xhigh（段階 6 で `fable` / high と比べて決め直す）。3 つの軸とも同じ値で始め、軸ごとに分けるかは段階 6 で決める | 設定で変える。往復の途中では変えない | IMPL-16、IMPL-19、[段階 6][f06] |
 | 6 | IMPL-34 | 批評（🔴 🟡 の再検証。進行ボットが別に起こす独立セッション） | 批評 AI | `opus` / high | 変えない | IMPL-22、REVIEW-2 |
 | 7 | IMPL-35 | 修正（2 ラウンド目以降） | 作業 AI | 1 ラウンド目が `sonnet` なら `opus` / high に 1 段上げる。`opus` で始めていればそのまま | 上げたことを記録と Issue のコメントに残す。往復 3 回で `needs-human`。再計画は人が指示する（自動では計画 AI に戻さない） | IMPL-24、IMPL-25 |
@@ -174,3 +176,4 @@
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
+[adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
