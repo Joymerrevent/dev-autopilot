@@ -12,7 +12,7 @@ dev-autopilot は、人が処理対象にした Issue を AI が実装し、別�
 - `docs/adr/`           設計判断。**ここが正典**。規則は [README][adr-readme]、一覧は [index.md][adr-index]
 - `docs/diagrams/`      図（要件の写し）。直し方は [README][diagrams]
 - `docs/design/`        構造仕様（基本設計）。まだ無い
-- `plugin/` `test/` `fixtures/`  予定の構成（[07-structure.md][structure]）。まだ無い。進行ボットは `plugin/src/` に置いて Plugin に同封し、単体テストは同封しないように `test/unit/` に置く
+- `plugin/` `test/` `fixtures/`  予定の構成（[07-structure.md][structure]）。まだ無い。進行 Bot は `plugin/src/` に置いて Plugin に同封し、単体テストは同封しないように `test/unit/` に置く
 - `.github/`            CI（`ci`・`commitlint`）と Dependabot
 - `.claude/`            Claude Code の禁止の規則（`settings.json`）
 
@@ -22,13 +22,13 @@ dev-autopilot は、人が処理対象にした Issue を AI が実装し、別�
    **CC が単独で `accepted` にしない。** メンテナが決める
 2. 要件は [README][req-readme] の「要件を変えるとき」に従って直す。選ぶ判断は整理の中で決めず、[09-undecided.md][undecided] に足して ADR で決める。
    図が写している要件を変えたら、同じ PR で図も直す
-3. bash のスクリプトを足さない。進行ボットとスクリプトは TypeScript で書き、Node 24 が直接実行する（[07-structure.md][structure]）
+3. bash のスクリプトを足さない。進行 Bot とスクリプトは TypeScript で書き、Node 24 が直接実行する（[07-structure.md][structure]）
 4. Markdown のリンクは参照スタイル（`[表示][ラベル]` と、ファイル末尾の `[ラベル]: パス`）。markdownlint が inline のリンクを止める。Markdown は Prettier で整形しない
 5. 検査は `pnpm lint` と `pnpm format:check`。成否は終了コードで見る。commit のときに lint-staged・commitlint・gitleaks がフックで走る
 6. ブランチは `main` と `develop`。PR は `develop` 向けにする。`main` と `develop` は ruleset で PR 必須、必須チェックは `ci` と `commitlint`。
    公開済みの履歴を書き換えない。Conventional Commits
 7. business-os の中身を import しない（STRUCT-1）。business-os の PR と Issue の番号は、「business-os の PR #77」のように business-os のものと分かる書き方にし、リンクを付ける
-8. dev-autopilot を、dev-autopilot 自身のリポに当てない（作業 AI が進行ボットのコードを書き換える経路になる。当てるなら別の ADR で決める）
+8. dev-autopilot を、dev-autopilot 自身のリポに当てない（作業 AI が進行 Bot のコードを書き換える経路になる。当てるなら別の ADR で決める）
 
 [overview]: docs/requirements/00-overview.md
 [structure]: docs/requirements/07-structure.md

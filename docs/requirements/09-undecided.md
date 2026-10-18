@@ -33,7 +33,7 @@
   実行をまたいで覚える値には、受け入れ AI の拒否の後のモデル（IMPL-29。[02-implement-review-fix.md][f02]）もある。
   記録を失ったとき（追跡しないフォルダの掃除、専用マシンへの移行など）に、失敗の回数と累計の利用枠をどう扱うかも決める（例：`needs-human` に倒す、回数を GitHub の印に残す）。数が 0 に戻ると、上限の `needs-human` が黙って効かなくなる~~
 - UNDECIDED-26 **上限で止まった作業を引き継ぐか。** IMPL-13 は上限に当たったセッションの途中の状態を commit せず、[ADR-20261013-001][adr-workspace] では次のセッションを GitHub にある状態（push 済みの commit と計画）から始める。
-  1 セッションに収まらない大きさの作業は、3 回とも止まって `needs-human` になる（IMPL-14）。引き継ぐ案として、止まったセッションでも AI が commit した分だけを進行ボットの clone へ取り込み、IMPL-15 の検査を通して作業ブランチへ push し、次のセッションを取り込んだ commit から始める形がある。
+  1 セッションに収まらない大きさの作業は、3 回とも止まって `needs-human` になる（IMPL-14）。引き継ぐ案として、止まったセッションでも AI が commit した分だけを進行 Bot の clone へ取り込み、IMPL-15 の検査を通して作業ブランチへ push し、次のセッションを取り込んだ commit から始める形がある。
   IMPL-13 を変え、未完成の作業を GitHub に push することになる。計画・実装工程（段階 5）で上限に当たった回数を記録してから決める（[02-implement-review-fix.md][f02]）
 - UNDECIDED-30 **欠番**（[ADR-20261018-002][adr-redo] で決めた）：~~**計画のやり直しを同じ実行で行うか。** 計画 AI の `opus` が自己申告したら、進行ボットは 1 回だけ `fable` で計画し直す（IMPL-10）。同じ実行で行うと、計画の工程で AI のセッションが 2 つになる。
   次の実行に回すなら、自己申告があったことと 1 回上げたことを GitHub に残す仕組み（`plan` の印の欄など）が要る。手元の記録は判定に使わない（[ADR-20261015-006][adr-flow]。[02-implement-review-fix.md][f02]）~~
@@ -44,7 +44,7 @@
 
 - UNDECIDED-9 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**pass なのに CI が緑でないとき。** pass なのに CI が赤・無い・保留のときの扱い。赤を修正に回して往復に数えるか、無い・保留は待つか（IMPL-27。[02-implement-review-fix.md][f02]）~~
 - UNDECIDED-10 **欠番**（[ADR-20261016-001][adr-pr] で決めた）：~~**2 件目以降の `merge=ready`。** 1 回の実行で `merge=ready` 1 件を超えた PR の扱い（`human` にすると一致の記録が汚れる）（MERGE-5。[03-merge.md][f03]）~~
-- UNDECIDED-32 **欠番**（[ADR-20261017-002][adr-review] で、進行ボットが軸ごとに別のセッションを起こし、Agent ツールはどの役にも与えず、設定の項目も無くすと決めた）：~~**レビュー AI のサブエージェントと Agent ツール。** REVIEW-1 は 3 つの軸を並列のサブエージェントで見るとするが、「[登場するもの][f00]」のレビュー AI の道具に Agent が無い。
+- UNDECIDED-32 **欠番**（[ADR-20261017-002][adr-review] で、進行 Bot が軸ごとに別のセッションを起こし、Agent ツールはどの役にも与えず、設定の項目も無くすと決めた）：~~**レビュー AI のサブエージェントと Agent ツール。** REVIEW-1 は 3 つの軸を並列のサブエージェントで見るとするが、「[登場するもの][f00]」のレビュー AI の道具に Agent が無い。
   [ADR-20261015-005][adr-settings] は、Agent ツールを許すことを、安全の境界を緩める変更として ADR で決めるとしている。設定の「Agent ツールを許すか」（IMPL-14、STRUCT-2）が役ごとかも決まっていない（[08-review-skill.md][f08]）~~
 - UNDECIDED-33 **欠番**（[ADR-20261017-002][adr-review] で、PR のコメントはどの役にも渡さないと決めた）：~~**コラボレータの PR のコメントを AI に渡すか。** TEXT-1 と REVIEW-6 は、コラボレータのコメントは渡す、PR のコメントも同じ、とする。一方、渡す文の範囲は `agent-ready` の時点で確定し、後から足されたコメントは渡さない（TEXT-1）。
   再レビューの入力（IMPL-21）と修正の入力（IMPL-23）にも、コラボレータのコメントは無い。PR のコメントはすべて `agent-ready` の後に付くので、渡すのか、渡すならどの役のどの入力かが決まらない（[04-external-text-and-markers.md][f04]、[08-review-skill.md][f08]）~~
@@ -104,19 +104,19 @@
 - UNDECIDED-19 実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）
 - UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
 - UNDECIDED-21 クラウドの仕組みを、利用者のマシンの定期の実行の代わりか補助に使うか。メンテナは将来、GitHub Actions などのクラウドでも動かしたい。
-  広げるときは、進行ボットの本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（[ADR-20261017-003][adr-plugin] の決定 3。STRUCT-8）。2026-10-07 の公式の仕様で分かっている範囲：
+  広げるときは、進行 Bot の本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（[ADR-20261017-003][adr-plugin] の決定 3。STRUCT-8）。2026-10-07 の公式の仕様で分かっている範囲：
   - Routine（`/schedule`）：Anthropic のクラウドで動き、GitHub のリポを clone して作業できる。起動は時刻・GitHub の webhook・API。最短 1 時間間隔。Routine 同士の連鎖は未サポート。利用枠を消費する
   - GitHub Actions の claude-code-action：PR のイベントで起動でき、`/code-review --comment` で行にコメントを書ける。レビュー AI だけをここに寄せる案がある
   - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（「[隔離と鍵の分け方][f05]」）の代わりに、使い捨てのクラウドの sandbox で動かす案。
     鍵と認証情報をクラウドに置くことになり、今は利用者のマシンで動かす形（「[決まっていること][f00]」の配り方と実行環境）とは別の守りが要る。マージ判定工程（段階 8）の出口を越えて専用マシンへの移行を決めるときの候補に留める
-  - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行ボットの判定を手元とクラウドで二重に持たないこと
+  - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行 Bot の判定を手元とクラウドで二重に持たないこと
 - UNDECIDED-22 検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）
 - UNDECIDED-27 作業場所の残骸の決め方。[ADR-20261013-001][adr-workspace] では、セッションのフォルダ（`sessions/<セッションの名前>/`）は同じ名前で作り直すか片付ける（FLOW-27）まで残るので、作業中の Issue のフォルダがあるのは普通の状態になる。
   どのフォルダを残骸とみなすか（例：片付けの後に残ったもの、名前から Issue か PR を引けないもの）を決め、SETUP-2 の warn・Issue ごとの `needs-human`・fail に当てはめる（FLOW-29、SAFE-4、「運用の規則」）。
   消す前に読んだ `commondir` か `gitdir` が作ったときと違う作業場所は、ADR のとおり消さずに `needs-human` にし、`check` で warn にする
-- UNDECIDED-39 進行ボットのほかのコメントに付ける印の種類。モデルを上げたことを残すコメント（IMPL-25）と、🟢 の重複のときに PR 番号を足すコメント（IMPL-26）に当てはまる `note` の種類が無い（今は `wait` `overlap` `remind` `stop` `link`）。種類を足すか、既存の種類に寄せるかを決める（[ADR-20261015-004][adr-markers]）
+- UNDECIDED-39 進行 Bot のほかのコメントに付ける印の種類。モデルを上げたことを残すコメント（IMPL-25）と、🟢 の重複のときに PR 番号を足すコメント（IMPL-26）に当てはまる `note` の種類が無い（今は `wait` `overlap` `remind` `stop` `link`）。種類を足すか、既存の種類に寄せるかを決める（[ADR-20261015-004][adr-markers]）
 - UNDECIDED-40 AI のセッションごとの安全設定の作り方。`allowRead`（自分のセッションのフォルダ）と `Write(//<worktree>/**)` はセッションごとに違うパスなのに、SAFE-2 の (e) と SAFE-5 は、`setup` が書く固定のファイルとハッシュの確かめを前提にしている。
-  進行ボットが雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める
+  進行 Bot が雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める
 - UNDECIDED-41 振動の数え方。IMPL-24 は「同じ指摘が 2 ラウンド続けて出たら振動」、「[レビューの Skill][f08]」の方針は「同じ指摘が 2 回出たら振動」とする。間を空けて再び出た指摘を振動に数えるかを決める
 - UNDECIDED-42 **欠番**（[ADR-20261016-003][adr-move] で、評価を dev-autopilot のリポに置くと決めた）：~~`review` Skill の評価の置き場。「[レビューの Skill][f08]」は評価を business-os の `pnpm eval:cases` の仕組みの上に置くとし、STRUCT-4 は検査を dev-autopilot 自身が持つとする。分離のときに評価も移すかを決める~~
 - UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:intake` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める
@@ -128,7 +128,7 @@
 - UNDECIDED-23 **欠番**（2026-10-16 に確かめた。済んでいたのは SETUP-10 だけで、「[いまのリポジトリに無いもの][f06]」の表に書き添えた。SETUP-11 は `dev-autopilot/` と構造仕様の表は済み、TypeScript の置き場（`src/` と tsconfig）はまだ無い。ほかの行は導入と点検の実装（段階 3。`setup` と `check` を作る段階）以降で作る）：~~**準備の作業（「[いまのリポジトリに無いもの][f06]」）が今どこまで済んでいるか。** 「[いまのリポジトリに無いもの][f06]」は 2026-10-07 時点の「足りないもの」の一覧で、その後どこまで済んだかを確かめた記録が無い。
   SETUP-11 は、`dev-autopilot/` フォルダと構造仕様（`docs/design/architecture.md`）の表は済んでいるが、TypeScript の置き場（`src/` と tsconfig）はまだ無い（2026-10-12 に確認）。
   SETUP-9（`develop` の ruleset）や SETUP-10（署名の移行）なども 1 つずつ確かめ、済んだものは「[いまのリポジトリに無いもの][f06]」の冒頭の規則に従って、行を残したまま済んだことを書き添える（[06-setup-and-stages.md][f06]）~~
-- UNDECIDED-24 **欠番**（[ADR-20261013-001][adr-workspace] で、進行ボットが AI の触った clone で fetch しない形に決め、確かめる必要が無くなった）：~~**AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
+- UNDECIDED-24 **欠番**（[ADR-20261013-001][adr-workspace] で、進行 Bot が AI の触った clone で fetch しない形に決め、確かめる必要が無くなった）：~~**AI が触った clone の中で、進行役が fetch を実行しても安全か。** AI の作業場所の案のうち、Issue ごとの clone を使い続けて新しい commit を fetch で届ける案は、この確認が前提になる。
   段階 2 で確かめたのは、別の clone からの fetch と、親 clone での `worktree list` と `remove` だけ（FACT-12。[10-verified-facts.md][f10]）。段階 3 の点検で確かめる~~
 - UNDECIDED-28 **欠番**（FACT-26 で確かめた。エージェント定義の `tools` に書けば使え、作業フォルダの外は Read と同じく拒否される）：~~**計画役の道具の Grep と Glob が使えるか。** 計画役は読むだけの道具（Read・Grep・Glob）で動く前提（「[登場するもの][f00]」）だが、Claude Code 2.1.285 の `-p` のセッションの道具の一覧に Grep と Glob が無かった（FACT-24。[10-verified-facts.md][f10]）。
   エージェント定義の `tools` に書いたときに使えるかを、段階 3 で確かめる。使えなければ、計画役がファイルを探す手段を決める~~
@@ -141,7 +141,7 @@
   Skill の置き場は `plugin/skills/review/`（配布物を `plugin/` に集めたため）で、skills CLI が `plugin/` の下を見つけるかを確かめていない（[07-structure.md][f07]）~~
 - UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
   sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
-  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行ボットを動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
+  worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行 Bot を動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
