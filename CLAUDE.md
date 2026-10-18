@@ -11,7 +11,7 @@ dev-autopilot は、人が処理対象にした Issue を AI が実装し、別�
 - `docs/requirements/`  要件。読み方と番号の索引は [README][req-readme]、決めていないことは [09-undecided.md][undecided]
 - `docs/adr/`           設計判断。**ここが正典**。規則は [README][adr-readme]、一覧は [index.md][adr-index]
 - `docs/diagrams/`      図（要件の写し）。直し方は [README][diagrams]
-- `docs/design/`        構造仕様（基本設計）。まだ無い
+- `docs/design/`        構造仕様（基本設計）。書いている途中。読み方と文書の一覧は [README][design]
 - `plugin/` `test/` `fixtures/`  予定の構成（[07-structure.md][structure]）。まだ無い。進行 Bot は `plugin/src/` に置いて Plugin に同封し、単体テストは同封しないように `test/unit/` に置く
 - `.github/`            CI（`ci`・`commitlint`）と Dependabot
 - `.claude/`            Claude Code の禁止の規則（`settings.json`）
@@ -37,3 +37,4 @@ dev-autopilot は、人が処理対象にした Issue を AI が実装し、別�
 [adr-readme]: docs/adr/README.md
 [adr-index]: docs/adr/index.md
 [diagrams]: docs/diagrams/README.md
+[design]: docs/design/README.md
