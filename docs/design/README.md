@@ -15,7 +15,7 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 | ファイル | 話題 |
 | --- | --- |
 | [basic/01-settings.md][b01] | 設定（リポの設定とマシンの設定の項目ごとの置き場・初期値・根拠） |
-| basic/02-flow-and-judgment.md（まだ無い） | 状態遷移と判定（Issue の状態の遷移、収束とマージの判定の表、印の種類） |
+| [basic/02-flow-and-judgment.md][b02] | 状態遷移と判定（1 回の実行の流れ、Issue ごとの次の工程、作業場所の残骸。収束とマージの判定の表と印の種類は書いている途中） |
 | basic/03-ai-sessions.md（まだ無い） | AI のセッション（起動の形、セッションごとの安全設定、止め方、モデルと effort） |
 
 ## 読み方
@@ -37,3 +37,4 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 [adr]: ../adr/README.md
 [undecided]: ../requirements/09-undecided.md
 [b01]: ./basic/01-settings.md
+[b02]: ./basic/02-flow-and-judgment.md
