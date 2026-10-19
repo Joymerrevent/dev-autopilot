@@ -115,6 +115,7 @@
 | `limits.wip` | 進行中の Issue（`In Progress` から `Done` の前まで）の数の上限 | 1 件（マージ判定工程（段階 8）まで。[FLOW-3][flow]） | 進行中の Issue の数にも上限を持ち、上限に達していれば新しい Issue に着手しない（[FLOW-3][flow]） |
 | `limits.intakePerRun` | 1 回の実行で受け入れる Issue の数の上限 | 5 件（暫定） | 1 回の実行で受け入れる件数に上限を持つ。初回の実行で未処理の Issue すべてに走らないためと、外の人が Issue を大量に立てたときの利用枠の歯止め（[TEXT-12][text]）。5 件は [ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
 | `limits.roundTrips` | レビューと修正の往復の回数の上限。超えたら `needs-human` | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が再び出たとき（同じ指摘の再発）も同じ扱い（[IMPL-24][impl]） |
+| `limits.planRevisions` | 計画のレビューの指摘で計画し直す回数の、計画の工程ごとの上限。上限まで計画し直しても `fix` なら、マージ判定工程（段階 8）の前は最後の計画を投稿する | 1 回（[IMPL-10][impl]） | 計画は実行して確かめられないので、レビューのたびに直すところが出て、ループが終わらないおそれがある。1 回なら、計画の工程は最大 5 つのセッション（1 セッションの上限 45 分なら 225 分）で終わる（[IMPL-10][impl]、[ADR-20261019-003][adr-replan]） |
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
 | `limits.session.costUsd` | AI のセッション 1 回の費用の上限（`--max-budget-usd`）。途中で止めた回は、この値をその回の費用とみなす | メンテナが決める（USD） | 費用の上限を `--max-budget-usd` でも掛ける（[IMPL-14][impl]）。途中で止めた回は費用が分からないので、この値をその回の費用とみなす（[ADR-20261018-001][adr-usage]） |
@@ -135,7 +136,7 @@
 | --- | --- | --- | --- |
 | `models.intake` | 受付 AI（受け入れと計画の難しさの判定） | `claude-haiku-5-5` / medium（[IMPL-29][impl]） | 役ごとのモデルの正本は要件の「モデルの流れ」の表（[IMPL-29][impl]）。`haiku` は別名が Haiku 4.5 に解けるので、完全な ID で書く |
 | `models.intakeAfterRefusal` | 受付 AI が拒否（`stop_reason: refusal`）で止まった Issue の、次の回の受付 AI | `sonnet`（[IMPL-29][impl]） / medium（effort は暫定。`models.intake` と同じ） | 受付 AI が拒否で止まったら実行の失敗として扱い、次の回は `sonnet` で試す（[IMPL-14、IMPL-29][impl]）。拒否の記録が無いときは `models.intake` で起動する（[運用の規則][flow]） |
-| `models.plan` | 計画 AI（既定） | `opus` / xhigh（[IMPL-31][impl]） | 計画 AI は既定で `opus`。受け入れの印かラベルが `fable` なら `models.planHard` で計画する（[IMPL-31][impl]） |
+| `models.plan` | 計画 AI（既定。計画のレビューの指摘で計画し直すときは、直す前の計画と同じ値） | `opus` / xhigh（[IMPL-31][impl]） | 計画 AI は既定で `opus`。受け入れの印かラベルが `fable` なら `models.planHard` で計画する（[IMPL-31][impl]） |
 | `models.planHard` | 計画 AI（受け入れの判定かラベルで `fable` にしたとき、計画 AI が自己申告して計画し直すとき） | `fable` / high（[IMPL-31][impl]） | `opus` が設計判断などを含むと自己申告したら、同じ実行で 1 回だけ `fable` で計画し直す（[IMPL-31][impl]、[ADR-20261018-002][adr-redo]） |
 | `models.work` | 作業 AI の最初の実装 | `opus` / high（[IMPL-32][impl]） | 作業 AI は `opus` で始め、計画・実装工程（段階 5）で人が手直しせずにマージできた種類から `sonnet` に仮に下げる（[IMPL-25、IMPL-32][impl]） |
 | `models.workByType` | Issue の種類ごとの、作業 AI の最初の実装 | 空（Issue の種類の分け方を決めるまで。UNDECIDED-52） | 最初の実装に使うモデルは、Issue の種類ごとに決める（[IMPL-25][impl]、[ADR-20261018-003][adr-model]）。種類の分け方が決まるまで空 |
@@ -226,3 +227,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [struct]: ../../requirements/07-structure.md
 [design-ai]: ./03-ai-sessions.md
 [adr-gaps]: ../../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
+[adr-replan]: ../../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md

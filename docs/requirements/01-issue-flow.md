@@ -59,7 +59,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | 3 | FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
 | 4 | FLOW-18 | `agent-ready` を検出し、渡す文のハッシュを取って `intake-final` の印を新しいコメントで投稿し（TEXT-12）、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行 Bot | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
 | 5 | FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行 Bot | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
-| 6 | FLOW-20 | 計画 AI（印とラベルで決めたモデル）が計画を返し、進行 Bot が `plan` の印付きで Issue にコメントする。計画 AI の `opus` が自己申告したら、同じ回の実行で続けて `fable` で計画し直し、やり直した計画だけを投稿する（IMPL-10。[ADR-20261018-002][adr-redo]）。計画を投稿した実行では、どの段階でも実装に入らない（重い工程は 1 回の実行で 1 つ。FLOW-4）。計画を投稿する前に、レビュー AI が計画をレビューする（マージ判定工程（段階 8）の前は結果を記録だけに残す。IMPL-10、[ADR-20261018-004][adr-planrev]）。マージ判定工程（段階 8）の前は、人がすべての計画を読み、誤っていれば次回の実行までに止める（Agent 欄 `paused` か `needs-human`）。マージ判定工程（段階 8）以降は計画を記録として残す（IMPL-10） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-10 |
+| 6 | FLOW-20 | 計画 AI（印とラベルで決めたモデル）が計画を返し、進行 Bot が `plan` の印付きで Issue にコメントする。計画 AI の `opus` が自己申告したら、同じ回の実行で続けて `fable` で計画し直し、やり直した計画だけを投稿する（IMPL-10。[ADR-20261018-002][adr-redo]）。計画を投稿した実行では、どの段階でも実装に入らない（重い工程は 1 回の実行で 1 つ。FLOW-4）。計画を投稿する前に、レビュー AI が計画をレビューし、直すべき点があれば、同じ回の実行で続けて計画 AI に計画し直させる（上限は設定。マージ判定工程（段階 8）の前は、レビューの結果も計画し直したことも Issue に書かない。IMPL-10、[ADR-20261018-004][adr-planrev]、[ADR-20261019-003][adr-replan]）。マージ判定工程（段階 8）の前は、人がすべての計画を読み、誤っていれば次回の実行までに止める（Agent 欄 `paused` か `needs-human`）。マージ判定工程（段階 8）以降は計画を記録として残す（IMPL-10） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-10 |
 | 7 | FLOW-21 | draft PR を作る（計画・実装工程（段階 5）ではレビュー AI が無いので、人がレビューする。Agent 欄は空） | 進行 Bot | `In Review` | `reviewer`（レビュー工程（段階 6）以降。計画・実装工程（段階 5）は空） | 変えない | IMPL-6、IMPL-7 |
 | 8 | FLOW-22 | 対応ループ：🔴 🟡 があるか、CI が赤（IMPL-27）なら作業 AI が直す。載せ直し（MERGE-6）で差分が変わったときもここに戻る | 進行 Bot | 変えない | `worker`（直している間）→ `reviewer`（再レビュー中） | 変えない | MERGE-6 |
 | 9 | FLOW-23 | 収束（CI 緑かつ `verdict=pass`）。🟢 を Issue にしてから PR を ready にする | 進行 Bot | `Ready to Merge` | 空 | 変えない | IMPL-27、IMPL-26、IMPL-11 |
@@ -131,3 +131,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
 [adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [readme]: ./README.md
+[adr-replan]: ../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md

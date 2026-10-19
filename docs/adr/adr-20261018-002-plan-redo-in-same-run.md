@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # 計画 AI の自己申告で計画し直すときは、次回の実行に回さずに続けて行い、やり直した計画だけを投稿する
 
+> **Amended by [ADR-20261019-003][adr-replan]（2026-10-19）**: 決定 1 のうち「計画の工程では、計画 AI のセッションを最大 2 つ起動する」を改めた。計画のレビューが `fix` を返したら、同じ回の実行で続けて計画 AI に計画し直させるので、計画 AI のセッションは最大 3 つ（計画し直す回数の上限が初期値のとき）になる。同じ回の実行で続けて行うこと、途中で実行が終わったら次の実行で最初の計画からやり直すこと、やり直した計画だけを投稿することと、決定 2 は据え置く。
+
 要件の UNDECIDED-30（[決めていないこと][undecided]の「計画のやり直しを同じ実行で行うか」）を決める。
 
 ## 背景と課題（Context and Problem Statement）
@@ -106,3 +108,4 @@ decision-makers: メンテナ
 [adr-flow]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-review]: ./adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-replan]: ./adr-20261019-003-replan-on-plan-review-from-stage-5.md
