@@ -19,6 +19,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。進行 Bot は agents/intake.md を起動する。人の操作は agent-ready だけ
     agents/
       planner.md               計画 AI（読むだけ。計画を出力契約で返す）
+      plan-reviewer.md         レビュー AI の計画のレビュー用（読むだけ。IMPL-10。reviewer.md は Bash を持つので分ける）
       worker.md                作業 AI（モデルは設定で）
       reviewer.md              レビュー AI（進行 Bot がレビューの軸ごとに別のセッションで起こす。Agent ツールは持たない。ADR-20261017-002）
       critic.md                批評 AI（レビューの指摘の再検証。進行 Bot が別に起こす独立セッション。IMPL-22）

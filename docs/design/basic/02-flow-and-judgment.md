@@ -240,7 +240,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 ## 作業場所の残骸
 
 UNDECIDED-27（作業場所の残骸の決め方）を決める。セッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）は、同じ名前で作り直すか片付けるまで残るので、作業中の Issue のフォルダがあるのは普通の状態（[ADR-20261013-001][adr-workspace]）。
-セッションの名前は、役と、Issue か PR の番号を略さずに書く（例：`work-issue-<番号>`、`review-pr-<番号>-round-<ラウンド>`。役ごとの名前の一覧は、AI のセッションの文書で決める）。進行 Bot は、名前から役と番号を読み、次の表で見分ける。
+セッションの名前は、役と、Issue か PR の番号を略さずに書く（例：`work-issue-<番号>`、`review-pr-<番号>-round-<ラウンド>-<軸>`。役ごとの名前の一覧は「[AI のセッション][design-ai]」の「セッションの名前」）。進行 Bot は、名前から役と番号を読み、次の表で見分ける。
 
 ![作業場所の残骸の見分け方][fig-residue]
 
@@ -279,3 +279,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-repeat]: ./diagrams/02-repeated-findings.drawio.svg
 [markers]: ../../requirements/04-external-text-and-markers.md
 [fig-markers]: ./diagrams/02-markers.drawio.svg
+[design-ai]: ./03-ai-sessions.md
