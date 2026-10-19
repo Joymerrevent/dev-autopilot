@@ -32,6 +32,7 @@
 | ADR-20261019-001 | [直したはずの指摘がレビューで再び出たら、間が空いていても人に渡す。同じ指摘かは、指摘ごとの ID を review の印に書いて見分ける][adr-20261019-001-repeated-findings-by-ids] | accepted | 2026-10-19 |
 | ADR-20261019-002 | [PR のレビューに、3 つの軸が挙げなかった問題を探す「見落とし」の軸を足す。最初は結果を記録だけに残し、人のレビューと比べてから使うかを決める][adr-20261019-002-review-gaps-axis-in-shadow-first] | accepted | 2026-10-19 |
 | ADR-20261019-003 | [計画のレビューで直すべき点が見つかったら、同じ回の実行で計画 AI に計画し直させる。計画・実装工程（段階 5）から始める][adr-20261019-003-replan-on-plan-review-from-stage-5] | accepted | 2026-10-19 |
+| ADR-20261019-004 | [方針に係る要望は、受付 AI が見分けて下書きに書き添え、計画が push しないパスに触れるなら実装の前に人に渡す][adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths] | proposed | 2026-10-19 |
 
 <!--
 行の例（表の最後に足す）:
@@ -70,3 +71,4 @@
 [adr-20261019-001-repeated-findings-by-ids]: ./adr-20261019-001-repeated-findings-by-ids.md
 [adr-20261019-002-review-gaps-axis-in-shadow-first]: ./adr-20261019-002-review-gaps-axis-in-shadow-first.md
 [adr-20261019-003-replan-on-plan-review-from-stage-5]: ./adr-20261019-003-replan-on-plan-review-from-stage-5.md
+[adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths]: ./adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
