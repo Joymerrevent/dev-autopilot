@@ -1,7 +1,7 @@
 # AI のセッション
 
 進行 Bot が AI の 5 役（受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI）のセッションを、どの作業場所で、どの引数と環境変数で起動するかを決める。
-セッションごとの安全設定、止め方と利用枠の数え方、役ごとの出力契約は、この文書に後で足す。
+止め方と利用枠の数え方、役ごとの出力契約は、この文書に後で足す。
 
 ## 役とエージェント定義
 
@@ -53,7 +53,7 @@
 | --- | --- | --- |
 | `-p` | — | 無人で 1 回だけ動かす |
 | `--setting-sources local` | — | ユーザー設定とプロジェクト設定（hook と `CLAUDE.md`）を読まない（[SAFE-2][safety] の (a)、FACT-11） |
-| `--settings` | セッションごとの安全設定のファイル | sandbox と、道具の許可と禁止を渡す（[SAFE-10][safety]）。作り方は、この文書に後で足す（UNDECIDED-40） |
+| `--settings` | セッションごとの安全設定のファイル | sandbox と、道具の許可と禁止を渡す（[SAFE-10][safety]）。作り方は下の「セッションごとの安全設定」 |
 | `--strict-mcp-config` | — | MCP のサーバーを読み込まない。`--mcp-config` は渡さない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `--plugin-dir` | 進行 Bot のプログラムの写し（`devAutopilotPath`） | AI が書けない写しから、エージェント定義と Skill を読む（[STRUCT-3][struct]） |
 | `--agent` | 役の表の `dev-autopilot:<ループ>:<役>` | 役ごとのエージェント定義で動かす（[STRUCT-3、STRUCT-9][struct]、FACT-2、FACT-40） |
@@ -83,6 +83,54 @@
 
 - 渡さないもの：`gh` の認証、`GH_TOKEN`、PAT と鍵、`PNPM_HOME`（[SAFE-1、SAFE-10][safety]）
 - 名前の一覧は、設定の `safety.env.names` の初期値にする（[設定][design-settings]）。名前を足すのは ADR で決める
+
+## セッションごとの安全設定
+
+![セッションごとの安全設定][fig-session-settings]
+
+AI のセッションに `--settings` で渡す安全設定は、読み書きを許すパス（自分のセッションのフォルダ、worktree、短い一時フォルダ）がセッションごとに違う。
+進行 Bot は、起動の直前にセッションごとのファイルを作り、AI が書けない場所に置いて、起動の前と後にハッシュを比べる（要件の UNDECIDED-40 を、この節で決めた）。
+
+### 作り方
+
+| 順 | すること | うまくいかないとき |
+| --- | --- | --- |
+| 1 | 進行 Bot のプログラムに持つ雛形に、マシンの設定のパスと、リポの設定の足す分を当てはめて、セッションの安全設定を組み立てる。パスは実体に解決する（シンボリックリンクをたどる。まだ無いパスは書いたまま入れる。[SAFE-5][safety]） | リポの設定の足す分に、決まった記号（下の「リポの設定に書く足す分」）で始まらないパスがあれば、起動しない（`check` も fail にする） |
+| 2 | `<paths.sandboxSettings>/<セッションの名前>.json` に書き（フォルダの権限は 700、ファイルは 600）、中身の SHA-256 を手元に持つ | 同じ名前のファイルがあれば、消してから書く |
+| 3 | 起動の直前に、ファイルを読み直してハッシュを比べる | 違えば起動せず、`needs-human` を付ける（stop の理由は `settings-tampered`。[状態遷移と判定][design-flow]） |
+| 4 | `claude -p --settings <ファイル>` で起動する（「起動の形」） | — |
+| 5 | セッションが終わったら（途中で止めたときも）、もう一度ハッシュを比べ、実行の記録にハッシュを残してから、ファイルを消す | 違えば、そのセッションの結果を使わず、`needs-human` を付ける（`settings-tampered`） |
+
+- 雛形はファイルにせず、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ。ファイルにすると、雛形の置き場とハッシュの確かめがもう 1 つ要る。プログラムの写しは AI が書けない（[STRUCT-3][struct]、[SAFE-16][safety]）
+- 安全設定のファイルは、セッションの途中で書き換えると、動いているセッションにすぐ効く（[公式文書][doc-sandboxing]）。AI が書けない場所に置き、セッションの後にもハッシュを比べるのは、このため
+- `sandbox-settings/` は置き場の中にある。置き場は AI の `denyRead` に入り、書き込みも許していないので、AI からは読めず書けない
+- 実行の最初に、`sandbox-settings/` に残っているファイルを消す（進行 Bot が途中で止まったときの残り。実行の lock があるので、ほかの実行のファイルではない）
+- `check` は、本物のセッションと同じ組み立て方で安全設定を作り、実際に読めない・書けないことを試す（[SAFE-5][safety]。試し方は「導入と点検」の文書で決める）
+
+### 中身
+
+| キー | 値 | 理由 |
+| --- | --- | --- |
+| `sandbox.enabled` | `true` | AI の Bash を sandbox の中で動かす（[SAFE-10][safety]） |
+| `sandbox.failIfUnavailable` | `true` | sandbox が起動できない（依存が無い、OS が対応していない）とき、Claude Code は既定では sandbox なしでコマンドを動かす。`true` にすると、起動の時点で止まり、実行の失敗になる（[公式文書][doc-sandboxing]。安全側に倒す。[SAFE-4][safety]） |
+| `sandbox.allowUnsandboxedCommands` | `false` | sandbox の中で失敗したコマンドを、sandbox の外で動かし直させない（[SAFE-10][safety]） |
+| `sandbox.filesystem.denyRead` | `~/`、置き場（`paths.workspace`）、秘密の置き場（`paths.secrets`）、マシンの設定のフォルダ、短い一時フォルダの根（`sessionTmp.root`）、`/tmp/claude-<uid>/`、リポの設定の `safety.sandbox.denyRead` | 読み取りを、自分のセッションのフォルダだけにする（[SAFE-10][safety]、[ADR-20261015-001][adr-read]、[ADR-20261017-006][adr-tmp]） |
+| `sandbox.filesystem.allowRead` | 自分のセッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）、自分の短い一時フォルダ、写しの `skills/`、マシンの設定の `safety.sandbox.toolDirs` | 狭い方の規則が勝つので、`denyRead` の中を開け直す（[SAFE-10][safety]、FACT-22、FACT-32） |
+| `sandbox.filesystem.allowWrite` | 自分のセッションのフォルダの `tmp/`（XDG の 4 つと pnpm の store） | sandbox が既定で書けるのは、作業フォルダ（worktree）と、ユーザーごとの一時フォルダ（短い一時フォルダの下の `claude-<uid>/`）と、worktree の親 clone の `.git` だけで（FACT-9、FACT-34）、`tmp/` は入らない。`allowWrite` に入れると、sandbox の中から書ける（FACT-41。[SAFE-10][safety]） |
+| `sandbox.filesystem.denyWrite` | 親 clone の `.git/worktrees/<名前>/gitdir`、リポの設定の `safety.sandbox.denyWrite` | 既定で書ける親 clone の `.git` のうち、`gitdir` は書けてしまうので止める（FACT-9、[SAFE-12][safety]） |
+| `sandbox.network.allowedDomains` | リポの設定の `safety.network.allowedDomains` | 外への通信は、許可した先だけにする（[SAFE-10][safety]） |
+| `disableClaudeAiConnectors` | `true` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
+| `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。Skill を呼ぶ `Skill` の道具は、入れなくても使える（FACT-42） |
+| `permissions.deny` | `Agent`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]） |
+
+- sandbox のパスは、`/` 始まりが絶対パス、`~/` 始まりがホームの中。`permissions` のパスは、`//` 始まりが絶対パス（`/` 始まりはプロジェクトの中。[公式文書][doc-sandboxing]、FACT-13）
+- 受付 AI は worktree を作らない（「役とエージェント定義」）ので、worktree と親 clone のパスを含む項目（`permissions.allow` の `Write` と `Edit`、`denyWrite` の `gitdir`、`deny` の `Write` と `Edit`）を入れない
+- 役ごとの道具の違いは、エージェント定義の `tools` で決める。安全設定は役を問わず同じ形にする
+
+### リポの設定に書く足す分
+
+- リポの設定の `safety.sandbox.denyRead` と `safety.sandbox.denyWrite` には、絶対パスを書かない（[ADR-20261015-005][adr-settings]）。パスは `${home}`（ホーム）か `${worktree}`（セッションの worktree）で始めて書き、進行 Bot が組み立てるときに実体のパスに置き換える
+- 読み取りと書き込みを許す側（`allowRead`・`allowWrite`・`permissions.allow`）は、設定で足せない。許す範囲を広げるのは、安全の境界を緩める変更なので、ADR で決める（[設計を変えるとき][design-change]）
 
 ## レビューの軸の起こし方
 
@@ -114,3 +162,8 @@
 [fig-review-axes]: ./diagrams/03-review-axes.drawio.svg
 [adr-gaps]: ../../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
 [adr-replan]: ../../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
+[adr-read]: ../../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[adr-settings]: ../../adr/adr-20261015-005-settings-values-and-machine-settings.md
+[design-change]: ../README.md#設計を変えるとき
+[doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
+[fig-session-settings]: ./diagrams/03-session-settings.drawio.svg
