@@ -12,13 +12,13 @@
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）に触れる diff は push しない
   （IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない。次のセッションが、作業 AI の書き換えた正典を規則として読まない。[ADR-20261017-002][adr-review]）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行 Bot はリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `plugin/src/` で行う（IMPL-15）。
-  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（実機の試し（段階 2）で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行 Bot のプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（実機の試し（段階 2）で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Skill`（レビュー AI が `review` Skill を呼ぶため。FACT-32 の試しは `Skill` を入れて行った）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行 Bot のプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。
   Read ツールは worktree の中と写しの `skills/` だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22、FACT-32。[ADR-20261015-001][adr-read]、[ADR-20261017-004][adr-human]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)` と `Read(//<進行 Bot のプログラムの写し>/src/**)`（写しの全体を `deny` にすると、`deny` は `allow` より強いので `skills/` も読めない）、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）。
   `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）。MCP の道具を取り除く `mcp__*` も入れる（SAFE-1）
-  sandbox の `--settings` のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる。一時フォルダはセッションごとに別のものを作る
+  sandbox の `--settings` のファイルは、進行 Bot がセッションごとに作って AI が書けない場所に置き、起動の前とセッションの後にハッシュを確かめる（安全設定のファイルは、セッションの途中で書き換えるとそのセッションに効くため。作り方は構造仕様の「AI のセッション」）。一時フォルダはセッションごとに別のものを作る
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
 - SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。UNDECIDED-27）では、作業を増やさずに記録して止める（fail-closed）
-- SAFE-5 sandbox の安全設定は、書いてあることではなく「実際に読めない・書けない」ことを `check` が試して確かめる。`denyRead` `denyWrite` のパスは `setup` が実体に解決して書く（シンボリックリンクを解決しない不具合が「[実機で確かめた事実][f10]」で見つかった）。ホームの中を指すリンクは、`denyRead` の `~/`（SAFE-10）で覆われる（FACT-22）
+- SAFE-5 sandbox の安全設定は、書いてあることではなく「実際に読めない・書けない」ことを `check` が試して確かめる。`denyRead` `denyWrite` のパスは、進行 Bot がセッションごとの安全設定を作るときに実体に解決する（シンボリックリンクを解決しない不具合が「[実機で確かめた事実][f10]」で見つかった）。ホームの中を指すリンクは、`denyRead` の `~/`（SAFE-10）で覆われる（FACT-22）
 - SAFE-6 作業 AI・計画 AI・レビュー AI・批評 AI に渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受付 AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（「[Issue と PR の本文の扱い][f04]」）
 - SAFE-7 AI に渡す文は、書いた人を問わず、渡す直前に毎回、進行 Bot の検疫を通す。検疫の限界と、検疫の代わりに頼る主の防衛は TEXT-11 に書く
 - SAFE-8 AI の出力が公開の場に書かれる前に、進行 Bot が漏えいの検査を掛ける（diff だけでなく、すべてのコメント・PR の本文・commit メッセージ・起票する Issue。IMPL-15）
@@ -29,7 +29,7 @@
 開発リポは sandbox を使わないので、同じ OS ユーザーで動く作業 AI は `~/.ssh` の鍵と `gh` の設定を Bash から読め、worktree が共有する `.git` の hook を書き換えて進行 Bot の push 時に実行させることもできる。
 さらに GitHub の deploy key は認証専用で署名の検証に使えないので、「リポに絞った鍵 1 本で push も署名も」は成り立たない。隔離と鍵は次のように分ける。
 
-- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）・短い一時フォルダの根・Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`。[ADR-20261017-006][adr-tmp]）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、自分の短い一時フォルダと、写しの `skills/`（Skill の参照ファイルとスクリプトのため。FACT-32。[ADR-20261017-004][adr-human]）と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
+- SAFE-10 AI の 5 役（「[登場するもの][f00]」）は、dev-autopilot が `--settings` で渡す安全設定で動かす：sandbox を有効（sandbox が起動できなければ、sandbox なしで動かさずに Claude Code が止まる `failIfUnavailable`）、読み取りは自分のセッションのフォルダだけ（`denyRead` に `~/`・置き場・秘密の置き場・マシンの設定の置き場（ADR-20261015-005）・短い一時フォルダの根・Claude Code のユーザーごとの一時フォルダ（`/tmp/claude-<uid>/`。[ADR-20261017-006][adr-tmp]）、`allowRead` に `<置き場>/sessions/<セッションの名前>/` と、自分の短い一時フォルダと、写しの `skills/`（Skill の参照ファイルとスクリプトのため。FACT-32。[ADR-20261017-004][adr-human]）と、ホームの中にある道具のフォルダ。狭い方の規則が勝つ。FACT-22。[ADR-20261015-001][adr-read]）、
   書き込みは自分のセッションの worktree と一時フォルダ（置き場の中の一時フォルダと、短い一時フォルダの下の `claude-<uid>/`）と、親 clone の `.git`（sandbox が既定で書けるようにする範囲。`gitdir` は除く）だけ、`allowUnsandboxedCommands: false`、外への通信は許可した先（npm のレジストリなど）だけ。
   雛形は business-os の `plugin/templates/settings.json.tmpl` の sandbox の節を元にする（利用者向けの四重防衛と同じ考え方）。npm のキャッシュとプロキシは ADR 20261006-01 の設定を写す。
   ホームを読めないと git と pnpm が個人設定を読めずに止まるので、進行 Bot は AI のセッションに `GIT_CONFIG_GLOBAL=/dev/null` と `NPM_CONFIG_USERCONFIG=/dev/null` を渡し、XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）を置き場の中のセッションの一時フォルダに向ける。commit の作者も環境変数で渡す（FACT-22）。claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS=false` も渡す（SAFE-1）。

@@ -119,8 +119,8 @@
   どのフォルダを残骸とみなすか（例：片付けの後に残ったもの、名前から Issue か PR を引けないもの）を決め、SETUP-2 の warn・Issue ごとの `needs-human`・fail に当てはめる（FLOW-29、SAFE-4、「運用の規則」）。
   消す前に読んだ `commondir` か `gitdir` が作ったときと違う作業場所は、ADR のとおり消さずに `needs-human` にし、`check` で warn にする~~
 - UNDECIDED-39 **欠番**（基本設計の「[状態遷移と判定][design-flow]」の「印の種類」で決めた。`raise` と `duplicate` を足した）：~~進行 Bot のほかのコメントに付ける印の種類。モデルを上げたことを残すコメント（IMPL-25）と、🟢 の重複のときに PR 番号を足すコメント（IMPL-26）に当てはまる `note` の種類が無い（今は `wait` `overlap` `remind` `stop` `link`）。種類を足すか、既存の種類に寄せるかを決める（[ADR-20261015-004][adr-markers]）~~
-- UNDECIDED-40 AI のセッションごとの安全設定の作り方。`allowRead`（自分のセッションのフォルダ）と `Write(//<worktree>/**)` はセッションごとに違うパスなのに、SAFE-2 の (e) と SAFE-5 は、`setup` が書く固定のファイルとハッシュの確かめを前提にしている。
-  進行 Bot が雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める
+- UNDECIDED-40 **欠番**（基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」で決めた。進行 Bot がプログラムの中の雛形からセッションごとに作り、起動の前と後にハッシュを比べる。リポの設定の足す分は `${home}` か `${worktree}` で始めて書く）：~~AI のセッションごとの安全設定の作り方。`allowRead`（自分のセッションのフォルダ）と `Write(//<worktree>/**)` はセッションごとに違うパスなのに、SAFE-2 の (e) と SAFE-5 は、`setup` が書く固定のファイルとハッシュの確かめを前提にしている。
+  進行 Bot が雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める~~
 - UNDECIDED-41 **欠番**（[ADR-20261019-001][adr-repeat] で決めた）：~~同じ指摘の再発（修正の後のラウンドで、前のラウンドと同じ指摘がもう一度出ること）の数え方。IMPL-24 は 2 ラウンド続けて出たとき、「[レビューの Skill][f08]」の方針は 2 回出たときに人に渡すとする。間を空けて再び出た指摘も数えるかを決める~~
 - UNDECIDED-42 **欠番**（[ADR-20261016-003][adr-move] で、評価を dev-autopilot のリポに置くと決めた）：~~`review` Skill の評価の置き場。「[レビューの Skill][f08]」は評価を business-os の `pnpm eval:cases` の仕組みの上に置くとし、STRUCT-4 は検査を dev-autopilot 自身が持つとする。分離のときに評価も移すかを決める~~
 - UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:brief:triager` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める
@@ -180,3 +180,4 @@
 [design-settings]: ../design/basic/01-settings.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [adr-repeat]: ../adr/adr-20261019-001-repeated-findings-by-ids.md
+[design-ai]: ../design/basic/03-ai-sessions.md
