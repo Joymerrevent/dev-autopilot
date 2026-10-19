@@ -31,7 +31,7 @@ MCP のサーバー（ログインしている claude.ai のアカウントの�
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
 | 進行 Bot | 定期の実行（macOS は launchd、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。Plugin に同封し、`setup` がマシンの置き場に写した、AI と共有しない進行 Bot のプログラムの写し（SAFE-16。STRUCT-3）から実行する | AI ではない。判定は決定的な処理で行う |
-| 計画 AI | `claude -p --agent dev-autopilot:plan:planner` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
+| 計画 AI | `claude -p --agent dev-autopilot:plan:planner` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごと、計画し直すごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる。計画のレビューで直すべき点が見つかったら、計画し直す（上限は設定。[ADR-20261019-003][adr-replan]） |
 | 作業 AI | `claude -p --agent dev-autopilot:change:worker` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行 Bot が固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
 | レビュー AI | `claude -p --agent dev-autopilot:change:reviewer` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行 Bot が PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。3 つの軸の後に、どの軸も挙げていない問題を探す見落としの軸のセッションも起こす（結果は、修正工程（段階 7）に進む前に使うかを決めるまで記録だけ。[ADR-20261019-002][adr-gaps]）。計画を投稿する前の計画のレビューも行う（`dev-autopilot:plan:reviewer`。計画ごとに新しいセッション。計画 AI と同じく読むだけの道具。IMPL-10、[ADR-20261018-004][adr-planrev]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
 | 批評 AI | `claude -p --agent dev-autopilot:change:verifier` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行 Bot が別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力は 3 つの軸のレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行 Bot がレビューの印に統合する（IMPL-22） |
@@ -55,3 +55,4 @@ AI は「受け入れの下書きを書く」「計画を書く」「実装す�
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [adr-gaps]: ../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
+[adr-replan]: ../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
