@@ -154,6 +154,16 @@ macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた�
 |---|---|---|---|
 | FACT-40 | `agents/` の下のフォルダに置いたエージェント定義を、コロンが 2 つ付く名前（`<Plugin の名前>:<フォルダ>:<名前>`）の `--agent` で起動できるか | **できる。** `init` のイベントの `agents` に `probe:change:verifier` と `probe:plan:reviewer` が出た。`--agent probe:plan:reviewer` で起動したセッションは、その定義の指示どおりの語だけを返した（`result` は `success`、費用は 0.001 USD）。STRUCT-9 の名前（`dev-autopilot:<ループ>:<役>`）で起動できる | 実行 |
 
+## セッションごとの安全設定を決める途中で確かめた事実（2026-10-19）
+
+macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた）で確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/dapprobe/`）。
+どちらも `claude -p --setting-sources local --strict-mcp-config --settings <安全設定> --output-format stream-json --verbose` を 1 回ずつ実行した（費用は 0.025 USD と 0.007 USD）。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-41 | sandbox の中のコマンドが、`allowWrite` に入れたセッションのフォルダの `tmp/` に書けるか。入れていないフォルダには書けないか | **`tmp/` には書け、入れていない隣のフォルダには書けない。** 置き場を `denyRead`、自分のセッションのフォルダを `allowRead`、`<セッションのフォルダ>/tmp` を `allowWrite` にし、作業フォルダを worktree にして、1 つの `sh -c` で 3 か所に書かせた。`tmp/` は終了コード 0 でファイルができ、`allowWrite` に入れていない `<セッションのフォルダ>/other/` は `Operation not permitted`（終了コード 1）でファイルができず、作業フォルダは終了コード 0 でファイルができた。ファイルの有無はディスクで確かめた | 実行 |
+| FACT-42 | `permissions.allow` に `Skill` を入れずに、エージェントが Plugin の Skill を呼べるか | **呼べる。** `allow` が `Bash` だけの安全設定で、`tools` に `Skill` だけを書いたエージェント（`--agent probe:change:reviewer`）を起動すると、`Skill` の道具で `probe:hello` を呼び、Skill の本文の指示どおりの語を返した。`permission_denials` は空で、`result` は `success` だった | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
