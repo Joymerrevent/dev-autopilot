@@ -11,7 +11,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | 項目 | 決定 |
 |---|---|
 | 置き場所 | 独立したリポ（Joymerrevent/dev-autopilot）で作る（[ADR-20261016-003][adr-move]）。進行 Bot が当てる先は、マージ判定工程（段階 8）の後に決めるまで business-os だけ（「[分離を見越した構成][f07]」）。文書とコードには業務の固有名詞と秘密を置かない（秘密は gitleaks で検査する。固有名詞の混入を探す検査は無い。UNDECIDED-46） |
-| 配り方と実行環境 | 誰でも、Plugin を当てる先のリポに入れて `setup` を実行すれば、進行 Bot を含めてすべて動く。進行 Bot は Plugin に同封し、`setup` が Plugin の版を利用者のマシンに写し、OS ごとの定期の実行が写しから動かす（[ADR-20261017-003][adr-plugin]、「[分離を見越した構成][f07]」の STRUCT-3・8）。今は macOS（launchd）と Linux（systemd のユーザーのタイマーか cron）。手元の Mac で始め、将来は専用マシンでも同じものを回す。GitHub Actions などのクラウドと Windows でも動かしたいが、今は対応せず、広げるときに別の ADR で決める（クラウドの論点は「[決めていないこと][f09]」の UNDECIDED-21） |
+| 配り方と実行環境 | 誰でも、Plugin を当てる先のリポに入れて `setup` を実行すれば、進行 Bot を含めてすべて動く。進行 Bot は Plugin に同封し、`setup` が Plugin の版を利用者のマシンに写し、OS ごとの定期の実行が写しから動かす（[ADR-20261017-003][adr-plugin]、「[分離を見越した構成][f07]」の STRUCT-3・8）。今は macOS（launchd）と Linux（systemd のユーザーのタイマー）。手元の Mac で始め、将来は専用マシンでも同じものを回す。GitHub Actions などのクラウドと Windows でも動かしたいが、今は対応せず、広げるときに別の ADR で決める（クラウドの論点は「[決めていないこと][f09]」の UNDECIDED-21） |
 | 人の関所 | Issue が起票されたら、受け入れ（検疫・作業指示の下書き・依存とマイルストーンの候補）は進行 Bot が自動で用意し、人は下書きを読んで `agent-ready` を付ける 1 操作で処理対象にする（TEXT-12）。PR のマージの実行は人だけが行う。開発の PR は進行 Bot がマージの可否を判定して人に渡す。方針に係る PR（「[マージ][f03]」の一覧）は判定の対象外。実行を進行 Bot に移すかは、判定の信頼度を測ってから別に決める |
 | マイルストーン | リリースごとにマイルストーンを組む。着手する Issue はマイルストーンの中から選ぶ（FLOW-1）。受け入れはマイルストーンの有無を問わない（TEXT-12） |
 | 名前 | dev-autopilot。自動で動くのは「開発」。人が行き先（処理対象の Issue）を決め、AI が操縦し、異常時は人が操縦を取る。呼び方は `/dev-autopilot` |
@@ -30,7 +30,7 @@ MCP のサーバー（ログインしている claude.ai のアカウントの�
 
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
-| 進行 Bot | 定期の実行（macOS は launchd、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。Plugin に同封し、`setup` がマシンの置き場に写した、AI と共有しない進行 Bot のプログラムの写し（SAFE-16。STRUCT-3）から実行する | AI ではない。判定は決定的な処理で行う |
+| 進行 Bot | 定期の実行（macOS は launchd、Linux は systemd のユーザーのタイマー。STRUCT-8）が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。Plugin に同封し、`setup` がマシンの置き場に写した、AI と共有しない進行 Bot のプログラムの写し（SAFE-16。STRUCT-3）から実行する | AI ではない。判定は決定的な処理で行う |
 | 計画 AI | `claude -p --agent dev-autopilot:plan:planner` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごと、計画し直すごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる。計画のレビューで直すべき点が見つかったら、計画し直す（上限は設定。[ADR-20261019-003][adr-replan]） |
 | 作業 AI | `claude -p --agent dev-autopilot:change:worker` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行 Bot が固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
 | レビュー AI | `claude -p --agent dev-autopilot:change:reviewer` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行 Bot が PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。3 つの軸の後に、どの軸も挙げていない問題を探す見落としの軸のセッションも起こす（結果は、修正工程（段階 7）に進む前に使うかを決めるまで記録だけ。[ADR-20261019-002][adr-gaps]）。計画を投稿する前の計画のレビューも行う（`dev-autopilot:plan:reviewer`。計画ごとに新しいセッション。計画 AI と同じく読むだけの道具。IMPL-10、[ADR-20261018-004][adr-planrev]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |

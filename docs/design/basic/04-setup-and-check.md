@@ -2,7 +2,7 @@
 
 人が呼ぶ `setup` と `check`、進行 Bot が毎回の実行の最初に回す点検の、順番と仕組みを決める。
 何を作り何を確かめるかは要件の [SETUP-1、SETUP-2][setup] が正本で、基本設計は順番・置き場・確かめ方を決める。
-定期の実行の登録と、点検の項目と仕組みは、この文書に後で足す。
+点検の項目と仕組みは、この文書に後で足す。
 
 ## setup の流れ
 
@@ -45,7 +45,7 @@
 | 記録と lock の置き場 | `paths.records` | 作った日時を書いた印のファイル（[運用の規則][flow-rules]） |
 | 秘密の置き場 | `paths.secrets` | フォルダを権限 700、空のファイルを権限 600 で作る。値は人が書く（[SAFE-15][safety]） |
 | 短い一時フォルダの根 | `sessionTmp.root` | 権限 700 で作る（[ADR-20261017-006][adr-tmp]） |
-| 定期の実行の登録 | OS ごと | この文書に後で足す |
+| 定期の実行の登録 | OS ごと | 下の「定期の実行の登録」 |
 
 - 進行 Bot の clone（`<置き場>/controller/`）は、`setup` では作らない。clone には deploy key が要り、`setup` のマシンの準備は秘密のファイルを読まないため。進行 Bot が最初の実行で作る
 
@@ -77,6 +77,50 @@
 - リポの CI で、`plugin/src/` の import が `node:` で始まるか相対パスだけであることを確かめる
 - 開発の道具（検査・テスト）の依存は、今のとおりリポの root の `package.json` と pnpm に置き、配らない（[STRUCT-4][struct]）
 
+## 定期の実行の登録
+
+![定期の実行の登録][fig-schedule]
+
+`setup` のマシンの準備で、OS ごとの仕組みに定期の実行を登録する。進行 Bot の本体は、どの仕組みから起こされても同じに動く（[STRUCT-8][struct]）。
+
+### 時刻
+
+- 時刻は、0 時から `run.intervalHours` ごと（分は 0）。初期値の 24 時間なら、毎日 0 時
+- `run.intervalHours` は、24 の約数（1・2・3・4・6・8・12・24）に限る。毎日同じ時刻に並べられるため。ほかの値は点検が fail にする
+- マシンが眠っていた間の時刻の分は、起きたときに 1 回だけ走らせる。launchd の `StartCalendarInterval` と systemd の `OnCalendar` は、眠っていた間の分を起きたときに走らせる（`man launchd.plist`、[systemd.timer][doc-systemd-timer]）。launchd の `StartInterval` と cron は、眠っていた間の分を逃すので使わない（`man launchd.plist`）
+- 実行が重ならないように、進行 Bot は実行の lock を取り、取れなければ何もせずに終わる（[運用の規則][flow-rules]）
+
+### macOS（launchd）
+
+| キー | 値 | 理由 |
+| --- | --- | --- |
+| `Label` | `dev-autopilot.<owner>.<repo>` | 当てる先のリポごとに 1 つ登録する |
+| `ProgramArguments` | Node 24 の実体の絶対パス、`<devAutopilotPath>/src/main.ts`、マシンの設定の `settings.json` の絶対パス | 写しから動かす（[STRUCT-3][struct]）。マシンの設定のパスを渡す（[ADR-20261017-004][adr-human] の決定 3） |
+| `StartCalendarInterval` | 上の「時刻」の一覧（`Hour` と `Minute` の組） | 眠っていた間の時刻の分を、起きたときに走らせる |
+| `EnvironmentVariables` | `PATH`（`node`・`pnpm`・`git`・`claude` の実体のフォルダと `/usr/bin:/bin:/usr/sbin:/sbin`）、`LANG` | launchd のジョブは人のシェルの設定を読まないので、道具の場所を渡す。秘密の値は書かない（点検が確かめる。[SETUP-2][setup]） |
+| `StandardOutPath`・`StandardErrorPath` | `<paths.records>/launchd.out.log`・`<paths.records>/launchd.err.log` | 進行 Bot が実行の記録を書く前に止まったときの出力を残す |
+| `RunAtLoad` | `false` | 登録したときには走らせない |
+
+- 置き場は `~/Library/LaunchAgents/<Label>.plist`。`launchctl bootstrap gui/<uid> <plist>` で登録し、登録し直すときは `launchctl bootout gui/<uid>/<Label>` の後に登録する
+- 手動の 1 回実行と点検は、`launchctl kickstart gui/<uid>/<Label>` で同じジョブを起こす。`-k` を付けない（動いている最中のジョブを止めずにそのままにする。`man launchctl`、[ADR-20261015-001][adr-read] の決定 3）
+
+### Linux（systemd のユーザーのタイマー）
+
+| ファイル | 中身 |
+| --- | --- |
+| `$XDG_CONFIG_HOME/systemd/user/dev-autopilot-<owner>-<repo>.service` | `Type=oneshot`。`ExecStart=` は macOS の `ProgramArguments` と同じ 3 つ。`Environment=` は `PATH` と `LANG` |
+| `$XDG_CONFIG_HOME/systemd/user/dev-autopilot-<owner>-<repo>.timer` | `OnCalendar=` は上の「時刻」（24 時間なら `*-*-* 00:00:00`、6 時間なら `*-*-* 00/6:00:00`）。`Persistent=true` |
+
+- cron でなく systemd のユーザーのタイマーにする。`OnCalendar` は眠っていた間の分を起きたときに走らせ、`Persistent=true` は電源が切れていた間の分を、次にタイマーが有効になったときに走らせる（[systemd.timer][doc-systemd-timer]）。cron は眠っていた間の分を逃す（`man launchd.plist`）
+- ログインしていない間も動かすには、ユーザーの lingering（`loginctl enable-linger`）が要る（[loginctl][doc-loginctl]）。`setup` は、人がやることとして示す
+- 手動の 1 回実行と点検は、`systemctl --user start dev-autopilot-<owner>-<repo>.service` で同じジョブを起こす
+- Linux では、sandbox の振る舞いを確かめ直すまで（UNDECIDED-49）、進行 Bot を動かさない（[STRUCT-8][struct]）。それまで `setup` は Linux で定期の実行を登録せず、そのことを示す。進行 Bot も、Linux で起こされたら作業に入らずに止まる
+
+### 登録し直すとき
+
+- 写しの版が変わったとき（`devAutopilotPath` が変わる）と、`run.intervalHours` が変わったときは、`setup` で登録し直す
+- 点検は、登録の中身（実行するファイルのパス、マシンの設定のパス、時刻）が、マシンの設定と `run.intervalHours` に合うかを確かめ、ずれていれば fail にする（[STRUCT-2][struct]、[設定][design-settings]）
+
 [setup]: ../../requirements/06-setup-and-stages.md
 [struct]: ../../requirements/07-structure.md
 [impl]: ../../requirements/02-implement-review-fix.md
@@ -89,3 +133,7 @@
 [adr-tmp]: ../../adr/adr-20261017-006-per-session-short-tmpdir.md
 [fig-setup-flow]: ./diagrams/04-setup-flow.drawio.svg
 [fig-program-copy]: ./diagrams/04-program-copy.drawio.svg
+[adr-read]: ../../adr/adr-20261015-001-read-allowlist-and-secret-file.md
+[doc-systemd-timer]: https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html
+[doc-loginctl]: https://www.freedesktop.org/software/systemd/man/latest/loginctl.html
+[fig-schedule]: ./diagrams/04-schedule.drawio.svg

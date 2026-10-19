@@ -16,7 +16,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
     deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15）、全体の止める合図のリポの変数（値は `stop`。人が `check` の後に `run` にする。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに、OS ごとの決まった場所に当てる先のリポ（owner/repo）ごとに作り（base ブランチの名前もここに書く。STRUCT-2）、OS ごとの起動の定義（macOS は launchd の plist）がマシンの設定のパスを進行 Bot に渡す。[ADR-20261015-005][adr-settings]）、
     進行 Bot のプログラムの写し（インストールされた Plugin の版を、置き場の中の版ごとのフォルダに写す。STRUCT-3）、
-    定期の実行の登録（macOS は launchd の plist、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
+    定期の実行の登録（macOS は launchd の plist、Linux は systemd のユーザーのタイマー。STRUCT-8）、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と印の署名の鍵（IMPL-20）の作成、どちらも秘密の置き場への保管（SAFE-15）、専用マシンの用意、利用枠の確認、
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
     処理対象にする Issue の承認（受け入れの下書きを読んで `agent-ready` を付ける。TEXT-12）
