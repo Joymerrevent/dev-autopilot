@@ -269,6 +269,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `ci-stale` | CI の結果が、取り消しなどのまま時間を過ぎても変わらない（[IMPL-27][impl]） |
 | `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
 | `workspace-tampered` | 作業場所の `commondir` か `gitdir` が、作ったときの値と違う（[SAFE-12][safety]、[ADR-20261013-001][adr-workspace]） |
+| `settings-tampered` | セッションの安全設定のファイルが、作ったときのハッシュと違う（起動の直前か、セッションの後。[SAFE-2][safety] の (e)、[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `records-missing` | 進行中の Issue の手元の記録が無い（[運用の規則][flow]） |
 | `unrecoverable` | GitHub の状態から、次の工程を決められない（[運用の規則][flow]） |
 | `unexpected-status` | Status が、印と PR から決まる値と違い、人が戻す手順にも当たらない（[SAFE-4][safety]） |
