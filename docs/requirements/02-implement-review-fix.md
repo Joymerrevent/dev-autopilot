@@ -108,7 +108,7 @@
 - IMPL-23 判定が fix なら、作業 AI を PR の head から作った新しい作業場所で起動し（[ADR-20261013-001][adr-workspace]）、最新のラウンドの 🔴 と 🟡 だけに対応させる。push は進行 Bot が漏えいの検査（IMPL-15）を通してから行う。🟢 はこの PR では直さない（直すと再レビューが新しい指摘を生み、ループが終わらない）。
   対応の結果は「`## R<n> の指摘への対応（<コミット>）`」のコメントに、指摘ごとの対応と確認を書く（いまの PR と同じ形）。
   印は `fix`（`round` `head` `sig`。「[印と固定の見出しの一覧][f04]」）
-- IMPL-24 往復の回数に上限を持つ（最初は 3 回）。超えたら Status を Blocked にし、`needs-human` ラベルを付け、経緯を Issue にコメントする。人が外すまで再着手しない（FLOW-1）。同じ指摘が 2 ラウンド続けて出たとき（同じ指摘の再発）も同じ扱い
+- IMPL-24 往復の回数に上限を持つ（最初は 3 回）。超えたら Status を Blocked にし、`needs-human` ラベルを付け、経緯を Issue にコメントする。人が外すまで再着手しない（FLOW-1）。前のどれかのラウンドに出た 🔴 🟡 の指摘が、後のラウンドで再び出たとき（同じ指摘の再発。間が空いていても数える）も同じ扱い。同じ指摘かは、`review` の印の `findings` の ID で見分ける（[ADR-20261019-001][adr-repeat]）
 - IMPL-25 **詰まったときの上げ方**。作業 AI が `sonnet` のとき、作業 AI の 2 ラウンド目（最初の修正のセッション）から `opus`（high）に 1 段上げる。作業 AI のラウンドは、実装を 1、修正を 2 以降と数える（「モデルの流れ」の表と同じ。`review` と `fix` の印の `round` とは数え方が違う）。`fable` には上げない。
   3 回で `needs-human` にする規則（IMPL-24）は変えず、再計画は人が指示する（自動では計画 AI に戻さない。fail-closed）。上げたことは記録と Issue のコメントに残す。
   最初の実装で使うモデルは、計画・実装工程（段階 5。計画と実装を AI に任せ、レビューと PR のマージは人が行う段階）では、`sonnet` と `opus` の PR を人が手直しせずにマージできたかで比べて、Issue の種類ごとに仮に決める。
@@ -183,3 +183,4 @@
 [adr-redo]: ../adr/adr-20261018-002-plan-redo-in-same-run.md
 [adr-model]: ../adr/adr-20261018-003-count-model-raise-at-stage-7.md
 [adr-planrev]: ../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
+[adr-repeat]: ../adr/adr-20261019-001-repeated-findings-by-ids.md

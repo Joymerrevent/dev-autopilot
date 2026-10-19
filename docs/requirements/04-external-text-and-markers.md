@@ -85,7 +85,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `intake` | Issue の受け入れの下書きコメント | `brief=<sha256>`、`plan=opus\|fable`、`quarantine=none\|found`（`found` のときは `brief=` `plan=` を持たない。[ADR-20261015-003][adr-intake]） | 許す（人が直す前提。未編集の条件を掛けない） | 人。進行 Bot は `plan=` と `quarantine=` だけ読む | TEXT-12、[ADR-20261016-002][adr-draft] |
 | `intake-final` | `agent-ready` の後に進行 Bot が新しく投稿するコメント | `brief=<sha256>`（渡す文のハッシュ）、`source=instruction\|draft`、`plan=opus\|fable`（ラベルで上書き済みの値） | 許さない | 進行 Bot（TEXT-4 のハッシュの照合、計画 AI のモデル） | TEXT-12、FLOW-1、[ADR-20261016-002][adr-draft] |
 | `plan` | Issue の計画コメント | `head=<base の SHA>`、`plan=<sha256>`（計画のハッシュ）、`model=<別名>` | 許さない | 進行 Bot（作業 AI に渡す前の照合） | IMPL-10 |
-| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評 AI が落とした 🔴 の、PR ごとの累計） | 許さない | 進行 Bot（収束の判定、マージの判定） | IMPL-18、IMPL-22 |
+| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評 AI が落とした 🔴 の、PR ごとの累計）、`findings=<ID>,<ID>,...`（統合の後に残った 🔴 🟡 の指摘ごとの ID。同じ指摘の再発を見分ける。[ADR-20261019-001][adr-repeat]） | 許さない | 進行 Bot（収束の判定、マージの判定、同じ指摘の再発の判定） | IMPL-18、IMPL-22、IMPL-24 |
 | `fix` | PR の対応コメント | `round=<n>`、`head=<SHA>` | 許さない | 進行 Bot（対応済みのラウンドの判定） | IMPL-23 |
 | `merge` | PR のマージ判定のコメント | `head=<SHA>`、`merge=ready\|human`、`reasons=<満たさない条件の記号>` | 許さない | 人（マージの判断）、進行 Bot（一致の集計） | MERGE-3 |
 | `note` | Issue か PR の、進行 Bot のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由、PR と Issue の結びつき） | `kind=wait\|overlap\|remind\|stop\|link`、必要なら `reason=<短い記号>`（`stop` の例：`marker-invalid` `unlinked-pr`）。`link` は、Issue に置くときは `pr=<PR の番号>`、PR に置くときは `issue=<Issue の番号>` を持つ | 許さない | 進行 Bot（「1 回だけ書く」の判定：同じ `kind` と `reason` の有効な印があれば書かない。`link` は PR と Issue の結びつけ。IMPL-6） | FLOW-8、FLOW-10、MERGE-3、IMPL-6、[ADR-20261015-004][adr-markers]、[ADR-20261016-001][adr-pr] |
@@ -112,3 +112,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-draft]: ../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [f01]: ./01-issue-flow.md
+[adr-repeat]: ../adr/adr-20261019-001-repeated-findings-by-ids.md
