@@ -67,7 +67,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   `/dev-autopilot` の手動の 1 回実行は、進行 Bot を直接起動せず、定期の実行と同じジョブを起こす（macOS は `launchctl kickstart`（`-k` なし）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin] の決定 3）。
   人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行 Bot のコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。Plugin のパスを手順に埋め込まない。
   `setup` は、dev-autopilot 自身のリポでは何も作らずに止まる（「分離の時期の目安」）
-- STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーか cron で、`setup` が登録する（Linux でどちらにするかは基本設計で決める。[ADR-20261017-003][adr-plugin] の決定 3）。
+- STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーで、`setup` が登録する（cron は、マシンが眠っていた間の実行を逃すので使わない。構造仕様の「導入と点検」。[ADR-20261017-003][adr-plugin] の決定 3）。
   進行 Bot の本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。
   Windows と、GitHub Actions などのクラウドで動かすことは、今は対応しない。広げるときは、進行 Bot の本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（クラウドの論点は UNDECIDED-21）。
   Linux の sandbox の振る舞いは確かめ直すまで（UNDECIDED-49）、Linux で進行 Bot を動かさない
