@@ -224,9 +224,12 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `brief.outOfScope` | 文の一覧 | 範囲外 |
 | `plan` | `"opus"` か `"fable"` | 計画の難しさの判定（[TEXT-12][text]） |
 | `planReason` | 文（1 行） | 判定の根拠 |
+| `policy` | 真偽 | 方針に係る要望か（当てる先のリポの方針の文書を変えてほしいという要望か。[ADR-20261019-004][adr-policy]） |
+| `policyReason` | 文（1 行） | 方針に係る要望かの判定の根拠 |
 
 - 下書きの形は「[作業指示（agent brief）の形][review-skill]」に従う。ファイルのパスと行番号を書かず、手順でなく振る舞いを書く
 - 進行 Bot は、4 つの欄を決まった見出しの下に並べて、「受け入れの下書き」コメントにする（[TEXT-12][text]）
+- `policy` が真なら、進行 Bot は判定と `policyReason` を決まった見出しの下に書き添える。判定で Issue を止めない（[ADR-20261019-004][adr-policy]）
 - 拒否（`stop_reason: refusal`）で止まったときは、出力契約を読まずに実行の失敗にする（次の回は `sonnet`。[TEXT-12][text]）
 
 ### 計画 AI（`plan/planner`。計画、計画し直し）
@@ -238,9 +241,10 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `plan.verification` | 文の一覧（1 件以上） | 検証方法（どのテストとコマンドで確かめるか） |
 | `plan.outOfScope` | 文の一覧 | 範囲外とするもの |
 | `plan.commits` | 文の一覧（1 件以上） | 想定する commit の分割 |
+| `plan.paths` | 文の一覧（1 件以上） | 変える見込みのファイルの、リポの中の相対パス。進行 Bot が push しないパスの一覧と照らす（[ADR-20261019-004][adr-policy]） |
 | `selfReport` | `"design-decision"`・`"architecture-choice"`・`"unknown-failure"` から選んだ一覧（空でよい） | 自己申告。設計判断、アーキテクチャの選択、原因不明の障害解析を含むか（[IMPL-10][impl]） |
 
-- 6 つの欄は、計画に必ず含める項目（[IMPL-10][impl]）。進行 Bot は、決まった見出しの下に並べて計画コメントにし、`plan` の印のハッシュを取る
+- `plan.paths` のほかの 6 つの欄は、計画に必ず含める項目（[IMPL-10][impl]）。`plan.paths` は計画コメントに載せず、照らすためだけに使う。進行 Bot は、決まった見出しの下に並べて計画コメントにし、`plan` の印のハッシュを取る
 - 計画し直すセッションも同じ形で返す。計画し直したセッションの `selfReport` は記録に残すだけで、使わない（[ADR-20261019-003][adr-replan]）
 
 ### レビュー AI の計画のレビュー（`plan/reviewer`）
@@ -338,3 +342,4 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 [adr-redo]: ../../adr/adr-20261018-002-plan-redo-in-same-run.md
 [adr-repeat]: ../../adr/adr-20261019-001-repeated-findings-by-ids.md
 [fig-contracts]: ./diagrams/03-output-contracts.drawio.svg
+[adr-policy]: ../../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
