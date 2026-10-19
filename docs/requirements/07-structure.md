@@ -104,7 +104,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 配るまでの間は、`~/.claude/skills/change-review` を今の版のまま残して手動のレビューに使う。v2 を手でも使いたくなったら、
     dev-autopilot のリポの `plugin/skills/review/` を skills CLI（`--copy` 付き）で入れる
 - STRUCT-9 **エージェント定義は、ループのフォルダに、役の名前で置く。** フォルダは、段取り・作業・検証・直す（PDCA）で回すループの成果物の名前にする（`brief` は作業指示、`plan` は計画、`change` は PR の変更。文書だけの変更も `change` に入る）。ファイルは、そのループで動く AI の役（「[登場するもの][f00]」）の名前にする。
-  `--agent` で渡す名前は `dev-autopilot:<ループ>:<役>` になる（Plugin は `agents/` の下のフォルダも読み込み、Plugin の名前とフォルダとファイルの名前をコロンでつなぐ。[Plugin の部品の文書][doc-plugin-agents]）。frontmatter の `name` は名前のうちファイルの名前の部分だけを置き換えるので、ファイルの名前と同じにする
+  `--agent` で渡す名前は `dev-autopilot:<ループ>:<役>` になる（Plugin は `agents/` の下のフォルダも読み込み、Plugin の名前とフォルダとファイルの名前をコロンでつなぐ。[Plugin の部品の文書][doc-plugin-agents]、FACT-40）。frontmatter の `name` は名前のうちファイルの名前の部分だけを置き換えるので、ファイルの名前と同じにする
   - 役の名前は `triager`（受付 AI）、`planner`（計画 AI）、`worker`（作業 AI）、`reviewer`（レビュー AI）、`verifier`（批評 AI）。`worker` と `reviewer` は、Project の Agent 欄の値と同じ
   - 各フォルダには、そのループで動く役だけを置く（5 役をそろえて置かない）。ループに役が加わったらファイルを足し、新しいループができたらフォルダを足す（例：受付 AI の下書きを AI が確かめるなら `brief/reviewer.md`）
   - 設定のキー（`models.plan` など）とセッションの名前（`plan-issue-…` など）は工程の名前で付け、エージェント定義の名前とは別にする（構造仕様）
