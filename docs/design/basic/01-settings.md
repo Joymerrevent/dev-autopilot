@@ -171,7 +171,7 @@
 | --- | --- | --- | --- |
 | `safety.botAccount` | 進行 Bot が投稿に使う GitHub のアカウント名。印はこのアカウントの投稿だけを読む | `setup` が人の `gh` のログイン名を書く（最初はメンテナのアカウント。[SETUP-13][setup]） | 進行 Bot は、このアカウントが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。アカウントは最初はメンテナの 1 つで始める（[SETUP-13][setup]） |
 | `safety.network.allowedDomains` | AI のセッションの sandbox から通信してよい先 | `registry.npmjs.org`（暫定） | AI のセッションの外への通信は、npm のレジストリなどの許可した先だけにする（[SAFE-10][safety]）。先を足すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
-| `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前（ほかの名前は渡さない） | `GIT_CONFIG_GLOBAL` `NPM_CONFIG_USERCONFIG` `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` `TMPDIR` `CLAUDE_CODE_TMPDIR` `ENABLE_CLAUDEAI_MCP_SERVERS`（[SAFE-10][safety]）。commit の作者を渡す名前と、起動に要るほかの名前は、AI のセッションの文書で決める | 子プロセスの環境変数は許可した名前だけで組み立て、`gh` の認証と `GH_TOKEN` を渡さない（[SAFE-1][safety]）。渡す名前は要件が挙げている（[SAFE-10][safety]）。名前を足すのは ADR で決める（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
+| `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前（ほかの名前は渡さない） | `HOME` `PATH` `USER` `LOGNAME` `TERM` `LANG` `TMPDIR` `CLAUDE_CODE_TMPDIR` `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` `GIT_CONFIG_GLOBAL` `NPM_CONFIG_USERCONFIG` `GIT_CONFIG_COUNT` `GIT_CONFIG_KEY_0` `GIT_CONFIG_VALUE_0` `GIT_AUTHOR_NAME` `GIT_AUTHOR_EMAIL` `GIT_COMMITTER_NAME` `GIT_COMMITTER_EMAIL` `ENABLE_CLAUDEAI_MCP_SERVERS`。それぞれの値と理由は「[AI のセッション][design-ai]」の「環境変数」 | 子プロセスの環境変数は許可した名前だけで組み立て、`gh` の認証と `GH_TOKEN` を渡さない（[SAFE-1][safety]）。渡す名前は要件が挙げている（[SAFE-10][safety]）。名前を足すのは ADR で決める（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
 | `safety.sandbox.denyRead` | AI のセッションの sandbox で読ませないパスのうち、足す分 | 空 | 読み取りは自分のセッションのフォルダだけにし、`denyRead` に入れるパスは要件が決めている（[SAFE-10][safety]）。進行 Bot は要件が決めたパスをマシンの置き場から組み立てて必ず入れ、設定には足す分だけを持つ（設定で消せないようにするため） |
 | `safety.sandbox.denyWrite` | AI のセッションの sandbox で書かせないパスのうち、足す分 | 空 | 書き込みは、自分のセッションの worktree と一時フォルダなどに限る（[SAFE-10][safety]）。`denyRead` と同じく、設定には足す分だけを持つ |
 
@@ -224,3 +224,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [safety]: ../../requirements/05-safety.md
 [setup]: ../../requirements/06-setup-and-stages.md
 [struct]: ../../requirements/07-structure.md
+[design-ai]: ./03-ai-sessions.md
