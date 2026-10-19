@@ -2,7 +2,6 @@
 
 人が呼ぶ `setup` と `check`、進行 Bot が毎回の実行の最初に回す点検の、順番と仕組みを決める。
 何を作り何を確かめるかは要件の [SETUP-1、SETUP-2][setup] が正本で、基本設計は順番・置き場・確かめ方を決める。
-点検の項目と仕組みは、この文書に後で足す。
 
 ## setup の流れ
 
@@ -16,7 +15,7 @@
 | 4 | GitHub の準備を、人の `gh` のログインで行い、作ったものを API で読み戻して確かめる（下の「GitHub の準備」） | 読み戻した値が違えば止まり、違いを示す |
 | 5 | マシンの準備を、GitHub の認証を使わずに行う（下の「マシンの準備」）。秘密のファイルは作るだけで、中身を読まない | 作れなければ止まり、作れたものを示す |
 | 6 | 人がやることを、手順として示す（[SETUP-1][setup] の「人がやるもの」） | — |
-| 7 | 定期の実行と同じジョブで点検だけを起こし、結果を示す（仕組みは、この文書に後で足す） | fail があれば示す |
+| 7 | 定期の実行と同じジョブで点検だけを起こし、結果を示す（下の「点検だけで動かす仕組み」） | fail があれば示す |
 | 8 | 人が、点検が pass になってから、全体の止める合図を `run` にする（[運用の規則][flow-rules]） | — |
 
 - 何度実行しても同じ結果にする（冪等）。今あるものは作り直さず、設定ファイルの今の値は上書きしない。足りない項目だけを足す
@@ -121,6 +120,67 @@
 - 写しの版が変わったとき（`devAutopilotPath` が変わる）と、`run.intervalHours` が変わったときは、`setup` で登録し直す
 - 点検は、登録の中身（実行するファイルのパス、マシンの設定のパス、時刻）が、マシンの設定と `run.intervalHours` に合うかを確かめ、ずれていれば fail にする（[STRUCT-2][struct]、[設定][design-settings]）
 
+## 点検
+
+![点検][fig-check]
+
+点検の項目は、要件の [SETUP-2][setup] が正本。基本設計は、項目を組に分け、いつ・どう確かめるかを決める。結果は fail / warn / pass で、fail が 1 つでもあれば、進行 Bot は作業に入らない（[SETUP-2][setup]）。
+
+### 組と回数
+
+| 組 | 主な項目（[SETUP-2][setup]） | 確かめ方 | 毎回の実行の最初 | `setup`・人の `check`・Claude Code の版が変わったとき |
+| --- | --- | --- | --- | --- |
+| 設定 | 設定ファイルの項目・型・ID、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致、`run.intervalHours` が 24 の約数であること | ファイルを読む | 確かめる | 確かめる |
+| GitHub | ラベル、Project の欄と自動追加、ruleset、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定 | 進行 Bot の PAT で読む | 確かめる | 確かめる |
+| PAT の権限 | 下の「PAT の権限」の読み取りが通ること。全体の止める合図の変数を変えられないこと | 読み取りと、変数を今と同じ値で書き戻す試し（403 で断られれば pass） | 確かめる | 確かめる |
+| マシン | `claude` と Node 24 の版、Plugin と写しの版、置き場と秘密の置き場の権限と実体のパス、記録と印のファイル、lock、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、objects のリンク数 | ファイルとプロセスを読む | 確かめる | 確かめる |
+| sandbox と AI のセッション | 読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、Read ツールの拒否、子プロセスから PAT と鍵が見えないこと、gitdir、objects を書き換えた clone からの fetch の失敗、MCP の道具が無いこと、一時フォルダ | 下の「試しのセッション」 | — | 確かめる |
+
+- 毎回の実行の最初は、モデルを使わない組だけを確かめる。試しのセッションは利用枠を使うので、`setup` と人の `check` のとき、Claude Code の版が変わったときに回す（[ADR-20261017-005][adr-mcp] と [ADR-20261017-006][adr-tmp] が基本設計に残した、確かめる回数）
+- Claude Code の版は、毎回の実行の最初に `claude --version` で読み、前の試しのセッションの記録と比べる。違えば、作業の前に試しのセッションを回す。Claude Code の更新で sandbox や道具の振る舞いが変わりうるため
+- 作業場所の残骸は warn にし、扱いは [状態遷移と判定][design-flow]の「作業場所の残骸」に従う
+
+### 点検だけで動かす仕組み
+
+人が呼ぶ `check` は、進行 Bot を直接起動せず、定期の実行と同じジョブを起こす。GitHub の点検は進行 Bot の PAT で行い、人のセッションは結果を読んで表示する（[SETUP-2][setup]、[ADR-20261017-004][adr-human] の決定 2）。点検だけで動かすことは、記録の置き場に置く依頼のファイルで伝える（[ADR-20261017-004][adr-human] が基本設計に残した仕組み）。
+
+| 順 | すること |
+| --- | --- |
+| 1 | 人の `check` が、origin からマシンの設定を見つけ、記録の置き場に依頼のファイル（`check-request.json`。依頼の ID と時刻）を置く |
+| 2 | 人の `check` が、定期の実行と同じジョブを起こす（上の「定期の実行の登録」の手動の 1 回実行） |
+| 3 | 進行 Bot が、実行の lock を取った後、依頼のファイルがあれば、点検だけを行う。全体の止める合図が `stop` でも行う（人は点検が pass になってから合図を `run` にするため） |
+| 4 | 進行 Bot が、結果を `check-result-<依頼の ID>.json` に書き、依頼のファイルを消して終わる |
+| 5 | 人の `check` が、結果のファイルを待って表示する |
+
+- ジョブが動いている最中なら、手動の 1 回実行は新しく起こさない（`kickstart` に `-k` を付けない）。進行 Bot は、実行の終わりにも依頼のファイルを見て、あれば点検だけを行う。人の `check` は、実行中であることを示して待つ
+- 依頼と結果のファイルは記録の置き場にあり、AI は sandbox の中から書けない
+
+### 試しのセッション
+
+- AI のセッションと同じ起動の形（安全設定、環境変数、引数。[AI のセッション][design-ai]）で、短いセッションを 1 つ起こす。名前は `check-<日時>`（[AI のセッション][design-ai]の「セッションの名前」）
+- エージェント定義は、作業 AI（`dev-autopilot:change:worker`）を使う。道具がいちばん広い役で、境界を試すため。モデルは `haiku` で、ターンの上限は小さくする
+- 進行 Bot が、試しのスクリプト（Node で動く。`plugin/src/` の中に持つ）をセッションのフォルダに置き、AI に 1 回だけ実行させる。スクリプトは、読めないはずの場所を読み、書けないはずの場所に書き、結果をセッションのフォルダに書く
+- 進行 Bot は、AI の返事ではなく、スクリプトが書いた結果のファイルと、書けないはずの場所にファイルができていないことで判定する。MCP の道具とサーバーは、初期化の記録（`init` のイベント）の一覧で確かめる（[ADR-20261017-005][adr-mcp] の決定 4）
+- 終わったら、「止め方と利用枠の数え方」の手順で残りを確かめ（[AI のセッション][design-ai]）、セッションのフォルダを消す。費用は実行の記録に残し、1 日の利用枠に数える
+- 試しのセッションのフォルダが消せずに残ったら（途中で落ちた、残りが止まったと確かめられない）、名前から Issue か PR を引けない残骸として扱い、点検を fail にする。人が中身を確かめて消す（[状態遷移と判定][design-flow]の「作業場所の残骸」）
+
+### PAT の権限
+
+進行 Bot の fine-grained PAT は、当てる先のリポだけに絞り、次の権限だけを付ける（[ADR-20261017-004][adr-human] が基本設計に残した、GitHub の点検に要る読み取りの権限を含む）。権限の名前は [GitHub の公式文書][doc-pat-permissions] による。
+
+| 権限 | 段 | 使うところ |
+| --- | --- | --- |
+| Metadata（リポ） | 読み取り | ruleset を読む（`GET /repos/{owner}/{repo}/rulesets` は Metadata の読み取りで通る） |
+| Issues（リポ） | 書き込み | ラベル、印とコメント、🟢 から Issue を作る |
+| Pull requests（リポ） | 書き込み | PR を作る、ready にする、PR にコメントする |
+| Commit statuses（リポ） | 読み取り | CI の結果（コミットの状態） |
+| Actions（リポ） | 読み取り | ワークフローの実行（人の承認が要るものを見つける。[IMPL-27][impl]） |
+| Variables（リポ） | 読み取り | 全体の止める合図を読む。書き込みは付けない（[ADR-20261017-007][adr-stop]） |
+| Projects（Organization） | 書き込み | Project の Status と Agent 欄（FACT-6） |
+
+- Administration（ruleset を作る管理の権限）と Contents は付けない。ruleset は人の `setup` が作り（[SETUP-1][setup]）、push は deploy key で行う（[SAFE-15][safety]）
+- CI のチェックの実行（check runs）を fine-grained PAT で読めるかは、確かめていない（UNDECIDED-55）
+
 [setup]: ../../requirements/06-setup-and-stages.md
 [struct]: ../../requirements/07-structure.md
 [impl]: ../../requirements/02-implement-review-fix.md
@@ -137,3 +197,8 @@
 [doc-systemd-timer]: https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html
 [doc-loginctl]: https://www.freedesktop.org/software/systemd/man/latest/loginctl.html
 [fig-schedule]: ./diagrams/04-schedule.drawio.svg
+[adr-mcp]: ../../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
+[design-flow]: ./02-flow-and-judgment.md
+[design-ai]: ./03-ai-sessions.md
+[doc-pat-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens
+[fig-check]: ./diagrams/04-check.drawio.svg
