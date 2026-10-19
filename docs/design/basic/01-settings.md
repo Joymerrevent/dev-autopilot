@@ -140,7 +140,7 @@
 | `models.work` | 作業 AI の最初の実装 | `opus` / high（[IMPL-32][impl]） | 作業 AI は `opus` で始め、計画・実装工程（段階 5）で人が手直しせずにマージできた種類から `sonnet` に仮に下げる（[IMPL-25、IMPL-32][impl]） |
 | `models.workByType` | Issue の種類ごとの、作業 AI の最初の実装 | 空（Issue の種類の分け方を決めるまで。UNDECIDED-52） | 最初の実装に使うモデルは、Issue の種類ごとに決める（[IMPL-25][impl]、[ADR-20261018-003][adr-model]）。種類の分け方が決まるまで空 |
 | `models.workRaised` | 最初の実装が `sonnet` だった Issue で、修正のときに上げる先 | `opus` / high（[IMPL-35][impl]） | 最初の実装が `sonnet` なら、修正のときに `opus` に 1 段上げる。`fable` には上げない（[IMPL-32、IMPL-35][impl]） |
-| `models.review` | レビュー AI（3 つの軸とも同じ値） | `opus` / xhigh（[IMPL-33][impl]） | 3 つの軸とも同じ値で始め、軸ごとに分けるかはレビュー工程（段階 6）で決める（[IMPL-33][impl]）。モデルは設定で変えられるようにする（[IMPL-19][impl]） |
+| `models.review` | レビュー AI（3 つの軸と見落としの軸とも同じ値） | `opus` / xhigh（[IMPL-33][impl]） | 3 つの軸と見落としの軸とも同じ値で始め（[ADR-20261019-002][adr-gaps]）、軸ごとに分けるかはレビュー工程（段階 6）で決める（[IMPL-33][impl]）。モデルは設定で変えられるようにする（[IMPL-19][impl]） |
 | `models.reviewComparison` | レビュー工程（段階 6）で比べるためだけに回すレビュー AI（印を書かない） | `fable` / high（[IMPL-33][impl]） | レビュー工程（段階 6）で、同じ PR を `fable` でも回して比べ、既定のモデルを決める。比較の実行は印を書かない（[IMPL-19、IMPL-33][impl]、[段階の表][stages]） |
 | `models.critic` | 批評 AI | `opus` / high（[IMPL-34][impl]） | 批評 AI は、🔴 と 🟡 を別のセッションで再検証する。値は変えない（[IMPL-22、IMPL-34][impl]） |
 | `models.planReview` | 計画をレビューするレビュー AI | `opus` / xhigh（`models.review` と同じ。暫定） | 計画のレビューのモデルと effort は、基本設計で決める（[IMPL-37][impl]）。同じレビュー AI の役で、計画の誤りを見つけるには PR のレビューと同じ深さが要るので、`models.review` と同じ値で始める。修正工程（段階 7）を終えるときに、人の判断と比べて見直す（[IMPL-10][impl]、[ADR-20261018-004][adr-planrev]） |
@@ -225,3 +225,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [setup]: ../../requirements/06-setup-and-stages.md
 [struct]: ../../requirements/07-structure.md
 [design-ai]: ./03-ai-sessions.md
+[adr-gaps]: ../../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
