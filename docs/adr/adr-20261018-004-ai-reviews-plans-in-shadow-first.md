@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # 計画は AI がレビューする。人が計画を読む間は結果を記録だけに残して人の判断と比べ、計画を止めるのに使うかは、その結果を見て決める
 
+> **Amended by [ADR-20261019-003][adr-replan]（2026-10-19）**: 決定 2 のうち「段階 5〜7 では、AI のレビューの結果を記録だけに残す」と、決定 3 のうち「計画 AI に計画し直させるかも、段階 7 を終えるときに決める」を改めた。段階 5 から、レビューが `fix` を返したら同じ回の実行で計画 AI に計画し直させる。段階 5〜7 でレビューの結果を Issue に書かないこと、人がすべての計画を読むこと、AI のレビューで計画を止めるかを段階 7 を終えるときに決めることと、決定 1 は据え置く。
+
 要件の UNDECIDED-51（[決めていないこと][undecided]の「計画をレビューするか（誰が、いつ）」）を決める。
 
 ## 背景と課題（Context and Problem Statement）
@@ -113,3 +115,4 @@ decision-makers: メンテナ
 [stages]: ../requirements/06-setup-and-stages.md
 [undecided]: ../requirements/09-undecided.md
 [adr-redo]: ./adr-20261018-002-plan-redo-in-same-run.md
+[adr-replan]: ./adr-20261019-003-replan-on-plan-review-from-stage-5.md
