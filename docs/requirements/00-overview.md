@@ -19,7 +19,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）、fine-grained PAT（進行 Bot 用）、印の署名の鍵（IMPL-20）だけを置く（「[隔離と鍵の分け方][f05]」） |
 | AI のセッションの隔離 | AI の 5 役（「登場するもの」）すべての `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。進行 Bot・次のセッション・CI は、AI が書いた worktree の中身（設定・gitdir・CI 定義・スクリプト）を信頼して実行しない（「[安全側に倒す設計][f05]」、「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。詳細は「[隔離と鍵の分け方][f05]」 |
 | モデル | 役ごとに別名で書き、版番号を書かない（`fable` `opus` `sonnet`。CLI の `--model` が別名を受け、最新の版に解ける。`haiku` だけは完全な ID（「[モデルの流れ][f02]」））。effort も役ごとに設定に持つ（`--effort`）。工程ごとのモデルと effort と切り替えの条件は「[モデルの流れ][f02]」の表が正本。要点は、作業 AI に `fable` を使わない、どの役にも `fable` を既定にしない、モデルを上げるのは計画 AI の自己申告と作業 AI の 2 ラウンド目の 2 か所だけ |
-| エージェント | 計画用・作業用・レビュー用・批評 AI・受付用の 5 つのエージェント定義を `plugin/agents/` に置く（「[分離を見越した構成][f07]」）。business-os の配布物 `plugin/agents/` には入れない |
+| エージェント | AI の 5 役のエージェント定義を、`plugin/agents/` のループごとのフォルダ（`brief` `plan` `change`）に、役の名前（`triager` `planner` `worker` `reviewer` `verifier`）で 6 つ置く（「[分離を見越した構成][f07]」の STRUCT-9）。business-os の配布物 `plugin/agents/` には入れない |
 
 ## 登場するもの
 
@@ -31,11 +31,11 @@ MCP のサーバー（ログインしている claude.ai のアカウントの�
 | 役割 | 実体と道具 | セッション |
 |---|---|---|
 | 進行 Bot | 定期の実行（macOS は launchd、Linux は systemd のユーザーのタイマーか cron。STRUCT-8）が起動する Node のスクリプト（TypeScript、Node 24 が直接実行）。Plugin に同封し、`setup` がマシンの置き場に写した、AI と共有しない進行 Bot のプログラムの写し（SAFE-16。STRUCT-3）から実行する | AI ではない。判定は決定的な処理で行う |
-| 計画 AI | `claude -p --agent <計画用>` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
-| 作業 AI | `claude -p --agent <作業用>` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行 Bot が固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
-| レビュー AI | `claude -p --agent <レビュー用>` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行 Bot が PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。計画を投稿する前の計画のレビューも行う（計画ごとに新しいセッション。計画 AI と同じく読むだけの道具。IMPL-10、[ADR-20261018-004][adr-planrev]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
-| 批評 AI | `claude -p --agent <批評用>` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行 Bot が別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力は 3 つの軸のレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行 Bot がレビューの印に統合する（IMPL-22） |
-| 受付 AI | `claude -p --agent <受付用>` を道具なしで起動する | Issue ごとに新しいセッション（コラボレータの Issue でも走る。検疫で見つかった Issue では起動しない）。読めるのは Issue の文だけ。作業指示の下書きと計画の難しさの判定を出力契約で返す（TEXT-12） |
+| 計画 AI | `claude -p --agent dev-autopilot:plan:planner` を worktree の中で、読むだけの道具（Read・Grep・Glob。Bash・Write・Edit なし）で起動する | Issue ごとに新しいセッション。計画だけを出力契約で返す（IMPL-10）。モデルは受け入れの印とラベルで決まり、自己申告で 1 回だけ `fable` に上がる |
+| 作業 AI | `claude -p --agent dev-autopilot:change:worker` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行 Bot が固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
+| レビュー AI | `claude -p --agent dev-autopilot:change:reviewer` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行 Bot が PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。計画を投稿する前の計画のレビューも行う（`dev-autopilot:plan:reviewer`。計画ごとに新しいセッション。計画 AI と同じく読むだけの道具。IMPL-10、[ADR-20261018-004][adr-planrev]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
+| 批評 AI | `claude -p --agent dev-autopilot:change:verifier` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行 Bot が別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力は 3 つの軸のレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行 Bot がレビューの印に統合する（IMPL-22） |
+| 受付 AI | `claude -p --agent dev-autopilot:brief:triager` を道具なしで起動する | Issue ごとに新しいセッション（コラボレータの Issue でも走る。検疫で見つかった Issue では起動しない）。読めるのは Issue の文だけ。作業指示の下書きと計画の難しさの判定を出力契約で返す（TEXT-12） |
 | 人 | メンテナ | 処理対象の承認（受け入れの下書きを読んで `agent-ready` を付ける）、PR のマージの実行（進行 Bot の判定を見て行う）、ループが止まったときの対処 |
 
 進行 Bot を AI にしないのは、「どの Issue を選ぶか」「待つか」「止めるか」を再現できる判定にするため。

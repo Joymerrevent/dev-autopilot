@@ -60,7 +60,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 | SETUP-14 | Issue のフォームに受け入れ条件の欄が無い | 外から入る Issue は報告・提案の形で、作業の定義ではない。コラボレータの作業指示コメント（TEXT-1）で補う。フォームには足さない（外の人が書く欄にしない） |
 | SETUP-15 | 渡す文が後から編集されうる | 処理対象にした時点のハッシュで検出する（TEXT-4）。外の人の文は渡さないので、外の人の編集は影響しない |
 | SETUP-16 | Issue を確かめる手順が dev-autopilot と結びついていない | 受け入れ（TEXT-12）を進行 Bot が自動で行い、人の操作は `agent-ready` だけにする。順「受け入れの下書き（自動）→ `agent-ready`（人）」を利用の手順に書く。コラボレータの Issue も対象（TEXT-9）。`/verify-issue` は手動の補助 |
-| SETUP-17 | 指示の混入の検査と作業指示の下書きを行うものが無い。`/verify-issue` は外の人の不具合の報告・改善の提案を人が確かめる手順として書かれている | 検査と下書きは進行 Bot の受け入れ（TEXT-12。`intake` エージェントと検疫のモジュール）が自動で行う。機械で探せる検査（見えない文字、HTML コメント、base64、URL、指示の形の語）は TypeScript にして vitest で検査する。`/verify-issue` は手動の補助として残し、最初の手順で同じ検疫のモジュールを呼ぶ。着手の条件は dev-autopilot の ADR に書く |
+| SETUP-17 | 指示の混入の検査と作業指示の下書きを行うものが無い。`/verify-issue` は外の人の不具合の報告・改善の提案を人が確かめる手順として書かれている | 検査と下書きは進行 Bot の受け入れ（TEXT-12。`dev-autopilot:brief:triager` と検疫のモジュール）が自動で行う。機械で探せる検査（見えない文字、HTML コメント、base64、URL、指示の形の語）は TypeScript にして vitest で検査する。`/verify-issue` は手動の補助として残し、最初の手順で同じ検疫のモジュールを呼ぶ。着手の条件は dev-autopilot の ADR に書く |
 | SETUP-18 | レビュー AI は PR のコードを実行して確かめる。その環境に GitHub のトークンや鍵があると、作業 AI が書いたコードから読み取れてしまう。開発リポは sandbox を使わないので、同じ OS ユーザーで動く限り `~/.ssh` と `~/.config/gh` は Bash から読める（`Read(~/.ssh/**)` の deny は Read ツールにしか効かない） | AI のセッションには `GH_TOKEN` を渡さず、`gh` を認証しない。GitHub への書き込みはすべて進行 Bot が行う（IMPL-5）。AI のセッションに sandbox を掛け、鍵を分ける（「[隔離と鍵の分け方][f05]」） |
 | SETUP-19 | `change-review` スキルが利用者の全体設定（`~/.claude/skills/`）にあり、dev-autopilot の専用マシンでは無いかもしれない | レビューの Skill の正本を dev-autopilot の中（`plugin/skills/review/`）に置き、dev-autopilot が自分の Skill として読み込む。`~/.claude` には依存しない（「[分離を見越した構成][f07]」） |
 

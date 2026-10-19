@@ -16,14 +16,14 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       check/SKILL.md           点検の入口（`plugin/src/check.ts` を呼ぶ包み。判定のロジックは持たない）
       review/SKILL.md          レビュー AI の手順（change-review v2 の正本。08-review-skill.md）
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
-      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。進行 Bot は agents/intake.md を起動する。人の操作は agent-ready だけ
-    agents/
-      planner.md               計画 AI（読むだけ。計画を出力契約で返す）
-      plan-reviewer.md         レビュー AI の計画のレビュー用（読むだけ。IMPL-10。reviewer.md は Bash を持つので分ける）
-      worker.md                作業 AI（モデルは設定で）
-      reviewer.md              レビュー AI（進行 Bot がレビューの軸ごとに別のセッションで起こす。Agent ツールは持たない。ADR-20261017-002）
-      critic.md                批評 AI（レビューの指摘の再検証。進行 Bot が別に起こす独立セッション。IMPL-22）
-      intake.md                受付 AI（道具なし。作業指示の下書きと計画の難しさの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
+      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。進行 Bot は agents/brief/triager.md を起動する。人の操作は agent-ready だけ
+    agents/                    エージェント定義。フォルダはループ（成果物）、ファイルは役（STRUCT-9）
+      brief/triager.md         受付 AI（道具なし。作業指示の下書きと計画の難しさの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
+      plan/planner.md          計画 AI（読むだけ。計画を出力契約で返す）
+      plan/reviewer.md         レビュー AI の計画のレビュー（読むだけ。IMPL-10。change/reviewer.md は Bash を持つので分ける）
+      change/worker.md         作業 AI（実装・修正・衝突の解消。モデルは設定で）
+      change/reviewer.md       レビュー AI の PR のレビュー（進行 Bot がレビューの軸ごとに別のセッションで起こす。Agent ツールは持たない。ADR-20261017-002）
+      change/verifier.md       批評 AI（レビューの指摘の再検証。進行 Bot が別に起こす独立セッション。IMPL-22）
     src/                       進行 Bot（TypeScript、Node 24 が直接実行。ビルドしない。bash を置かない）。Plugin に同封し、マシンの写しから定期の実行が動かす（ADR-20261017-003）
       main.ts                  入口
       select.ts                例：Issue の選定
@@ -59,7 +59,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **Plugin を入れたプロジェクトで、写しから動かす。** 利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ（入れる設定は当てる先のリポの `.claude/settings.json` に commit される）、当てる先のリポで開いた Claude Code で `setup` を実行する（SETUP-1）。
   `setup` は、インストールされた Plugin の版（`${CLAUDE_PLUGIN_ROOT}` の中身）を、マシンの置き場の中の版ごとのフォルダ（例：`<置き場>/program/<版>/`）に写す。写しを「進行 Bot のプログラムの写し」と呼び、マシンの設定の `devAutopilotPath` は写しを指す（[ADR-20261017-003][adr-plugin] の決定 2・4）。
-  進行 Bot は、写しの `src/main.ts` を定期の実行から起こされ、`claude -p --plugin-dir <写しの絶対パス> --agent dev-autopilot:worker` のように、写しを Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
+  進行 Bot は、写しの `src/main.ts` を定期の実行から起こされ、`claude -p --plugin-dir <写しの絶対パス> --agent dev-autopilot:change:worker` のように、写しを Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
   `--plugin-dir` は AI の worktree の中ではなく、写し（AI が書けず、読めるのは `skills/` だけ。SAFE-16）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
   進行 Bot（`plugin/src/`）と、AI のセッションに読ませるエージェント定義と Skill は、同じ写しから使う（版がずれないようにするため。STRUCT-7 で同封した理由と同じ）。
   版を上げるのは、人が `setup` を実行したときだけ。Plugin が更新されても（自動の更新を含む）、写しは変わらない。写しを作り直すのは、進行 Bot が動いていない間に限る（実行の lock を取る）。
@@ -90,8 +90,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - `README.md`：使い方
   - **Markdown の規則は、リポの root の `.markdownlint-cli2.jsonc` に持つ**（`md-lint-format` レシピ。MD054 は参照スタイル）。Markdown は Prettier で整形しない（`.prettierignore`）
   - business-os 側の ADR は、dev-autopilot を business-os に置いた橋渡しの ADR 20261008-01 と、それを置き換える「分離した」ADR（[ADR-20261016-003][adr-move] の決定 5）だけにし、dev-autopilot の中身の判断は dev-autopilot の ADR に書く
-- STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:intake` に置き、進行 Bot が自動で呼ぶ（人の操作は `agent-ready` だけ。TEXT-12）。
-  business-os の `/verify-issue` は、business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初に検疫のモジュール（TEXT-11）を呼び、最後に `dev-autopilot:intake` で下書きを作る（TEXT-9、SETUP-17 と同じ順）。
+- STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:brief:triager` に置き、進行 Bot が自動で呼ぶ（人の操作は `agent-ready` だけ。TEXT-12）。
+  business-os の `/verify-issue` は、business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初に検疫のモジュール（TEXT-11）を呼び、最後に `dev-autopilot:brief:triager` で下書きを作る（TEXT-9、SETUP-17 と同じ順）。
   business-os からはリポをまたいだ呼び出しになる。呼び方は決めていない（UNDECIDED-43）
 
 - STRUCT-7 **Skill と進行 Bot は Plugin に同封し、ほかの人に配るときは `review` だけ同じフォルダから単体でも入れられるようにする。** 別に公開して組み合わせる形は採らない
@@ -103,6 +103,17 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     `${CLAUDE_PLUGIN_ROOT}` や agent の名前を手順の本体に埋め込まない。同封したファイル（参照ファイルとスクリプト）は `${CLAUDE_SKILL_DIR}` で指す（`SKILL.md` のあるフォルダに置き換わるので、Plugin の中からも単体でも同じに動く。[ADR-20261017-004][adr-human] の決定 1）
   - 配るまでの間は、`~/.claude/skills/change-review` を今の版のまま残して手動のレビューに使う。v2 を手でも使いたくなったら、
     dev-autopilot のリポの `plugin/skills/review/` を skills CLI（`--copy` 付き）で入れる
+- STRUCT-9 **エージェント定義は、ループのフォルダに、役の名前で置く。** フォルダは、段取り・作業・検証・直す（PDCA）で回すループの成果物の名前にする（`brief` は作業指示、`plan` は計画、`change` は PR の変更。文書だけの変更も `change` に入る）。ファイルは、そのループで動く AI の役（「[登場するもの][f00]」）の名前にする。
+  `--agent` で渡す名前は `dev-autopilot:<ループ>:<役>` になる（Plugin は `agents/` の下のフォルダも読み込み、Plugin の名前とフォルダとファイルの名前をコロンでつなぐ。[Plugin の部品の文書][doc-plugin-agents]）。frontmatter の `name` は名前のうちファイルの名前の部分だけを置き換えるので、ファイルの名前と同じにする
+  - 役の名前は `triager`（受付 AI）、`planner`（計画 AI）、`worker`（作業 AI）、`reviewer`（レビュー AI）、`verifier`（批評 AI）。`worker` と `reviewer` は、Project の Agent 欄の値と同じ
+  - 各フォルダには、そのループで動く役だけを置く（5 役をそろえて置かない）。ループに役が加わったらファイルを足し、新しいループができたらフォルダを足す（例：受付 AI の下書きを AI が確かめるなら `brief/reviewer.md`）
+  - 設定のキー（`models.plan` など）とセッションの名前（`plan-issue-…` など）は工程の名前で付け、エージェント定義の名前とは別にする（構造仕様）
+
+  | ループ（成果物） | 受付 AI（`triager`） | 計画 AI（`planner`） | 作業 AI（`worker`） | レビュー AI（`reviewer`） | 批評 AI（`verifier`） |
+  | --- | --- | --- | --- | --- | --- |
+  | `brief`（作業指示） | 作る（D） | | | | |
+  | `plan`（計画） | | 作る（D） | | 確かめる（C） | |
+  | `change`（PR の変更） | | | 作る（D）・直す（A） | 確かめる（C） | 確かめ直す（2 つ目の C） |
 
 ## 分離の時期の目安
 
@@ -114,6 +125,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 - 形は、マージ判定工程（段階 8）の前から、Plugin を入れたプロジェクトで動く形（STRUCT-3）で作る。マージ判定工程（段階 8）の後に決めるのは、当てる先を広げることと、ほかの人への公開（marketplace への登録）の時期だけ（[ADR-20261017-003][adr-plugin]）
 - dev-autopilot を、dev-autopilot 自身のリポに当てない。当てると、作業 AI が進行 Bot のコードを書き換える経路が戻る。`setup` は dev-autopilot 自身のリポでは止まる。当てるなら、別の ADR で決める
 
+[f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
 [f02]: ./02-implement-review-fix.md
 [f04]: ./04-external-text-and-markers.md
@@ -130,3 +142,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
+[doc-plugin-agents]: https://code.claude.com/docs/en/plugins/components#organize-agents-in-subfolders
