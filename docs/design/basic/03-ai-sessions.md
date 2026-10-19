@@ -1,7 +1,6 @@
 # AI のセッション
 
 進行 Bot が AI の 5 役（受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI）のセッションを、どの作業場所で、どの引数と環境変数で起動するかを決める。
-役ごとの出力契約は、この文書に後で足す。
 
 ## 役とエージェント定義
 
@@ -199,6 +198,112 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 - 3 つの軸のうち 1 つでも失敗したら（出力契約が解析できない、時間かターンか費用の上限など）、そのラウンドのレビューは印を書かず、実行の失敗として次の実行に持ち越す（[IMPL-18][impl]、[ADR-20261017-002][adr-review] の決定 1）。次の実行では、3 つとも起こし直す
 - 並べて起こすと、利用枠を短い時間にまとめて使う。利用枠切れ（HTTP 429）も実行の失敗として扱い、次の実行に持ち越す（[IMPL-14][impl]）
 
+## 役ごとの出力契約
+
+![役ごとの出力契約][fig-contracts]
+
+AI のセッションは、作業の結果を GitHub に書かず、出力契約で進行 Bot に返す（[IMPL-5][impl]、[SAFE-1][safety]）。役と工程ごとに、返す値の形を決める。
+
+### 共通の決まり
+
+- 最後の返事（`stream-json` の最後の `result` の文）の全体を、JSON の値 1 つにする。前後に文を書かない。全体が 1 つのコードブロック（言語名 `json`）のときは、ブロックの区切りの行を外して読む。ほかの形は、取り出せないとして扱う
+- 進行 Bot は、役と工程ごとの JSON スキーマで確かめる。欠け・型の違い・決めていないキーがあれば、実行の失敗にして次の実行に持ち越す。解析できない出力を「成功」や「0 件」と読まない（[IMPL-5、IMPL-14][impl]）
+- `--json-schema` は使わない。`--agent` と一緒に使うと結果が空になる（FACT-14）。形は、エージェント定義の指示と、進行 Bot が標準入力で渡す指示文で伝える
+- JSON スキーマは、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ（印の形の正本と同じ）。エージェント定義と進行 Bot は同じ写しから使うので、版はずれない（[STRUCT-3][struct]、[STRUCT-7][struct]）
+- 決まった値から選ぶ欄（下の表で `"…"` の並びを書いた欄）は、ほかの値を許さない。進行 Bot が Issue や PR に書き添えるときは、AI の文でなく、値ごとに決めた固定の文で書く（[ADR-20261018-002][adr-redo] の決定 2）
+- 文の欄は AI が書いた文で、GitHub に書く前に漏えいの検査を掛ける（[IMPL-15][impl]）。コメントに載せる文の長さは、GitHub のコメントの上限（65,536 文字）に収まるように、スキーマで上限を持つ
+
+### 受付 AI（`brief/triager`。受け入れ）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `brief.problem` | 文 | 困っていること |
+| `brief.behavior` | 文 | 望む振る舞い |
+| `brief.acceptance` | 文の一覧（1 件以上） | 受け入れ条件。1 件ずつ検証できる形で書く |
+| `brief.outOfScope` | 文の一覧 | 範囲外 |
+| `plan` | `"opus"` か `"fable"` | 計画の難しさの判定（[TEXT-12][text]） |
+| `planReason` | 文（1 行） | 判定の根拠 |
+
+- 下書きの形は「[作業指示（agent brief）の形][review-skill]」に従う。ファイルのパスと行番号を書かず、手順でなく振る舞いを書く
+- 進行 Bot は、4 つの欄を決まった見出しの下に並べて、「受け入れの下書き」コメントにする（[TEXT-12][text]）
+- 拒否（`stop_reason: refusal`）で止まったときは、出力契約を読まずに実行の失敗にする（次の回は `sonnet`。[TEXT-12][text]）
+
+### 計画 AI（`plan/planner`。計画、計画し直し）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `plan.targets` | 文の一覧（1 件以上） | 対象のファイル・モジュール・型定義と、その依存関係 |
+| `plan.steps` | 一覧（1 件以上）。1 件は `do`（文）と `done`（文） | 作業の手順と順序。`done` は手順ごとの完了条件 |
+| `plan.verification` | 文の一覧（1 件以上） | 検証方法（どのテストとコマンドで確かめるか） |
+| `plan.outOfScope` | 文の一覧 | 範囲外とするもの |
+| `plan.commits` | 文の一覧（1 件以上） | 想定する commit の分割 |
+| `selfReport` | `"design-decision"`・`"architecture-choice"`・`"unknown-failure"` から選んだ一覧（空でよい） | 自己申告。設計判断、アーキテクチャの選択、原因不明の障害解析を含むか（[IMPL-10][impl]） |
+
+- 6 つの欄は、計画に必ず含める項目（[IMPL-10][impl]）。進行 Bot は、決まった見出しの下に並べて計画コメントにし、`plan` の印のハッシュを取る
+- 計画し直すセッションも同じ形で返す。計画し直したセッションの `selfReport` は記録に残すだけで、使わない（[ADR-20261019-003][adr-replan]）
+
+### レビュー AI の計画のレビュー（`plan/reviewer`）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `verdict` | `"ok"` か `"fix"` | 問題が無いか、直すべき点があるか |
+| `findings` | 一覧。1 件は `heading`（文）と `detail`（文） | 指摘の一覧。`fix` なら 1 件以上、`ok` なら 0 件 |
+
+- 見るのは、渡す文に沿っているか、範囲外を含まないか、計画に必ず含める項目がそろっているか、手順と検証方法がリポの中身と食い違わないか（[IMPL-10][impl]）
+- `findings` は、計画し直すセッションに渡すだけで、GitHub に書かない（マージ判定工程（段階 8）の前。[ADR-20261019-003][adr-replan]）
+
+### 作業 AI（`change/worker`。実装、修正、衝突の解消）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `outcome` | `"done"` か `"stopped"` | 作業を終えたか、止まったか |
+| `stopReason` | `"adr-required"` か `"canon-change"` | `stopped` のときだけ。ADR の起票が要る、規約の正典を変える必要がある（[IMPL-8][impl]） |
+| `stopDetail` | 文 | `stopped` のときだけ。止まった理由の説明 |
+| `pr.title`・`pr.body` | 文 | 実装で `done` のときだけ。PR の題名と本文の案（[IMPL-5][impl]） |
+| `responses` | 一覧。1 件は `id`（進行 Bot が渡した指摘の ID）、`action`（`"fixed"` か `"unable"`）、`check`（文） | 修正で `done` のときだけ。渡した 🔴 🟡 の指摘ごとの対応と確認。渡した ID をすべて含む（[IMPL-23][impl]） |
+| `checks` | 一覧。1 件は `command`（文）、`result`（`"pass"`・`"fail"`・`"skipped"`）、`note`（文） | `done` のとき。確かめた検査とその結果（[IMPL-5][impl]） |
+
+- 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と `checks` だけを返す
+- 作業の結果は、worktree の中の commit で返す。出力契約に diff を入れない（[IMPL-5][impl]）
+- `stopped` なら、進行 Bot は理由を Issue にコメントし、`needs-human` を付ける（stop の理由は `adr-required`。[状態遷移と判定][design-flow]）
+- `action` が `"unable"` の指摘は、次のラウンドのレビューで再び出れば、同じ指摘の再発として人に渡る（[IMPL-24][impl]）
+
+### レビュー AI の PR のレビュー（`change/reviewer`。軸ごと）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `axis` | `"behavior"`・`"spec"`・`"conventions"`・`"gaps"` | 見た軸。進行 Bot が渡した軸と同じ |
+| `converged` | 真偽 | レビューが収束したか。偽なら「未収束」 |
+| `unconvergedReason` | 文 | `converged` が偽のときだけ（[REVIEW-5][review-skill]） |
+| `body` | 文 | 人が読む本文（[REVIEW-3][review-skill]） |
+| `counts.high`・`counts.medium`・`counts.low` | 0 以上の整数 | 重要度ごとの件数。`findings` の重要度ごとの件数と同じ |
+| `findings` | 一覧。1 件は下の 7 つ | 指摘の一覧 |
+| `findings[].severity` | `"high"`・`"medium"`・`"low"` | 重要度（🔴 🟡 🟢） |
+| `findings[].heading` | 文（1 行） | 見出し。指摘の ID と、🟢 から作る Issue の題名に使う（[ADR-20261019-001][adr-repeat]、[IMPL-26][impl]） |
+| `findings[].path` | 文 | 主なファイルのリポの中のパス。ファイルに結びつかない指摘は空の文 |
+| `findings[].confidence` | 0〜100 の整数 | 確信度（[REVIEW-3][review-skill]） |
+| `findings[].scenario` | 文 | 失敗シナリオ |
+| `findings[].evidence` | `"executed"` か `"read"` | 証拠レベル（実行で確かめた、読んだだけ） |
+| `findings[].recommendation` | 文 | 推奨 |
+
+- 3 つの軸と見落としの軸は、同じ形で返す。見落としの軸の結果は、記録だけの間は印に入れない（[IMPL-16][impl]）
+- 進行 Bot は、軸ごとの `body` を仕様 → 動作 → 規約の順に並べて 1 つのコメントにし、`counts` と批評 AI の結果から `review` の印を書く。指摘の ID は、`axis`・`heading`・`path` から計算する（[IMPL-18][impl]、[状態遷移と判定][design-flow]）
+- `counts` と `findings` の件数が合わなければ、出力契約が解析できないとして扱う（IMPL-18 の (1) と (4)）
+
+### 批評 AI（`change/verifier`）
+
+| キー | 型 | 中身 |
+| --- | --- | --- |
+| `results` | 一覧。1 件は下の 5 つ。渡した指摘をすべて含む | 指摘ごとの再検証 |
+| `results[].id` | 文 | 進行 Bot が渡した指摘の ID |
+| `results[].reproduced` | `"executed"` か `"read"` | 再現できたか（実行済み、読んだだけ） |
+| `results[].confidence` | 0〜100 の整数 | 確信度 |
+| `results[].severity` | `"high"`・`"medium"`・`"low"` | 推奨する重要度 |
+| `results[].note` | 文 | 再検証の要点 |
+
+- 進行 Bot は、渡した 🔴 🟡 に ID を付けて渡す。統合の規則（🔴 は 🟡 より下げない、🟡 は確信度がしきい値未満なら 🟢 に下げる）は進行 Bot が当てる（[IMPL-22][impl]、`review.criticConfidenceThreshold`）
+- 渡した ID が欠けていれば、出力契約が解析できないとして扱う（[IMPL-22][impl]）
+
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-planrev]: ../../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
@@ -227,3 +332,8 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 [flow]: ../../requirements/01-issue-flow.md
 [flow-rules]: ../../requirements/01-issue-flow.md
 [fig-stop-usage]: ./diagrams/03-stop-and-usage.drawio.svg
+[text]: ../../requirements/04-external-text-and-markers.md
+[review-skill]: ../../requirements/08-review-skill.md
+[adr-redo]: ../../adr/adr-20261018-002-plan-redo-in-same-run.md
+[adr-repeat]: ../../adr/adr-20261019-001-repeated-findings-by-ids.md
+[fig-contracts]: ./diagrams/03-output-contracts.drawio.svg
