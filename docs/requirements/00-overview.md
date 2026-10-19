@@ -35,7 +35,7 @@ MCP のサーバー（ログインしている claude.ai のアカウントの�
 | 作業 AI | `claude -p --agent dev-autopilot:change:worker` を worktree の中で起動する。Bash・Read・Write・Edit（WebFetch・WebSearch・Agent なし） | Issue ごと、ラウンドごとに新しいセッション。計画は進行 Bot が固定の指示文の中で渡す（思考の引き継ぎに頼らない） |
 | レビュー AI | `claude -p --agent dev-autopilot:change:reviewer` を、レビューの 3 つの軸（動作・仕様・規約。REVIEW-1）ごとに、進行 Bot が PR の head で作る別の worktree（作業 AI の worktree と同じ書き込みの規則）で起動する。Bash・Read（実行して確かめるため）、Write は worktree の中だけ | PR ごと、ラウンドごと、軸ごとに新しいセッション（[ADR-20261017-002][adr-review]）。3 つの軸の後に、どの軸も挙げていない問題を探す見落としの軸のセッションも起こす（結果は、修正工程（段階 7）に進む前に使うかを決めるまで記録だけ。[ADR-20261019-002][adr-gaps]）。計画を投稿する前の計画のレビューも行う（`dev-autopilot:plan:reviewer`。計画ごとに新しいセッション。計画 AI と同じく読むだけの道具。IMPL-10、[ADR-20261018-004][adr-planrev]）。作業 AI と文脈を共有しない。モデルは設定で分けられる（既定は「[モデルの流れ][f02]」） |
 | 批評 AI | `claude -p --agent dev-autopilot:change:verifier` を、レビュー AI と同じ PR の head で別に作った作業場所（[ADR-20261013-001][adr-workspace]）で、レビュー AI の後に進行 Bot が別に起動する（レビュー AI のサブエージェントでなく独立セッション）。Bash・Read | PR ごと、ラウンドごとに新しいセッション。入力は 3 つの軸のレビュー AI の指摘と差分だけ。指摘ごとの再検証の結果を出力契約で返し、進行 Bot がレビューの印に統合する（IMPL-22） |
-| 受付 AI | `claude -p --agent dev-autopilot:brief:triager` を道具なしで起動する | Issue ごとに新しいセッション（コラボレータの Issue でも走る。検疫で見つかった Issue では起動しない）。読めるのは Issue の文だけ。作業指示の下書きと計画の難しさの判定を出力契約で返す（TEXT-12） |
+| 受付 AI | `claude -p --agent dev-autopilot:brief:triager` を道具なしで起動する | Issue ごとに新しいセッション（コラボレータの Issue でも走る。検疫で見つかった Issue では起動しない）。読めるのは Issue の文だけ。作業指示の下書きと、計画の難しさと方針に係る要望かの判定を出力契約で返す（TEXT-12） |
 | 人 | メンテナ | 処理対象の承認（受け入れの下書きを読んで `agent-ready` を付ける）、PR のマージの実行（進行 Bot の判定を見て行う）、ループが止まったときの対処 |
 
 進行 Bot を AI にしないのは、「どの Issue を選ぶか」「待つか」「止めるか」を再現できる判定にするため。
