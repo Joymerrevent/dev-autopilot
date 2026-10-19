@@ -164,6 +164,17 @@ macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた�
 | FACT-41 | sandbox の中のコマンドが、`allowWrite` に入れたセッションのフォルダの `tmp/` に書けるか。入れていないフォルダには書けないか | **`tmp/` には書け、入れていない隣のフォルダには書けない。** 置き場を `denyRead`、自分のセッションのフォルダを `allowRead`、`<セッションのフォルダ>/tmp` を `allowWrite` にし、作業フォルダを worktree にして、1 つの `sh -c` で 3 か所に書かせた。`tmp/` は終了コード 0 でファイルができ、`allowWrite` に入れていない `<セッションのフォルダ>/other/` は `Operation not permitted`（終了コード 1）でファイルができず、作業フォルダは終了コード 0 でファイルができた。ファイルの有無はディスクで確かめた | 実行 |
 | FACT-42 | `permissions.allow` に `Skill` を入れずに、エージェントが Plugin の Skill を呼べるか | **呼べる。** `allow` が `Bash` だけの安全設定で、`tools` に `Skill` だけを書いたエージェント（`--agent probe:change:reviewer`）を起動すると、`Skill` の道具で `probe:hello` を呼び、Skill の本文の指示どおりの語を返した。`permission_denials` は空で、`result` は `success` だった | 実行 |
 
+## 止め方と利用枠の数え方を決める途中で確かめた事実（2026-10-19）
+
+macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた）で確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/dap-stop-probe/`）。
+FACT-43 と FACT-45 は、AI のセッションと同じ起動の形（`--setting-sources local`、`--settings` の sandbox、許可した名前だけの環境変数、`--include-partial-messages`）の `claude -p` を 1 回実行して確かめた。FACT-44 は、モデルを使わずに、この会話の Bash から確かめた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-43 | 止めた後に残ったコマンドを、止める前に控えたプロセスグループと、作業フォルダ（cwd）で見つけて止められるか | **どちらでも見つけて止められる。** `SIGTERM` を無視するコマンド（`sh` が `sleep` を子に持ち、1 秒ごとに印のファイルを書く）を Bash で動かしている間に、1 秒ごとに `claude` の子孫をたどってプロセスグループを控えた（始めてから 4.2 秒で控えられた）。`claude` のプロセスグループに `SIGTERM` を送ると、`claude` は 0.5 秒で終了コード 143 で終わり、`sh`（親が PID 1 に替わった）と `sleep` 2 つが残った。3 つとも控えたプロセスグループの中にあり、`lsof` で作業フォルダがセッションのフォルダの中にあるプロセスを探しても、同じ 3 つが見つかった。控えたプロセスグループに `SIGKILL` を送ると、3 秒後にはどちらの探し方でも何も見つからず、印のファイルの更新も止まった | 実行 |
+| FACT-44 | macOS の `ps` で、セッションの ID と、ほかのプロセスの環境変数を取れるか | **この会話の Bash からは取れなかった。** `ps -o sess` は 0 を出した。`ps -ww -E` は、子のプロセスにも自分のシェルにも、環境変数を出さなかった。進行 Bot と同じ条件（Claude Code の外の定期の実行）では確かめていない | 実行（モデルなし） |
+| FACT-45 | AI のセッションの Bash のコマンドは、どのシェルで動くか | **人のログインシェル（zsh）で、Claude Code がホームの `.claude/shell-snapshots/` に作ったシェルのスナップショットを読み込んで動いた。** FACT-43 の試験で控えたコマンドは `/bin/zsh -c source <ホーム>/.claude/shell-snapshots/snapshot-zsh-…` の形だった（子プロセスに `SHELL` は渡していない）。同じフォルダの最新のスナップショットには、人のシェルの関数 13・別名 2・`PATH` の export 1 行が入っていた（値は見ていない）。AI のセッションから `shell-snapshots/` を読めるか、何が入りうるかは確かめていない（UNDECIDED-54） | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
