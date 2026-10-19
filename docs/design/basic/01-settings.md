@@ -119,9 +119,9 @@
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
 | `limits.session.costUsd` | AI のセッション 1 回の費用の上限（`--max-budget-usd`）。途中で止めた回は、この値をその回の費用とみなす | メンテナが決める（USD） | 費用の上限を `--max-budget-usd` でも掛ける（[IMPL-14][impl]）。途中で止めた回は費用が分からないので、この値をその回の費用とみなす（[ADR-20261018-001][adr-usage]） |
-| `limits.issueCostUsd` | 1 Issue の累計の費用の上限（往復を含む）。超えたら `needs-human` | メンテナが決める（USD） | 1 Issue の累計の利用枠（往復を含む）に上限を持ち、費用で数える。当たったら `needs-human`（[IMPL-14][impl]、[ADR-20261018-001][adr-usage]） |
-| `limits.runCostUsd` | 1 回の実行の費用の上限 | メンテナが決める（USD） | `claude -p` の実行は利用枠を消費するので、1 回の実行の上限を持つ（[SETUP-12][setup]、[IMPL-14][impl]） |
-| `limits.dailyCostUsd` | 1 日の費用の上限 | メンテナが決める（USD） | 1 日の利用枠にも上限を持ち、費用で数える（[SETUP-12][setup]、[IMPL-14][impl]） |
+| `limits.issueCostUsd` | 1 Issue の累計の費用の上限（往復を含む）。起動の前に、累計にこの回の費用の上限を足して超えるなら、起動せずに `needs-human` | メンテナが決める（USD） | 1 Issue の累計の利用枠（往復を含む）に上限を持ち、費用で数える。当たったら `needs-human`（[IMPL-14][impl]、[ADR-20261018-001][adr-usage]） |
+| `limits.runCostUsd` | 1 回の実行の費用の上限。起動の前に、その回の累計にこの回の費用の上限を足して超えるなら、起動せずに次の実行で続ける | メンテナが決める（USD） | `claude -p` の実行は利用枠を消費するので、1 回の実行の上限を持つ（[SETUP-12][setup]、[IMPL-14][impl]） |
+| `limits.dailyCostUsd` | 1 日（マシンの時刻の日付）の費用の上限。起動の前に、その日の累計にこの回の費用の上限を足して超えるなら、起動せずに次の日の実行で続ける | メンテナが決める（USD） | 1 日の利用枠にも上限を持ち、費用で数える（[SETUP-12][setup]、[IMPL-14][impl]） |
 | `limits.stopGraceSeconds` | AI のセッションを途中で止めるとき、`SIGTERM` を送ってから `SIGKILL` を送るまでの猶予 | 10 秒（暫定） | 途中で止めるときは `SIGTERM` を送り、猶予の間に終わらなければ `SIGKILL` を送る。猶予は設定に持つ（[IMPL-14][impl]）。試験では `SIGTERM` の後 1 秒ほどで終わった（[ADR-20261018-001][adr-usage]）ので、10 倍の余裕を見る |
 | `limits.retry.count` | 同じ Issue で実行の失敗が続いたとき、`needs-human` にするまでの回数 | 3 回（[IMPL-14][impl]） | 実行の失敗（利用枠切れ・時間の上限など、作業の中身と無関係の失敗）は次回に持ち越し、同じ Issue で続いたら `needs-human` にする（[IMPL-14][impl]） |
 | `limits.retry.intervalRuns` | 実行の失敗の後、何回目の定期の実行で再試行するか | 1（次の定期の実行。暫定） | 実行の失敗の再試行の間隔を設定に持つ（[IMPL-14][impl]）。実行の中で待つと lock を長く持つので、次の定期の実行で再試行する（[FLOW-4][flow]）。[ADR-20261015-005][adr-settings] の補足情報が挙げた候補（再試行は次の実行） |

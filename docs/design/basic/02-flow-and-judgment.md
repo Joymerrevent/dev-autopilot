@@ -252,7 +252,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `repeated-finding` | 同じ指摘の再発（直したはずの指摘が再び出た。[IMPL-24][impl]、[ADR-20261019-001][adr-repeat]） |
 | `adr-required` | 作業 AI が、ADR の起票か規約の正典の変更が要ると返した（[IMPL-8][impl]） |
 | `retry-limit` | 同じ Issue で実行の失敗が続き、回数の上限に達した（[IMPL-14][impl]） |
-| `usage-limit` | 1 Issue の累計の費用が上限に当たった（[IMPL-14][impl]） |
+| `usage-limit` | 1 Issue の累計の費用に、次のセッションの費用の上限を足すと、上限を超える（[IMPL-14][impl]、[AI のセッション][design-ai]の「止め方と利用枠の数え方」） |
 | `session-not-stopped` | AI のセッションを止めた後、コマンドの残りが止まったと確かめられない（[IMPL-14][impl]） |
 | `leak` | 漏えいの検査に引っかかった（[IMPL-15][impl]） |
 | `blocked-path` | diff が、push しないパスに触れている（[IMPL-15][impl]） |

@@ -1,7 +1,7 @@
 # AI のセッション
 
 進行 Bot が AI の 5 役（受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI）のセッションを、どの作業場所で、どの引数と環境変数で起動するかを決める。
-止め方と利用枠の数え方、役ごとの出力契約は、この文書に後で足す。
+役ごとの出力契約は、この文書に後で足す。
 
 ## 役とエージェント定義
 
@@ -132,6 +132,61 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 - リポの設定の `safety.sandbox.denyRead` と `safety.sandbox.denyWrite` には、絶対パスを書かない（[ADR-20261015-005][adr-settings]）。パスは `${home}`（ホーム）か `${worktree}`（セッションの worktree）で始めて書き、進行 Bot が組み立てるときに実体のパスに置き換える
 - 読み取りと書き込みを許す側（`allowRead`・`allowWrite`・`permissions.allow`）は、設定で足せない。許す範囲を広げるのは、安全の境界を緩める変更なので、ADR で決める（[設計を変えるとき][design-change]）
 
+## 止め方と利用枠の数え方
+
+![止め方と利用枠の数え方][fig-stop-usage]
+
+AI のセッションの上限、起動の前の利用枠の確かめ方、途中で止める手順、止めた後に残ったコマンドの探し方、費用の数え方を決める。
+止める手順と費用の数え方は [ADR-20261018-001][adr-usage] が決めていて、基本設計で決めることになっていた「残りの探し方」を、実機で確かめてここで決めた（FACT-43）。
+
+### 上限
+
+| 上限 | 掛け方 | 当たったとき |
+| --- | --- | --- |
+| 時間（`limits.session.minutes`。45 分） | `claude` に時間の上限は無いので、進行 Bot が起動からの時間を数え、超えたら下の「止める手順」で止める | 実行の失敗。次の実行に持ち越す（[IMPL-13、IMPL-14][impl]） |
+| ターン（`limits.session.turns`。200 ターン） | `--max-turns` | 実行の失敗。次の実行に持ち越す（[IMPL-13、IMPL-14][impl]） |
+| 費用（`limits.session.costUsd`） | `--max-budget-usd`。Claude Code はメッセージの間で確かめるので、上限をメッセージ 1 つ分超えうる（FACT-39） | `result` の `subtype` が `error_max_budget_usd` になり、出力契約が欠けるので、実行の失敗として持ち越す（[IMPL-14][impl]） |
+
+### 起動の前の確かめ
+
+AI のセッションを起動する前に、毎回、次の順に確かめる。セッションは費用の上限まで使いうるので、累計にこの回の費用の上限（`limits.session.costUsd`）を足して比べる。足しても超えないときだけ起動すれば、上限を超えない。
+
+| 順 | 確かめること | 外れたとき |
+| --- | --- | --- |
+| 1 | 全体の止める合図が `run` である | 起動しない。実行の失敗に数えず、合図が戻った後の実行で続ける（[運用の規則][flow-rules]、[ADR-20261017-007][adr-stop]） |
+| 2 | その日の累計 ＋ この回の費用の上限が、`limits.dailyCostUsd` を超えない | 起動しない。その日は、ほかの AI のセッションも起動しない。実行の失敗に数えず、次の日の実行で続ける |
+| 3 | その回の実行の累計 ＋ この回の費用の上限が、`limits.runCostUsd` を超えない | 起動しない。実行の失敗に数えず、次の実行で続ける |
+| 4 | その Issue の累計（往復を含む）＋ この回の費用の上限が、`limits.issueCostUsd` を超えない | 起動せず、`needs-human` を付ける（stop の理由は `usage-limit`。[IMPL-14][impl]） |
+
+- 1 日は、マシンの時刻の日付で区切る（0 時で切り替える）
+- 累計は、手元の記録から足し上げる（[状態遷移と判定][design-flow]の「状態の組み立て」）
+
+### 止める手順
+
+| 順 | すること | うまくいかないとき |
+| --- | --- | --- |
+| 1 | セッションの間、2 秒ごとに `claude` の子孫をたどり、子孫のプロセスグループを控える（残りの探し方 1）。Bash のコマンドは `claude` と別のプロセスグループで動く（FACT-38） | — |
+| 2 | 止めるとき（時間の上限、全体の止める合図）は、`claude` のプロセスグループに `SIGTERM` を送る。`SIGINT` は使わない（書いている途中のメッセージの費用を 0 と数える `result` を出すため。FACT-38） | — |
+| 3 | `limits.stopGraceSeconds`（10 秒）の間に終わらなければ、`claude` のプロセスグループに `SIGKILL` を送る | — |
+| 4 | `claude` が終わったら（止めずに終わったときも）、残りを 2 つの探し方で探す。探し方 1 は、控えたプロセスグループにまだプロセスがあるか。探し方 2 は、作業フォルダ（cwd）がセッションのフォルダの中にあるプロセスがあるか（`lsof`）。見つかれば、プロセスグループごと `SIGKILL` を送る | — |
+| 5 | 3 秒待って、もう一度 2 つの探し方で探す | 残っていれば、作業場所を消さず、そのセッションの次の AI のセッションを起動せず、`needs-human` を付ける（`session-not-stopped`。[IMPL-14][impl]） |
+
+- 探し方 1 は、`SIGTERM` を無視して残り、親が PID 1 に替わったコマンドも、プロセスグループで見つけられる。探し方 2 は、控える間隔（2 秒）の間に生まれて親が替わったものを拾う。どちらでも見つけて止められることを確かめた（FACT-43）
+- 止めずに終わったときも探すのは、`&` で裏に回したコマンドが、`claude` が終わった後も残りうるため
+- 環境変数の印と、セッションの ID では探さない。macOS の `ps` で取れなかった（FACT-44）
+- 残ったコマンドは sandbox の中のままで、書けるのは自分のセッションの作業場所と一時フォルダだけ（FACT-38）。Linux で同じに振る舞うかは確かめていない（UNDECIDED-49）
+
+### 費用の数え方
+
+| 回の終わり方 | 費用 | トークン |
+| --- | --- | --- |
+| 正常に終わった（`result` があり、`terminal_reason` が `aborted_` で始まらない。費用の上限に当たった回も含む） | `result` の `total_cost_usd` | `result` の `modelUsage` |
+| 途中で止めた（`result` が無いか、`terminal_reason` が `aborted_` で始まる） | `limits.session.costUsd`（`--max-budget-usd` に渡した値）とみなす | 書き終えたメッセージの `message_delta` と、書いている途中のメッセージの `message_start` から数え、出力が分からないメッセージがあったことを記録する |
+
+- 費用とトークンは、セッションごとに手元の記録（[FLOW-5][flow]）に残す（セッションの名前、Issue か PR の番号、モデル、終わり方、費用、トークン）
+- `assistant` のイベントの `usage` は、同じメッセージで重複するので足し上げに使わない（FACT-29）
+- 費用は Claude Code が出す USD 換算の値で、請求の額とは限らない。上限と比べる物差しとしてだけ使う（[ADR-20261018-001][adr-usage]）
+
 ## レビューの軸の起こし方
 
 ![レビューの軸の起こし方][fig-review-axes]
@@ -167,3 +222,8 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 [design-change]: ../README.md#設計を変えるとき
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [fig-session-settings]: ./diagrams/03-session-settings.drawio.svg
+[adr-usage]: ../../adr/adr-20261018-001-stop-session-and-count-usage.md
+[adr-stop]: ../../adr/adr-20261017-007-stop-switch-in-repo-variable.md
+[flow]: ../../requirements/01-issue-flow.md
+[flow-rules]: ../../requirements/01-issue-flow.md
+[fig-stop-usage]: ./diagrams/03-stop-and-usage.drawio.svg

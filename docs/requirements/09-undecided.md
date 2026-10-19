@@ -146,6 +146,8 @@
 - UNDECIDED-49 **Linux で、Claude Code の sandbox が macOS と同じに振る舞うか。** [ADR-20261017-003][adr-plugin] で、今は macOS と Linux に対応すると決めた（STRUCT-8）。
   sandbox の振る舞いを確かめた事実（FACT-9、FACT-13、FACT-22 など）は、macOS で確かめたもの。Linux で、読み取りを自分のセッションのフォルダに絞れること（`denyRead` と `allowRead`。FACT-22）、Read ツールが作業フォルダの外を拒否すること（FACT-13、FACT-22）、
   worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行 Bot を動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
+- UNDECIDED-54 **AI の Bash が、人のシェルのスナップショットを読み込む。** AI のセッションの Bash のコマンドは、Claude Code がホームの `.claude/shell-snapshots/` に作る人のシェルのスナップショット（関数・別名・`PATH`）を読み込んで動く（FACT-45）。
+  SAFE-2 の (a) はユーザー設定から切り離すとし、SAFE-10 は読み取りを自分のセッションのフォルダだけにするとしている。スナップショットに何が入りうるか（環境変数が入ることがあるか）、AI のセッションから `shell-snapshots/` を読めるか、スナップショットを読み込ませない手段があるかを確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
