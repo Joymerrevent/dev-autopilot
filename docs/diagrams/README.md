@@ -8,7 +8,7 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 | [全体の構成][overview] | 進行 Bot・AI の 5 役・作業場所・GitHub・人（メンテナと外の人）の関係。誰が何に書けるか | [00-overview.md][f00]、[01-issue-flow.md][f01]、[04-external-text-and-markers.md][f04] の TEXT-12 と印の一覧、[05-safety.md][f05] |
 | [Issue の流れ][issue-flow] | Issue の起票（外の人でもコラボレータでも）からマージ後の片付けまでの正常な順と、止まる・待つ・戻す遷移。各工程の担い手と Project の Status。各工程が動き始める段階 | [01-issue-flow.md][f01] の FLOW-15〜34、[03-merge.md][f03] の MERGE-5・6、[04-external-text-and-markers.md][f04] の TEXT-12、[06-setup-and-stages.md][f06] の段階の表 |
 | [隔離と鍵][isolation] | sandbox の境界、秘密の置き場、進行 Bot の clone（business-os の clone）とプログラムの写し、GitHub への書き込みの経路 | [05-safety.md][f05] の SAFE-1〜18 |
-| [フォルダ構成と起動][structure] | dev-autopilot のリポの構成（予定）と、Plugin の入れ方・写し・定期の実行・進行 Bot・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜8 |
+| [フォルダ構成と起動][structure] | dev-autopilot のリポの構成（予定）と、Plugin の入れ方・写し・定期の実行・進行 Bot・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜9 |
 
 ## 全体の構成
 
