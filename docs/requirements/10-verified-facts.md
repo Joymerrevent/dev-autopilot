@@ -173,7 +173,16 @@ FACT-43 と FACT-45 は、AI のセッションと同じ起動の形（`--settin
 |---|---|---|---|
 | FACT-43 | 止めた後に残ったコマンドを、止める前に控えたプロセスグループと、作業フォルダ（cwd）で見つけて止められるか | **どちらでも見つけて止められる。** `SIGTERM` を無視するコマンド（`sh` が `sleep` を子に持ち、1 秒ごとに印のファイルを書く）を Bash で動かしている間に、1 秒ごとに `claude` の子孫をたどってプロセスグループを控えた（始めてから 4.2 秒で控えられた）。`claude` のプロセスグループに `SIGTERM` を送ると、`claude` は 0.5 秒で終了コード 143 で終わり、`sh`（親が PID 1 に替わった）と `sleep` 2 つが残った。3 つとも控えたプロセスグループの中にあり、`lsof` で作業フォルダがセッションのフォルダの中にあるプロセスを探しても、同じ 3 つが見つかった。控えたプロセスグループに `SIGKILL` を送ると、3 秒後にはどちらの探し方でも何も見つからず、印のファイルの更新も止まった | 実行 |
 | FACT-44 | macOS の `ps` で、セッションの ID と、ほかのプロセスの環境変数を取れるか | **この会話の Bash からは取れなかった。** `ps -o sess` は 0 を出した。`ps -ww -E` は、子のプロセスにも自分のシェルにも、環境変数を出さなかった。進行 Bot と同じ条件（Claude Code の外の定期の実行）では確かめていない | 実行（モデルなし） |
-| FACT-45 | AI のセッションの Bash のコマンドは、どのシェルで動くか | **人のログインシェル（zsh）で、Claude Code がホームの `.claude/shell-snapshots/` に作ったシェルのスナップショットを読み込んで動いた。** FACT-43 の試験で控えたコマンドは `/bin/zsh -c source <ホーム>/.claude/shell-snapshots/snapshot-zsh-…` の形だった（子プロセスに `SHELL` は渡していない）。同じフォルダの最新のスナップショットには、人のシェルの関数 13・別名 2・`PATH` の export 1 行が入っていた（値は見ていない）。AI のセッションから `shell-snapshots/` を読めるか、何が入りうるかは確かめていない（UNDECIDED-54） | 実行 |
+| FACT-45 | AI のセッションの Bash のコマンドは、どのシェルで動くか | **人のログインシェル（zsh）で、~~Claude Code がホームの `.claude/shell-snapshots/` に作ったシェルのスナップショットを読み込んで動いた~~ Claude Code がホームの `.claude/shell-snapshots/` に作ったシェルのスナップショットを読み込む形のコマンドで動いた（読み込みは sandbox に止められる。FACT-46）。** FACT-43 の試験で控えたコマンドは `/bin/zsh -c source <ホーム>/.claude/shell-snapshots/snapshot-zsh-…` の形だった（子プロセスに `SHELL` は渡していない）。同じフォルダの最新のスナップショットには、人のシェルの関数 13・別名 2・`PATH` の export 1 行が入っていた（値は見ていない）。AI のセッションから `shell-snapshots/` を読めるか、何が入りうるかは確かめていない（UNDECIDED-54） | 実行 |
+
+## 人のシェルのスナップショットを確かめた事実（2026-10-19）
+
+macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた）で確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/dap-snap-probe/`）。
+AI のセッションと同じ安全設定（`denyRead` に `~/` と置き場）と、許可した名前だけの環境変数で `claude -p` を 1 回実行し（費用は 0.046 USD）、Bash で確かめた。値は見ず、数と可否だけを出した。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-46 | sandbox の中の AI のコマンドが、人のシェルのスナップショットと、その置き場をどう扱えるか | **読めず、人の関数も当たらない。** `~/.claude/shell-snapshots/` の一覧は出せず、ほかのセッションのスナップショットは `operation not permitted` で読めなかった。人のシェルの関数は 0 個（スナップショットには 15 個ある）、別名は zsh にもともとある 2 つ（`run-help`、`which-command`）だけで、`PATH` は進行 Bot が渡した値のままだった。人の `~/.zshrc` には `export` の行が 3 つあったが、スナップショットの `export` は `PATH` の 1 行だけだった。公式文書は、セッションの始めにシェルの設定ファイルを読み込み、別名・関数・シェルのオプションを取り出して Bash のコマンドに当てるとする（[tools-reference][doc-tools]） | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
@@ -191,3 +200,4 @@ FACT-43 と FACT-45 は、AI のセッションと同じ起動の形（`--settin
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [doc-env]: https://code.claude.com/docs/en/env-vars
+[doc-tools]: https://code.claude.com/docs/en/tools-reference#bash-tool-behavior
