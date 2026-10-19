@@ -2,7 +2,7 @@
 
 進行 Bot が、毎回の実行で GitHub の状態を読み、Issue ごとに「次の工程」を決めて進める仕組みを決める。
 遷移そのもの（正常な順と止まる遷移）は[要件の Issue の状態の遷移][flow]が正本で、基本設計は、何をどの順に読み、どの条件でどの工程に進むかを表にする。
-収束とマージの判定の細かい表と、印の種類は、この文書に後で足す。
+印の種類は、この文書に後で足す。
 
 ## 1 回の実行の流れ
 
@@ -105,8 +105,81 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 20 | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま `limits.remindDays` 日を過ぎ、催促の印（`note kind=remind`）がまだ無い | 催促（軽い）（[MERGE-3][merge]） |
 | 21 | どれにも当てはまらない | 何もしない。人の操作か CI を待つ |
 
-- 順 14 と 15 の「そのラウンド」は、PR の head に対して最後に書いた `review` か `fix` の印の `round` で決める。印の数え方と、収束とマージの判定の細かい表は、この文書に後で足す
+- 順 14 と 15 の「そのラウンド」は、PR の head に対して最後に書いた `review` か `fix` の印の `round` で決める。ラウンドの数え方と、収束とマージの判定は、下の「判定」の節で決める
 - 順 15 の、レビュー工程（段階 6）で AI が直さない扱いは、要件が決めていない。段階の表が対応ループを修正工程（段階 7）で足すことに合わせた（[段階の表][setup]）
+
+## 判定
+
+次の工程の表の順 14〜20 で使う判定を決める。判定には、GitHub にある署名付きの印と、PR と必須チェックの状態だけを使う（[ADR-20261015-006][adr-flow] の決定 4）。
+
+### ラウンドと往復の数え方
+
+![ラウンドと往復の数え方][fig-rounds]
+
+- ラウンドは、PR のレビューの 1 回。`review` の印の `round` は 1 から始め、レビューするたびに 1 増やす。欠けていたら `needs-human` にする（[IMPL-18][impl]）
+- 修正の後の再レビューと、載せ直しで差分（patch-id）が変わったときの再レビューは、新しいラウンドにする。載せ直しで差分が同じときは、ラウンドを増やさず、同じ内容の印を新しい head に付け直す（[MERGE-6][merge]）
+- `fix` の印の `round` は、直した対象の `review` の印の `round` と同じにする（[IMPL-27][impl]）
+- 往復の回数は、最新の `review` の印の `round` から 1 を引いた数。最新のラウンドが `fix` か CI が赤で、往復の回数がすでに上限（`limits.roundTrips`）に達していれば、修正せずに `needs-human` にする（[IMPL-24][impl]、[FLOW-28][flow]）
+
+| ラウンド | 起きたこと | 往復の回数 |
+| --- | --- | --- |
+| 1 | 最初のレビューが `fix` を返し、修正する | 0 回 |
+| 2 | 再レビューが `fix` を返し、修正する | 1 回 |
+| 3 | 再レビューが `fix` を返し、修正する | 2 回 |
+| 4 | 再レビューが `fix` を返す | 3 回。上限（3 回）に達しているので、修正せずに `needs-human` にする |
+
+### 収束の判定
+
+![収束の判定][fig-convergence]
+
+PR が収束した（`Ready to Merge` に進めてよい）かを、次の順に確かめる（[FLOW-23][flow]、[IMPL-27][impl]）。
+
+| 順 | 確かめること | 当てはまらないとき |
+| --- | --- | --- |
+| 1 | 最新の `review` の印の `head` が、PR の head と同じ | その head はまだレビューしていない。次の工程の表の順 14（レビュー）に進む |
+| 2 | 最新の `review` の印の `verdict` が `pass` | 順 15（修正）に進む |
+| 3 | 必須チェック（`checks.required`）のすべてが、PR の head に対して `success` | 結果ごとの扱いは IMPL-27 の表のとおり。`action_required` は `needs-human`、`failure` と `timed_out` は修正、まだ無いか動いている途中なら待つ、`cancelled` などは待って `limits.ciStaleHours` を過ぎたら `needs-human`（[IMPL-27][impl]） |
+
+- 必須チェックは、チェックの名前・チェックを出した app・base 側のワークフローのパスの 3 つがすべて一致するものだけを数え、同じ名前が複数あれば最新の 1 件を採る。一致するチェックが無ければ、まだ無いものとして待つ（[IMPL-27][impl]、[ADR-20261016-001][adr-pr]）
+- 3 つとも満たせば収束。1 回目のレビューから `pass` なら、1 回で収束する（[IMPL-27][impl]）
+
+### マージの判定
+
+![マージの判定][fig-merge]
+
+Status が `Ready to Merge` の PR を、マージしてよいかで判定する（[MERGE-2、MERGE-3][merge]）。判定の時点で CI が緑でなければ、判定を次の実行に回し、印を書かない（`merge=human` にもしない。[MERGE-3][merge]）。
+CI が緑なら、次の条件をすべて確かめ、満たさない条件の記号を `merge` の印の `reasons` に書く。
+
+| 記号（`reasons`） | 満たさない条件 | 確かめ方 |
+| --- | --- | --- |
+| `not-bot-pr` | dev-autopilot が作った PR でない | PR に、進行 Bot の署名付きの結びつきの印が無い（[MERGE-2][merge]、[IMPL-6][impl]） |
+| `base` | 向き先が base ブランチでない（`release/*` ブランチと `main` 向けの PR を含む） | PR の向き先の名前を、マシンの設定の `baseBranch` と比べる（[MERGE-2、MERGE-4][merge]） |
+| `not-converged` | 収束していない | 上の「収束の判定」を、判定の時点でもう一度確かめる（[MERGE-2][merge]） |
+| `leak` | 漏えいの検査に引っかかった | 判定の時点で、最終の head の diff 全体に検査を掛け直す（[IMPL-15][impl]） |
+| `dropped-high` | 批評 AI が 🔴 を再現できないとして落としたラウンドがある | 最新の `review` の印の `dropped_high` が 1 以上（[IMPL-22][impl]） |
+| `path` | 許可一覧（`merge.allowPaths`）に無いパスを触った | 進行 Bot の clone で取った `git diff --raw <base>...<head>` の一覧と比べる（[MERGE-2、MERGE-4][merge]） |
+| `diff-kind` | 削除・改名・種類の変更・実行属性の変更がある。または、mode が `100644` でない | 同じ `git diff --raw` の状態と mode を見る（[MERGE-2、MERGE-4][merge]） |
+| `policy` | 方針に係るパス（`merge.policyPaths`）を触った | 同じ `git diff --raw` の一覧と比べる（[MERGE-2][merge]） |
+
+- 当てはまった記号をすべて `,` でつないで `reasons` に書く。1 つも無ければ `merge=ready`、1 つでもあれば `merge=human` にする（[MERGE-3][merge]）
+- `merge=ready` にするのは、1 回の実行で 1 件まで。2 件目以降は判定を次の実行に回し、印を書かない（[MERGE-5][merge]）
+- 修正工程（段階 7）は、判定を手元の記録にだけ残し、印を書かない。マージ判定工程（段階 8）から印を書く（[FLOW-24][flow]）
+
+### 同じ指摘の再発の判定
+
+![同じ指摘の再発の判定][fig-repeat]
+
+修正の後のラウンドで、前のラウンドと同じ指摘がもう一度出たかを、`review` の印の `findings` で見分ける（[ADR-20261019-001][adr-repeat]）。
+
+- 進行 Bot は、`review` の印を書く前に、批評 AI の統合の後に残った 🔴 🟡 の指摘ごとに ID を計算し、`findings` に書く。ID は「軸」「正規化した見出し」「ファイルのパス」を改行でつないだ文字列の SHA-256 の先頭 8 文字（16 進）。正規化は、Unicode の NFKC にそろえ、先頭の重要度の記号と空白を除き、英字を小文字にする（[ADR-20261019-001][adr-repeat] の決定 1）
+- 新しいラウンドの `findings` の ID が、前のどれかのラウンドの `findings` にもあれば、同じ指摘の再発とする。間が空いていても数える。同じラウンドの中の重複は数えない（[ADR-20261019-001][adr-repeat] の決定 2）
+- 同じ指摘の再発なら、往復の上限と同じく、修正せずに Status を `Blocked` にして `needs-human` を付け、再び出た指摘の見出しと、出たラウンドを Issue にコメントする（[IMPL-24][impl]、[FLOW-28][flow]）
+
+| ラウンド | `findings`（例） | 判定 |
+| --- | --- | --- |
+| 1 | A、B | 前のラウンドが無い。修正に進む |
+| 2 | C | A も B も出ていない。修正に進む |
+| 3 | A | A はラウンド 1 にも出ている。同じ指摘の再発として `needs-human` にする |
 
 ## 作業場所の残骸
 
@@ -142,3 +215,9 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-before-start]: ./diagrams/02-next-step-before-start.drawio.svg
 [fig-in-progress]: ./diagrams/02-next-step-in-progress.drawio.svg
 [fig-residue]: ./diagrams/02-workspace-residue.drawio.svg
+[adr-pr]: ../../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
+[adr-repeat]: ../../adr/adr-20261019-001-repeated-findings-by-ids.md
+[fig-rounds]: ./diagrams/02-rounds.drawio.svg
+[fig-convergence]: ./diagrams/02-convergence.drawio.svg
+[fig-merge]: ./diagrams/02-merge-judgment.drawio.svg
+[fig-repeat]: ./diagrams/02-repeated-findings.drawio.svg
