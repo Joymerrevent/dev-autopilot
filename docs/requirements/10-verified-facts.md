@@ -145,6 +145,15 @@ AI のセッションと同じ起動の形（`claude -p --setting-sources local 
 | FACT-38 | 作業中の `claude` を途中で止めたときに、AI のコマンド（孫プロセス）がどうなるか | **Bash のコマンドは `claude` と別のプロセスグループで動き、止め方によっては残る。** モデルが Bash で長いコマンド（`sh` が `sleep` を子に持ち、1 秒ごとに印のファイルを書く）を実行している間に止めた。`claude` のプロセスグループか `claude` のプロセスだけに `SIGTERM` を送ると、`claude` はコマンドを止めて 1 秒ほどで終了コード 143 で終わり、3 秒後にコマンドは残っていなかった。コマンドが `trap '' TERM HUP INT` で `SIGTERM` を無視すると、`claude` は終了コード 143 で終わったが、コマンドは親が PID 1 になって残り、印のファイルを書き続けた。プロセスグループに `SIGKILL` を送ったときも、コマンドが残った。残ったコマンドは sandbox の中のままで、`claude` が終わった後に作業場所の外へ書こうとすると止められた。`claude` のプロセスだけに `SIGINT` を送ると、`claude` は終了コード 0 で終わり、コマンドは残らず、`result` が出た（`subtype` は `error_during_execution`、`terminal_reason` は `aborted_tools`、`modelUsage` は書き終えたメッセージの `message_delta` と同じ値）。ただし、モデルが文を書いている途中に `SIGINT` を送ると、`result` の `terminal_reason` は `aborted_streaming`、`total_cost_usd` は 0、`usage` のトークンもすべて 0 だった | 実行 |
 | FACT-39 | 途中で止めた回の `stream-json` に、消費がどこまで残るか | **書き終えたメッセージは `message_delta` に最後のトークン数が残り、書いている途中のメッセージは入力の側しか残らない。** コマンドの実行中に `SIGTERM` で止めた回は、道具を呼んだメッセージの `message_start` と `message_delta`（出力 114。`stop_reason` は `tool_use`）が出ていて、`result` は無かった。文を書いている途中に `SIGTERM` で止めた回は、`message_start`（入力の側のトークン数。出力は 2）と文の差分（`text_delta`）だけで、`message_delta` も `result` も無かった。`--max-budget-usd 0.01` で短い指示を実行すると、`result` は `subtype` が `error_max_budget_usd`、`terminal_reason` が `budget_exhausted`、`total_cost_usd` が 0.0769 で、上限をメッセージ 1 つ分超えた（上限はメッセージの間で確かめる）。正常に終わった回の `terminal_reason` は `completed`（FACT-31 の試験の記録） | 実行 |
 
+## エージェント定義の置き方を決める途中で確かめた事実（2026-10-19）
+
+macOS、Claude Code 2.1.285、haiku（`claude-haiku-4-5-20251001` に解けた）で確かめた。scratchpad に、名札とエージェント定義 2 つ（`agents/plan/reviewer.md` と `agents/change/verifier.md`。frontmatter の `name` はファイルの名前と同じ）だけを持つ試しの Plugin（名前は `probe`）を作った。
+`claude -p --setting-sources local --strict-mcp-config --plugin-dir <試しの Plugin> --agent probe:plan:reviewer --max-turns 1 --max-budget-usd 0.05 --output-format stream-json --verbose` を 1 回実行した。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-40 | `agents/` の下のフォルダに置いたエージェント定義を、コロンが 2 つ付く名前（`<Plugin の名前>:<フォルダ>:<名前>`）の `--agent` で起動できるか | **できる。** `init` のイベントの `agents` に `probe:change:verifier` と `probe:plan:reviewer` が出た。`--agent probe:plan:reviewer` で起動したセッションは、その定義の指示どおりの語だけを返した（`result` は `success`、費用は 0.001 USD）。STRUCT-9 の名前（`dev-autopilot:<ループ>:<役>`）で起動できる | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
