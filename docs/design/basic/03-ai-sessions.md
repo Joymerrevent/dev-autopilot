@@ -28,8 +28,8 @@
 | 工程 | セッションの名前 | フォルダの中 |
 | --- | --- | --- |
 | 受け入れ | `intake-issue-<Issue の番号>` | `tmp/` |
-| 計画 | `plan-issue-<Issue の番号>` | `clone/`、`worktree/`、`tmp/` |
-| 計画のレビュー | `plan-review-issue-<Issue の番号>` | `clone/`、`worktree/`、`tmp/` |
+| 計画 | `plan-issue-<Issue の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
+| 計画のレビュー | `plan-review-issue-<Issue の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
 | 実装 | `work-issue-<Issue の番号>` | `clone/`、`worktree/`、`tmp/` |
 | 修正 | `fix-pr-<PR の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
 | 衝突の解消 | `rebase-pr-<PR の番号>` | `clone/`、`worktree/`、`tmp/` |
@@ -38,6 +38,8 @@
 
 - `tmp/` は、セッションの一時フォルダ。XDG の 4 つ（`config/`・`cache/`・`data/`・`state/`）を置き、pnpm の store も `data/` の下にできる（[SAFE-10][safety]、[ADR-20261015-002][adr-store]）
 - 修正のセッションの名前には、直す対象の `review` の印のラウンドを入れる。ラウンドごとに別のフォルダになり、記録と照らしやすい
+- 計画と計画のレビューのセッションの名前には、計画の工程の中のラウンドを入れる。最初の計画が 1 で、計画のレビューの指摘で計画し直すたびに 1 足す（[状態遷移と判定][design-flow]の「計画の工程の中の順番」）。自己申告で `fable` で計画し直すときは、同じラウンドの名前のフォルダを作り直す（`opus` の計画は使わないため）
+- 計画のレビューの指摘で計画し直すセッションには、渡す文（作業指示）、直す前の計画、指摘の一覧を、標準入力の指示文で渡す。指摘は GitHub に書かない（[ADR-20261019-003][adr-replan]）
 - 同じ名前のフォルダがあれば、作り直す直前にフォルダごと消す（[ADR-20261013-001][adr-workspace]）
 - レビュー工程（段階 6）で比べるために回すレビュー（[IMPL-19][impl]）の名前と起こし方は、記録の欄と一緒に、レビュー工程（段階 6）に入る前に決める
 
@@ -111,3 +113,4 @@
 [fig-launch]: ./diagrams/03-launch.drawio.svg
 [fig-review-axes]: ./diagrams/03-review-axes.drawio.svg
 [adr-gaps]: ../../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
+[adr-replan]: ../../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
