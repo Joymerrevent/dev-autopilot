@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない
 
+> **Amended by [ADR-20261019-002][adr-gaps]（2026-10-19）**: 決定 1 のうち、「1 ラウンドのレビューは、軸ごとの 3 つのセッション（動作・仕様・規約）と、その後の批評 AI のセッションで行う」を改め、3 つの軸の後に 4 つ目の軸「見落とし」のセッションを足した。見落としの軸の結果は、修正工程（段階 7）に進む前に使うかを決めるまで記録だけに残す。決定 1 のほかの項目と、決定 2〜4 は据え置く。
+
 要件の UNDECIDED-32、UNDECIDED-33、UNDECIDED-34（[決めていないこと][undecided]の「レビューとマージ」）を決める。
 どれもレビュー AI が何を読み、どの道具で動くかの論点で、問いは 3 つある：3 つの軸をどう動かし Agent ツールを許すか、コラボレータの PR のコメントを AI に渡すか、規約の正典をどこから読ませるか。
 
@@ -283,3 +285,4 @@ decision-makers: メンテナ
 [doc-permissions]: https://code.claude.com/docs/en/permissions
 [doc-headless]: https://code.claude.com/docs/en/headless
 [da-pr-5]: https://github.com/Joymerrevent/dev-autopilot/pull/5
+[adr-gaps]: ./adr-20261019-002-review-gaps-axis-in-shadow-first.md
