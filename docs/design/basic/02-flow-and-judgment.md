@@ -2,7 +2,6 @@
 
 進行 Bot が、毎回の実行で GitHub の状態を読み、Issue ごとに「次の工程」を決めて進める仕組みを決める。
 遷移そのもの（正常な順と止まる遷移）は[要件の Issue の状態の遷移][flow]が正本で、基本設計は、何をどの順に読み、どの条件でどの工程に進むかを表にする。
-印の種類は、この文書に後で足す。
 
 ## 1 回の実行の流れ
 
@@ -181,6 +180,63 @@ CI が緑なら、次の条件をすべて確かめ、満たさない条件の�
 | 2 | C | A も B も出ていない。修正に進む |
 | 3 | A | A はラウンド 1 にも出ている。同じ指摘の再発として `needs-human` にする |
 
+## 印の種類
+
+UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を決め、`stop` の印の理由の記号をそろえる。
+印の形と欄の正本は[印と固定の見出しの一覧][markers]で、基本設計は、どのコメントにどの印を付けるかと、記号の一覧を決める。進行 Bot が投稿するコメントは、すべて署名付きの印を 1 つ持つ（[印と固定の見出しの一覧][markers]）。
+
+### 印が付く順
+
+![印が付く順][fig-markers]
+
+正常な順で、Issue と PR のコメントに付く印。このほかに、`note` の印を、待つとき・重なりを警告するとき・催促するとき・止めるとき・モデルを上げたとき・🟢 が重複したときに書く（下の「note の種類」）。
+
+### note の種類
+
+| `kind` | 書くとき | 置き場 | 欄 | 1 回だけ書く判定 |
+| --- | --- | --- | --- | --- |
+| `wait` | 依存の相手が閉じていないので待つとき（[FLOW-10][flow]） | Issue | — | 同じ `kind` の有効な印があれば書かない |
+| `overlap` | 触る範囲が、ほかの進行中の PR と重なったとき（[FLOW-8][flow]） | Issue | — | 同じ `kind` の有効な印があれば書かない |
+| `remind` | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま日数を過ぎたとき（[MERGE-3][merge]） | PR | — | 同じ `kind` の有効な印があれば書かない |
+| `link` | PR を作った直後（[IMPL-6][impl]） | Issue と PR | Issue には `pr=<PR の番号>`、PR には `issue=<Issue の番号>` | 同じ番号の有効な印があれば書かない |
+| `stop` | `needs-human` を付けるとき | Issue か PR | `reason=<記号>`（下の「stop の理由の記号」） | 1 回だけにしない。`needs-human` を付けるたびに書く |
+| `raise`（足す） | 作業 AI のモデルを `sonnet` から `opus` に上げたとき（[IMPL-25][impl]） | Issue | `from=<別名>`、`to=<別名>` | 同じ `kind` の有効な印があれば書かない（1 つの Issue で上げるのは 1 回） |
+| `duplicate`（足す） | 🟢 を Issue にするときに、同じ見出しの open な Issue があり、新しく作らずに PR 番号を足すとき（[IMPL-26][impl]） | すでにある 🟢 の Issue | `pr=<PR の番号>` | 同じ番号の有効な印があれば書かない |
+
+- `raise` と `duplicate` を足し、今ある種類に寄せなかった。`raise` を `stop` に寄せると止まったと読まれる。`duplicate` を `link` に寄せると、PR と Issue の結びつき（[IMPL-6][impl] の判定に使う）を誤る
+- `stop` だけは、`needs-human` を付けるたびに書く。`needs-human` の Issue は進行 Bot が触らないので、同じ理由で重ねて書くことは無い。人が `needs-human` を外した後に、同じ理由で再び止まったとき、前の印を見て書かないと、今回止まったことが人に伝わらないため
+
+### stop の理由の記号
+
+`needs-human` を付けるときに書く `note kind=stop` の `reason` の一覧。止まる遷移（[FLOW-28、FLOW-29][flow]）の契機ごとに 1 つ決める。
+
+| `reason` | 止めた契機 |
+| --- | --- |
+| `round-limit` | 往復の回数が上限に達した（[IMPL-24][impl]） |
+| `repeated-finding` | 同じ指摘の再発（直したはずの指摘が再び出た。[IMPL-24][impl]、[ADR-20261019-001][adr-repeat]） |
+| `adr-required` | 作業 AI が、ADR の起票か規約の正典の変更が要ると返した（[IMPL-8][impl]） |
+| `retry-limit` | 同じ Issue で実行の失敗が続き、回数の上限に達した（[IMPL-14][impl]） |
+| `usage-limit` | 1 Issue の累計の費用が上限に当たった（[IMPL-14][impl]） |
+| `session-not-stopped` | AI のセッションを止めた後、コマンドの残りが止まったと確かめられない（[IMPL-14][impl]） |
+| `leak` | 漏えいの検査に引っかかった（[IMPL-15][impl]） |
+| `blocked-path` | diff が、push しないパスに触れている（[IMPL-15][impl]） |
+| `brief-changed` | 渡す文のハッシュが、承認したときと違う（[TEXT-4][text]） |
+| `brief-sensitive` | 渡す文に、事業データか認証情報の形が混じっている（[TEXT-7][text]） |
+| `quarantine` | 受け入れの検疫で見つかった（[TEXT-12][text]） |
+| `issue-changed` | 作業中に、Issue が閉じられた・移された・`agent-ready` かマイルストーンが外された（[TEXT-8][text]） |
+| `permission` | ラベルや編集の権限が足りない（[FLOW-29][flow]） |
+| `unauthorized-resume` | push 未満の人が `needs-human` を外した（[TEXT-10][text]） |
+| `unlinked-pr` | ブランチ名が一致するのに、結びつきの印が無い PR がある（[IMPL-6][impl]） |
+| `pr-closed` | 結びつく PR が、マージされずに閉じられた（[IMPL-6][impl]） |
+| `marker-invalid` | 進行 Bot の印が、未編集か署名の条件を満たさない。または `review` の印の `round` が欠けている（[IMPL-20、IMPL-18][impl]） |
+| `ci-action-required` | CI のワークフローの実行に、人の承認が要る（[IMPL-27][impl]） |
+| `ci-stale` | CI の結果が、取り消しなどのまま時間を過ぎても変わらない（[IMPL-27][impl]） |
+| `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
+| `workspace-tampered` | 作業場所の `commondir` か `gitdir` が、作ったときの値と違う（[SAFE-12][safety]、[ADR-20261013-001][adr-workspace]） |
+| `records-missing` | 進行中の Issue の手元の記録が無い（[運用の規則][flow]） |
+| `unrecoverable` | GitHub の状態から、次の工程を決められない（[運用の規則][flow]） |
+| `unexpected-status` | Status が、印と PR から決まる値と違い、人が戻す手順にも当たらない（[SAFE-4][safety]） |
+
 ## 作業場所の残骸
 
 UNDECIDED-27（作業場所の残骸の決め方）を決める。セッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）は、同じ名前で作り直すか片付けるまで残るので、作業中の Issue のフォルダがあるのは普通の状態（[ADR-20261013-001][adr-workspace]）。
@@ -221,3 +277,5 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-convergence]: ./diagrams/02-convergence.drawio.svg
 [fig-merge]: ./diagrams/02-merge-judgment.drawio.svg
 [fig-repeat]: ./diagrams/02-repeated-findings.drawio.svg
+[markers]: ../../requirements/04-external-text-and-markers.md
+[fig-markers]: ./diagrams/02-markers.drawio.svg
