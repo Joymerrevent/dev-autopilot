@@ -9,15 +9,16 @@
 
 | 役 | エージェント定義（`--agent`） | 道具 | 作業場所 | 起動する工程 |
 | --- | --- | --- | --- | --- |
-| 受付 AI | `dev-autopilot:intake` | なし | セッションのフォルダの一時フォルダだけ。clone しない | 受け入れ |
-| 計画 AI | `dev-autopilot:planner` | Read・Grep・Glob | base ブランチの先端で切った worktree | 計画 |
-| レビュー AI（計画のレビュー） | `dev-autopilot:plan-reviewer`（足す） | Read・Grep・Glob | base ブランチの先端で切った worktree（計画とは別に作る） | 計画のレビュー |
-| 作業 AI | `dev-autopilot:worker` | Bash・Read・Write・Edit | 実装は base ブランチの先端、修正と衝突の解消は PR の head で切った worktree（作業ブランチを切る） | 実装、修正、衝突の解消 |
-| レビュー AI | `dev-autopilot:reviewer` | Bash・Read（Write は worktree の中だけ） | PR の head で切った worktree（軸ごとに別に作る） | レビュー |
-| 批評 AI | `dev-autopilot:critic` | Bash・Read | PR の head で切った worktree（レビューとは別に作る） | 批評 |
+| 受付 AI | `dev-autopilot:brief:triager` | なし | セッションのフォルダの一時フォルダだけ。clone しない | 受け入れ |
+| 計画 AI | `dev-autopilot:plan:planner` | Read・Grep・Glob | base ブランチの先端で切った worktree | 計画 |
+| レビュー AI（計画のレビュー） | `dev-autopilot:plan:reviewer` | Read・Grep・Glob | base ブランチの先端で切った worktree（計画とは別に作る） | 計画のレビュー |
+| 作業 AI | `dev-autopilot:change:worker` | Bash・Read・Write・Edit | 実装は base ブランチの先端、修正と衝突の解消は PR の head で切った worktree（作業ブランチを切る） | 実装、修正、衝突の解消 |
+| レビュー AI | `dev-autopilot:change:reviewer` | Bash・Read（Write は worktree の中だけ） | PR の head で切った worktree（軸ごとに別に作る） | レビュー |
+| 批評 AI | `dev-autopilot:change:verifier` | Bash・Read | PR の head で切った worktree（レビューとは別に作る） | 批評 |
 
 - 道具は、エージェント定義の `tools` で決まる（[登場するもの][overview]、[ADR-20261017-002][adr-review] の決定 2）。どの役にも Agent ツールを与えない
-- 計画のレビューに、レビュー AI のエージェント定義（`reviewer.md`）を使わず、`plan-reviewer.md` を足す。計画のレビューは計画 AI と同じく読むだけの道具で動かす決まりで（[IMPL-10][impl]、[ADR-20261018-004][adr-planrev]）、`reviewer.md` には Bash があるため。役はレビュー AI のまま（新しい役は足さない）
+- エージェント定義は、ループのフォルダ（`brief` `plan` `change`）に、役の名前で置く。`--agent` の値は `dev-autopilot:<ループ>:<役>` になる（[STRUCT-9][struct]）
+- 計画のレビューは、PR のレビューと別のエージェント定義（`plan/reviewer.md`）で起こす。計画のレビューは計画 AI と同じく読むだけの道具で動かす決まりで（[IMPL-10][impl]、[ADR-20261018-004][adr-planrev]）、PR のレビューの定義（`change/reviewer.md`）には Bash があるため。役はレビュー AI のまま（新しい役は足さない）
 - 作業場所は、AI のセッションごとに origin から clone し、決まった SHA で worktree を切る（[ADR-20261013-001][adr-workspace]）。作業 AI だけが作業ブランチ（`<型>/issue-<番号>`）を切り、ほかの役は `--detach` で切る
 
 ## セッションの名前
@@ -53,7 +54,7 @@
 | `--settings` | セッションごとの安全設定のファイル | sandbox と、道具の許可と禁止を渡す（[SAFE-10][safety]）。作り方は、この文書に後で足す（UNDECIDED-40） |
 | `--strict-mcp-config` | — | MCP のサーバーを読み込まない。`--mcp-config` は渡さない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `--plugin-dir` | 進行 Bot のプログラムの写し（`devAutopilotPath`） | AI が書けない写しから、エージェント定義と Skill を読む（[STRUCT-3][struct]） |
-| `--agent` | 役の表の `dev-autopilot:<定義>` | 役ごとのエージェント定義で動かす（[STRUCT-3][struct]、FACT-2） |
+| `--agent` | 役の表の `dev-autopilot:<ループ>:<役>` | 役ごとのエージェント定義で動かす（[STRUCT-3、STRUCT-9][struct]、FACT-2） |
 | `--model` | 設定の `models.*` の `model` | エージェント定義の `model` より優先される（FACT-8、[モデルの流れ][impl]） |
 | `--effort` | 設定の `models.*` の `effort` | 役ごとの effort を明示する（[モデルの流れ][impl]） |
 | `--max-turns` | `limits.session.turns` | ターンの上限（[IMPL-13][impl]） |
