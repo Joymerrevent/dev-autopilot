@@ -221,6 +221,15 @@ macOS、Claude Code 2.1.285、haiku の別名で確かめた。試験の場所�
 |---|---|---|---|
 | FACT-54 | 非公開のリポで、fine-grained PAT でチェックの実行を読めるか。読めないなら、ほかの API で必須チェックの結果を読めるか | **チェックの実行は読めず、Actions のジョブからなら読める。** `commits/{ref}/check-runs` と `check-suites` は 403（`Resource not accessible by personal access token`。要る権限は `checks=read`）だった。`actions/runs?head_sha=` と `actions/runs/{id}/jobs` は 200（要る権限は `actions=read`）で、ワークフローのパスと、ジョブの名前・結果が読めた。ジョブには、対応するチェックの実行の URL があった。business-os では、ジョブの名前（マトリクスの `check (ubuntu-latest)` などを含む）が、チェックの実行の名前と同じだった。コミットの結合した状態は、状態が 0 件で `pending` だった（FACT-53 と同じ）。認証なしでは 404 だった | 実行 |
 
+## エージェント定義の道具と、作業フォルダの local の設定を確かめた事実（2026-10-20）
+
+基本設計の再レビューで確かめた。macOS、Claude Code 2.1.285、`claude-haiku-4-5-20251001` で、試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/` の下に試験ごとのフォルダを作った）。どれも `claude -p --setting-sources local --no-session-persistence --output-format stream-json --verbose` で起動し、終わった後に試験のフォルダと、人のホームに残った空のフォルダ（FACT-51）を消した。費用は合わせて 0.083 USD。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-55 | エージェント定義の `tools` に `Skill` が無いとき、エージェントが Plugin の Skill を呼べるか | **呼べない。** `tools: Bash, Read` のエージェント（`--agent probe:change:reviewer`）は、初期化の記録の道具の一覧が `["Bash","Read"]` で、Skill を呼ぶよう頼むと、Skill の道具が無いと返した。同じ Plugin の `tools: Bash, Read, Skill` のエージェントは、道具の一覧に `Skill` があり、`probe:hello` を呼んで、Skill の本文の指示どおりの語を返した。どちらも、初期化の記録の Skill の一覧には、Plugin の Skill と、Claude Code に同梱の Skill（`update-config`・`schedule`・`loop` など 18 個）が並んだ。FACT-42 の「`allow` に入れなくても使える」は、`tools` に `Skill` を書いたエージェントのときに当たる | 実行 |
+| FACT-56 | 作業フォルダの `.claude/settings.local.json` を、sandbox の中の Bash から書けるか。`--setting-sources local` で起動すると読まれるか | **Bash からは書けないが、置いてあれば読まれ、hook が sandbox の外で動く。** sandbox を有効にし、`permissions.allow` を `Bash` だけにした安全設定で、作業フォルダ（git のリポ）で 3 つの書き込みを実行させた。`.claude/settings.local.json` と `.claude/settings.json` への書き込みは `operation not permitted`（終了コード 1）でファイルができず、同じフォルダの `.claude/other.txt` は終了コード 0 でできた。別の試験で、作業フォルダに SessionStart の hook を書いた `.claude/settings.local.json` を置いて起動すると、hook が動き、作業フォルダの外（sandbox の書き込みの範囲の外）にファイルを作った。当てる先のリポに `.claude/settings.local.json` が commit されていれば、clone に入って読まれる | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
