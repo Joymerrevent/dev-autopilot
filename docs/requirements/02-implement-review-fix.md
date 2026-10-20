@@ -136,7 +136,7 @@
   | `cancelled`、`skipped`、`neutral`、`stale` | 待つ。同じ head で、完了から設定の時間が経っても変わらなければ `needs-human`（人が再実行するか、原因を確かめる） |
   | すべて `success` | 緑 |
 
-  照合はチェック名だけでなく、チェックを出した app（GitHub Actions）と、base 側に存在するワークフローのパスでも行う（AI が同じ名前の job を足して緑にする経路を塞ぐ）。必須チェックの一覧が空なら点検（SETUP-2）を fail にする（空を「すべて success」と読まない）。
+  照合はチェック名だけでなく、チェックを出した app（GitHub Actions）と、base 側に存在するワークフローのパスでも行う（AI が同じ名前の job を足して緑にする経路を塞ぐ）。fine-grained PAT にはチェックの実行を読む権限（Checks）が無く、公開のリポでは権限なしで読めるが、非公開のリポでは読めない（FACT-52、FACT-54）。GitHub App に切り替えた後は、アプリの Checks の読み取りで、非公開のリポでも読む（[ADR-20261020-002][adr-app]）。必須チェックの一覧が空なら点検（SETUP-2）を fail にする（空を「すべて success」と読まない）。
   進行 Bot は実行の中で CI を待たず、次回の実行で結果を読む（FLOW-4）。いまの運用（2 回目のレビューで指摘 0 件ならマージ）を含み、🟢 だけ残った場合も収束とする。
   1 回目から pass なら 1 回で収束とする。満たしたら Status を Ready to Merge にする
 - IMPL-28 Ready to Merge になった PR は、進行 Bot が「[マージ][f03]」の条件でマージの可否を判定し、結果を印として PR に書く。マージの実行は人（「[マージ][f03]」）
@@ -198,3 +198,4 @@
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-settings]: ../design/basic/01-settings.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
+[adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md

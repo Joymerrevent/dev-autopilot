@@ -53,7 +53,8 @@
   作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）
 - SAFE-15 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行 Bot だけが使う）。
   進行 Bot の `gh` は business-os に絞った fine-grained PAT を、進行 Bot のプロセスの中でだけ持つ（`gh auth login` でマシンに残さない）。
-  PAT、印の署名の鍵（IMPL-20 の (c)）、deploy key は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。launchd の plist には書かない（[ADR-20261015-001][adr-read]）
+  受け入れ工程（段階 4）で GitHub に書き始める前に、PAT から GitHub App に切り替える。切り替えの後は、アプリの秘密鍵から作る 1 時間で切れるトークンを使い、PAT を消す。要件の中の「進行 Bot の PAT」は、切り替えの後はアプリのトークンと読む（[ADR-20261020-002][adr-app]）。
+  PAT（切り替えの後はアプリの秘密鍵）、印の署名の鍵（IMPL-20 の (c)）、deploy key は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。launchd の plist には書かない（[ADR-20261015-001][adr-read]）
 - SAFE-16 進行 Bot は、専用の clone を 2 種類と、プログラムの写しを持つ：AI の worktree を切る「AI の作業場所」の clone、進行 Bot だけが書き、当てる先のリポ（business-os）の fetch・merge・push を行う「進行 Bot の clone」（`<置き場>/controller/`）、
   進行 Bot と `setup` だけが書き、`src/` を実行して Plugin として読み込ませる「進行 Bot のプログラムの写し」（`setup` が Plugin の版を置き場に写したもの。`devAutopilotPath`。[ADR-20261017-003][adr-plugin] の決定 2。STRUCT-3）。進行 Bot の clone は、AI のセッションから読めず書けない。
   プログラムの写しは、AI のセッションから書けず、読めるのは `skills/`（Skill の参照ファイルとスクリプト）だけで、`src/`（進行 Bot のコード）は読めない（SAFE-2 の (e)、SAFE-10。FACT-32。[ADR-20261017-004][adr-human]）。
@@ -75,3 +76,4 @@
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
+[adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md

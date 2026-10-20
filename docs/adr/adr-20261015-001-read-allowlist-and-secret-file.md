@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-17
+updated: 2026-10-20
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -18,6 +18,8 @@ decision-makers: メンテナ
 >
 > **Amended by [ADR-20261017-006][adr-tmp]（2026-10-17）**: 決定 1 のうち、`TMPDIR` をセッションの一時フォルダに向けるところを、セッションごとの短いパスの一時フォルダを `CLAUDE_CODE_TMPDIR` と `TMPDIR` で渡す形に改めた（sandbox の中の `$TMPDIR` は、Claude Code がユーザーごとの一時フォルダに置き換えるため）。
 > AI が読める範囲から、Claude Code のユーザーごとの一時フォルダとほかのセッションの一時フォルダを外した。XDG の 4 つをセッションの一時フォルダに向けることと、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 2 の秘密の置き場に置くもののうち、PAT を、GitHub App に切り替えた後はアプリの秘密鍵にした。置き場と権限（700・600）は据え置く。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -229,3 +231,4 @@ decision-makers: メンテナ
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-human]: ./adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-tmp]: ./adr-20261017-006-per-session-short-tmpdir.md
+[adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md

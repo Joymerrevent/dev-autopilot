@@ -44,7 +44,7 @@
 
 - テストの準備で、一時フォルダの `bin/` に、`gh` などの名前の起動の包みを作る。包みは、`fakes/` の TypeScript を読み込むだけの JavaScript にする（拡張子の無いファイルは TypeScript として読まれないため）。偽物も bash で書かない（[07-structure.md][struct] の決まり）
 - origin は、テストの一時フォルダに作る bare のリポで、`fixtures/repos/` の雛形から作る。clone と push は、ファイルのパスの URL で行い、SSH と deploy key を使わない
-- 秘密の置き場には、テストの中で作る使い捨ての値（意味の無い PAT の文字列と、印の署名の鍵）を置く。本物の秘密を前提データに入れない
+- 秘密の置き場には、テストの中で作る使い捨ての値（意味の無い PAT の文字列、テストの中で作るアプリの秘密鍵、印の署名の鍵）を置く。本物の秘密を前提データに入れない
 - `HOME` と XDG の 4 つ（`XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME`）を、テストの一時フォルダに向ける。マシンの設定は、一時フォルダの `settings.json` のパスを入口の引数で渡す（「[導入と点検][design-setup]」の「定期の実行の登録」と同じ形）。テストが、人のホームと Claude Code の設定に書かないため
 
 ## 前提データ

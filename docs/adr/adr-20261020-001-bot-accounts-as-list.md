@@ -8,6 +8,8 @@ decision-makers: メンテナ
 
 # 自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ
 
+> **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 1（いまは分けない）を、GitHub に書き始める前に GitHub App に切り替えて分ける形に改めた。決定 2 の「投稿に使うアカウントは PAT の持ち主」と点検の「PAT の持ち主が一覧にある」は、切り替えの後はアプリの投稿者の名前と読む。一覧の形、決定 3、決定 4 は据え置く。
+
 要件の UNDECIDED-20（[決めていないこと][undecided]の「自動化用の GitHub アカウントを分けるか」）を決める。あわせて、ADR「署名付きの印と、人の操作の権限の確かめ」（[ADR-20261015-004][adr-markers]）の決定 1 のうち、印を読む条件の「進行 Bot のアカウント」を、1 つのアカウントから設定に並べたアカウントの一覧に改める。[ADR-20261015-004][adr-markers] のほかの決定（決定 1 の署名と印の読み方、決定 2 の人の操作の確かめ）は据え置く。
 
 ## 背景と課題（Context and Problem Statement）
@@ -127,3 +129,4 @@ decision-makers: メンテナ
 [design-settings]: ../design/basic/01-settings.md
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
+[adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md

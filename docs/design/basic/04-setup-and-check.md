@@ -135,7 +135,7 @@
 | --- | --- | --- | --- | --- |
 | 設定 | 設定ファイルの項目と型、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前が無いこと | ファイルを読む | 確かめる | 確かめる |
 | GitHub | ラベル、Project の欄と自動追加、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（必須チェックに `checks.required` がすべて strict で入っていること）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、基線の必須チェック（warn） | 進行 Bot の PAT で読む | 確かめる | 確かめる |
-| PAT の権限 | 下の「PAT の権限」の読み取りが通ること。リポの変数を作れないこと。PAT の持ち主が `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]） | 読み取りと、点検用の変数を作る試し（403 で断られれば pass） | 確かめる | 読み取りは確かめる。作る試しは、合図が `run` のときだけ |
+| PAT かアプリの権限 | 下の「PAT の権限」か「GitHub App の権限」の読み取りが通ること。リポの変数を作れないこと。投稿に使うアカウントが `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]）。`run.dryRun` が `false` なら、アプリに切り替えてあり、PAT のファイルが無いこと（[ADR-20261020-002][adr-app]） | 読み取りと、点検用の変数を作る試し（403 で断られれば pass） | 確かめる | 読み取りは確かめる。作る試しは、合図が `run` のときだけ |
 | マシン | `claude` と Node 24 の版、Plugin と写しの版、写しの Skill とエージェント定義が Plugin の中の一覧どおりにあること、置き場と秘密の置き場の権限と実体のパス、記録と印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、objects のリンク数 | ファイルとプロセスを読む | 確かめる | 確かめる |
 | 子プロセスと clone | 子プロセスに渡す環境変数に PAT・鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗すること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
 | sandbox と AI のセッション | 読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否と写しの `skills/` の読み取り、子プロセスから秘密の置き場を読めないこと、gitdir、道具の一覧に MCP の道具と `Agent`・`Task` が無いこと、一時フォルダ | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
@@ -175,7 +175,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 
 毎回の実行の最初に、進行 Bot が、AI のセッションを起動せずに試す（[SETUP-2][setup] の「進行 Bot は毎回の実行の最初に同じ点検を回し」）。リポの設定の PR で環境変数の名前が変わっても、次の実行で確かめるため。
 
-- 子プロセスの環境変数：AI のセッションを起動するときと同じ処理で環境変数を組み立てる。名前が、決めた名前と `safety.env.names` の足す名前だけであること、`GH_TOKEN` と `PNPM_HOME` が無いこと、値に PAT と鍵の中身と秘密の置き場のパスが無いことを確かめる（[SAFE-1][safety]、[SAFE-10][safety]、[AI のセッション][design-ai]の「環境変数」）
+- 子プロセスの環境変数：AI のセッションを起動するときと同じ処理で環境変数を組み立てる。名前が、決めた名前と `safety.env.names` の足す名前だけであること、`GH_TOKEN` と `PNPM_HOME` が無いこと、値に PAT かアプリの秘密鍵とほかの鍵の中身と、秘密の置き場のパスが無いことを確かめる（[SAFE-1][safety]、[SAFE-10][safety]、[AI のセッション][design-ai]の「環境変数」）
 - objects を書き換えた clone からの fetch：一時フォルダに、試しのためだけの小さなリポ（commit 1 つ）と、小さなリポの clone を作り、clone の objects のファイルを 1 つ書き換える。小さなリポに、進行 Bot の clone と同じ fetch の設定で clone から fetch し、失敗することを確かめる（[ADR-20261013-001][adr-workspace] の確認方法）。一時フォルダは試しの後に消す
   - 進行 Bot の clone を試しに使わない。進行 Bot の clone から clone すると objects のファイルがハードリンクで共有され、書き換えが進行 Bot の clone に及ぶうえ、試しが通ってしまったときに、書き換えた objects を取り込むため
 - sandbox が読み書きを止めることと、道具の一覧は、モデルを使わずには試せないので、試しのセッションで確かめる
@@ -197,6 +197,8 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 
 ### PAT の権限
 
+GitHub App に切り替えるまで（受け入れ工程（段階 4）で GitHub に書き始めるまで）、進行 Bot は fine-grained PAT で GitHub を読む。切り替えた後は、下の「GitHub App の権限」による（[ADR-20261020-002][adr-app]）。
+
 進行 Bot の fine-grained PAT は、当てる先のリポだけに絞り、次の権限だけを付ける（[ADR-20261017-004][adr-human] が基本設計に残した、GitHub の点検に要る読み取りの権限を含む）。権限の名前は [GitHub の公式文書][doc-pat-permissions] による。
 
 | 権限 | 読み取りか書き込みか | 使うところ |
@@ -210,8 +212,30 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 | Projects（Organization） | 書き込み | Project の Status と Agent 欄（FACT-6） |
 
 - Administration（ruleset を作る管理の権限）と Contents は付けない。ruleset は人の `setup` が作り（[SETUP-1][setup]）、push は deploy key で行う（[SAFE-15][safety]）
-- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。非公開のリポでは読めない（403。FACT-54）。非公開のリポに当てるときの読み方は、当てると決めるときに決める（UNDECIDED-57、[分離の時期の目安][struct]）
+- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。非公開のリポでは読めない（403。FACT-54）。非公開のリポは、GitHub App に切り替えた後に、アプリの Checks の読み取りで読む（[ADR-20261020-002][adr-app]）
 - 書き込みを付けていないことは、点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しで確かめる。403 で断られれば pass。作れてしまったら fail にし、作った変数を消す。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
+
+### GitHub App の権限
+
+受け入れ工程（段階 4）で `run.dryRun` を `false` にする（GitHub に書き始める）前に、進行 Bot を GitHub App に切り替える。印を書く前に替えるので、PAT のアカウントで書いた印は無く、読み続ける手当ては要らない（[ADR-20261020-002][adr-app]、[ADR-20261020-001][adr-bots]）。
+
+| 権限 | 読み取りか書き込みか | 使うところ |
+| --- | --- | --- |
+| Metadata（リポ） | 読み取り | ruleset などを読む |
+| Issues（リポ） | 書き込み | ラベル、印とコメント、🟢 から Issue を作る |
+| Pull requests（リポ） | 書き込み | PR を作る、ready にする、PR にコメントする |
+| Checks（リポ） | 読み取り | CI のチェックの実行（非公開のリポを含む。[IMPL-27][impl]） |
+| Actions（リポ） | 読み取り | ワークフローの実行（[IMPL-27][impl]） |
+| Commit statuses（リポ） | 読み取り | コミットの状態（結合した状態は判定に使わない。FACT-53） |
+| Variables（リポ） | 読み取り | 全体の止める合図を読む。書き込みは付けない（[ADR-20261017-007][adr-stop]） |
+| Projects（組織） | 書き込み | Project の Status と Agent 欄 |
+
+- Contents の書き込みと Administration は付けない。push は deploy key で行い（[IMPL-15][impl]）、ruleset は人の `setup` が作る（[SETUP-1][setup]）。Webhook は使わない
+- アプリの登録、当てる先のリポへの導入、秘密鍵の作成は、人が行う。`setup` は手順を示し、点検が確かめる（[SETUP-1][setup] の「人がやるもの」）
+- 秘密鍵のファイルは秘密の置き場に置く（権限 600）。アプリの ID とインストールの ID は、リポの設定の `githubApp.appId` と `githubApp.installationId`（[設定][design-settings]）
+- 進行 Bot は、実行のたびに秘密鍵で JWT を作り、1 時間で切れるインストールのトークンに引き換えて使う。切れる前に作り直す。Node の標準の機能（`node:crypto`）で作り、npm の依存を足さない（上の「依存」）
+- 切り替えの順：人がアプリを登録して導入し、秘密鍵を秘密の置き場に置く → `githubApp.*` と `safety.botAccounts`（アプリの投稿者の名前）を、リポの設定の PR で直す → `dryRun` のまま、アプリで書けることと読めることを確かめる（[ADR-20261020-002][adr-app] の確認方法） → 人が GitHub で PAT を削除し、秘密の置き場の PAT のファイルを消す → `run.dryRun` を `false` にする PR をマージする
+- 点検は、`run.dryRun` が `false` なのにアプリに切り替えていない（`githubApp.*` が空か、秘密鍵が無いか、PAT のファイルが残っている）とき fail にする。書き始める前に替える決まりを、人の記憶でなく点検で守るため
 
 ## 状態の表示
 
@@ -248,3 +272,4 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
+[adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md

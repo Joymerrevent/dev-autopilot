@@ -109,7 +109,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
   lock で見送った実行と、マシンのスリープや停止で定期の実行が起動しなかった日は記録に残し、`check` が warn に出す（受け入れ工程（段階 4）の「7 回の実行」はこれらを除いて数える）
 - 止める合図：全体を止めるのは、当てる先のリポの変数（Actions の変数。名前は構造仕様で決める。例：`DEV_AUTOPILOT_RUN`）。値が `run` のときだけ動き、ほかの値・変数が無い・読めないときは止まる。
   `setup` の GitHub の準備が値を `stop` にして作り、人が `check` の後に `run` にする。人は GitHub の画面（スマートフォンを含む）か人の `gh` で変え、PR は要らない（変えられるのは push 以上の人。org のリポでは、変えた人が org の監査ログに残る）。
-  進行 Bot の PAT は変数を読むだけで、変えられない（[ADR-20261017-007][adr-stop]）。その Issue だけを止めるのは、Project の Agent 欄 `paused`。
+  進行 Bot の PAT は変数を読むだけで、変えられない（GitHub App に切り替えた後も同じ。[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）。その Issue だけを止めるのは、Project の Agent 欄 `paused`。
   進行 Bot は、全体の合図を、実行の最初・AI のセッションを起動する前・GitHub に書き込む前に読み、`run` を読めなければ起動も書き込みもしない。AI のセッションが動いている間も一定の間隔で読み（間隔は、基本設計の「[設定][design-settings]」の `run.stopSignalPollSeconds`）、
   `run` 以外の値を読んだら、AI のセッションを時間の上限と同じやり方（`SIGTERM`、猶予、`SIGKILL`、残ったコマンドも止める。IMPL-14）で止める。間の読み取りの失敗では止めない（書き込む前にもう一度読むため）。
   合図で止めた実行は、手元の記録に残し、lock を外して終わる。その回は実行の失敗に数えない（IMPL-14）。次の実行は、合図が `run` に戻った後、GitHub の状態から続ける
@@ -135,3 +135,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-policy]: ../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [design-settings]: ../design/basic/01-settings.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
+[adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md

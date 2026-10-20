@@ -47,7 +47,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行 Bot に渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
   要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
-  - リポと Project：owner / repo、base ブランチ（マシン。リポの設定を読む前に要るため。[ADR-20261017-007][adr-stop]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
+  - リポと Project：owner / repo、base ブランチ（マシン。リポの設定を読む前に要るため。[ADR-20261017-007][adr-stop]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）、GitHub App の ID とインストールの ID（[ADR-20261020-002][adr-app]）
   - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
   - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
@@ -56,7 +56,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
   - 安全：印を書いたと認める進行 Bot のアカウント名の一覧（IMPL-20。[ADR-20261020-001][adr-bots]）、sandbox の `--settings` の置き場（マシン）と、`denyRead` `denyWrite` に足すパスの一覧（要件が決めたパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」、基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」）、外への通信の許可先、子プロセスに渡す環境変数のうち、足す名前の一覧（SAFE-10 の git と pnpm のための環境変数、`CLAUDE_CODE_TMPDIR`、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）など、要件と ADR が決めた名前は、設定の PR で消せないように進行 Bot のプログラムに固定する。「[安全側に倒す設計][f05]」、基本設計の「[AI のセッション][design-ai]」の「環境変数」）、
-    セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
+    セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT（切り替えの後は GitHub App の秘密鍵）と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **Plugin を入れたプロジェクトで、写しから動かす。** 利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ（入れる設定は当てる先のリポの `.claude/settings.json` に commit される）、当てる先のリポで開いた Claude Code で `setup` を実行する（SETUP-1）。
   `setup` は、インストールされた Plugin の版（`${CLAUDE_PLUGIN_ROOT}` の中身）を、マシンの置き場の中の版ごとのフォルダ（例：`<置き場>/program/<版>/`）に写す。写しを「進行 Bot のプログラムの写し」と呼び、マシンの設定の `devAutopilotPath` は写しを指す（[ADR-20261017-003][adr-plugin] の決定 2・4）。
   進行 Bot は、写しの `src/main.ts` を定期の実行から起こされ、`claude -p --plugin-dir <写しの絶対パス> --agent dev-autopilot:change:worker` のように、写しを Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
@@ -146,3 +146,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [doc-plugin-agents]: https://code.claude.com/docs/en/plugins/components#organize-agents-in-subfolders
 [design-tests]: ../design/basic/05-tests.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
+[adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
