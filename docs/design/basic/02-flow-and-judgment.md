@@ -288,7 +288,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `brief-changed` | 渡す文のハッシュが、承認したときと違う（[TEXT-4][text]） |
 | `brief-edited-after-approval` | 渡す文（作業指示コメントか、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻より後（[TEXT-10][text]） |
 | `brief-sensitive` | 渡す文に、事業データか認証情報の形が混じっている（[TEXT-7][text]） |
-| `quarantine` | 受け入れの検疫で見つかった。または、見つかった Issue に `## 作業指示` のコメントが無いまま `agent-ready` が付いた（[TEXT-12][text]） |
+| `quarantine` | 受け入れの検疫で見つかった。または、見つかった Issue に `## 作業指示` のコメントが無いまま `agent-ready` が付いた（[TEXT-12][text]）。または、AI に渡す直前の検疫で見つかった（[TEXT-11][text]、[AI のセッション][design-ai]の「起動の前の確かめ」） |
 | `issue-changed` | 作業中に、Issue が閉じられた・移された・`agent-ready` かマイルストーンが外された（[TEXT-8][text]） |
 | `permission` | `agent-ready` を付けた人、作業指示コメントを書いた人、下書きのコメントを編集した人が push 未満（[TEXT-10][text]、[FLOW-29][flow]） |
 | `unauthorized-resume` | push 未満の人が `needs-human` を外した（[TEXT-10][text]） |
@@ -317,6 +317,7 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 | 名前から引けた PR がマージされた | 片付け（次の工程の順 1）で消す。片付けが途中で止まって残ったものも、次の実行の片付けで消す（[FLOW-27][flow]、[MERGE-7][merge]） |
 | 名前から引けた Issue が、PR がマージされないまま閉じられたか、結びつく PR がマージされずに閉じられた | Issue に紐づく残骸。消さずに Issue を `needs-human` にし、人が中身を確かめてから消す（[FLOW-29][flow]） |
 | 消す前に読んだ `commondir` か `gitdir` が、作ったときの値（作業場所のパスから決まる値）と違う | 消さずに Issue を `needs-human` にし、`check` で warn にする（[ADR-20261013-001][adr-workspace]、[SAFE-12][safety]） |
+| 短い一時フォルダの根（`sessionTmp.root`）の下にあり、実行の記録にセッションの名前との組が無い | Issue に紐づかない残骸。点検を fail にし、実行は作業に入らずに止まる。人が中身を確かめて消す（[ADR-20261017-006][adr-tmp]、[AI のセッション][design-ai]の「短い一時フォルダ」） |
 | 名前から Issue か PR を引けない。または、引けた番号が設定した Project に無い | Issue に紐づかない残骸。点検を fail にし、実行は作業に入らずに止まる。人が中身を確かめて消す（[運用の規則][flow]、[SETUP-2][setup]、[SAFE-4][safety]） |
 
 進行 Bot が、名前から引けない残骸を消さないのは、何のフォルダか分からないものを消すと、人が調べる材料を失うため。作業に入らないのは、判定できない状態で作業を増やさないため（[SAFE-4][safety]）。
@@ -355,3 +356,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-plan-step]: ./diagrams/02-plan-step.drawio.svg
 [adr-policy]: ../../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [adr-intake]: ../../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
+[adr-tmp]: ../../adr/adr-20261017-006-per-session-short-tmpdir.md
