@@ -20,7 +20,6 @@
 
 - 要件が初期値を決めている項目も、表に値を書き、出典の要件へリンクする。値の正本は要件で、食い違っていたら要件が正しい。要件の初期値を変える PR では、表も直す（[ADR-20261018-005][adr-table]）
 - 要件が初期値を決めていない項目は、表に初期値と根拠を書き、「暫定」と添える。段階の出口の記録（FLOW-5、FLOW-13）で見直す（[ADR-20261015-005][adr-settings] の決定 1）
-- 「メンテナが決める」と書いた項目は、要件にも ADR にも根拠になる値が無く、利用枠の使い方などメンテナの事情で決まる。値が空のままなら `check` は fail にし、進行 Bot を動かさない
 - `setup` は、表の初期値で設定ファイルを作る。今の値の正本は設定ファイル。初期値の正本は、要件が決めた値は要件、それ以外は表
 - リポの設定の値は PR で変える。マシンの設定の値は、そのマシンで人が書き換える。安全の境界を緩める変更は、値の変更でも ADR で決める（[設計を変えるとき][design-change]）
 
@@ -118,15 +117,40 @@
 | `limits.planRevisions` | 計画のレビューの指摘で計画し直す回数の、計画の工程ごとの上限。上限まで計画し直しても `fix` なら、マージ判定工程（段階 8）の前は最後の計画を投稿する | 1 回（[IMPL-10][impl]） | 計画は実行して確かめられないので、レビューのたびに直すところが出て、ループが終わらないおそれがある。1 回なら、計画の工程は最大 5 つのセッション（1 セッションの上限 45 分なら 225 分）で終わる（[IMPL-10][impl]、[ADR-20261019-003][adr-replan]） |
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
-| `limits.session.costUsd` | AI のセッション 1 回の費用の上限（`--max-budget-usd`）。途中で止めた回は、この値をその回の費用とみなす | メンテナが決める（USD） | 費用の上限を `--max-budget-usd` でも掛ける（[IMPL-14][impl]）。途中で止めた回は費用が分からないので、この値をその回の費用とみなす（[ADR-20261018-001][adr-usage]） |
-| `limits.issueCostUsd` | 1 Issue の累計の費用の上限（往復を含む）。起動の前に、累計にこの回の費用の上限を足して超えるなら、起動せずに `needs-human` | メンテナが決める（USD） | 1 Issue の累計の利用枠（往復を含む）に上限を持ち、費用で数える。当たったら `needs-human`（[IMPL-14][impl]、[ADR-20261018-001][adr-usage]） |
-| `limits.runCostUsd` | 1 回の実行の費用の上限。起動の前に、その回の累計にこの回の費用の上限を足して超えるなら、起動せずに次の実行で続ける | メンテナが決める（USD） | `claude -p` の実行は利用枠を消費するので、1 回の実行の上限を持つ（[SETUP-12][setup]、[IMPL-14][impl]） |
-| `limits.dailyCostUsd` | 1 日（マシンの時刻の日付）の費用の上限。起動の前に、その日の累計にこの回の費用の上限を足して超えるなら、起動せずに次の日の実行で続ける | メンテナが決める（USD） | 1 日の利用枠にも上限を持ち、費用で数える（[SETUP-12][setup]、[IMPL-14][impl]） |
+| `limits.session.costUsd` | AI のセッション 1 回の費用の上限（`--max-budget-usd`）。途中で止めた回は、この値をその回の費用とみなす | 1 USD（受け入れ工程（段階 4）の値。暫定） | 費用の上限を `--max-budget-usd` でも掛ける（[IMPL-14][impl]）。途中で止めた回は費用が分からないので、この値をその回の費用とみなす（[ADR-20261018-001][adr-usage]）。値の決め方は下の「[費用の上限の値][cost-values]」 |
+| `limits.issueCostUsd` | 1 Issue の累計の費用の上限（往復を含む）。起動の前に、累計にこの回の費用の上限を足して超えるなら、起動せずに `needs-human` | 2 USD（受け入れ工程（段階 4）の値。暫定） | 1 Issue の累計の利用枠（往復を含む）に上限を持ち、費用で数える。当たったら `needs-human`（[IMPL-14][impl]、[ADR-20261018-001][adr-usage]）。値の決め方は下の「[費用の上限の値][cost-values]」 |
+| `limits.runCostUsd` | 1 回の実行の費用の上限。起動の前に、その回の累計にこの回の費用の上限を足して超えるなら、起動せずに次の実行で続ける | 6 USD（受け入れ工程（段階 4）の値。暫定） | `claude -p` の実行は利用枠を消費するので、1 回の実行の上限を持つ（[SETUP-12][setup]、[IMPL-14][impl]）。値の決め方は下の「[費用の上限の値][cost-values]」 |
+| `limits.dailyCostUsd` | 1 日（マシンの時刻の日付）の費用の上限。起動の前に、その日の累計にこの回の費用の上限を足して超えるなら、起動せずに次の日の実行で続ける | 12 USD（受け入れ工程（段階 4）の値。暫定） | 1 日の利用枠にも上限を持ち、費用で数える（[SETUP-12][setup]、[IMPL-14][impl]）。値の決め方は下の「[費用の上限の値][cost-values]」 |
 | `limits.stopGraceSeconds` | AI のセッションを途中で止めるとき、`SIGTERM` を送ってから `SIGKILL` を送るまでの猶予 | 10 秒（暫定） | 途中で止めるときは `SIGTERM` を送り、猶予の間に終わらなければ `SIGKILL` を送る。猶予は設定に持つ（[IMPL-14][impl]）。試験では `SIGTERM` の後 1 秒ほどで終わった（[ADR-20261018-001][adr-usage]）ので、10 倍の余裕を見る |
 | `limits.retry.count` | 同じ Issue で実行の失敗が続いたとき、`needs-human` にするまでの回数 | 3 回（[IMPL-14][impl]） | 実行の失敗（利用枠切れ・時間の上限など、作業の中身と無関係の失敗）は次回に持ち越し、同じ Issue で続いたら `needs-human` にする（[IMPL-14][impl]） |
 | `limits.retry.intervalRuns` | 実行の失敗の後、何回目の定期の実行で再試行するか | 1（次の定期の実行。暫定） | 実行の失敗の再試行の間隔を設定に持つ（[IMPL-14][impl]）。実行の中で待つと lock を長く持つので、次の定期の実行で再試行する（[FLOW-4][flow]）。[ADR-20261015-005][adr-settings] の補足情報が挙げた候補（再試行は次の実行） |
 | `limits.remindDays` | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま経ったとき、進行 Bot が 1 回だけ催促するまでの日数 | 7 日（[MERGE-3][merge]） | 人が動かない PR は、判定の信頼度の記録（マージ判定工程（段階 8）の 10 件）に数えられないので、1 回だけ催促する（[MERGE-3][merge]） |
 | `limits.ciStaleHours` | CI の結果が `cancelled` `skipped` `neutral` `stale` のまま変わらないとき、`needs-human` にするまで待つ時間 | 48 時間（暫定） | CI の結果が `cancelled` などのまま、完了から設定の時間が経っても変わらなければ `needs-human` にする（[IMPL-27][impl]）。48 時間は、1 日 1 回の間隔（[FLOW-12][flow]）で、人が再実行する機会を間隔 1 回分より長く取る値 |
+
+##### 費用の上限の値
+
+費用の上限 4 つ（`limits.session.costUsd`・`limits.issueCostUsd`・`limits.runCostUsd`・`limits.dailyCostUsd`）の値と決め方。値は USD で、Claude Code が API の定価で換算した費用（`total_cost_usd`）と比べる（[AI のセッション][design-ai]の「費用の数え方」）。
+
+| 上限 | 受け入れ工程（段階 4。初期値） | 計画・実装工程（段階 5）からマージ判定工程（段階 8）まで | 決め方 |
+| --- | --- | --- | --- |
+| `limits.session.costUsd` | 1 USD | 10 USD | 段階 4 で動く AI は受付 AI（`claude-haiku-5-5`）だけで、拒否の後の回は `sonnet`（[IMPL-29][impl]）。Haiku のセッションの試験の費用は 0.001〜0.046 USD だった（FACT-40、FACT-46 ほか）。段階 5 からは `opus` が動く。Opus 5.5 の短い会話（やりとり 33〜71 回）は、API の定価で 1.7〜3.3 USD だった（2026-10-20 に、メンテナの手元の会話の記録から数えた）。ターンの上限（200 ターン）まで動いたセッションを止めない値にする |
+| `limits.issueCostUsd` | 2 USD | 100 USD | 段階 4 は、受け入れ 1 回と、拒否の後の `sonnet` の 1 回。段階 5 からは、1 セッションの上限の 10 回分。超える Issue は `needs-human` にして人が見る |
+| `limits.runCostUsd` | 6 USD | 30 USD | 段階 4 は、受け入れ 5 件（`limits.intakePerRun`）と、点検の試しのセッション 1 つ。段階 5 からは、レビューの 3 つの軸を同時に起こしても収まる額（1 セッションの上限の 3 倍） |
+| `limits.dailyCostUsd` | 12 USD | 60 USD | 定期の実行 1 回（[FLOW-12][flow]）と、人が手で起こす実行 1 回の分（1 回の実行の上限の 2 倍） |
+
+- 値は、プランの利用枠の何割かを表すものではない。Pro と Max の利用枠は、5 時間ごとの上限と 1 週間の上限で、チャットと Claude Code で共有し、量は USD で公開されていない（[Claude Code の費用の文書][doc-costs]、[Claude の料金とプラン][doc-plans]）
+- 段階 8 までは、定期の実行が 1 日 1 回で（[FLOW-12][flow]）、進行中の Issue は 1 件なので（[FLOW-3][flow]）、4 つの値はプランに依らない。プランで変わるのは、どの段階まで動かしてよいか
+
+  | プラン | 目安 |
+  | --- | --- |
+  | Pro | 受け入れ工程（段階 4）まで。`opus` のセッションは 1 つで数 USD かかり、Pro の利用枠（Max 5x の 5 分の 1。[Claude の料金とプラン][doc-plans]）では、人の作業と利用枠を取り合う（推定） |
+  | Max 5x、Max 20x | マージ判定工程（段階 8）まで、上の表の値で動かす。Max 5x で、人の作業が週の上限に近いときは、`limits.dailyCostUsd` を 30 USD（定期の実行 1 回分）にする |
+
+- 計画・実装工程（段階 5）に進む PR で、`run.stage` と一緒に、4 つの値を段階 5 の列に直す。段階 5 の最初の 5 件の記録（セッションごとの費用。[FLOW-5][flow]）を見て、値を決め直す
+- 実行の間隔を狭める段階（段階 9）では、`limits.dailyCostUsd` を「1 回の実行の上限 × 1 日の実行の回数」で決め直す。Max 20x と Max 5x の違いは、ここで値に出る
+- 値を決め直すときも、次の関係を保つ。起動の前に「累計 ＋ この回の費用の上限」で比べるので（[AI のセッション][design-ai]の「起動の前の確かめ」）、外れるとセッションを 1 つも起動できない
+  - `limits.issueCostUsd` と `limits.runCostUsd` と `limits.dailyCostUsd` は、`limits.session.costUsd` 以上
+  - `limits.dailyCostUsd` は、`limits.runCostUsd` 以上
 
 #### モデル
 
@@ -198,7 +222,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 - すべての項目が、リポの設定かマシンの設定のどちらか一方にだけあり、形が表のとおりであること
 - リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと
 - マシンの設定の置き場の実体のパスが、同期フォルダの下・`~/.claude/` の下・`/tmp/claude-<uid>/` の下に無いこと
-- 「メンテナが決める」の項目と `checks.required` が空でないこと
+- `checks.required` が空でないこと
 - 定期の実行の定義が渡すマシンの設定のパスと、人が呼ぶ Skill が origin から見つけるパスが一致すること。定期の実行の間隔が `run.intervalHours` と一致すること
 
 [adr-settings]: ../../adr/adr-20261015-005-settings-values-and-machine-settings.md
@@ -229,3 +253,6 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [adr-gaps]: ../../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
 [adr-replan]: ../../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
 [design-setup]: ./04-setup-and-check.md
+[cost-values]: #費用の上限の値
+[doc-costs]: https://code.claude.com/docs/en/costs
+[doc-plans]: https://claude.com/pricing
