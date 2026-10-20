@@ -7,7 +7,7 @@
 
 | 設定 | ファイル | 置く場所 | 持つ項目 |
 | --- | --- | --- | --- |
-| リポの設定 | `.claude/dev-autopilot.json` | 当てる先のリポの中（commit する） | 項目の大半：リポと Project、ラベル名と固定の見出し、進行 Bot の実行（`dryRun`・`stage`・定期の実行の間隔など）、上限、モデル、検査と判定、規約、安全（進行 Bot のアカウント名・通信の許可先・子プロセスに渡す環境変数の名前など） |
+| リポの設定 | `.claude/dev-autopilot.json` | 当てる先のリポの中（commit する） | 項目の大半：リポと Project、ラベル名と固定の見出し、進行 Bot の実行（`dryRun`・`stage`・定期の実行の間隔など）、上限、モデル、検査と判定、規約、安全（印を書いたと認めるアカウント名の一覧・通信の許可先・子プロセスに渡す環境変数の名前など） |
 | マシンの設定 | `settings.json` | リポの外の、OS ごとの決まった場所。当てる先のリポごとにフォルダを分ける | マシンごとに違う 10 項目：base ブランチの名前、進行 Bot のプログラムの写しのパス（`devAutopilotPath`）、フォルダのパス 4 つ（置き場・記録の置き場・秘密の置き場・安全設定の置き場）、ホームの中の道具のフォルダ、短い一時フォルダの根・ID の長さ・長さの上限 |
 
 マシンの設定をリポの中に置かない理由は 3 つある。
@@ -197,7 +197,7 @@
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `safety.botAccount` | 進行 Bot が投稿に使う GitHub のアカウント名。印はこのアカウントの投稿だけを読む | `setup` が人の `gh` のログイン名を書く（最初はメンテナのアカウント。[SETUP-13][setup]） | 進行 Bot は、このアカウントが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。アカウントは最初はメンテナの 1 つで始める（[SETUP-13][setup]） |
+| `safety.botAccounts` | 印を書いたと認める GitHub のアカウント名の一覧。投稿に使うアカウントは進行 Bot の PAT の持ち主で決まり、一覧では決めない | `setup` が人の `gh` のログイン名を 1 つ書く（最初はメンテナのアカウント。[SETUP-13][setup]） | 進行 Bot は、一覧のどれかが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。アカウントはいまは分けない。分けるときは、分けると決めた ADR の後に新しいアカウントを足し、前のアカウントの印が残る Issue と PR が閉じたら前のアカウントを外す。足すのは認める投稿者を増やす向きなので PR に残す（[ADR-20261020-001][adr-bots]） |
 | `safety.network.allowedDomains` | AI のセッションの sandbox から通信してよい先 | `registry.npmjs.org`（暫定） | AI のセッションの外への通信は、npm のレジストリなどの許可した先だけにする（[SAFE-10][safety]）。先を足すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
 | `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前のうち、足す名前（ほかの名前は渡さない） | 空（決めた名前は進行 Bot のプログラムに固定する。名前と値と理由は「[AI のセッション][design-ai]」の「環境変数」。決めた名前のうち、`XDG_*` の 4 つ・`GIT_CONFIG_GLOBAL`・`NPM_CONFIG_USERCONFIG`・commit の作者・`ENABLE_CLAUDEAI_MCP_SERVERS` は [SAFE-10][safety] と [SAFE-1][safety] が決めた名前） | 子プロセスの環境変数は許可した名前だけで組み立て、`gh` の認証と `GH_TOKEN` を渡さない（[SAFE-1][safety]）。決めた名前は、リポの設定の PR で消せないようにプログラムに固定し、設定には足す名前だけを持つ（`safety.sandbox.denyRead` と同じ形）。足す名前の値は、進行 Bot の環境変数の値をそのまま渡す。名前を足すのは ADR で決める（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
 | `safety.sandbox.denyRead` | AI のセッションの sandbox で読ませないパスのうち、足す分。`${home}` か `${worktree}` で始めて書き、絶対パスは書かない | 空 | 読み取りは自分のセッションのフォルダだけにし、`denyRead` に入れるパスは要件が決めている（[SAFE-10][safety]）。進行 Bot は要件が決めたパスをマシンの置き場から組み立てて必ず入れ、設定には足す分だけを持つ（設定で消せないようにするため） |
@@ -226,6 +226,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 - リポの設定に絶対パス（`/Users/` `/home/` などで始まる値）が無いこと
 - マシンの設定の置き場の実体のパスが、同期フォルダの下・`~/.claude/` の下・`/tmp/claude-<uid>/` の下に無いこと
 - `checks.required` が空でないこと
+- `safety.botAccounts` が空でなく、進行 Bot の PAT の持ち主（`GET /user` の `login`）が入っていること（[ADR-20261020-001][adr-bots]）
 - `safety.env.names` に、AI のセッションに渡さない名前（`GH_TOKEN`、`PNPM_HOME` など。「[AI のセッション][design-ai]」の「環境変数」）が無いこと
 - 定期の実行の定義が渡すマシンの設定のパスと、人が呼ぶ Skill が origin から見つけるパスが一致すること。定期の実行の間隔が `run.intervalHours` と一致すること
 
@@ -262,3 +263,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [doc-plans]: https://claude.com/pricing
 [design-flow]: ./02-flow-and-judgment.md
 [adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md

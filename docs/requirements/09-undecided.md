@@ -113,7 +113,7 @@
 
 - UNDECIDED-18 **欠番**（基本設計の「[AI のセッション][design-ai]」の「レビューの軸の起こし方」で決めた。レビュー AI と批評 AI は品質ゲートの全体を回さず、CI の結果で判定する。指摘を確かめるための実行は行ってよい）：~~レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）~~
 - UNDECIDED-19 **欠番**（基本設計の「[設定][design-settings]」の「マシンの中のフォルダ」で決めた）：~~実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）~~
-- UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
+- UNDECIDED-20 **欠番**（[ADR-20261020-001][adr-bots] で決めた。いまは分けない。分ける要望が出たら、machine user か GitHub App かを別の ADR で決め、印を書いたと認めるアカウントの一覧に足して切り替える）：~~自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める~~
 - UNDECIDED-22 **欠番**（基本設計の「[テスト][design-tests]」の「前提データ」で決めた。検疫の見本は `fixtures/quarantine/` に置く）：~~検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）~~
 - UNDECIDED-27 **欠番**（基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」で決めた）：~~作業場所の残骸の決め方。[ADR-20261013-001][adr-workspace] では、セッションのフォルダ（`sessions/<セッションの名前>/`）は同じ名前で作り直すか片付ける（FLOW-27）まで残るので、作業中の Issue のフォルダがあるのは普通の状態になる。
   どのフォルダを残骸とみなすか（例：片付けの後に残ったもの、名前から Issue か PR を引けないもの）を決め、SETUP-2 の warn・Issue ごとの `needs-human`・fail に当てはめる（FLOW-29、SAFE-4、「運用の規則」）。
@@ -188,3 +188,4 @@
 [design-ai]: ../design/basic/03-ai-sessions.md
 [adr-policy]: ../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md

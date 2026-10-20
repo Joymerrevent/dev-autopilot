@@ -81,7 +81,7 @@
 | `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` | セッションのフォルダの `tmp/` の下の `config/`・`cache/`・`data/`・`state/` | ホームを読めないので、道具の設定とキャッシュをセッションの中に向ける（[SAFE-10][safety]、FACT-22） |
 | `GIT_CONFIG_GLOBAL`、`NPM_CONFIG_USERCONFIG` | `/dev/null` | git と pnpm が、ホームの個人設定を読まずに動く（[SAFE-10][safety]、FACT-22） |
 | `GIT_CONFIG_COUNT`、`GIT_CONFIG_KEY_0`、`GIT_CONFIG_VALUE_0`、`GIT_CONFIG_KEY_1`、`GIT_CONFIG_VALUE_1` | `2`、`commit.gpgsign`、`false`、`gc.auto`、`0` | 作業 AI の commit は署名しない（[SAFE-14][safety]）。AI のセッションの git では自動 gc を止め、書く場所を増やさない（[SAFE-11][safety]）。環境変数で git の設定を渡せ、`gc.auto` が効くことを確かめた（FACT-17） |
-| `GIT_AUTHOR_NAME` `GIT_AUTHOR_EMAIL` `GIT_COMMITTER_NAME` `GIT_COMMITTER_EMAIL` | 進行 Bot のアカウント（`safety.botAccount`）の名前と、GitHub の noreply のアドレス | commit の作者を環境変数で渡す（[SAFE-10][safety]）。noreply のアドレスは、漏えいの検査が止めないアドレスにする（[IMPL-15][impl]） |
+| `GIT_AUTHOR_NAME` `GIT_AUTHOR_EMAIL` `GIT_COMMITTER_NAME` `GIT_COMMITTER_EMAIL` | 進行 Bot の PAT の持ち主のアカウントの名前と、GitHub の noreply のアドレス（[ADR-20261020-001][adr-bots]） | commit の作者を環境変数で渡す（[SAFE-10][safety]）。noreply のアドレスは、漏えいの検査が止めないアドレスにする（[IMPL-15][impl]） |
 | `ENABLE_CLAUDEAI_MCP_SERVERS` | `false` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]） |
 
 - 渡さないもの：`gh` の認証、`GH_TOKEN`、PAT と鍵、`PNPM_HOME`（[SAFE-1、SAFE-10][safety]）
@@ -451,3 +451,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [fig-inputs]: ./diagrams/03-inputs.drawio.svg
 [merge]: ../../requirements/03-merge.md
+[adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md

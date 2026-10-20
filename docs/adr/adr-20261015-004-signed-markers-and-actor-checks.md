@@ -1,13 +1,15 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-17
+updated: 2026-10-20
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 進行役の投稿にはすべて署名付きの印を付け、人の操作は操作した人の権限と時刻を確かめてから従う
 
+> **Amended by [ADR-20261020-001][adr-bots]（2026-10-20）**: 決定 1 の「進行役のアカウント」を、1 つのアカウントから、設定に並べたアカウントの一覧（`safety.botAccounts`）のどれかに改めた。印を読む条件の投稿者は一覧のどれかと読む。署名と未編集の条件、決定 2 は据え置く。
+>
 > **Amended by [ADR-20261016-002][adr-draft]（2026-10-16）**: 決定 2 の時刻の規則の対象から、Issue の本文を外した（Issue の本文は、著者を問わず AI に渡さなくなったため）。時刻の規則の対象は、作業指示コメントと直した下書きの 2 つになる。ほかの決定は据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-004 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
@@ -178,3 +180,4 @@ decision-makers: メンテナ
 [setup]: ../requirements/06-setup-and-stages.md
 [facts]: ../requirements/10-verified-facts.md
 [adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
+[adr-bots]: ./adr-20261020-001-bot-accounts-as-list.md

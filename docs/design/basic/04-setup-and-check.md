@@ -135,7 +135,7 @@
 | --- | --- | --- | --- | --- |
 | 設定 | 設定ファイルの項目と型、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前が無いこと | ファイルを読む | 確かめる | 確かめる |
 | GitHub | ラベル、Project の欄と自動追加、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（必須チェックに `checks.required` がすべて strict で入っていること）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、基線の必須チェック（warn） | 進行 Bot の PAT で読む | 確かめる | 確かめる |
-| PAT の権限 | 下の「PAT の権限」の読み取りが通ること。リポの変数を作れないこと | 読み取りと、点検用の変数を作る試し（403 で断られれば pass） | 確かめる | 読み取りは確かめる。作る試しは、合図が `run` のときだけ |
+| PAT の権限 | 下の「PAT の権限」の読み取りが通ること。リポの変数を作れないこと。PAT の持ち主が `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]） | 読み取りと、点検用の変数を作る試し（403 で断られれば pass） | 確かめる | 読み取りは確かめる。作る試しは、合図が `run` のときだけ |
 | マシン | `claude` と Node 24 の版、Plugin と写しの版、写しの Skill とエージェント定義が Plugin の中の一覧どおりにあること、置き場と秘密の置き場の権限と実体のパス、記録と印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、objects のリンク数 | ファイルとプロセスを読む | 確かめる | 確かめる |
 | 子プロセスと clone | 子プロセスに渡す環境変数に PAT・鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗すること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
 | sandbox と AI のセッション | 読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否と写しの `skills/` の読み取り、子プロセスから秘密の置き場を読めないこと、gitdir、道具の一覧に MCP の道具と `Agent`・`Task` が無いこと、一時フォルダ | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
@@ -247,3 +247,4 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 [adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
