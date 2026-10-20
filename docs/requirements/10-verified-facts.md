@@ -204,6 +204,15 @@ macOS、Claude Code 2.1.285、haiku の別名で確かめた。試験の場所�
 |---|---|---|---|
 | FACT-51 | `--no-session-persistence` を付けると、会話の記録が人のホームに残るか | **会話の記録は残らないが、空のフォルダは残る。** 実行の前に無かった `~/.claude/projects/<作業フォルダのパスから付けた名前>/` ができ、中は空の `memory/` だけで、会話の記録（`.jsonl`）は無かった（FACT-50 では、付けずに起動して `.jsonl` が残った）。`claude --help` は、`--no-session-persistence` は `--print` のときだけ効き、会話を保存せず再開できなくなると書く | 実行 |
 
+## fine-grained PAT でチェックの実行を読めるかを確かめた事実（2026-10-20）
+
+メンテナが発行した fine-grained PAT（対象は Joymerrevent/business-os だけ、権限は Actions・Commit statuses の読み取りと、自動で付く Metadata の読み取り、期限 1 日）で、business-os の main の先端の commit に対して、REST API を読んだ。トークンの値は画面に出さず、応答の状態と件数、応答の見出し（`X-Accepted-GitHub-Permissions` と `X-RateLimit-Limit`）だけを控えた。試しの後に、トークンを保存したファイルを消した。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-52 | fine-grained PAT で、CI のチェックの実行（check runs）を読めるか | **公開のリポなら読める。** `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` は 200 で、6 件のチェックの実行の名前・結果・app（`github-actions`）が読めた。利用の上限は 5,000 で、PAT の認証が効いていた。応答の見出しは、要る権限を `checks=read` と返した。fine-grained PAT の権限の一覧には Checks が無く（GitHub の公式文書）、PAT にも付けていないので、公開のリポのリソースを権限なしで読めた形。check suites も同じく読めた。認証なし（上限 60）と、PAT の対象に入れていない公開のリポでも読めた。非公開のリポでは試していない | 実行 |
+| FACT-53 | 同じ PAT で、ワークフローの実行、コミットの状態、PAT の持ち主を読めるか | **読める。ただし、コミットの結合した状態は、状態が無くても `pending` を返す。** `GET .../actions/runs?head_sha=` は 200（要る権限は `actions=read`）で、ワークフローの名前・パス（`.github/workflows/ci.yml` など）・結果が読めた。`GET .../commits/{ref}/status` は 200（`statuses=read`）だったが、状態の件数が 0 なのに `state` は `pending` だった。`GET /user` は 200（`allows_permissionless_access=true`）で、PAT の持ち主のログイン名が読めた | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
