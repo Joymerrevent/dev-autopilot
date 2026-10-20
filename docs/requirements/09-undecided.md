@@ -108,9 +108,9 @@
   手元の Mac で試す間（SAFE-18）は、人の Claude Code のセッションの作業用のフォルダも同じ一時フォルダの下にある。
   セッションごとに一時フォルダを分けるか、分けるならどの手段で分けるか（進行ボットがセッションごとに `CLAUDE_CODE_TMPDIR` を渡す、など）を決める。
   `CLAUDE_CODE_TMPDIR` はパスが長いと既定の場所の下の短いパスに置き換わる（FACT-34）ので、dev-autopilot の置き場のパスで効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
-- UNDECIDED-57 **非公開のリポに当てるときに、必須チェックの結果をどう読むか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、チェックの実行の結果を読む。fine-grained PAT には Checks の権限が無く、公開のリポでは権限なしで読めたが（FACT-52）、非公開のリポでは 403 で読めなかった（FACT-54）。GitHub Actions のチェックは、ワークフローのジョブ（Actions の読み取り）から名前と結果を読めた（FACT-54）。
+- UNDECIDED-57 **欠番**（[ADR-20261020-002][adr-app] で決めた。書き始める前に GitHub App に切り替え、非公開のリポのチェックの実行もアプリの Checks の読み取りで読む）：~~**非公開のリポに当てるときに、必須チェックの結果をどう読むか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、チェックの実行の結果を読む。fine-grained PAT には Checks の権限が無く、公開のリポでは権限なしで読めたが（FACT-52）、非公開のリポでは 403 で読めなかった（FACT-54）。GitHub Actions のチェックは、ワークフローのジョブ（Actions の読み取り）から名前と結果を読めた（FACT-54）。
   非公開のリポに当てると決めるとき（ほかのリポに当てる時期は、マージ判定工程（段階 8）の後に決める。[07-structure.md][f07]）に、ジョブから読むか（GitHub Actions 以外の app のチェックは読めない）、Checks の権限を持てる GitHub App にするか、などを決める（[02-implement-review-fix.md][f02]）。
-  GitHub の公式文書では、GitHub App のリポの権限に「Checks」があり、チェックの実行の一覧は読み取りで足りる（[GitHub App の権限の一覧][doc-app-permissions]）。入れたリポだけに絞れる。classic PAT も `repo` のスコープで読めるが（[チェックの実行の API][doc-check-runs]）、持ち主が触れるすべての非公開のリポを読み書きできるので、進行 Bot の PAT を当てる先のリポだけに絞る決まり（SAFE-15）に合わず、候補から外す。GitHub App にすると、投稿者は App の名前のアカウントになるので、UNDECIDED-20 の「アカウントを分ける」とあわせて決める（[ADR-20261020-001][adr-bots] の決定 1）
+  GitHub の公式文書では、GitHub App のリポの権限に「Checks」があり、チェックの実行の一覧は読み取りで足りる（[GitHub App の権限の一覧][doc-app-permissions]）。入れたリポだけに絞れる。classic PAT も `repo` のスコープで読めるが（[チェックの実行の API][doc-check-runs]）、持ち主が触れるすべての非公開のリポを読み書きできるので、進行 Bot の PAT を当てる先のリポだけに絞る決まり（SAFE-15）に合わず、候補から外す。GitHub App にすると、投稿者は App の名前のアカウントになるので、UNDECIDED-20 の「アカウントを分ける」とあわせて決める（[ADR-20261020-001][adr-bots] の決定 1）~~
 
 ## 基本設計の中で決めてよいもの
 
@@ -194,3 +194,4 @@
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
 [doc-app-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps
 [doc-check-runs]: https://docs.github.com/en/rest/checks/runs
+[adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
