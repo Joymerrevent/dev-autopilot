@@ -31,8 +31,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       check.ts                 点検の正本（進行 Bot が毎回の最初に回す）
   test/                        テスト。Plugin に同封しないように `plugin/` の外に置く
     unit/                      単体テスト。`plugin/src/` と同じ形の路で置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
-                               結合テスト（偽の gh を差し替えて進行 Bot を端から端まで回す）も test/ に置く。分け方は基本設計で決める
-  fixtures/                    結合テストの前提データ（偽の gh の応答、使い捨てリポの雛形、Issue と PR の本文の例）
+                               結合テスト（偽の gh を差し替えて進行 Bot を端から端まで回す）も test/ に置く。分け方は基本設計の「テスト」（docs/design/basic/05-tests.md）
+  fixtures/                    テストの前提データ（偽の gh の応答、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査の見本）
   docs/                        要件（requirements/）、設計判断（adr/）、構造仕様（design/）、図（diagrams/。要件の写し）
   README.md                    使い方。業務の固有名詞を書かない
   package.json                 検査のスクリプトと依存（STRUCT-4）
@@ -53,7 +53,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
   - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
-  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、漏えい検査の見本の置き場
+  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
   - 安全：進行 Bot のアカウント名（IMPL-20）、sandbox の `--settings` の置き場（マシン）と `denyRead` `allowRead` `denyWrite` の一覧（`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」）、外への通信の許可先、子プロセスに渡す環境変数の名前の一覧（SAFE-10 の git と pnpm のための環境変数と、`CLAUDE_CODE_TMPDIR`、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）を含む。「[安全側に倒す設計][f05]」）、
     セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
@@ -78,7 +78,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 単体テストが対象のコードの隣でなくなるので、CI で次の 2 つを確かめ、どちらかが外れたら CI を落とす（TypeScript の検査。検査そのものも vitest で検査する）
     - `plugin/src/` のコードのファイルごとに、`test/unit/` に同じ路の単体テストがあること。単体テストを持たないファイル（型の定義だけのファイルなど）は、理由を添えた例外の一覧に書いたものだけを認める
     - `plugin/` の中に、テストのファイル（`*.test.ts` など）が無いこと
-  - 結合テスト（偽の `gh` と使い捨てのリポで進行 Bot を端から端まで回す）も `test/` に置く（単体テストとの分け方は基本設計で決める）。前提データは `fixtures/`
+  - 結合テスト（偽の `gh` と使い捨てのリポで進行 Bot を端から端まで回す）も `test/` に置く（単体テストとの分け方は、基本設計の「[テスト][design-tests]」で決めた）。前提データは `fixtures/`
   - `review` Skill の評価も dev-autopilot のリポが持つ（「[レビューの Skill][f08]」。[ADR-20261016-003][adr-move] の決定 4）
 - STRUCT-5 **文書は dev-autopilot のリポに置く。** dev-autopilot の要件、設計判断（ADR）、構造仕様は `docs/` に、使い方は `README.md` に置き、business-os の `docs/` には書かない
   - **ADR の規則は、利用者の全体設定の新しい規則（`project-recipes` の `adr-docs` レシピ）に従う。** business-os の旧規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄）ではなく、dev-autopilot のリポだけで成り立つ規則を持つ
@@ -144,3 +144,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [doc-plugin-agents]: https://code.claude.com/docs/en/plugins/components#organize-agents-in-subfolders
+[design-tests]: ../design/basic/05-tests.md
