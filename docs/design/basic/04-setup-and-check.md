@@ -204,13 +204,13 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 | Metadata（リポ） | 読み取り | ruleset を読む（`GET /repos/{owner}/{repo}/rulesets` は Metadata の読み取りで通る） |
 | Issues（リポ） | 書き込み | ラベル、印とコメント、🟢 から Issue を作る |
 | Pull requests（リポ） | 書き込み | PR を作る、ready にする、PR にコメントする |
-| Commit statuses（リポ） | 読み取り | CI の結果（コミットの状態） |
+| Commit statuses（リポ） | 読み取り | CI の結果（コミットの状態）。結合した状態（`/status`）は、状態が 0 件でも `pending` を返すので、CI が緑かの判定には使わず、必須チェックを名前で照らす（FACT-53） |
 | Actions（リポ） | 読み取り | ワークフローの実行（人の承認が要るものを見つける。[IMPL-27][impl]） |
 | Variables（リポ） | 読み取り | 全体の止める合図を読む。書き込みは付けない（[ADR-20261017-007][adr-stop]） |
 | Projects（Organization） | 書き込み | Project の Status と Agent 欄（FACT-6） |
 
 - Administration（ruleset を作る管理の権限）と Contents は付けない。ruleset は人の `setup` が作り（[SETUP-1][setup]）、push は deploy key で行う（[SAFE-15][safety]）
-- CI のチェックの実行（check runs）を fine-grained PAT で読めるかは、確かめていない（UNDECIDED-55）
+- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。当てる先を非公開のリポにするときは、読み方を確かめ直す（[分離の時期の目安][struct]）
 - 書き込みを付けていないことは、点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しで確かめる。403 で断られれば pass。作れてしまったら fail にし、作った変数を消す。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
 
 ## 状態の表示

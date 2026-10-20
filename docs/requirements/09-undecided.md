@@ -149,8 +149,8 @@
   worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行 Bot を動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 - UNDECIDED-54 **欠番**（FACT-46 で確かめた。AI のセッションの安全設定では、sandbox の読み取りの拒否（`~/`）がスナップショットの読み込みを止め、人の関数は当たらず、AI はスナップショットの置き場を読めない。`PATH` は進行 Bot が渡した値のまま）：~~**AI の Bash が、人のシェルのスナップショットを読み込む。** AI のセッションの Bash のコマンドは、Claude Code がホームの `.claude/shell-snapshots/` に作る人のシェルのスナップショット（関数・別名・`PATH`）を読み込んで動く（FACT-45）。
   SAFE-2 の (a) はユーザー設定から切り離すとし、SAFE-10 は読み取りを自分のセッションのフォルダだけにするとしている。スナップショットに何が入りうるか（環境変数が入ることがあるか）、AI のセッションから `shell-snapshots/` を読めるか、スナップショットを読み込ませない手段があるかを確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
-- UNDECIDED-55 **fine-grained PAT で、CI のチェックの実行（check runs）を読めるか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、PR の head に対する結果を読む。GitHub の公式文書の fine-grained PAT の権限の一覧には、Commit statuses と Actions はあるが、チェックの実行の権限が見当たらない（基本設計の「導入と点検」の「PAT の権限」）。
-  人が発行した PAT で、チェックの実行の一覧を読めるかを確かめる。読めなければ、必須チェックの結果を GitHub Actions のワークフローのジョブ（Actions の読み取り）から読む形に、IMPL-27 の読み方を改めるかを決める（[02-implement-review-fix.md][f02]）
+- UNDECIDED-55 **欠番**（FACT-52 で確かめた。fine-grained PAT に Checks の権限は無いが、当てる先の business-os は公開のリポなので、権限なしでチェックの実行を読めた。IMPL-27 の読み方は改めない。当てる先を非公開のリポにするときは、読み方を確かめ直す）：~~**fine-grained PAT で、CI のチェックの実行（check runs）を読めるか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、PR の head に対する結果を読む。GitHub の公式文書の fine-grained PAT の権限の一覧には、Commit statuses と Actions はあるが、チェックの実行の権限が見当たらない（基本設計の「導入と点検」の「PAT の権限」）。
+  人が発行した PAT で、チェックの実行の一覧を読めるかを確かめる。読めなければ、必須チェックの結果を GitHub Actions のワークフローのジョブ（Actions の読み取り）から読む形に、IMPL-27 の読み方を改めるかを決める（[02-implement-review-fix.md][f02]）~~
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
