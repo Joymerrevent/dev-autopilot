@@ -83,7 +83,7 @@
   3 つの軸が終わったら、4 つ目の軸「見落とし」のセッションを起こし、3 つの軸が出した指摘（見出しとファイルのパス）を渡して、どの軸も挙げていない問題だけを返させる。見落としの軸が終わってから、批評 AI のセッションを起こす（[ADR-20261019-002][adr-gaps]）。
   見落としの軸の結果は、修正工程（段階 7）に進む前に使うかを ADR で決めるまで、手元の記録（FLOW-5）に残すだけで、批評 AI に渡さず、`review` の印とコメントにも入れない。PR の流れ（修正・収束・マージの判定）は 3 つの軸の結果だけで決まり、見落としの軸のセッションが失敗しても変えない。
   作業場所は、軸のセッションごとに進行 Bot が origin の URL から clone し、PR の head（API の SHA）で切る専用の worktree（作業 AI の worktree と同じ書き込みの規則。[ADR-20261013-001][adr-workspace]）。3 つのセッションを並列で起こすか順に起こすかは、基本設計の「[AI のセッション][design-ai]」の「レビューの軸の起こし方」で決めた。作業場所の名前の付け方は、同じ文書の「セッションの名前」で決めた。
-  軸のセッションは同じレビュー用のエージェント定義で起こし、どの軸を見るかを固定の指示文と `review` Skill の引数で渡す（REVIEW-5）。規約の正典は作業場所（PR の head）のものを読む（作業 AI は正典に触れる diff を push できない。IMPL-15）。
+  軸のセッションは同じレビュー用のエージェント定義で起こす。レビュー AI には `Skill` の道具を持たせず、進行 Bot が、写しの `review` Skill の本文に引数（見る軸を含む。REVIEW-5）と `${CLAUDE_SKILL_DIR}` を入れて、固定の指示文に続けて渡す（[ADR-20261021-001][adr-review-skill]）。規約の正典は作業場所（PR の head）のものを読む（作業 AI は正典に触れる diff を push できない。IMPL-15）。
   手順は `review` Skill（`change-review` を v2 に組み直したもの。「[レビューの Skill][f08]」）を使う。核は変えない（実行して確かめる、fail-open を探す、収束するまで回す）
 - IMPL-17 結果は、いまの PR と同じ形で PR のコメントに書く（行に付けるレビューコメントにしない）。
   1 回目は「## レビュー結果（基点: `develop`）」、2 回目以降は「`## 再レビュー結果 R<n>（対象: <範囲>）`」。
@@ -199,3 +199,4 @@
 [design-settings]: ../design/basic/01-settings.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
