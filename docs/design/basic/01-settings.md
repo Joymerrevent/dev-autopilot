@@ -8,7 +8,7 @@
 | 設定 | ファイル | 置く場所 | 持つ項目 |
 | --- | --- | --- | --- |
 | リポの設定 | `.claude/dev-autopilot.json` | 当てる先のリポの中（commit する） | 項目の大半：リポと Project、ラベル名と固定の見出し、進行 Bot の実行（`dryRun`・`stage`・定期の実行の間隔など）、上限、モデル、検査と判定、規約、安全（進行 Bot のアカウント名・通信の許可先・子プロセスに渡す環境変数の名前など） |
-| マシンの設定 | `settings.json` | リポの外の、OS ごとの決まった場所。当てる先のリポごとにフォルダを分ける | マシンごとに違う 10 項目：base ブランチの名前、進行 Bot のプログラムの写しのパス（`devAutopilotPath`）、置き場のパス 4 つ（作業場所・記録・秘密・安全設定）、ホームの中の道具のフォルダ、短い一時フォルダの根・ID の長さ・長さの上限 |
+| マシンの設定 | `settings.json` | リポの外の、OS ごとの決まった場所。当てる先のリポごとにフォルダを分ける | マシンごとに違う 10 項目：base ブランチの名前、進行 Bot のプログラムの写しのパス（`devAutopilotPath`）、置き場のパス 4 つ（置き場・記録・秘密の置き場・安全設定の置き場）、ホームの中の道具のフォルダ、短い一時フォルダの根・ID の長さ・長さの上限 |
 
 マシンの設定をリポの中に置かない理由は 3 つある。
 
@@ -54,6 +54,8 @@
 | 記録 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く印のファイル（「[運用の規則][flow-rules]」） |
 | 秘密の置き場 | `paths.secrets` | `<マシンの設定のフォルダ>/secrets/` | `<マシンの設定のフォルダ>/secrets/` | PAT、deploy key、印の署名の鍵。フォルダの権限は 700、ファイルは 600（[ADR-20261015-001][adr-read] の決定 2） |
 | 短い一時フォルダの根 | `sessionTmp.root` | `/tmp/dap` | `/tmp/dap` | セッションごとの短い一時フォルダ（[ADR-20261017-006][adr-tmp]） |
+
+表のパスは、どれも要件に値が無いので暫定（[ADR-20261015-005][adr-settings] の補足情報）。
 
 - 置き場を macOS で `~/Library/Application Support/` の下に置かないのは、パスに空白が入るため。AI は置き場の中の worktree で品質ゲート（`pnpm check`）とパッケージのスクリプトを動かし、空白を含むパスで失敗する道具がある
 - 記録と秘密の置き場は、AI が道具を動かさないので、macOS ではマシンの設定のフォルダの中に並べる（秘密の置き場をマシンの設定と並べてよいことは [ADR-20261015-005][adr-settings] の決定 2）。Linux の記録は、XDG の決まり（状態のファイルは `XDG_STATE_HOME`）に合わせる
@@ -103,7 +105,7 @@
 | `run.dryRun` | GitHub に書かずに試すか（`true` なら、書くつもりだった内容を手元の記録にだけ残す） | `true`（受け入れ工程（段階 4）の最初。[運用の規則][flow]） | GitHub への書き込みをすべて手元の記録に残して試す合図で、受け入れ工程（段階 4）の最初と新しい段階に入るときに使う（[運用の規則][flow]、[ADR-20261017-007][adr-stop]）。`false` にする（書き始める）のは、安全の境界を緩める向きの変更なので PR に残す |
 | `run.stage` | 今の段階の番号（段階ごとの振る舞いを切り替える） | `4`（受け入れ工程。暫定） | 段階ごとの振る舞い（計画・実装工程（段階 5）では Agent 欄が空、修正工程（段階 7）では判定の印を書かない、など）を、設定の `stage` で切り替える（[Issue の状態の遷移][flow]）。Issue の流れは受け入れ工程（段階 4）から動く（[段階の表][stages]） |
 | `run.intervalHours` | 定期の実行の間隔。24 の約数（1・2・3・4・6・8・12・24）に限る（[導入と点検][design-setup]の「定期の実行の登録」） | 24 時間（1 日 1 回。[FLOW-12][flow]） | 間隔と件数の上限は、リポの設定 1 つで変える（[FLOW-11][flow]）。間隔は OS ごとの定期の実行の登録にも書くので、`check` がずれを確かめる（[STRUCT-2][struct]） |
-| `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの Issue は次の実行に回す | 180 分（暫定） | 1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次の実行に回す。lock を長く持たないため（[FLOW-4][flow]）。180 分は、重い工程 1 つ（1 セッションは最大 45 分）の後にも、軽い工程とほかの Issue の重い工程を進める余地を持たせる値で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
+| `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの Issue は次の実行に回す | 180 分（暫定） | 1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次の実行に回す。lock を長く持たないため（[FLOW-4][flow]）。上限は Issue の合間に見るので、動いている工程は止めない（計画の工程は、計画し直しを含めて最大 225 分かかりうる。`limits.planRevisions`）。180 分は、1 セッションで終わる重い工程（最大 45 分）なら、ほかの Issue の工程も進める余地を持たせる値で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
 | `run.stopSignalPollSeconds` | AI のセッションが動いている間に、全体を止める合図を読む間隔 | 60 秒（暫定） | AI のセッションが動いている間も、全体を止める合図を一定の間隔で読む。間隔は基本設計で決める（[運用の規則][flow]）。60 秒にすると、止めると決めてから AI のセッションが止まるまでが 1 分ほどになる。1 セッションの間に読む回数は数十回で、GitHub の API の上限（1 時間に 5,000 回）に比べて少ない |
 
 #### 上限
@@ -164,7 +166,7 @@
 | `models.planHard` | 計画 AI（受け入れの判定かラベルで `fable` にしたとき、計画 AI が自己申告して計画し直すとき） | `fable` / high（[IMPL-31][impl]） | `opus` が設計判断などを含むと自己申告したら、同じ実行で 1 回だけ `fable` で計画し直す（[IMPL-31][impl]、[ADR-20261018-002][adr-redo]） |
 | `models.work` | 作業 AI の最初の実装 | `opus` / high（[IMPL-32][impl]） | 作業 AI は `opus` で始め、計画・実装工程（段階 5）で人が手直しせずにマージできた種類から `sonnet` に仮に下げる（[IMPL-25、IMPL-32][impl]） |
 | `models.workByType` | Issue の種類ごとの、作業 AI の最初の実装。種類は作業ブランチの型（`labels.branchTypes` と `labels.defaultBranchType` で決まる `fix`・`feat` など）で、キーは型、値は `model` と `effort` | 空（どの型も `models.work`。暫定） | 最初の実装に使うモデルは、Issue の種類ごとに決める（[IMPL-25][impl]、[ADR-20261018-003][adr-model]）。種類は作業ブランチの型にする（UNDECIDED-52 を、ここで決めた）。型はラベルから決まるので、同じ Issue は毎回同じ種類になる。計画・実装工程（段階 5）の PR は 5 件と少なく、細かく分けると種類ごとに比べられないので、型の粗さで分ける。比べるために、実行の記録に型を残す。計画・実装工程（段階 5）を終えるときに、人が手直しせずにマージできた型に `sonnet` を書く（[IMPL-32][impl]） |
-| `models.workRaised` | 最初の実装が `sonnet` だった Issue で、修正のときに上げる先 | `opus` / high（[IMPL-35][impl]） | 最初の実装が `sonnet` なら、修正のときに `opus` に 1 段上げる。`fable` には上げない（[IMPL-32、IMPL-35][impl]） |
+| `models.workRaised` | 最初の実装が `sonnet` だった Issue で、修正のときに上げる先 | `opus` / high（[IMPL-35][impl]） | 最初の実装が `sonnet` なら、修正のときに `opus` に 1 段上げる。`fable` には上げない（[IMPL-32、IMPL-35][impl]）。最初の実装のモデルは、修正のときに、最初の実装と同じ決め方（作業ブランチの型の `models.workByType`、無ければ `models.work`）で今の設定から決める。手元の記録は判定に使わないため（[ADR-20261015-006][adr-flow] の決定 4）。PR を作った後に設定を変えると、変えた後の値で決まる |
 | `models.review` | レビュー AI（3 つの軸と見落としの軸とも同じ値） | `opus` / xhigh（[IMPL-33][impl]） | 3 つの軸と見落としの軸とも同じ値で始め（[ADR-20261019-002][adr-gaps]）、軸ごとに分けるかはレビュー工程（段階 6）で決める（[IMPL-33][impl]）。モデルは設定で変えられるようにする（[IMPL-19][impl]） |
 | `models.reviewComparison` | レビュー工程（段階 6）で比べるためだけに回すレビュー AI（印を書かない） | `fable` / high（[IMPL-33][impl]） | レビュー工程（段階 6）で、同じ PR を `fable` でも回して比べ、既定のモデルを決める。比較の実行は印を書かない（[IMPL-19、IMPL-33][impl]、[段階の表][stages]） |
 | `models.critic` | 批評 AI | `opus` / high（[IMPL-34][impl]） | 批評 AI は、🔴 と 🟡 を別のセッションで再検証する。値は変えない（[IMPL-22、IMPL-34][impl]） |
@@ -203,12 +205,12 @@
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 無し。`setup` のマシンの準備で人が指定する | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
-| `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | `setup` が `<paths.workspace>/program/<版>/` を書く | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
+| `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 無し。`setup` のマシンの準備で人が指定する（business-os は `develop`。[IMPL-6][impl]、[MERGE-2][merge]） | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
+| `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | `setup` が `<paths.workspace>/program/<版>/` を書く（暫定） | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
 | `paths.workspace` | 置き場（進行 Bot の clone、セッションごとのフォルダ、プログラムの写し、安全設定のファイル） | 「[マシンの中の置き場][places]」 | AI のセッションごとに origin から clone し直す。進行 Bot の clone は `controller/`、セッションのフォルダは `sessions/<セッションの名前>/` に置く（[ADR-20261013-001][adr-workspace]） |
 | `paths.records` | 実行の記録と lock の置き場 | 「[マシンの中の置き場][places]」 | 実行の記録を追跡しないフォルダに残す（[FLOW-5][flow]）。記録と lock の置き場はマシンの設定に置く（[ADR-20261015-005][adr-settings]） |
 | `paths.secrets` | 秘密の置き場（PAT、deploy key、印の署名の鍵） | 「[マシンの中の置き場][places]」 | PAT・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2） |
-| `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | `<paths.workspace>/sandbox-settings/` | 安全設定のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる（[SAFE-2][safety] の (e)）。進行 Bot がセッションごとに作り、終わった後にもハッシュを比べて消す（[AI のセッション][design-ai]の「セッションごとの安全設定」） |
+| `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | `<paths.workspace>/sandbox-settings/`（暫定） | 安全設定のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる（[SAFE-2][safety] の (e)）。進行 Bot がセッションごとに作り、終わった後にもハッシュを比べて消す（[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `safety.sandbox.toolDirs` | sandbox の `allowRead` に足す、ホームの中にある道具のフォルダ | `setup` が、`node` `pnpm` `git` の実体のうちホームの中にあるもののフォルダを書く（暫定） | sandbox はホーム（`~/`）を読ませないので、ホームの中にある道具のフォルダを `allowRead` に足す（[SAFE-10][safety]） |
 | `sessionTmp.root` | セッションごとの短い一時フォルダを作る根 | 「[マシンの中の置き場][places]」 | セッションごとの短い一時フォルダを、ホーム・置き場・`/tmp/claude-<uid>/` の外の、dev-autopilot 専用の短い根の下に作る（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]） |
 | `sessionTmp.idLength` | 短い一時フォルダの名前（セッションの短い ID）の文字数 | 8 文字（暫定） | 根と ID の長さの値は、設定の表で決める（[ADR-20261017-006][adr-tmp]）。8 文字にすると、`<根>/<ID>/claude-<uid>` が 44 バイト以内に収まる（uid は 19 桁まで） |
@@ -257,3 +259,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [doc-costs]: https://code.claude.com/docs/en/costs
 [doc-plans]: https://claude.com/pricing
 [design-flow]: ./02-flow-and-judgment.md
+[adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md

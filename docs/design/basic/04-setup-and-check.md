@@ -77,7 +77,7 @@
 - 写しに `node_modules` を作らず、`setup` は依存を入れない。npm の登録所への通信も、lifecycle script も要らない
 - JSON スキーマで確かめる処理（出力契約、設定）も、外の部品を使わずに `plugin/src/` の中に書く
 - リポの CI で、`plugin/src/` の import が `node:` で始まるか相対パスだけであることを確かめる
-- 開発の道具（検査・テスト）の依存は、今のとおりリポの root の `package.json` と pnpm に置き、配らない（[STRUCT-4][struct]）
+- 開発の道具（検査・テスト）の依存は、リポの root の `package.json` と pnpm に置き、配らない（[STRUCT-4][struct]）
 
 ## 定期の実行の登録
 
@@ -113,7 +113,7 @@
 | `$XDG_CONFIG_HOME/systemd/user/dev-autopilot-<owner>-<repo>.service` | `Type=oneshot`。`ExecStart=` は macOS の `ProgramArguments` と同じ 3 つ。`Environment=` は `PATH` と `LANG` |
 | `$XDG_CONFIG_HOME/systemd/user/dev-autopilot-<owner>-<repo>.timer` | `OnCalendar=` は上の「時刻」（24 時間なら `*-*-* 00:00:00`、6 時間なら `*-*-* 00/6:00:00`）。`Persistent=true` |
 
-- cron でなく systemd のユーザーのタイマーにする。`OnCalendar` は眠っていた間の分を起きたときに走らせ、`Persistent=true` は電源が切れていた間の分を、次にタイマーが有効になったときに走らせる（[systemd.timer][doc-systemd-timer]）。cron は眠っていた間の分を逃す（`man launchd.plist`）
+- cron でなく systemd のユーザーのタイマーにする。`OnCalendar` は眠っていた間の分を起きたときに走らせ、`Persistent=true` は電源が切れていた間の分を、次にタイマーが有効になったときに走らせる（[systemd.timer][doc-systemd-timer]）。Linux の cron が眠っていた間の分をどう扱うかは確かめていないので、根拠にしない
 - ログインしていない間も動かすには、ユーザーの lingering（`loginctl enable-linger`）が要る（[loginctl][doc-loginctl]）。`setup` は、人がやることとして示す
 - 手動の 1 回実行と点検は、`systemctl --user start dev-autopilot-<owner>-<repo>.service` で同じジョブを起こす
 - Linux では、sandbox の振る舞いを確かめ直すまで（UNDECIDED-49）、進行 Bot を動かさない（[STRUCT-8][struct]）。それまで `setup` は Linux で定期の実行を登録せず、そのことを示す。進行 Bot も、Linux で起こされたら作業に入らずに止まる
@@ -133,10 +133,10 @@
 
 | 組 | 主な項目（[SETUP-2][setup]） | 確かめ方 | 毎回の実行の最初 | `setup`・人の `check` |
 | --- | --- | --- | --- | --- |
-| 設定 | 設定ファイルの項目・型・ID、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前が無いこと | ファイルを読む | 確かめる | 確かめる |
-| GitHub | ラベル、Project の欄と自動追加、ruleset（必須チェックに `checks.required` がすべて strict で入っていること）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、基線の必須チェック（warn） | 進行 Bot の PAT で読む | 確かめる | 確かめる |
+| 設定 | 設定ファイルの項目と型、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前が無いこと | ファイルを読む | 確かめる | 確かめる |
+| GitHub | ラベル、Project の欄と自動追加、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（必須チェックに `checks.required` がすべて strict で入っていること）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、基線の必須チェック（warn） | 進行 Bot の PAT で読む | 確かめる | 確かめる |
 | PAT の権限 | 下の「PAT の権限」の読み取りが通ること。リポの変数を作れないこと | 読み取りと、点検用の変数を作る試し（403 で断られれば pass） | 確かめる | 読み取りは確かめる。作る試しは、合図が `run` のときだけ |
-| マシン | `claude` と Node 24 の版、Plugin と写しの版、置き場と秘密の置き場の権限と実体のパス、記録と印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、objects のリンク数 | ファイルとプロセスを読む | 確かめる | 確かめる |
+| マシン | `claude` と Node 24 の版、Plugin と写しの版、写しの Skill とエージェント定義が Plugin の中の一覧どおりにあること、置き場と秘密の置き場の権限と実体のパス、記録と印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、objects のリンク数 | ファイルとプロセスを読む | 確かめる | 確かめる |
 | 子プロセスと clone | 子プロセスに渡す環境変数に PAT・鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗すること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
 | sandbox と AI のセッション | 読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否と写しの `skills/` の読み取り、子プロセスから秘密の置き場を読めないこと、gitdir、道具の一覧に MCP の道具と `Agent`・`Task` が無いこと、一時フォルダ | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
 
@@ -199,7 +199,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 
 進行 Bot の fine-grained PAT は、当てる先のリポだけに絞り、次の権限だけを付ける（[ADR-20261017-004][adr-human] が基本設計に残した、GitHub の点検に要る読み取りの権限を含む）。権限の名前は [GitHub の公式文書][doc-pat-permissions] による。
 
-| 権限 | 段 | 使うところ |
+| 権限 | 読み取りか書き込みか | 使うところ |
 | --- | --- | --- |
 | Metadata（リポ） | 読み取り | ruleset を読む（`GET /repos/{owner}/{repo}/rulesets` は Metadata の読み取りで通る） |
 | Issues（リポ） | 書き込み | ラベル、印とコメント、🟢 から Issue を作る |

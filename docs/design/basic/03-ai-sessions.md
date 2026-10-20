@@ -12,7 +12,7 @@
 | 計画 AI | `dev-autopilot:plan:planner` | Read・Grep・Glob | base ブランチの先端で切った worktree | 計画 |
 | レビュー AI（計画のレビュー） | `dev-autopilot:plan:reviewer` | Read・Grep・Glob | base ブランチの先端で切った worktree（計画とは別に作る） | 計画のレビュー |
 | 作業 AI | `dev-autopilot:change:worker` | Bash・Read・Write・Edit | 実装は base ブランチの先端、修正と衝突の解消は PR の head で切った worktree（作業ブランチを切る） | 実装、修正、衝突の解消 |
-| レビュー AI | `dev-autopilot:change:reviewer` | Bash・Read（Write は worktree の中だけ） | PR の head で切った worktree（軸ごとに別に作る） | レビュー |
+| レビュー AI | `dev-autopilot:change:reviewer` | Bash・Read（sandbox の中で書けるのは worktree と一時フォルダだけ） | PR の head で切った worktree（軸ごとに別に作る） | レビュー |
 | 批評 AI | `dev-autopilot:change:verifier` | Bash・Read | PR の head で切った worktree（レビューとは別に作る） | 批評 |
 
 - 道具は、エージェント定義の `tools` で決まる（[登場するもの][overview]、[ADR-20261017-002][adr-review] の決定 2）。どの役にも Agent ツールを与えない
@@ -66,7 +66,7 @@
 
 - 指示文と、渡す文などの値は、標準入力で渡す。引数に置くと、同じマシンのほかのユーザーから、プロセスの一覧で読めるため。渡す要素は、下の「役ごとの入力」
 - 使わない引数：`--json-schema`（`--agent` と併用すると結果が空になる。[IMPL-5][impl]、FACT-14）。sandbox を外す引数と、許可の確かめを省く引数
-- 時間の上限（`limits.session.minutes`）は `claude` に無いので、進行 Bot が数えて止める（[IMPL-13][impl]）。止め方は、この文書に後で足す
+- 時間の上限（`limits.session.minutes`）は `claude` に無いので、進行 Bot が数えて止める（[IMPL-13][impl]）。止め方は、下の「止め方と利用枠の数え方」
 
 ## 環境変数
 
@@ -109,7 +109,7 @@
 ![セッションごとの安全設定][fig-session-settings]
 
 AI のセッションに `--settings` で渡す安全設定は、読み書きを許すパス（自分のセッションのフォルダ、worktree、短い一時フォルダ）がセッションごとに違う。
-進行 Bot は、起動の直前にセッションごとのファイルを作り、AI が書けない場所に置いて、起動の前と後にハッシュを比べる（要件の UNDECIDED-40 を、この節で決めた）。
+進行 Bot は、起動の直前にセッションごとのファイルを作り、AI が書けない場所に置いて、起動の前と後にハッシュを比べる（要件の UNDECIDED-40 を、この節で決めた）。[ADR-20261015-001][adr-read] は `setup` が安全設定を書く形だったが、セッションごとに違うパスを入れるために、セッションごとに作る形に改めた。安全設定を AI が書けない場所に置き、ハッシュを確かめる守りは変えない。
 
 ### 作り方
 
@@ -125,7 +125,7 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 - 安全設定のファイルは、セッションの途中で書き換えると、動いているセッションにすぐ効く（[公式文書][doc-sandboxing]）。AI が書けない場所に置き、セッションの後にもハッシュを比べるのは、このため
 - `sandbox-settings/` は置き場の中にある。置き場は AI の `denyRead` に入り、書き込みも許していないので、AI からは読めず書けない
 - 実行の最初に、`sandbox-settings/` に残っているファイルを消す（進行 Bot が途中で止まったときの残り。実行の lock があるので、ほかの実行のファイルではない）
-- `check` は、本物のセッションと同じ組み立て方で安全設定を作り、実際に読めない・書けないことを試す（[SAFE-5][safety]。試し方は「導入と点検」の文書で決める）
+- `check` は、本物のセッションと同じ組み立て方で安全設定を作り、実際に読めない・書けないことを試す（[SAFE-5][safety]。試し方は「[導入と点検][design-setup]」の「試しのセッション」）
 
 ### 中身
 
@@ -134,7 +134,7 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `sandbox.enabled` | `true` | AI の Bash を sandbox の中で動かす（[SAFE-10][safety]） |
 | `sandbox.failIfUnavailable` | `true` | sandbox が起動できない（依存が無い、OS が対応していない）とき、Claude Code は既定では sandbox なしでコマンドを動かす。`true` にすると、起動の時点で止まり、実行の失敗になる（[公式文書][doc-sandboxing]。安全側に倒す。[SAFE-4][safety]） |
 | `sandbox.allowUnsandboxedCommands` | `false` | sandbox の中で失敗したコマンドを、sandbox の外で動かし直させない（[SAFE-10][safety]） |
-| `sandbox.filesystem.denyRead` | `~/`、置き場（`paths.workspace`）、秘密の置き場（`paths.secrets`）、マシンの設定のフォルダ、短い一時フォルダの根（`sessionTmp.root`）、`/tmp/claude-<uid>/`、リポの設定の `safety.sandbox.denyRead` | 読み取りを、自分のセッションのフォルダだけにする（[SAFE-10][safety]、[ADR-20261015-001][adr-read]、[ADR-20261017-006][adr-tmp]） |
+| `sandbox.filesystem.denyRead` | `~/`、置き場（`paths.workspace`）、秘密の置き場（`paths.secrets`）、マシンの設定のフォルダ、短い一時フォルダの根（`sessionTmp.root`）、記録の置き場（`paths.records`）、安全設定の置き場（`paths.sandboxSettings`）、`/tmp/claude-<uid>/`、リポの設定の `safety.sandbox.denyRead`。記録と安全設定の置き場は、既定ではほかの場所の下にあるが、人が別の場所を指定したときも読ませないために名指しする | 読み取りを、自分のセッションのフォルダだけにする（[SAFE-10][safety]、[ADR-20261015-001][adr-read]、[ADR-20261017-006][adr-tmp]） |
 | `sandbox.filesystem.allowRead` | 自分のセッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）、自分の短い一時フォルダ、写しの `skills/`、マシンの設定の `safety.sandbox.toolDirs` | 狭い方の規則が勝つので、`denyRead` の中を開け直す（[SAFE-10][safety]、FACT-22、FACT-32） |
 | `sandbox.filesystem.allowWrite` | 自分のセッションのフォルダの `tmp/`（XDG の 4 つと pnpm の store） | sandbox が既定で書けるのは、作業フォルダ（worktree）と、ユーザーごとの一時フォルダ（短い一時フォルダの下の `claude-<uid>/`）と、worktree の親 clone の `.git` だけで（FACT-9、FACT-34）、`tmp/` は入らない。`allowWrite` に入れると、sandbox の中から書ける（FACT-41。[SAFE-10][safety]） |
 | `sandbox.filesystem.denyWrite` | 親 clone の `.git/worktrees/<名前>/gitdir`、リポの設定の `safety.sandbox.denyWrite` | 既定で書ける親 clone の `.git` のうち、`gitdir` は書けてしまうので止める（FACT-9、[SAFE-12][safety]） |
@@ -195,7 +195,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 | 2 | 止めるとき（時間の上限、全体の止める合図）は、`claude` のプロセスグループに `SIGTERM` を送る。`SIGINT` は使わない（書いている途中のメッセージの費用を 0 と数える `result` を出すため。FACT-38） | — |
 | 3 | `limits.stopGraceSeconds`（10 秒）の間に終わらなければ、`claude` のプロセスグループに `SIGKILL` を送る | — |
 | 4 | `claude` が終わったら（止めずに終わったときも）、残りを 2 つの探し方で探す。探し方 1 は、控えたプロセスグループにまだプロセスがあるか。探し方 2 は、作業フォルダ（cwd）が、セッションのフォルダか、セッションの短い一時フォルダの中にあるプロセスがあるか（`lsof`）。見つかれば、プロセスグループごと `SIGKILL` を送る | — |
-| 5 | 3 秒待って、もう一度 2 つの探し方で探す | 残っていれば、作業場所を消さず、そのセッションの次の AI のセッションを起動せず、`needs-human` を付ける（`session-not-stopped`。[IMPL-14][impl]） |
+| 5 | 3 秒待って、もう一度 2 つの探し方で探す | 残っていれば、作業場所を消さず、止めたセッションの Issue か PR で、次の AI のセッションを起動せず、`needs-human` を付ける（`session-not-stopped`。[IMPL-14][impl]） |
 
 - 探し方 1 は、`SIGTERM` を無視して残り、親が PID 1 に替わったコマンドも、プロセスグループで見つけられる。探し方 2 は、控える間隔（1 秒）の間に生まれて親が替わったものを拾う。短い一時フォルダも探すのは、AI のコマンドが `$TMPDIR` の下で動くことがあるため。どちらでも見つけて止められることを確かめた（FACT-43）
 - 止めずに終わったときも探すのは、`&` で裏に回したコマンドが、`claude` が終わった後も残りうるため
@@ -221,9 +221,9 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 1 ラウンドのレビューは、軸ごとの 3 つのセッション（動作・仕様・規約）、その後の見落としの軸のセッション、その後の批評 AI のセッションで行う（[ADR-20261017-002][adr-review] の決定 1、[ADR-20261019-002][adr-gaps] の決定 1）。基本設計で決めることになっていた、3 つを並べて起こすか、順に起こすかを決める。
 
 - 3 つの軸のセッションは、並べて同時に起こす。3 つが終わってから見落としの軸のセッションを起こし、見落としの軸が終わってから批評 AI のセッションを起こす
-- 理由：3 つの軸を順に起こすと、1 ラウンドのレビューが、軸の 3 つと見落としと批評で最大 5 セッション分（1 セッションの上限 45 分なら 225 分）かかり、1 回の実行の所要時間の上限（`run.maxMinutes` の初期値 180 分）を超える。並べると、最大 3 セッション分（135 分）で済む
+- 理由：3 つの軸を順に起こすと、1 ラウンドのレビューが、軸の 3 つと見落としと批評で最大 5 セッション分（1 セッションの上限 45 分なら 225 分）かかり、1 回の実行の所要時間の上限（`run.maxMinutes` の初期値 180 分）を超えて、lock を長く持つ（上限は Issue の合間に見るので、動いている工程は止まらない）。並べると、最大 3 セッション分（135 分）で済む
 - 見落としの軸には、3 つの軸が出した指摘（🔴 🟡 🟢 の見出しとファイルのパス）を渡す。結果は、修正工程（段階 7）に進む前に使うかを決めるまで手元の記録に残すだけで、批評 AI に渡さず、`review` の印にも入れない（[ADR-20261019-002][adr-gaps] の決定 2）。見落としの軸のセッションが失敗しても、そのラウンドのレビューは続け、失敗を記録に残す
-- 3 つの軸のセッションと批評 AI のセッションには、IMPL-18 の 5 つの条件を掛ける。(1) 出力契約が解析できる、(2) レビューが収束した（`converged` が真）、(3) `result` の `is_error` が偽、(4) 件数（`counts`）がすべて数で返り、`findings` の件数と合う、(5) 実際に使われたモデル（`modelUsage`）が設定のモデルと一致する。時間かターンか費用の上限に当たった回は、(1) を満たさない
+- 3 つの軸のセッションと批評 AI のセッションには、IMPL-18 の 5 つの条件を掛ける。(1) 出力契約が解析できる、(2) レビューの Skill が指摘を出し切った（`converged` が真。[REVIEW-5][review-skill] の「未収束」でない）、(3) `result` の `is_error` が偽、(4) 件数（`counts`）がすべて数で返り、`findings` の件数と合う、(5) 実際に使われたモデル（`modelUsage`）が設定のモデルと一致する。時間かターンか費用の上限に当たった回は、(1) を満たさない
 - どれか 1 つのセッションでも満たさなければ、そのラウンドは `review` の印を書かず、実行の失敗として次の実行に持ち越す（[IMPL-18][impl]、[ADR-20261017-002][adr-review] の決定 1）。次の実行では、3 つの軸と批評 AI を起こし直す（前の実行の結果を使い回さない）。見落としの軸には、結果を記録だけに残す間は掛けない
 - 並べて起こすと、利用枠を短い時間にまとめて使う。利用枠切れ（HTTP 429）も実行の失敗として扱い、次の実行に持ち越す（[IMPL-14][impl]）
 - レビュー AI（3 つの軸と見落としの軸）と批評 AI は、品質ゲート（`checks.qualityGate`。初期値は `pnpm check`）の全体を回さない。CI が緑かは、収束の判定で必須チェックの結果から決める（[状態遷移と判定][design-flow]の「収束の判定」、[IMPL-27][impl]）。指摘を確かめるための実行（テストの一部を回す、再現の手順を動かす）は行ってよく、確かめた指摘は証拠レベルを `executed` にする（UNDECIDED-18 を、ここで決めた）
@@ -278,7 +278,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 - `--json-schema` は使わない。`--agent` と一緒に使うと結果が空になる（FACT-14）。形は、エージェント定義の指示と、進行 Bot が標準入力で渡す指示文で伝える
 - JSON スキーマは、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ（印の形の正本と同じ）。エージェント定義と進行 Bot は同じ写しから使うので、版はずれない（[STRUCT-3][struct]、[STRUCT-7][struct]）
 - 決まった値から選ぶ欄（下の表で `"…"` の並びを書いた欄）は、ほかの値を許さない。進行 Bot が Issue や PR に書き添えるときは、AI の文でなく、値ごとに決めた固定の文で書く（[ADR-20261018-002][adr-redo] の決定 2）
-- 文の欄は AI が書いた文で、GitHub に書く前に漏えいの検査を掛ける（[IMPL-15][impl]）。コメントに載せる文の長さは、GitHub のコメントの上限（65,536 文字）に収まるように、スキーマで上限を持つ
+- 文の欄は AI が書いた文で、GitHub に書く前に漏えいの検査を掛ける（[IMPL-15][impl]）。AI が書いた文を載せるコメント（受け入れの下書き、計画、レビュー）の先頭に、「AI が生成した」の 1 行を付ける（[REVIEW-3][review-skill]）。コメントに載せる文の長さは、GitHub のコメントの上限（65,536 文字）に収まるように、スキーマで上限を持つ
 - 文の欄を GitHub に書く前に、印の形の文字列（空白の揺れを含む）を取り除く。取り除き方は、印を読む処理と同じ規則にし、印の形の正本と同じ 1 か所に持つ（[ADR-20261015-004][adr-markers] の決定 1、[IMPL-20][impl]）。取り除かないと、署名の無い印の形の文が進行 Bot のコメントに載り、`marker-invalid` で止まる
 - Bash を持つ役（作業 AI・レビュー AI・批評 AI）は、依存の導入（`pnpm install`）がレジストリにつながらずに失敗したら、作業を止めて `{"environmentError": "dependency-install"}` だけを返す。進行 Bot は、実行の失敗として次の実行に持ち越す（[IMPL-14][impl] の表、[ADR-20261015-002][adr-store]）。`environmentError` をほかの欄と一緒に返したら、取り出せないとして扱う
 
@@ -298,6 +298,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 - 下書きの形は「[作業指示（agent brief）の形][review-skill]」に従う。ファイルのパスと行番号を書かず、手順でなく振る舞いを書く
 - 進行 Bot は、4 つの欄を決まった見出しの下に並べて、「受け入れの下書き」コメントにする（[TEXT-12][text]）
 - `policy` が真なら、進行 Bot は判定と `policyReason` を決まった見出しの下に書き添える。判定で Issue を止めない（[ADR-20261019-004][adr-policy]）
+- `policyReason` は AI の文なので、書き添える前に、検疫（[TEXT-11][text]）と漏えいの検査を通す。判定は、手元の記録の出力契約の写し（[状態遷移と判定][design-flow]の「手元の記録」）に残る（[ADR-20261019-004][adr-policy]）
 - 拒否（`stop_reason: refusal`）で止まったときは、出力契約を読まずに実行の失敗にする（次の回は `sonnet`。[TEXT-12][text]）
 
 ### 計画 AI（`plan/planner`。計画、計画し直し）
@@ -312,7 +313,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `plan.paths` | 文の一覧（1 件以上） | 変える見込みのファイルの、リポの中の相対パス。進行 Bot が push しないパスの一覧と照らす（[ADR-20261019-004][adr-policy]） |
 | `selfReport` | `"design-decision"`・`"architecture-choice"`・`"unknown-failure"` から選んだ一覧（空でよい） | 自己申告。設計判断、アーキテクチャの選択、原因不明の障害解析を含むか（[IMPL-10][impl]） |
 
-- `plan.paths` のほかの 6 つの欄は、計画に必ず含める項目（[IMPL-10][impl]）。`plan.paths` は計画コメントに載せず、照らすためだけに使う。進行 Bot は、決まった見出しの下に並べて計画コメントにし、`plan` の印のハッシュを取る
+- `plan.paths` のほかの欄（`steps` の手順と完了条件を分けて数えると 6 項目）は、計画に必ず含める項目（[IMPL-10][impl]）。`plan.paths` は計画コメントに載せず、照らすためだけに使う。進行 Bot は、決まった見出しの下に並べて計画コメントにし、`plan` の印のハッシュを取る
 - 計画し直すセッションも同じ形で返す。計画し直したセッションの `selfReport` は記録に残すだけで、使わない（[ADR-20261019-003][adr-replan]）
 
 ### レビュー AI の計画のレビュー（`plan/reviewer`）
@@ -338,7 +339,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 
 - 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と `checks` だけを返す
 - 作業の結果は、worktree の中の commit で返す。出力契約に diff を入れない（[IMPL-5][impl]）
-- `stopped` なら、進行 Bot は理由を Issue にコメントし、`needs-human` を付ける（stop の理由は `adr-required`。[状態遷移と判定][design-flow]）
+- `stopped` なら、進行 Bot は理由を Issue にコメントし、`needs-human` を付ける。stop の理由は、`stopReason` が `adr-required` でも `canon-change` でも `adr-required` にする。規約の正典を変えるのも ADR で決めるため（[IMPL-8][impl]、[状態遷移と判定][design-flow]）
 - `action` が `"unable"` の指摘は、次のラウンドのレビューで再び出れば、同じ指摘の再発として人に渡る（[IMPL-24][impl]）
 
 ### レビュー AI の PR のレビュー（`change/reviewer`。軸ごと）
@@ -346,7 +347,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | キー | 型 | 中身 |
 | --- | --- | --- |
 | `axis` | `"behavior"`・`"spec"`・`"conventions"`・`"gaps"` | 見た軸。進行 Bot が渡した軸と同じ |
-| `converged` | 真偽 | レビューが収束したか。偽なら「未収束」 |
+| `converged` | 真偽 | レビューの Skill が指摘を出し切ったか。偽なら「未収束」。PR を `Ready to Merge` に進める「収束の判定」（[状態遷移と判定][design-flow]）とは別のもの |
 | `unconvergedReason` | 文 | `converged` が偽のときだけ（[REVIEW-5][review-skill]） |
 | `body` | 文 | 人が読む本文（[REVIEW-3][review-skill]） |
 | `counts.high`・`counts.medium`・`counts.low` | 0 以上の整数 | 重要度ごとの件数。`findings` の重要度ごとの件数と同じ |
@@ -361,7 +362,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 
 - 3 つの軸と見落としの軸は、同じ形で返す。見落としの軸の結果は、記録だけの間は印に入れない（[IMPL-16][impl]）
 - 進行 Bot は、軸ごとの `body` を仕様 → 動作 → 規約の順に並べて 1 つのコメントにし、`counts` と批評 AI の結果から `review` の印を書く。指摘の ID は、`axis`・`heading`・`path` から計算する（[IMPL-18][impl]、[状態遷移と判定][design-flow]）
-- `counts` と `findings` の件数が合わなければ、出力契約が解析できないとして扱う（IMPL-18 の (1) と (4)）
+- `counts` と `findings` の件数が合わなければ、出力契約が解析できないとして扱う（上の「レビューの軸の起こし方」の、IMPL-18 の 5 つの条件のうち、出力契約が解析できることと、件数が合うこと）
 
 ### 批評 AI（`change/verifier`）
 
