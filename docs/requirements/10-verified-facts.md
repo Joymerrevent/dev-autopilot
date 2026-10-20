@@ -210,8 +210,16 @@ macOS、Claude Code 2.1.285、haiku の別名で確かめた。試験の場所�
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
-| FACT-52 | fine-grained PAT で、CI のチェックの実行（check runs）を読めるか | **公開のリポなら読める。** `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` は 200 で、6 件のチェックの実行の名前・結果・app（`github-actions`）が読めた。利用の上限は 5,000 で、PAT の認証が効いていた。応答の見出しは、要る権限を `checks=read` と返した。fine-grained PAT の権限の一覧には Checks が無く（GitHub の公式文書）、PAT にも付けていないので、公開のリポのリソースを権限なしで読めた形。check suites も同じく読めた。認証なし（上限 60）と、PAT の対象に入れていない公開のリポでも読めた。非公開のリポでは試していない | 実行 |
+| FACT-52 | fine-grained PAT で、CI のチェックの実行（check runs）を読めるか | **公開のリポなら読める。** `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` は 200 で、6 件のチェックの実行の名前・結果・app（`github-actions`）が読めた。利用の上限は 5,000 で、PAT の認証が効いていた。応答の見出しは、要る権限を `checks=read` と返した。fine-grained PAT の権限の一覧には Checks が無く（GitHub の公式文書）、PAT にも付けていないので、公開のリポのリソースを権限なしで読めた形。check suites も同じく読めた。認証なし（上限 60）と、PAT の対象に入れていない公開のリポでも読めた。非公開のリポでは読めなかった（FACT-54） | 実行 |
 | FACT-53 | 同じ PAT で、ワークフローの実行、コミットの状態、PAT の持ち主を読めるか | **読める。ただし、コミットの結合した状態は、状態が無くても `pending` を返す。** `GET .../actions/runs?head_sha=` は 200（要る権限は `actions=read`）で、ワークフローの名前・パス（`.github/workflows/ci.yml` など）・結果が読めた。`GET .../commits/{ref}/status` は 200（`statuses=read`）だったが、状態の件数が 0 なのに `state` は `pending` だった。`GET /user` は 200（`allows_permissionless_access=true`）で、PAT の持ち主のログイン名が読めた | 実行 |
+
+## 非公開のリポでチェックの実行を読めるかを確かめた事実（2026-10-20）
+
+試しのためだけに、組織 Joymerrevent に非公開のリポ（`dap-checks-probe`）を作り、`echo ok` だけのワークフローを 1 回動かして、チェックの実行を 1 件作った。メンテナが発行した fine-grained PAT（対象は試しのリポだけ、権限は Actions・Commit statuses の読み取りと、自動で付く Metadata の読み取り、期限 1 日）で、FACT-52・53 と同じ API と、ワークフローのジョブを読んだ。ジョブの名前とチェックの実行の名前の対応は、business-os（公開）の main の先端の commit で、認証なしで比べた。トークンの値は画面に出さず、試しの後にトークンを保存したファイルを消した。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-54 | 非公開のリポで、fine-grained PAT でチェックの実行を読めるか。読めないなら、ほかの API で必須チェックの結果を読めるか | **チェックの実行は読めず、Actions のジョブからなら読める。** `commits/{ref}/check-runs` と `check-suites` は 403（`Resource not accessible by personal access token`。要る権限は `checks=read`）だった。`actions/runs?head_sha=` と `actions/runs/{id}/jobs` は 200（要る権限は `actions=read`）で、ワークフローのパスと、ジョブの名前・結果が読めた。ジョブには、対応するチェックの実行の URL があった。business-os では、ジョブの名前（マトリクスの `check (ubuntu-latest)` などを含む）が、チェックの実行の名前と同じだった。コミットの結合した状態は、状態が 0 件で `pending` だった（FACT-53 と同じ）。認証なしでは 404 だった | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
