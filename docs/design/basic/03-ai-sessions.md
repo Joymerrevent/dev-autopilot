@@ -70,7 +70,7 @@
 
 ## 環境変数
 
-進行 Bot は、子プロセスの環境変数を、次の名前だけで組み立てる（[SAFE-1、SAFE-10][safety]）。ここに無い名前は渡さない。
+進行 Bot は、子プロセスの環境変数を、次の表の名前（進行 Bot のプログラムに固定する）と、リポの設定の `safety.env.names`（足す名前）だけで組み立てる（[SAFE-1、SAFE-10][safety]）。ここに無い名前は渡さない。
 
 | 名前 | 値 | 理由 |
 | --- | --- | --- |
@@ -78,12 +78,31 @@
 | `TMPDIR`、`CLAUDE_CODE_TMPDIR` | セッションごとの短い一時フォルダ（`<sessionTmp.root>/<ID>`） | sandbox の中の `$TMPDIR` をセッションごとに分ける（[SAFE-10][safety]、[ADR-20261017-006][adr-tmp]） |
 | `XDG_CONFIG_HOME` `XDG_CACHE_HOME` `XDG_DATA_HOME` `XDG_STATE_HOME` | セッションのフォルダの `tmp/` の下の `config/`・`cache/`・`data/`・`state/` | ホームを読めないので、道具の設定とキャッシュをセッションの中に向ける（[SAFE-10][safety]、FACT-22） |
 | `GIT_CONFIG_GLOBAL`、`NPM_CONFIG_USERCONFIG` | `/dev/null` | git と pnpm が、ホームの個人設定を読まずに動く（[SAFE-10][safety]、FACT-22） |
-| `GIT_CONFIG_COUNT`、`GIT_CONFIG_KEY_0`、`GIT_CONFIG_VALUE_0` | `1`、`commit.gpgsign`、`false` | 作業 AI の commit は署名しない（[SAFE-14][safety]）。環境変数で git の設定を渡せることを確かめた（FACT-17） |
+| `GIT_CONFIG_COUNT`、`GIT_CONFIG_KEY_0`、`GIT_CONFIG_VALUE_0`、`GIT_CONFIG_KEY_1`、`GIT_CONFIG_VALUE_1` | `2`、`commit.gpgsign`、`false`、`gc.auto`、`0` | 作業 AI の commit は署名しない（[SAFE-14][safety]）。AI のセッションの git では自動 gc を止め、書く場所を増やさない（[SAFE-11][safety]）。環境変数で git の設定を渡せ、`gc.auto` が効くことを確かめた（FACT-17） |
 | `GIT_AUTHOR_NAME` `GIT_AUTHOR_EMAIL` `GIT_COMMITTER_NAME` `GIT_COMMITTER_EMAIL` | 進行 Bot のアカウント（`safety.botAccount`）の名前と、GitHub の noreply のアドレス | commit の作者を環境変数で渡す（[SAFE-10][safety]）。noreply のアドレスは、漏えいの検査が止めないアドレスにする（[IMPL-15][impl]） |
 | `ENABLE_CLAUDEAI_MCP_SERVERS` | `false` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]） |
 
 - 渡さないもの：`gh` の認証、`GH_TOKEN`、PAT と鍵、`PNPM_HOME`（[SAFE-1、SAFE-10][safety]）
-- 名前の一覧は、設定の `safety.env.names` の初期値にする（[設定][design-settings]）。名前を足すのは ADR で決める
+- 表の名前は、進行 Bot のプログラムに固定し、リポの設定の PR で消せないようにする（`safety.sandbox.denyRead` と同じ形）。リポの設定の `safety.env.names` には、足す名前だけを書き、値は進行 Bot の環境変数の値をそのまま渡す（[設定][design-settings]）。名前を足すのは、安全の境界を緩める変更なので ADR で決める
+- `safety.env.names` に、渡さないもの（上の箇条の `GH_TOKEN`・`PNPM_HOME` など）が入っていれば、起動せず、`check` も fail にする
+- 要件の STRUCT-2 は、名前の一覧を設定に持つと書いている。プログラムに固定する形に、要件を直す PR でそろえる
+
+## 短い一時フォルダ
+
+![短い一時フォルダ][fig-session-tmp]
+
+セッションごとの短い一時フォルダ（`<sessionTmp.root>/<ID>`）を、作ってから消すまでの順番を決める（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]）。
+
+| 順 | すること |
+| --- | --- |
+| 1 | ID を作る。`sessionTmp.idLength` 文字の、英小文字と数字の乱数（`node:crypto`） |
+| 2 | 起動の前の確かめの順 5 と 6（根の持ち主・リンク・権限、フォルダがまだ無いこと、長さ）を行う |
+| 3 | `<sessionTmp.root>/<ID>` を権限 700 で作り、実行の記録に、セッションの名前と ID の組を残す |
+| 4 | 作ったフォルダを実体のパスに解決して、環境変数（`TMPDIR`、`CLAUDE_CODE_TMPDIR`）と、セッションの安全設定（`allowRead`）に入れる。安全設定は、一時フォルダを作った後に組み立てる（下の「セッションごとの安全設定」の「作り方」） |
+| 5 | セッションのフォルダを消すとき（作り直す直前、片付け、受け入れのフォルダはセッションの後）に、記録の組から ID を引いて、`<sessionTmp.root>/<ID>` もフォルダごと消す。git を使わず、シンボリックリンクの先をたどらない（[SAFE-12][safety]） |
+
+- 実行の記録にセッションの名前との組が無いフォルダが根の下にあれば、名前から Issue か PR を引けない残骸として扱い、点検を fail にする（[状態遷移と判定][design-flow]の「作業場所の残骸」）
+- 安全設定を組み立てる前にフォルダを作るのは、まだ無いパスは実体に解決できず、`denyRead` の根（実体のパス）と `allowRead` のフォルダの書き方が食い違うため（macOS の `/tmp` は `/private/tmp` へのリンク）
 
 ## セッションごとの安全設定
 
@@ -120,6 +139,7 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `sandbox.filesystem.allowWrite` | 自分のセッションのフォルダの `tmp/`（XDG の 4 つと pnpm の store） | sandbox が既定で書けるのは、作業フォルダ（worktree）と、ユーザーごとの一時フォルダ（短い一時フォルダの下の `claude-<uid>/`）と、worktree の親 clone の `.git` だけで（FACT-9、FACT-34）、`tmp/` は入らない。`allowWrite` に入れると、sandbox の中から書ける（FACT-41。[SAFE-10][safety]） |
 | `sandbox.filesystem.denyWrite` | 親 clone の `.git/worktrees/<名前>/gitdir`、リポの設定の `safety.sandbox.denyWrite` | 既定で書ける親 clone の `.git` のうち、`gitdir` は書けてしまうので止める（FACT-9、[SAFE-12][safety]） |
 | `sandbox.network.allowedDomains` | リポの設定の `safety.network.allowedDomains` | 外への通信は、許可した先だけにする（[SAFE-10][safety]） |
+| `env` | `NODE_USE_ENV_PROXY`：`1`、`npm_config_cache`：`${TMPDIR}/npm-cache` | Node の `fetch` は、sandbox のプロキシの環境変数を使わないので、許可した通信先にも届かない。`NODE_USE_ENV_PROXY` でプロキシを使わせる。npm と `npx` のキャッシュは、ホームでなく sandbox の一時フォルダに置く（`${TMPDIR}` は npm が展開する）。どちらも business-os の ADR 20261006-01 の設定を写す（[SAFE-10][safety]、[ADR-20261015-002][adr-store]）。効くことは、点検の試しのセッションで確かめる（「[導入と点検][design-setup]」の「試しのセッション」） |
 | `disableClaudeAiConnectors` | `true` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。Skill を呼ぶ `Skill` の道具は、入れなくても使える（FACT-42） |
 | `permissions.deny` | `Agent`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]） |
@@ -150,30 +170,36 @@ AI のセッションの上限、起動の前の利用枠の確かめ方、途�
 
 ### 起動の前の確かめ
 
-AI のセッションを起動する前に、毎回、次の順に確かめる。セッションは費用の上限まで使いうるので、累計にこの回の費用の上限（`limits.session.costUsd`）を足して比べる。足しても超えないときだけ起動すれば、上限を超えない。
+AI のセッションを起動する前に、毎回、次の順に確かめる。セッションは費用の上限まで使いうるので、費用は、累計に、動いているほかのセッションの費用の上限と、この回の費用の上限（`limits.session.costUsd`）を足して比べる。同時に起こすセッション（レビューの 3 つの軸）は、起こす前に 3 つ分をまとめて足して比べる。足しても超えないときだけ起動すれば、上限を超えない。
 
 | 順 | 確かめること | 外れたとき |
 | --- | --- | --- |
 | 1 | 全体の止める合図が `run` である | 起動しない。実行の失敗に数えず、合図が戻った後の実行で続ける（[運用の規則][flow-rules]、[ADR-20261017-007][adr-stop]） |
-| 2 | その日の累計 ＋ この回の費用の上限が、`limits.dailyCostUsd` を超えない | 起動しない。その日は、ほかの AI のセッションも起動しない。実行の失敗に数えず、次の日の実行で続ける |
-| 3 | その回の実行の累計 ＋ この回の費用の上限が、`limits.runCostUsd` を超えない | 起動しない。実行の失敗に数えず、次の実行で続ける |
-| 4 | その Issue の累計（往復を含む）＋ この回の費用の上限が、`limits.issueCostUsd` を超えない | 起動せず、`needs-human` を付ける（stop の理由は `usage-limit`。[IMPL-14][impl]） |
+| 2 | その日の累計 ＋ 動いているセッションの上限 ＋ この回の費用の上限が、`limits.dailyCostUsd` を超えない | 起動しない。その日は、ほかの AI のセッションも起動しない。実行の失敗に数えず、次の日の実行で続ける |
+| 3 | その回の実行の累計 ＋ 動いているセッションの上限 ＋ この回の費用の上限が、`limits.runCostUsd` を超えない | 起動しない。実行の失敗に数えず、次の実行で続ける |
+| 4 | その Issue の累計（往復を含む）＋ 動いているセッションの上限 ＋ この回の費用の上限が、`limits.issueCostUsd` を超えない | 起動せず、`needs-human` を付ける（stop の理由は `usage-limit`。[IMPL-14][impl]） |
+| 5 | 短い一時フォルダの根（`sessionTmp.root`）が、進行 Bot のユーザーの持ち物で、シンボリックリンクでなく、権限が 700 | 起動しない。ほかの AI のセッションも起動せず、実行を終える。マシンの置き場の異常なので、Issue に `needs-human` を付けない。点検のマシンの組でも fail にする（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]） |
+| 6 | 起動するセッションの短い一時フォルダ（`<sessionTmp.root>/<ID>`）がまだ無く、`<短い一時フォルダ>/claude-<uid>` の長さが `sessionTmp.maxBytes` 以内 | 起動しない。5 と同じく実行を終える（[ADR-20261017-006][adr-tmp]） |
+| 7 | 渡す文を検疫（[TEXT-11][text]）に通して、見つからない。対象は、計画 AI と作業 AI に渡す作業指示（作業指示コメントか、承認された下書き）、作業 AI に渡す計画コメント、再レビューに渡す前回の指摘、計画し直すセッションに渡す計画のレビューの指摘。受付 AI に渡す Issue の文は、受け入れの検疫で調べる（[状態遷移と判定][design-flow]の「受け入れと承認の確定で確かめること」） | 起動せず、`needs-human` を付ける（`quarantine`。[TEXT-11][text]） |
 
 - 1 日は、マシンの時刻の日付で区切る（0 時で切り替える）
-- 累計は、手元の記録から足し上げる（[状態遷移と判定][design-flow]の「状態の組み立て」）
+- 累計は、手元の記録から足し上げる（[状態遷移と判定][design-flow]の「状態の組み立て」）。記録が無いときに、累計や実行の失敗の回数を 0 と読まない（[運用の規則][flow-rules]、[ADR-20261015-006][adr-flow] の決定 4）
+  - 計画の印か結びつく PR がある Issue なのに、Issue の記録が無ければ、順 4 で起動せずに `needs-human` を付ける（`records-missing`）。実行の失敗が起きたときも、1 回目で `needs-human` にする
+  - 当日の実行の記録に、AI のセッションを起動した実行があるのに、当日の費用の記録が無ければ、順 2 で、当日は起動しない
 
 ### 止める手順
 
 | 順 | すること | うまくいかないとき |
 | --- | --- | --- |
-| 1 | セッションの間、2 秒ごとに `claude` の子孫をたどり、子孫のプロセスグループを控える（残りの探し方 1）。Bash のコマンドは `claude` と別のプロセスグループで動く（FACT-38） | — |
+| 1 | セッションの間、1 秒ごとに `claude` の子孫をたどり、子孫のプロセスグループを控える（残りの探し方 1。1 秒は FACT-43 で試した間隔）。Bash のコマンドは `claude` と別のプロセスグループで動く（FACT-38） | — |
 | 2 | 止めるとき（時間の上限、全体の止める合図）は、`claude` のプロセスグループに `SIGTERM` を送る。`SIGINT` は使わない（書いている途中のメッセージの費用を 0 と数える `result` を出すため。FACT-38） | — |
 | 3 | `limits.stopGraceSeconds`（10 秒）の間に終わらなければ、`claude` のプロセスグループに `SIGKILL` を送る | — |
-| 4 | `claude` が終わったら（止めずに終わったときも）、残りを 2 つの探し方で探す。探し方 1 は、控えたプロセスグループにまだプロセスがあるか。探し方 2 は、作業フォルダ（cwd）がセッションのフォルダの中にあるプロセスがあるか（`lsof`）。見つかれば、プロセスグループごと `SIGKILL` を送る | — |
+| 4 | `claude` が終わったら（止めずに終わったときも）、残りを 2 つの探し方で探す。探し方 1 は、控えたプロセスグループにまだプロセスがあるか。探し方 2 は、作業フォルダ（cwd）が、セッションのフォルダか、セッションの短い一時フォルダの中にあるプロセスがあるか（`lsof`）。見つかれば、プロセスグループごと `SIGKILL` を送る | — |
 | 5 | 3 秒待って、もう一度 2 つの探し方で探す | 残っていれば、作業場所を消さず、そのセッションの次の AI のセッションを起動せず、`needs-human` を付ける（`session-not-stopped`。[IMPL-14][impl]） |
 
-- 探し方 1 は、`SIGTERM` を無視して残り、親が PID 1 に替わったコマンドも、プロセスグループで見つけられる。探し方 2 は、控える間隔（2 秒）の間に生まれて親が替わったものを拾う。どちらでも見つけて止められることを確かめた（FACT-43）
+- 探し方 1 は、`SIGTERM` を無視して残り、親が PID 1 に替わったコマンドも、プロセスグループで見つけられる。探し方 2 は、控える間隔（1 秒）の間に生まれて親が替わったものを拾う。短い一時フォルダも探すのは、AI のコマンドが `$TMPDIR` の下で動くことがあるため。どちらでも見つけて止められることを確かめた（FACT-43）
 - 止めずに終わったときも探すのは、`&` で裏に回したコマンドが、`claude` が終わった後も残りうるため
+- 全体の止める合図で止めた回は、実行の失敗に数えない。合図が `run` に戻った後の実行で続ける。費用は、途中で止めた回として数える（[IMPL-14][impl] の表、[ADR-20261017-007][adr-stop]）
 - 環境変数の印と、セッションの ID では探さない。macOS の `ps` で取れなかった（FACT-44）
 - 残ったコマンドは sandbox の中のままで、書けるのは自分のセッションの作業場所と一時フォルダだけ（FACT-38）。Linux で同じに振る舞うかは確かめていない（UNDECIDED-49）
 
@@ -197,7 +223,8 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 - 3 つの軸のセッションは、並べて同時に起こす。3 つが終わってから見落としの軸のセッションを起こし、見落としの軸が終わってから批評 AI のセッションを起こす
 - 理由：3 つの軸を順に起こすと、1 ラウンドのレビューが、軸の 3 つと見落としと批評で最大 5 セッション分（1 セッションの上限 45 分なら 225 分）かかり、1 回の実行の所要時間の上限（`run.maxMinutes` の初期値 180 分）を超える。並べると、最大 3 セッション分（135 分）で済む
 - 見落としの軸には、3 つの軸が出した指摘（🔴 🟡 🟢 の見出しとファイルのパス）を渡す。結果は、修正工程（段階 7）に進む前に使うかを決めるまで手元の記録に残すだけで、批評 AI に渡さず、`review` の印にも入れない（[ADR-20261019-002][adr-gaps] の決定 2）。見落としの軸のセッションが失敗しても、そのラウンドのレビューは続け、失敗を記録に残す
-- 3 つの軸のうち 1 つでも失敗したら（出力契約が解析できない、時間かターンか費用の上限など）、そのラウンドのレビューは印を書かず、実行の失敗として次の実行に持ち越す（[IMPL-18][impl]、[ADR-20261017-002][adr-review] の決定 1）。次の実行では、3 つとも起こし直す
+- 3 つの軸のセッションと批評 AI のセッションには、IMPL-18 の 5 つの条件を掛ける。(1) 出力契約が解析できる、(2) レビューが収束した（`converged` が真）、(3) `result` の `is_error` が偽、(4) 件数（`counts`）がすべて数で返り、`findings` の件数と合う、(5) 実際に使われたモデル（`modelUsage`）が設定のモデルと一致する。時間かターンか費用の上限に当たった回は、(1) を満たさない
+- どれか 1 つのセッションでも満たさなければ、そのラウンドは `review` の印を書かず、実行の失敗として次の実行に持ち越す（[IMPL-18][impl]、[ADR-20261017-002][adr-review] の決定 1）。次の実行では、3 つの軸と批評 AI を起こし直す（前の実行の結果を使い回さない）。見落としの軸には、結果を記録だけに残す間は掛けない
 - 並べて起こすと、利用枠を短い時間にまとめて使う。利用枠切れ（HTTP 429）も実行の失敗として扱い、次の実行に持ち越す（[IMPL-14][impl]）
 - レビュー AI（3 つの軸と見落としの軸）と批評 AI は、品質ゲート（`checks.qualityGate`。初期値は `pnpm check`）の全体を回さない。CI が緑かは、収束の判定で必須チェックの結果から決める（[状態遷移と判定][design-flow]の「収束の判定」、[IMPL-27][impl]）。指摘を確かめるための実行（テストの一部を回す、再現の手順を動かす）は行ってよく、確かめた指摘は証拠レベルを `executed` にする（UNDECIDED-18 を、ここで決めた）
 - 品質ゲートの全体を回さないのは、CI と同じ確かめを重ねても判定が変わらず、同時に起こす 3 つの軸が、それぞれ 1 セッションの時間の上限（45 分）の中で、全体の検査に時間を取られるため
@@ -216,6 +243,8 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 - JSON スキーマは、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ（印の形の正本と同じ）。エージェント定義と進行 Bot は同じ写しから使うので、版はずれない（[STRUCT-3][struct]、[STRUCT-7][struct]）
 - 決まった値から選ぶ欄（下の表で `"…"` の並びを書いた欄）は、ほかの値を許さない。進行 Bot が Issue や PR に書き添えるときは、AI の文でなく、値ごとに決めた固定の文で書く（[ADR-20261018-002][adr-redo] の決定 2）
 - 文の欄は AI が書いた文で、GitHub に書く前に漏えいの検査を掛ける（[IMPL-15][impl]）。コメントに載せる文の長さは、GitHub のコメントの上限（65,536 文字）に収まるように、スキーマで上限を持つ
+- 文の欄を GitHub に書く前に、印の形の文字列（空白の揺れを含む）を取り除く。取り除き方は、印を読む処理と同じ規則にし、印の形の正本と同じ 1 か所に持つ（[ADR-20261015-004][adr-markers] の決定 1、[IMPL-20][impl]）。取り除かないと、署名の無い印の形の文が進行 Bot のコメントに載り、`marker-invalid` で止まる
+- Bash を持つ役（作業 AI・レビュー AI・批評 AI）は、依存の導入（`pnpm install`）がレジストリにつながらずに失敗したら、作業を止めて `{"environmentError": "dependency-install"}` だけを返す。進行 Bot は、実行の失敗として次の実行に持ち越す（[IMPL-14][impl] の表、[ADR-20261015-002][adr-store]）。`environmentError` をほかの欄と一緒に返したら、取り出せないとして扱う
 
 ### 受付 AI（`brief/triager`。受け入れ）
 
@@ -268,7 +297,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `stopReason` | `"adr-required"` か `"canon-change"` | `stopped` のときだけ。ADR の起票が要る、規約の正典を変える必要がある（[IMPL-8][impl]） |
 | `stopDetail` | 文 | `stopped` のときだけ。止まった理由の説明 |
 | `pr.title`・`pr.body` | 文 | 実装で `done` のときだけ。PR の題名と本文の案（[IMPL-5][impl]） |
-| `responses` | 一覧。1 件は `id`（進行 Bot が渡した指摘の ID）、`action`（`"fixed"` か `"unable"`）、`check`（文） | 修正で `done` のときだけ。渡した 🔴 🟡 の指摘ごとの対応と確認。渡した ID をすべて含む（[IMPL-23][impl]） |
+| `responses` | 一覧。1 件は `id`（進行 Bot が渡した指摘の通し番号）、`action`（`"fixed"` か `"unable"`）、`check`（文） | 修正で `done` のときだけ。渡した 🔴 🟡 の指摘ごとの対応と確認。渡した通し番号をすべて含む（[IMPL-23][impl]） |
 | `checks` | 一覧。1 件は `command`（文）、`result`（`"pass"`・`"fail"`・`"skipped"`）、`note`（文） | `done` のとき。確かめた検査とその結果（[IMPL-5][impl]） |
 
 - 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と `checks` だけを返す
@@ -303,13 +332,13 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | キー | 型 | 中身 |
 | --- | --- | --- |
 | `results` | 一覧。1 件は下の 5 つ。渡した指摘をすべて含む | 指摘ごとの再検証 |
-| `results[].id` | 文 | 進行 Bot が渡した指摘の ID |
+| `results[].id` | 文 | 進行 Bot が渡した指摘の通し番号 |
 | `results[].reproduced` | `"executed"` か `"read"` | 再現できたか。`executed` は実行で再現できた、`read` は再現できず読んだだけ（[REVIEW-2][review-skill]） |
 | `results[].confidence` | 0〜100 の整数 | 確信度 |
 | `results[].severity` | `"high"`・`"medium"`・`"low"` | 推奨する重要度 |
 | `results[].note` | 文 | 再検証の要点 |
 
-- 進行 Bot は、渡した 🔴 🟡 に ID を付けて渡し、返事に次の統合の規則を当てる（[IMPL-22][impl]、[REVIEW-2][review-skill]）
+- 進行 Bot は、渡す 🔴 🟡 に、ラウンドの中の通し番号（`1` から）を付けて渡し、返事に次の統合の規則を当てる（[IMPL-22][impl]、[REVIEW-2][review-skill]）
 
   | 指摘 | 批評 AI の返事 | 統合の後 |
   | --- | --- | --- |
@@ -319,7 +348,8 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
   | 🟡 | `confidence` がしきい値未満 | 🟢 に下げる |
 
 - 批評 AI が推奨する重要度（`severity`）は、記録に残すだけで、統合には使わない。🔴 は再現できたかだけで下げ（🟡 より下げない）、🟡 は確信度だけで下げる
-- 渡した ID が欠けていれば、出力契約が解析できないとして扱う（[IMPL-22][impl]）
+- 渡した通し番号が欠けていれば、出力契約が解析できないとして扱う（[IMPL-22][impl]）
+- 受け渡しには、指摘の ID（`findings`。軸・見出し・パスから計算する）を使わない。同じ軸が同じ見出しとパスの指摘を 2 件返すと、同じラウンドで指摘の ID が重なるため。`review` の印の `findings` には、重なった ID を 1 つだけ書く（[ADR-20261019-001][adr-repeat]）
 
 ## 人の Skill から受け入れを呼ぶ形
 
@@ -376,3 +406,7 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [fig-human-intake]: ./diagrams/03-human-intake.drawio.svg
 [adr-human]: ../../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [stages]: ../../requirements/06-setup-and-stages.md
+[adr-markers]: ../../adr/adr-20261015-004-signed-markers-and-actor-checks.md
+[design-setup]: ./04-setup-and-check.md
+[fig-session-tmp]: ./diagrams/03-session-tmp.drawio.svg
+[adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
