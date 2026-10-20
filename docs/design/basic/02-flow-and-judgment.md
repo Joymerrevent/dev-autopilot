@@ -84,7 +84,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
-| 1 | 結びついた PR がマージされた | 片付け（軽い）：Issue を閉じ、作業場所を消す。Agent 欄とラベルは書き換えない。順 2 の除外より先に見る（[FLOW-27][flow]、[MERGE-7][merge]、[ADR-20261015-006][adr-flow] の決定 3）。依存していた PR の載せ直しは、片付けの中で行わず、その PR の Issue の順 18 で行う（基線の条件と、順 2 の除外を通すため） |
+| 1 | 結びついた PR がマージされた | 片付け（軽い）：Issue を閉じ、作業場所を消す。Agent 欄とラベルは書き換えない。順 2 の除外より先に見る（[FLOW-27][flow]、[MERGE-7][merge]、[ADR-20261015-006][adr-flow] の決定 3）。依存していた PR の載せ直しは、片付けの中で行わず、依存していた PR の Issue の順 18 で行う（基線の条件と、順 2 の除外を通すため） |
 | 2 | Agent 欄が `human` か `paused`。または `needs-human` がある | 触らない（[Issue の状態の遷移][flow]の決まり、[FLOW-1][flow]） |
 | 3 | 着手した後（Status が `In Progress` 以降）に、Issue が閉じられた・別のリポに移された・`agent-ready` かマイルストーンが外された | `needs-human` にし（`issue-changed`）、作業ブランチと PR は残す（[TEXT-8][text]） |
 | 4 | 結びつく PR がマージされずに閉じられた。または、ブランチ名が一致するのに結びつきの印が無い PR がある | `needs-human` にする。印の無い PR のときは `note kind=stop reason=unlinked-pr` を書く（[IMPL-6][impl]） |
