@@ -1,5 +1,34 @@
-# gitleaks の設定。既定の規則をそのまま使う。
+# gitleaks の設定。既定の規則（秘密の値）に、業務の固有名詞の混入を探す規則を足す（UNDECIDED-46）。
+# 足した規則は、commit のフックと CI の全履歴の検査の両方で動く。
+# 法人格や金額の形をとらない固有名詞（取引先の名前など）は見つけられないので、書く前に確かめる決まりは残る。
 title = "dev-autopilot"
 
 [extend]
 useDefault = true
+
+[[rules]]
+id = "email-address"
+description = "メールアドレス。noreply と、例のために予約されたドメインは許す"
+regex = '''[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}'''
+
+[[rules.allowlists]]
+regexes = [
+  '''(?i)^noreply@anthropic\.com$''',
+  '''(?i)@users\.noreply\.github\.com$''',
+  '''(?i)@example\.(com|org|net|invalid)$''',
+]
+
+[[rules]]
+id = "phone-number-jp"
+description = "日本の電話番号（ハイフンでつないだ形）"
+regex = '''\b0\d{1,4}-\d{1,4}-\d{3,4}\b'''
+
+[[rules]]
+id = "corporate-type-jp"
+description = "法人格（会社や法人の名前に付く語）"
+regex = '''(株式会社|合同会社|有限会社|合資会社|合名会社|一般社団法人|一般財団法人|公益社団法人|公益財団法人|特定非営利活動法人|NPO法人|\(株\)|（株）|㈱)'''
+
+[[rules]]
+id = "amount-jpy"
+description = "円の金額"
+regex = '''([¥￥]\s?\d[\d,]*|\d[\d,]*\s?(円|万円|億円))'''
