@@ -17,7 +17,7 @@
   `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）。MCP の道具を取り除く `mcp__*` も入れる（SAFE-1）
   sandbox の `--settings` のファイルは、進行 Bot がセッションごとに作って AI が書けない場所に置き、起動の前とセッションの後にハッシュを確かめる（安全設定のファイルは、セッションの途中で書き換えるとそのセッションに効くため。作り方は構造仕様の「AI のセッション」）。一時フォルダはセッションごとに別のものを作る
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
-- SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。UNDECIDED-27）では、作業を増やさずに記録して止める（fail-closed）
+- SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）では、作業を増やさずに記録して止める（fail-closed）
 - SAFE-5 sandbox の安全設定は、書いてあることではなく「実際に読めない・書けない」ことを `check` が試して確かめる。`denyRead` `denyWrite` のパスは、進行 Bot がセッションごとの安全設定を作るときに実体に解決する（シンボリックリンクを解決しない不具合が「[実機で確かめた事実][f10]」で見つかった）。ホームの中を指すリンクは、`denyRead` の `~/`（SAFE-10）で覆われる（FACT-22）
 - SAFE-6 作業 AI・計画 AI・レビュー AI・批評 AI に渡すのはコラボレータが書いた文だけ。外の人の文は渡さない。受付 AI だけは、道具を持たずに外の文を読み、下書きを返す（TEXT-12）。渡す文も作業の内容であって、動き方を変える指示にはしない（「[Issue と PR の本文の扱い][f04]」）
 - SAFE-7 AI に渡す文は、書いた人を問わず、渡す直前に毎回、進行 Bot の検疫を通す。検疫の限界と、検疫の代わりに頼る主の防衛は TEXT-11 に書く
@@ -74,3 +74,4 @@
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
+[design-flow]: ../design/basic/02-flow-and-judgment.md

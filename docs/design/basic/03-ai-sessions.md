@@ -85,7 +85,7 @@
 - 渡さないもの：`gh` の認証、`GH_TOKEN`、PAT と鍵、`PNPM_HOME`（[SAFE-1、SAFE-10][safety]）
 - 表の名前は、進行 Bot のプログラムに固定し、リポの設定の PR で消せないようにする（`safety.sandbox.denyRead` と同じ形）。リポの設定の `safety.env.names` には、足す名前だけを書き、値は進行 Bot の環境変数の値をそのまま渡す（[設定][design-settings]）。名前を足すのは、安全の境界を緩める変更なので ADR で決める
 - `safety.env.names` に、渡さないもの（上の箇条の `GH_TOKEN`・`PNPM_HOME` など）が入っていれば、起動せず、`check` も fail にする
-- 要件の STRUCT-2 は、名前の一覧を設定に持つと書いている。プログラムに固定する形に、要件を直す PR でそろえる
+- 要件の STRUCT-2 も、決めた名前をプログラムに固定し、設定には足す名前だけを持つと書いている
 
 ## 短い一時フォルダ
 
