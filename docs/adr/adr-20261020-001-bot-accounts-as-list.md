@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 created: 2026-10-20
 updated: 2026-10-20
 author: Claude Code（メンテナの依頼で起票）
@@ -8,7 +8,7 @@ decision-makers: メンテナ
 
 # 自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ
 
-要件の UNDECIDED-20（[決めていないこと][undecided]の「自動化用の GitHub アカウントを分けるか」）を決める。あわせて、ADR「署名付きの印と、人の操作の権限の確かめ」（[ADR-20261015-004][adr-markers]）の決定 1 のうち、印を読む条件の「進行 Bot のアカウント」を、1 つのアカウントから設定に並べたアカウントの一覧に改める。
+要件の UNDECIDED-20（[決めていないこと][undecided]の「自動化用の GitHub アカウントを分けるか」）を決める。あわせて、ADR「署名付きの印と、人の操作の権限の確かめ」（[ADR-20261015-004][adr-markers]）の決定 1 のうち、印を読む条件の「進行 Bot のアカウント」を、1 つのアカウントから設定に並べたアカウントの一覧に改める。[ADR-20261015-004][adr-markers] のほかの決定（決定 1 の署名と印の読み方、決定 2 の人の操作の確かめ）は据え置く。
 
 ## 背景と課題（Context and Problem Statement）
 
