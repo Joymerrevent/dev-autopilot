@@ -111,6 +111,9 @@
 - UNDECIDED-57 **欠番**（[ADR-20261020-002][adr-app] で決めた。書き始める前に GitHub App に切り替え、非公開のリポのチェックの実行もアプリの Checks の読み取りで読む）：~~**非公開のリポに当てるときに、必須チェックの結果をどう読むか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、チェックの実行の結果を読む。fine-grained PAT には Checks の権限が無く、公開のリポでは権限なしで読めたが（FACT-52）、非公開のリポでは 403 で読めなかった（FACT-54）。GitHub Actions のチェックは、ワークフローのジョブ（Actions の読み取り）から名前と結果を読めた（FACT-54）。
   非公開のリポに当てると決めるとき（ほかのリポに当てる時期は、マージ判定工程（段階 8）の後に決める。[07-structure.md][f07]）に、ジョブから読むか（GitHub Actions 以外の app のチェックは読めない）、Checks の権限を持てる GitHub App にするか、などを決める（[02-implement-review-fix.md][f02]）。
   GitHub の公式文書では、GitHub App のリポの権限に「Checks」があり、チェックの実行の一覧は読み取りで足りる（[GitHub App の権限の一覧][doc-app-permissions]）。入れたリポだけに絞れる。classic PAT も `repo` のスコープで読めるが（[チェックの実行の API][doc-check-runs]）、持ち主が触れるすべての非公開のリポを読み書きできるので、進行 Bot の PAT を当てる先のリポだけに絞る決まり（SAFE-15）に合わず、候補から外す。GitHub App にすると、投稿者は App の名前のアカウントになるので、UNDECIDED-20 の「アカウントを分ける」とあわせて決める（[ADR-20261020-001][adr-bots] の決定 1）~~
+- UNDECIDED-58 **進行 Bot と AI のセッションを Docker のコンテナの中で動かし、OS への依存を減らすか。** 今は、AI のセッションの境界を Claude Code の sandbox（macOS は Seatbelt、Linux は bubblewrap）に置き、確かめた事実も macOS のもの（UNDECIDED-49）。Claude Code の sandbox は macOS・Linux・WSL2 で動き、Windows ではコマンドを sandbox なしで動かす（`failIfUnavailable` なら起動のときに止まる）。権限の無いコンテナの中では bubblewrap が `/proc` を作れず、特権のコンテナにするか、ほかのプロセスの情報が見える弱めた sandbox（`enableWeakerNestedSandbox`）にするかになる（[公式文書][doc-sandboxing]）。
+  入れ方の候補：(A) 進行 Bot と AI を 1 つのコンテナに入れ、中の bubblewrap を境界にする（特権のコンテナが要る。弱めた sandbox では、AI から進行 Bot のプロセスの情報が見え、秘密が漏れる経路になりうる）。(B) 進行 Bot はマシンで動かし、AI のセッションを 1 回ごとに新しいコンテナで起こし、コンテナを境界にする（秘密は進行 Bot の側に残る。通信の許可先を絞る仕組みをコンテナの側で用意する）。(C) 進行 Bot もコンテナに入れ、そこから AI のコンテナを起こす（進行 Bot に Docker を操作させると、マシンの管理者に近い権限を渡す）。
+  良くなる見込み：道具の版を OS によらずそろえられる。コンテナを消せば残ったコマンドも消え、止める手順（IMPL-14）が簡単になる。AI が触れるのは渡したフォルダだけになる。前提を変える承認済みの ADR：[ADR-20261013-001][adr-workspace]（作業場所）、[ADR-20261015-001][adr-read]（読み取りの範囲）、[ADR-20261017-006][adr-tmp]（一時フォルダ）、[ADR-20261018-001][adr-usage]（止め方）など。決めるのは、Linux か Windows のマシンに広げるとき、またはほかの人に配るとき（マージ判定工程（段階 8）の後。[07-structure.md][f07]）を目安にする。後で替えやすいように、詳細設計で AI のセッションを起こす処理を 1 つの部品にまとめておく（[05-safety.md][f05]）
 
 ## 基本設計の中で決めてよいもの
 
@@ -195,3 +198,4 @@
 [doc-app-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps
 [doc-check-runs]: https://docs.github.com/en/rest/checks/runs
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
