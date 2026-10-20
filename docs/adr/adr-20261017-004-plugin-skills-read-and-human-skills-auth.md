@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-20
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # AI のセッションには写しの skills/ だけを読ませ、setup の GitHub の準備は人の gh で行い、check と /dev-autopilot は進行ボットのジョブを起こし、マシンの設定は OS ごとの決まった場所に当てる先のリポごとに置く
+
+> **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 2 の「進行ボットの PAT」は、GitHub App に切り替えた後はアプリのトークンと読む。人の `setup` が人の `gh` で GitHub の準備をすること、進行ボットに管理の権限を持たせないことは据え置く。
 
 要件の UNDECIDED-36 と UNDECIDED-37（[決めていないこと][undecided]の「安全と設定」）を決める。
 問いは 3 つある：AI のセッションが Plugin の Skill の参照ファイルとスクリプトをどう使うか、人が呼ぶ `setup` と `check` がどの認証で GitHub を扱うか、人が呼ぶ Skill がマシンの設定をどう見つけるか。
@@ -208,3 +210,4 @@ decision-makers: メンテナ
 [doc-skills]: https://code.claude.com/docs/en/skills
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [doc-env]: https://code.claude.com/docs/en/env-vars
+[adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
