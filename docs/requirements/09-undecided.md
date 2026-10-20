@@ -108,6 +108,9 @@
   手元の Mac で試す間（SAFE-18）は、人の Claude Code のセッションの作業用のフォルダも同じ一時フォルダの下にある。
   セッションごとに一時フォルダを分けるか、分けるならどの手段で分けるか（進行ボットがセッションごとに `CLAUDE_CODE_TMPDIR` を渡す、など）を決める。
   `CLAUDE_CODE_TMPDIR` はパスが長いと既定の場所の下の短いパスに置き換わる（FACT-34）ので、dev-autopilot の置き場のパスで効くかを先に確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
+- UNDECIDED-57 **非公開のリポに当てるときに、必須チェックの結果をどう読むか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、チェックの実行の結果を読む。fine-grained PAT には Checks の権限が無く、公開のリポでは権限なしで読めたが（FACT-52）、非公開のリポでは 403 で読めなかった（FACT-54）。GitHub Actions のチェックは、ワークフローのジョブ（Actions の読み取り）から名前と結果を読めた（FACT-54）。
+  非公開のリポに当てると決めるとき（ほかのリポに当てる時期は、マージ判定工程（段階 8）の後に決める。[07-structure.md][f07]）に、ジョブから読むか（GitHub Actions 以外の app のチェックは読めない）、Checks の権限を持てる GitHub App にするか、などを決める（[02-implement-review-fix.md][f02]）。
+  GitHub の公式文書では、GitHub App のリポの権限に「Checks」があり、チェックの実行の一覧は読み取りで足りる（[GitHub App の権限の一覧][doc-app-permissions]）。入れたリポだけに絞れる。classic PAT も `repo` のスコープで読めるが（[チェックの実行の API][doc-check-runs]）、持ち主が触れるすべての非公開のリポを読み書きできるので、進行 Bot の PAT を当てる先のリポだけに絞る決まり（SAFE-15）に合わず、候補から外す。GitHub App にすると、投稿者は App の名前のアカウントになるので、UNDECIDED-20 の「アカウントを分ける」とあわせて決める（[ADR-20261020-001][adr-bots] の決定 1）
 
 ## 基本設計の中で決めてよいもの
 
@@ -149,8 +152,8 @@
   worktree で `git commit` が通り親 clone の `.git` の保護が効くこと（FACT-9）、SAFE-10 の環境変数で git と pnpm が動くこと（FACT-22）、`CLAUDE_CODE_TMPDIR` で sandbox の中の `$TMPDIR` をセッションごとの短い一時フォルダにでき、長さの上限と戻り方が macOS と同じこと（FACT-37。[ADR-20261017-006][adr-tmp]）、途中で止めたときの AI のコマンドの残り方と、残ったコマンドが sandbox の中のままであること（FACT-38。[ADR-20261018-001][adr-usage]）を確かめ直す。確かめるまで、Linux で進行 Bot を動かさない（[07-structure.md][f07]、[05-safety.md][f05]）
 - UNDECIDED-54 **欠番**（FACT-46 で確かめた。AI のセッションの安全設定では、sandbox の読み取りの拒否（`~/`）がスナップショットの読み込みを止め、人の関数は当たらず、AI はスナップショットの置き場を読めない。`PATH` は進行 Bot が渡した値のまま）：~~**AI の Bash が、人のシェルのスナップショットを読み込む。** AI のセッションの Bash のコマンドは、Claude Code がホームの `.claude/shell-snapshots/` に作る人のシェルのスナップショット（関数・別名・`PATH`）を読み込んで動く（FACT-45）。
   SAFE-2 の (a) はユーザー設定から切り離すとし、SAFE-10 は読み取りを自分のセッションのフォルダだけにするとしている。スナップショットに何が入りうるか（環境変数が入ることがあるか）、AI のセッションから `shell-snapshots/` を読めるか、スナップショットを読み込ませない手段があるかを確かめる（[05-safety.md][f05]、[10-verified-facts.md][f10]）~~
-- UNDECIDED-55 **fine-grained PAT で、CI のチェックの実行（check runs）を読めるか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、PR の head に対する結果を読む。GitHub の公式文書の fine-grained PAT の権限の一覧には、Commit statuses と Actions はあるが、チェックの実行の権限が見当たらない（基本設計の「導入と点検」の「PAT の権限」）。
-  人が発行した PAT で、チェックの実行の一覧を読めるかを確かめる。読めなければ、必須チェックの結果を GitHub Actions のワークフローのジョブ（Actions の読み取り）から読む形に、IMPL-27 の読み方を改めるかを決める（[02-implement-review-fix.md][f02]）
+- UNDECIDED-55 **欠番**（FACT-52・54 で確かめた。fine-grained PAT に Checks の権限は無い。当てる先の business-os は公開のリポなので、権限なしでチェックの実行を読めた。IMPL-27 の読み方は改めない。非公開のリポでは読めず、Actions のジョブからなら読めた。非公開のリポに当てるときの読み方は UNDECIDED-57）：~~**fine-grained PAT で、CI のチェックの実行（check runs）を読めるか。** IMPL-27 は、必須チェックを名前・app・ワークフローのパスで照らし、PR の head に対する結果を読む。GitHub の公式文書の fine-grained PAT の権限の一覧には、Commit statuses と Actions はあるが、チェックの実行の権限が見当たらない（基本設計の「導入と点検」の「PAT の権限」）。
+  人が発行した PAT で、チェックの実行の一覧を読めるかを確かめる。読めなければ、必須チェックの結果を GitHub Actions のワークフローのジョブ（Actions の読み取り）から読む形に、IMPL-27 の読み方を改めるかを決める（[02-implement-review-fix.md][f02]）~~
 
 [f00]: ./00-overview.md
 [f01]: ./01-issue-flow.md
@@ -189,3 +192,5 @@
 [adr-policy]: ../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
+[doc-app-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps
+[doc-check-runs]: https://docs.github.com/en/rest/checks/runs
