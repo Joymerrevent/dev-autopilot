@@ -196,6 +196,14 @@ macOS、Claude Code 2.1.285、`claude-haiku-5-5`（完全な ID で渡した）�
 | FACT-49 | Read ツールの拒否が記録に載るか。写しの `skills/` を読めるか。道具の一覧に `Agent` と `Task` が出るか。短い試しが何ターンで終わるか | **拒否は `permission_denials` に載り、`Agent` も `Task` も一覧に出ない。** 作業フォルダの外のファイルを Read ツールで読ませると、結果が `is_error` になり、`result` の `permission_denials` に道具の名前とファイルのパスが載った。`permissions.allow` の `Read(//<写し>/skills/**)` に当たるファイルは読めた。`permissions.deny` に `Agent` を入れると、初期化の記録の道具の一覧に `Agent` も `Task` も無かった。一覧には、別の道具の `TaskStop` があった。試しのスクリプトの実行と 2 つの読み取りは、4 ターン・7 秒で終わった | 実行 |
 | FACT-50 | AI のセッションが、短い一時フォルダの外と人のホームに何を残すか | **短い一時フォルダの直下と、人のホームの会話の記録に残す。** 短い一時フォルダ（`CLAUDE_CODE_TMPDIR`）の直下に、`claude-<uid>` のほかに `cc-socks`、`node-compile-cache`、`npm-cache` ができた。人のホームの `~/.claude/projects/` の下に、作業フォルダのパスから名前を付けたフォルダができ、会話の記録（`.jsonl`）が残った | 実行 |
 
+## 会話の記録を残さない引数を確かめた事実（2026-10-20）
+
+macOS、Claude Code 2.1.285、haiku の別名で確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/dapnp-<時刻>/wt`）。`claude -p --no-session-persistence --setting-sources local --strict-mcp-config --max-turns 1` を 1 回実行した（表示の費用は 0.016 USD）。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-51 | `--no-session-persistence` を付けると、会話の記録が人のホームに残るか | **会話の記録は残らないが、空のフォルダは残る。** 実行の前に無かった `~/.claude/projects/<作業フォルダのパスから付けた名前>/` ができ、中は空の `memory/` だけで、会話の記録（`.jsonl`）は無かった（FACT-50 では、付けずに起動して `.jsonl` が残った）。`claude --help` は、`--no-session-persistence` は `--print` のときだけ効き、会話を保存せず再開できなくなると書く | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
