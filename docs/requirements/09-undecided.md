@@ -114,7 +114,7 @@
   - 外部のコード実行 sandbox（E2B など）：AI のセッションを Claude Code の sandbox（「[隔離と鍵の分け方][f05]」）の代わりに、使い捨てのクラウドの sandbox で動かす案。
     鍵と認証情報をクラウドに置くことになり、今は利用者のマシンで動かす形（「[決まっていること][f00]」の配り方と実行環境）とは別の守りが要る。マージ判定工程（段階 8）の出口を越えて専用マシンへの移行を決めるときの候補に留める
   - 判断の軸：専用マシンの保守の手間、利用枠と課金、鍵と認証情報をどこに置くか、進行 Bot の判定を手元とクラウドで二重に持たないこと
-- UNDECIDED-22 検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）
+- UNDECIDED-22 **欠番**（基本設計の「[テスト][design-tests]」の「前提データ」で決めた。検疫の見本は `fixtures/quarantine/` に置く）：~~検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）~~
 - UNDECIDED-27 **欠番**（基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」で決めた）：~~作業場所の残骸の決め方。[ADR-20261013-001][adr-workspace] では、セッションのフォルダ（`sessions/<セッションの名前>/`）は同じ名前で作り直すか片付ける（FLOW-27）まで残るので、作業中の Issue のフォルダがあるのは普通の状態になる。
   どのフォルダを残骸とみなすか（例：片付けの後に残ったもの、名前から Issue か PR を引けないもの）を決め、SETUP-2 の warn・Issue ごとの `needs-human`・fail に当てはめる（FLOW-29、SAFE-4、「運用の規則」）。
   消す前に読んだ `commondir` か `gitdir` が作ったときと違う作業場所は、ADR のとおり消さずに `needs-human` にし、`check` で warn にする~~
@@ -186,3 +186,4 @@
 [adr-repeat]: ../adr/adr-20261019-001-repeated-findings-by-ids.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [adr-policy]: ../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
+[design-tests]: ../design/basic/05-tests.md
