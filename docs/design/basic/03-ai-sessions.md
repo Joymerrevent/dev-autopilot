@@ -198,6 +198,8 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 - 見落としの軸には、3 つの軸が出した指摘（🔴 🟡 🟢 の見出しとファイルのパス）を渡す。結果は、修正工程（段階 7）に進む前に使うかを決めるまで手元の記録に残すだけで、批評 AI に渡さず、`review` の印にも入れない（[ADR-20261019-002][adr-gaps] の決定 2）。見落としの軸のセッションが失敗しても、そのラウンドのレビューは続け、失敗を記録に残す
 - 3 つの軸のうち 1 つでも失敗したら（出力契約が解析できない、時間かターンか費用の上限など）、そのラウンドのレビューは印を書かず、実行の失敗として次の実行に持ち越す（[IMPL-18][impl]、[ADR-20261017-002][adr-review] の決定 1）。次の実行では、3 つとも起こし直す
 - 並べて起こすと、利用枠を短い時間にまとめて使う。利用枠切れ（HTTP 429）も実行の失敗として扱い、次の実行に持ち越す（[IMPL-14][impl]）
+- レビュー AI（3 つの軸と見落としの軸）と批評 AI は、品質ゲート（`checks.qualityGate`。初期値は `pnpm check`）の全体を回さない。CI が緑かは、収束の判定で必須チェックの結果から決める（[状態遷移と判定][design-flow]の「収束の判定」、[IMPL-27][impl]）。指摘を確かめるための実行（テストの一部を回す、再現の手順を動かす）は行ってよく、確かめた指摘は証拠レベルを `executed` にする（UNDECIDED-18 を、ここで決めた）
+- 品質ゲートの全体を回さないのは、CI と同じ確かめを重ねても判定が変わらず、同時に起こす 3 つの軸が、それぞれ 1 セッションの時間の上限（45 分）の中で、全体の検査に時間を取られるため
 
 ## 役ごとの出力契約
 
@@ -309,6 +311,24 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 - 進行 Bot は、渡した 🔴 🟡 に ID を付けて渡す。統合の規則（🔴 は 🟡 より下げない、🟡 は確信度がしきい値未満なら 🟢 に下げる）は進行 Bot が当てる（[IMPL-22][impl]、`review.criticConfidenceThreshold`）
 - 渡した ID が欠けていれば、出力契約が解析できないとして扱う（[IMPL-22][impl]）
 
+## 人の Skill から受け入れを呼ぶ形
+
+![人の Skill から受け入れを呼ぶ形][fig-human-intake]
+
+business-os の `/verify-issue`（人が手で深く確かめたいときに呼ぶ Skill）が、dev-autopilot の検疫と受付 AI を使う形を決める（UNDECIDED-43 を、ここで決めた）。分担は STRUCT-6 のとおりで、`/verify-issue` は、最初に検疫を呼び、business-os 固有の確かめの後に、受付 AI で下書きを作る。
+
+| 順 | すること |
+| --- | --- |
+| 1 | `/verify-issue` が、`dev-autopilot:intake` の Skill を、引数「検疫」で呼ぶ。intake の Skill は、インストールした Plugin の中の検疫のモジュール（[TEXT-11][text]）を Node で動かし、結果（無し、または見つかった種類と場所。見つかった文の中身は写さない）を返す。見つかったら、`/verify-issue` はそこで止まり、下書きを作らない |
+| 2 | `/verify-issue` が、business-os 固有の確かめ（hook・雛形・第三者のツールの再現）を行う |
+| 3 | `/verify-issue` が、`dev-autopilot:intake` の Skill を、引数「下書き」で呼ぶ。intake の Skill は、受付 AI の定義（`dev-autopilot:brief:triager`）をサブエージェントとして起こし、受付 AI の出力契約と同じ形の下書きを返す |
+| 4 | 人が、確かめの結果と下書きを読んで判断する。下書きを使うなら、Issue に `## 作業指示` のコメントとして書く |
+
+- 呼び出しは許す。Skill を呼ぶことは、business-os が dev-autopilot のファイルを取り込む（import する）ことでなく、Plugin の入口を使うことなので、STRUCT-1 に反しない
+- `/verify-issue` は、dev-autopilot の `plugin/src/` を直接実行しない。Plugin の中のファイルの路は版で変わりうるので、約束の境目を Skill の名前と引数にする
+- 人が呼んだ intake の Skill は、GitHub に印を書かない。印の署名の鍵は進行 Bot だけが読み、人のセッションは秘密を読まない（[ADR-20261015-001][adr-read] の決定 2、[ADR-20261017-004][adr-human]）。進行 Bot の受け入れ（[状態遷移と判定][design-flow]の次の工程の順 9）とは別に、人の確かめの助けとして動く
+- business-os の `/verify-issue` を直すのは、business-os の PR で行う（導入と点検の実装の段階 3 の「`/verify-issue` の拡張」。「[段階][stages]」の表）
+
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-planrev]: ../../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
@@ -343,3 +363,6 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 [adr-repeat]: ../../adr/adr-20261019-001-repeated-findings-by-ids.md
 [fig-contracts]: ./diagrams/03-output-contracts.drawio.svg
 [adr-policy]: ../../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
+[fig-human-intake]: ./diagrams/03-human-intake.drawio.svg
+[adr-human]: ../../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[stages]: ../../requirements/06-setup-and-stages.md

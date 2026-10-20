@@ -104,7 +104,7 @@
 
 ## 基本設計の中で決めてよいもの
 
-- UNDECIDED-18 レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）
+- UNDECIDED-18 **欠番**（基本設計の「[AI のセッション][design-ai]」の「レビューの軸の起こし方」で決めた。レビュー AI と批評 AI は品質ゲートの全体を回さず、CI の結果で判定する。指摘を確かめるための実行は行ってよい）：~~レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）~~
 - UNDECIDED-19 **欠番**（基本設計の「[設定][design-settings]」の「マシンの中の置き場」で決めた）：~~実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）~~
 - UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
 - UNDECIDED-21 クラウドの仕組みを、利用者のマシンの定期の実行の代わりか補助に使うか。メンテナは将来、GitHub Actions などのクラウドでも動かしたい。
@@ -123,9 +123,9 @@
   進行 Bot が雛形からセッションごとに作るか、雛形をどこに置きハッシュをどう確かめるか、リポの設定の `denyRead` `allowRead` の一覧にマシンのパスをどう書くか（記号で書いて起動の前に解決するなど。リポの設定には絶対パスを置かない。ADR-20261015-005）を決める~~
 - UNDECIDED-41 **欠番**（[ADR-20261019-001][adr-repeat] で決めた）：~~同じ指摘の再発（修正の後のラウンドで、前のラウンドと同じ指摘がもう一度出ること）の数え方。IMPL-24 は 2 ラウンド続けて出たとき、「[レビューの Skill][f08]」の方針は 2 回出たときに人に渡すとする。間を空けて再び出た指摘も数えるかを決める~~
 - UNDECIDED-42 **欠番**（[ADR-20261016-003][adr-move] で、評価を dev-autopilot のリポに置くと決めた）：~~`review` Skill の評価の置き場。「[レビューの Skill][f08]」は評価を business-os の `pnpm eval:cases` の仕組みの上に置くとし、STRUCT-4 は検査を dev-autopilot 自身が持つとする。分離のときに評価も移すかを決める~~
-- UNDECIDED-43 `/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:brief:triager` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める
+- UNDECIDED-43 **欠番**（基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた。`/verify-issue` は `dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）：~~`/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:brief:triager` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める~~
 - UNDECIDED-46 業務の固有名詞の混入を探す検査。business-os の中にあった間は、business-os の `check:leak`（メールアドレス・電話番号・法人格・金額・許可リストに無いドメインを探す）が dev-autopilot の文書も見ていた。dev-autopilot のリポの gitleaks は秘密の値だけを探すので、固有名詞の混入を探す検査が無い（「[決まっていること][f00]」の置き場所の行）。検査を足すか、足すならどう足すか（gitleaks の独自の規則、TypeScript の検査など）を決める
-- UNDECIDED-52 Issue の種類の分け方。最初の実装で使うモデルは Issue の種類ごとに決める（IMPL-25、[ADR-20261018-003][adr-model]）が、要件は Issue をどう種類に分けるか（ブランチの型（IMPL-2）か、別の分け方か）を書いていない。計画・実装工程（段階 5）の記録の欄を決めるときに決める
+- UNDECIDED-52 **欠番**（基本設計の「[設定][design-settings]」の `models.workByType` で決めた。Issue の種類は作業ブランチの型にする）：~~Issue の種類の分け方。最初の実装で使うモデルは Issue の種類ごとに決める（IMPL-25、[ADR-20261018-003][adr-model]）が、要件は Issue をどう種類に分けるか（ブランチの型（IMPL-2）か、別の分け方か）を書いていない。計画・実装工程（段階 5）の記録の欄を決めるときに決める~~
 
 ## 確かめること
 

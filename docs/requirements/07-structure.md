@@ -92,7 +92,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - business-os 側の ADR は、dev-autopilot を business-os に置いた橋渡しの ADR 20261008-01 と、それを置き換える「分離した」ADR（[ADR-20261016-003][adr-move] の決定 5）だけにし、dev-autopilot の中身の判断は dev-autopilot の ADR に書く
 - STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:brief:triager` に置き、進行 Bot が自動で呼ぶ（人の操作は `agent-ready` だけ。TEXT-12）。
   business-os の `/verify-issue` は、business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初に検疫のモジュール（TEXT-11）を呼び、最後に `dev-autopilot:brief:triager` で下書きを作る（TEXT-9、SETUP-17 と同じ順）。
-  business-os からはリポをまたいだ呼び出しになる。呼び方は決めていない（UNDECIDED-43）
+  business-os からはリポをまたいだ呼び出しになる。呼び方は、基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた（`dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）
 
 - STRUCT-7 **Skill と進行 Bot は Plugin に同封し、ほかの人に配るときは `review` だけ同じフォルダから単体でも入れられるようにする。** 別に公開して組み合わせる形は採らない
   - 同封する理由：進行 Bot・agent・Skill は出力契約や引数で結びついていて、版がずれると黙って壊れる。Plugin の 1 つの版で一緒に検査し、一緒に配る（進行 Bot の同封は [ADR-20261017-003][adr-plugin] の決定 1）
@@ -138,6 +138,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[design-ai]: ../design/basic/03-ai-sessions.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
