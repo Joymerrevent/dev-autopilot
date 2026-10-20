@@ -210,7 +210,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 | Projects（Organization） | 書き込み | Project の Status と Agent 欄（FACT-6） |
 
 - Administration（ruleset を作る管理の権限）と Contents は付けない。ruleset は人の `setup` が作り（[SETUP-1][setup]）、push は deploy key で行う（[SAFE-15][safety]）
-- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。当てる先を非公開のリポにするときは、読み方を確かめ直す（[分離の時期の目安][struct]）
+- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。非公開のリポでは読めない（403。FACT-54）。非公開のリポに当てるときの読み方は、当てると決めるときに決める（UNDECIDED-57、[分離の時期の目安][struct]）
 - 書き込みを付けていないことは、点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しで確かめる。403 で断られれば pass。作れてしまったら fail にし、作った変数を消す。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
 
 ## 状態の表示
