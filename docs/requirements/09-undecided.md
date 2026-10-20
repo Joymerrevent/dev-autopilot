@@ -126,6 +126,7 @@
 - UNDECIDED-43 **欠番**（基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた。`/verify-issue` は `dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）：~~`/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:brief:triager` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める~~
 - UNDECIDED-46 **欠番**（`.gitleaks.toml` に規則を足して決めた。メールアドレス・電話番号・法人格・円の金額を、commit のフックと CI の全履歴の検査で止める。決まった形の無い固有名詞は見つけられない）：~~業務の固有名詞の混入を探す検査。business-os の中にあった間は、business-os の `check:leak`（メールアドレス・電話番号・法人格・金額・許可リストに無いドメインを探す）が dev-autopilot の文書も見ていた。dev-autopilot のリポの gitleaks は秘密の値だけを探すので、固有名詞の混入を探す検査が無い（「[決まっていること][f00]」の置き場所の行）。検査を足すか、足すならどう足すか（gitleaks の独自の規則、TypeScript の検査など）を決める~~
 - UNDECIDED-52 **欠番**（基本設計の「[設定][design-settings]」の `models.workByType` で決めた。Issue の種類は作業ブランチの型にする）：~~Issue の種類の分け方。最初の実装で使うモデルは Issue の種類ごとに決める（IMPL-25、[ADR-20261018-003][adr-model]）が、要件は Issue をどう種類に分けるか（ブランチの型（IMPL-2）か、別の分け方か）を書いていない。計画・実装工程（段階 5）の記録の欄を決めるときに決める~~
+- UNDECIDED-56 AI のセッションの会話の記録の扱い。`claude -p` は、作業フォルダのパスから名前を付けたフォルダに、会話の記録を人のホームの `~/.claude/projects/` の下に残す（FACT-50）。進行 Bot が動かすと、セッションごとに記録がたまる。消すか、残すならどこにいつまで残すかを決める
 
 ## 確かめること
 
