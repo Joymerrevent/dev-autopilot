@@ -56,7 +56,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 | SETUP-10 | 済み（2026-10-16 に確認）：コミットの署名が 1Password のソケット頼み | 人の署名は手元の SSH 鍵に移す（`gpg.format ssh`、`user.signingkey` を鍵ファイルに）。dev-autopilot は人の鍵を使わない。作業 AI の commit は署名なし、`develop` への squash マージの commit は GitHub が署名する（SAFE-14）。business-os の雛形（ADR 20261003-11）は利用者向けなので変えない |
 | SETUP-11 | 開発専用の TypeScript の置き場が無い（tsconfig は `evals/` `plugin/hooks/` `plugin/scripts/` `test/` だけ） | ~~開発物のフォルダ `dev-autopilot/` を 1 つ足し、構造仕様 3.1 節の表に加える。~~ dev-autopilot は別のリポに移した（[ADR-20261016-003][adr-move]）ので、そのリポの root に `src/` と `tsconfig.json` を置く。中身は「[分離を見越した構成][f07]」の構成 |
 | SETUP-12 | `claude -p` の実行は利用枠を消費する | 1 回の実行・1 日あたりの上限を設定に持つ |
-| SETUP-13 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（IMPL-18）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む） |
+| SETUP-13 | 作業 AI とレビュー AI が同じ GitHub アカウント（メンテナ）で投稿することになる | GitHub は PR の作者自身の approve と request changes を受け付けない。いまの運用も GitHub のレビュー状態を使わず、PR のコメントで判定している。dev-autopilot も同じで、判定は PR のコメントの固定の印（IMPL-18）で行う。アカウントは最初はメンテナの 1 つで始め、無人のマシンにはこのリポだけに絞った fine-grained PAT を置く。人と AI の投稿は印で見分ける。監査のために分けたくなったら、自動化用のアカウントをコラボレータに足す（判定の仕組みは変えずに済む）。いまは分けない。分けるときは、印を書いたと認めるアカウントの一覧（設定）に新しいアカウントを足して切り替え、前のアカウントの印も読み続ける（[ADR-20261020-001][adr-bots]） |
 | SETUP-14 | Issue のフォームに受け入れ条件の欄が無い | 外から入る Issue は報告・提案の形で、作業の定義ではない。コラボレータの作業指示コメント（TEXT-1）で補う。フォームには足さない（外の人が書く欄にしない） |
 | SETUP-15 | 渡す文が後から編集されうる | 処理対象にした時点のハッシュで検出する（TEXT-4）。外の人の文は渡さないので、外の人の編集は影響しない |
 | SETUP-16 | Issue を確かめる手順が dev-autopilot と結びついていない | 受け入れ（TEXT-12）を進行 Bot が自動で行い、人の操作は `agent-ready` だけにする。順「受け入れの下書き（自動）→ `agent-ready`（人）」を利用の手順に書く。コラボレータの Issue も対象（TEXT-9）。`/verify-issue` は手動の補助 |
@@ -105,3 +105,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
+[adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md

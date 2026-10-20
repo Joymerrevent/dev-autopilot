@@ -99,11 +99,11 @@
   `review` の印の `round` は 1 から欠けずに続くことを判定の条件にし、欠けていたら `needs-human`（印のコメントの削除は API から検出できないため）。`dropped_high` は PR ごとの累計を書く（[ADR-20261015-004][adr-markers]）
 - IMPL-19 レビュー AI のモデルは設定で変えられるようにする。作業 AI と同じモデルでもよい（effort は別。「モデルの流れ」）。レビュー工程（段階 6）の比較のためだけに `fable` で回したレビューは印を書かない（shadow。判定に混ぜない）
 - IMPL-20 **印の真正性**：正は GitHub に置き、手元の記録に依存しない。進行 Bot は、次の 3 つをすべて満たすコメントの印だけを読む。
-  (a) 投稿者が進行 Bot のアカウント（設定に持つ）、(b) コメントが未編集（GraphQL の `lastEditedAt` が null、または `userContentEdits.totalCount` が 0。`updated_at` は非表示（minimize）でも変わるので使わない。リアクションでは変わらない。実機の試し（段階 2）で確認）。受け入れの下書き（TEXT-12）は人が編集する前提なのでこの条件を掛けず、`agent-ready` 後に進行 Bot が確定の印を新しいコメントで投稿する）、
+  (a) 投稿者が、設定に並べた進行 Bot のアカウントのどれか（[ADR-20261020-001][adr-bots]）、(b) コメントが未編集（GraphQL の `lastEditedAt` が null、または `userContentEdits.totalCount` が 0。`updated_at` は非表示（minimize）でも変わるので使わない。リアクションでは変わらない。実機の試し（段階 2）で確認）。受け入れの下書き（TEXT-12）は人が編集する前提なのでこの条件を掛けず、`agent-ready` 後に進行 Bot が確定の印を新しいコメントで投稿する）、
   (c) 印に進行 Bot の署名 `sig=<HMAC>` があり検証できる。署名の対象は印の `sig` 以外のすべての欄（「[印と固定の見出しの一覧][f04]」）で、進行 Bot だけが持つ鍵で計算する。鍵は PAT と同じ秘密の置き場（SAFE-15）のファイルに置き、AI のセッションには渡さない。
   手元の記録にはコメント ID も残すが、判定には使わない（手元の記録は上限の数え上げにだけ使う。進行 Bot が途中で死んで記録を失っても、GitHub の状態から判定できる。「[運用の規則][f01]」）。
   AI の出力を投稿する前に、`<!-- dev-autopilot:` で始まる文字列を進行 Bot が取り除く（AI の出力に印を混ぜても、署名が無いので判定に使われない）。取り除く規則は、印を読む処理（`plugin/src/marker.ts`）と同じ規則（空白の揺れを含む）にする。AI のセッションに前回の印を渡すときは、進行 Bot が読み取った値（ラウンド・件数・判定）だけを渡す。
-  署名の対象には、`sig` 以外の欄に加えて、印の種類・リポ・置き場の Issue か PR の番号を含める（別の Issue や PR に写した印の署名は通らない）。同じ Issue か PR の中で、進行 Bot のアカウントが投稿した印のうち (b) か (c) を満たさないものが 1 つでもあれば、印の置き場の Issue か PR を `needs-human` にし、`note kind=stop reason=marker-invalid` を投稿する（受け入れの下書きには (b) を掛けない。[ADR-20261015-004][adr-markers]）
+  署名の対象には、`sig` 以外の欄に加えて、印の種類・リポ・置き場の Issue か PR の番号を含める（別の Issue や PR に写した印の署名は通らない）。同じ Issue か PR の中で、進行 Bot のアカウント（設定に並べたどれか）が投稿した印のうち (b) か (c) を満たさないものが 1 つでもあれば、印の置き場の Issue か PR を `needs-human` にし、`note kind=stop reason=marker-invalid` を投稿する（受け入れの下書きには (b) を掛けない。[ADR-20261015-004][adr-markers]）
   **進行 Bot が投稿した文は、投稿者がコラボレータであっても常に AI の出力として扱う**（TEXT-1 の「コラボレータの文」には数えない。見分けは投稿者でなく署名付きの印の有無で行う）
 - IMPL-21 再レビューの入力は「前回の印から読み取った値（ラウンド・件数・判定。IMPL-20）と指摘」「修正コミットの範囲（SHA）」「差分」だけ。作業 AI の対応コメント（「確認済み」の主張）は渡さない（「[レビューの Skill][f08]」の文脈のバイアス）
 - IMPL-22 **批評 AI**。3 つの軸のレビュー AI が出力契約で返した 🔴 と 🟡 をまとめて、進行 Bot が別のセッション（`dev-autopilot:change:verifier`、新しい文脈、レビュー AI と別に作った作業場所。[ADR-20261013-001][adr-workspace]）に差分とともに渡し、指摘ごとに「反対する前提」で実際のコードで再現を試みさせる。
@@ -197,3 +197,4 @@
 [adr-policy]: ../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-settings]: ../design/basic/01-settings.md
+[adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
