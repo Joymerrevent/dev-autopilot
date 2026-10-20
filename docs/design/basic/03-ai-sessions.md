@@ -304,12 +304,21 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | --- | --- | --- |
 | `results` | 一覧。1 件は下の 5 つ。渡した指摘をすべて含む | 指摘ごとの再検証 |
 | `results[].id` | 文 | 進行 Bot が渡した指摘の ID |
-| `results[].reproduced` | `"executed"` か `"read"` | 再現できたか（実行済み、読んだだけ） |
+| `results[].reproduced` | `"executed"` か `"read"` | 再現できたか。`executed` は実行で再現できた、`read` は再現できず読んだだけ（[REVIEW-2][review-skill]） |
 | `results[].confidence` | 0〜100 の整数 | 確信度 |
 | `results[].severity` | `"high"`・`"medium"`・`"low"` | 推奨する重要度 |
 | `results[].note` | 文 | 再検証の要点 |
 
-- 進行 Bot は、渡した 🔴 🟡 に ID を付けて渡す。統合の規則（🔴 は 🟡 より下げない、🟡 は確信度がしきい値未満なら 🟢 に下げる）は進行 Bot が当てる（[IMPL-22][impl]、`review.criticConfidenceThreshold`）
+- 進行 Bot は、渡した 🔴 🟡 に ID を付けて渡し、返事に次の統合の規則を当てる（[IMPL-22][impl]、[REVIEW-2][review-skill]）
+
+  | 指摘 | 批評 AI の返事 | 統合の後 |
+  | --- | --- | --- |
+  | 🔴 | `reproduced` が `executed` | 🔴 のまま |
+  | 🔴 | `reproduced` が `read`（再現できなかった） | 🟡 に下げ、下げた数を `review` の印の `dropped_high` に足す（印には PR ごとの累計を書く） |
+  | 🟡 | `confidence` が `review.criticConfidenceThreshold` 以上 | 🟡 のまま |
+  | 🟡 | `confidence` がしきい値未満 | 🟢 に下げる |
+
+- 批評 AI が推奨する重要度（`severity`）は、記録に残すだけで、統合には使わない。🔴 は再現できたかだけで下げ（🟡 より下げない）、🟡 は確信度だけで下げる
 - 渡した ID が欠けていれば、出力契約が解析できないとして扱う（[IMPL-22][impl]）
 
 ## 人の Skill から受け入れを呼ぶ形
