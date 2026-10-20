@@ -138,9 +138,9 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-human]: ../adr/adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
+[design-ai]: ../design/basic/03-ai-sessions.md
 [adr-mcp]: ../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ../adr/adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [doc-plugin-agents]: https://code.claude.com/docs/en/plugins/components#organize-agents-in-subfolders
-[design-ai]: ../design/basic/03-ai-sessions.md
