@@ -63,8 +63,10 @@
 | `--max-turns` | `limits.session.turns` | ターンの上限（[IMPL-13][impl]） |
 | `--max-budget-usd` | `limits.session.costUsd` | 費用の上限（[IMPL-14][impl]） |
 | `--output-format stream-json`、`--verbose`、`--include-partial-messages` | — | 費用とトークンを数える（[IMPL-14][impl]、FACT-29、FACT-39）。試験と同じ形にそろえる |
+| `--no-session-persistence` | — | 会話の記録を、人のホームの `~/.claude/projects/` に残さない（FACT-50、FACT-51）。会話の流れは、進行 Bot が受け取った `stream-json` を記録の置き場に残す（[状態遷移と判定][design-flow]の「手元の記録」）。AI のセッションは再開しないので、保存しなくても困らない |
 
 - 指示文と、渡す文などの値は、標準入力で渡す。引数に置くと、同じマシンのほかのユーザーから、プロセスの一覧で読めるため。渡す要素は、下の「役ごとの入力」
+- `--no-session-persistence` を付けても、`~/.claude/projects/` の下に、作業フォルダのパスから名前を付けた空のフォルダ（中に空の `memory/`）は残る（FACT-51）。進行 Bot は、人のホームの Claude Code のフォルダを消さない。Claude Code の持ち物で、消し方を誤ると人の会話の記録を失うため
 - 使わない引数：`--json-schema`（`--agent` と併用すると結果が空になる。[IMPL-5][impl]、FACT-14）。sandbox を外す引数と、許可の確かめを省く引数
 - 時間の上限（`limits.session.minutes`）は `claude` に無いので、進行 Bot が数えて止める（[IMPL-13][impl]）。止め方は、下の「止め方と利用枠の数え方」
 

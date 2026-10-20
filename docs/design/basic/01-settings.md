@@ -8,7 +8,7 @@
 | 設定 | ファイル | 置く場所 | 持つ項目 |
 | --- | --- | --- | --- |
 | リポの設定 | `.claude/dev-autopilot.json` | 当てる先のリポの中（commit する） | 項目の大半：リポと Project、ラベル名と固定の見出し、進行 Bot の実行（`dryRun`・`stage`・定期の実行の間隔など）、上限、モデル、検査と判定、規約、安全（進行 Bot のアカウント名・通信の許可先・子プロセスに渡す環境変数の名前など） |
-| マシンの設定 | `settings.json` | リポの外の、OS ごとの決まった場所。当てる先のリポごとにフォルダを分ける | マシンごとに違う 10 項目：base ブランチの名前、進行 Bot のプログラムの写しのパス（`devAutopilotPath`）、置き場のパス 4 つ（置き場・記録・秘密の置き場・安全設定の置き場）、ホームの中の道具のフォルダ、短い一時フォルダの根・ID の長さ・長さの上限 |
+| マシンの設定 | `settings.json` | リポの外の、OS ごとの決まった場所。当てる先のリポごとにフォルダを分ける | マシンごとに違う 10 項目：base ブランチの名前、進行 Bot のプログラムの写しのパス（`devAutopilotPath`）、フォルダのパス 4 つ（置き場・記録の置き場・秘密の置き場・安全設定の置き場）、ホームの中の道具のフォルダ、短い一時フォルダの根・ID の長さ・長さの上限 |
 
 マシンの設定をリポの中に置かない理由は 3 つある。
 
@@ -44,14 +44,16 @@
 - 人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて、マシンの設定のフォルダを見つける。定期の実行の定義（macOS は launchd の plist）は、同じ `settings.json` のパスを進行 Bot に渡す。`check` が 2 つの一致を確かめる（STRUCT-2）
 - AI のセッションの `denyRead` に入れる（SAFE-10）
 
-## マシンの中の置き場
+## マシンの中のフォルダ
 
-`setup` は、次の既定のパスで置き場を作り、マシンの設定に書く。人が別の場所を指定したときは、指定した値を書く。
+`setup` は、次の既定のパスでフォルダを作り、マシンの設定に書く。人が別の場所を指定したときは、指定した値を書く。
 
-| 置き場 | キー | macOS | Linux | 中身 |
+基本設計で「置き場」とだけ書くときは、`paths.workspace` を指す（[ADR-20261013-001][adr-workspace] の `<置き場>`）。ほかのフォルダは、「記録の置き場」「秘密の置き場」のように、何の置き場かを添えて呼ぶ。
+
+| フォルダ | キー | macOS | Linux | 中身 |
 | --- | --- | --- | --- | --- |
 | 置き場 | `paths.workspace` | `~/.local/share/dev-autopilot/<owner>/<repo>/` | `$XDG_DATA_HOME/dev-autopilot/<owner>/<repo>/`（`XDG_DATA_HOME` が無ければ `~/.local/share`） | 進行 Bot の clone（`controller/`）、セッションごとのフォルダ（`sessions/<セッションの名前>/`）、進行 Bot のプログラムの写し（`program/<版>/`）、安全設定のファイル（`sandbox-settings/`） |
-| 記録 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く印のファイル（「[運用の規則][flow-rules]」） |
+| 記録の置き場 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く印のファイル（「[運用の規則][flow-rules]」） |
 | 秘密の置き場 | `paths.secrets` | `<マシンの設定のフォルダ>/secrets/` | `<マシンの設定のフォルダ>/secrets/` | PAT、deploy key、印の署名の鍵。フォルダの権限は 700、ファイルは 600（[ADR-20261015-001][adr-read] の決定 2） |
 | 短い一時フォルダの根 | `sessionTmp.root` | `/tmp/dap` | `/tmp/dap` | セッションごとの短い一時フォルダ（[ADR-20261017-006][adr-tmp]） |
 
@@ -59,7 +61,7 @@
 
 - 置き場を macOS で `~/Library/Application Support/` の下に置かないのは、パスに空白が入るため。AI は置き場の中の worktree で品質ゲート（`pnpm check`）とパッケージのスクリプトを動かし、空白を含むパスで失敗する道具がある
 - 記録と秘密の置き場は、AI が道具を動かさないので、macOS ではマシンの設定のフォルダの中に並べる（秘密の置き場をマシンの設定と並べてよいことは [ADR-20261015-005][adr-settings] の決定 2）。Linux の記録は、XDG の決まり（状態のファイルは `XDG_STATE_HOME`）に合わせる
-- どの置き場も、`~/.claude/` と `/tmp/claude-<uid>/` の下に置かない（SAFE-10）。`check` は、実体のパスが同期フォルダの下に無いことを確かめる（[ADR-20261015-005][adr-settings] の決定 2）
+- どのフォルダも、`~/.claude/` と `/tmp/claude-<uid>/` の下に置かない（SAFE-10）。`check` は、実体のパスが同期フォルダの下に無いことを確かめる（[ADR-20261015-005][adr-settings] の決定 2）
 - 短い一時フォルダの根 `/tmp/dap` は、[ADR-20261017-006][adr-tmp] の例のまま。`<根>/<ID>/claude-<uid>` を上限（`sessionTmp.maxBytes`）の 44 バイト以内に収めるため、根は短くする。ID を 8 文字にすると、uid は 19 桁まで収まる
 
 ## 設定ファイルの外の合図
@@ -207,12 +209,12 @@
 | --- | --- | --- | --- |
 | `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 無し。`setup` のマシンの準備で人が指定する（business-os は `develop`。[IMPL-6][impl]、[MERGE-2][merge]） | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
 | `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | `setup` が `<paths.workspace>/program/<版>/` を書く（暫定） | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
-| `paths.workspace` | 置き場（進行 Bot の clone、セッションごとのフォルダ、プログラムの写し、安全設定のファイル） | 「[マシンの中の置き場][places]」 | AI のセッションごとに origin から clone し直す。進行 Bot の clone は `controller/`、セッションのフォルダは `sessions/<セッションの名前>/` に置く（[ADR-20261013-001][adr-workspace]） |
-| `paths.records` | 実行の記録と lock の置き場 | 「[マシンの中の置き場][places]」 | 実行の記録を追跡しないフォルダに残す（[FLOW-5][flow]）。記録と lock の置き場はマシンの設定に置く（[ADR-20261015-005][adr-settings]） |
-| `paths.secrets` | 秘密の置き場（PAT、deploy key、印の署名の鍵） | 「[マシンの中の置き場][places]」 | PAT・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2） |
+| `paths.workspace` | 置き場（進行 Bot の clone、セッションごとのフォルダ、プログラムの写し、安全設定のファイル） | 「[マシンの中のフォルダ][places]」 | AI のセッションごとに origin から clone し直す。進行 Bot の clone は `controller/`、セッションのフォルダは `sessions/<セッションの名前>/` に置く（[ADR-20261013-001][adr-workspace]） |
+| `paths.records` | 実行の記録と lock の置き場 | 「[マシンの中のフォルダ][places]」 | 実行の記録を追跡しないフォルダに残す（[FLOW-5][flow]）。記録と lock の置き場はマシンの設定に置く（[ADR-20261015-005][adr-settings]） |
+| `paths.secrets` | 秘密の置き場（PAT、deploy key、印の署名の鍵） | 「[マシンの中のフォルダ][places]」 | PAT・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2） |
 | `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | `<paths.workspace>/sandbox-settings/`（暫定） | 安全設定のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる（[SAFE-2][safety] の (e)）。進行 Bot がセッションごとに作り、終わった後にもハッシュを比べて消す（[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `safety.sandbox.toolDirs` | sandbox の `allowRead` に足す、ホームの中にある道具のフォルダ | `setup` が、`node` `pnpm` `git` の実体のうちホームの中にあるもののフォルダを書く（暫定） | sandbox はホーム（`~/`）を読ませないので、ホームの中にある道具のフォルダを `allowRead` に足す（[SAFE-10][safety]） |
-| `sessionTmp.root` | セッションごとの短い一時フォルダを作る根 | 「[マシンの中の置き場][places]」 | セッションごとの短い一時フォルダを、ホーム・置き場・`/tmp/claude-<uid>/` の外の、dev-autopilot 専用の短い根の下に作る（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]） |
+| `sessionTmp.root` | セッションごとの短い一時フォルダを作る根 | 「[マシンの中のフォルダ][places]」 | セッションごとの短い一時フォルダを、ホーム・置き場・`/tmp/claude-<uid>/` の外の、dev-autopilot 専用の短い根の下に作る（[ADR-20261017-006][adr-tmp]、[SAFE-10][safety]） |
 | `sessionTmp.idLength` | 短い一時フォルダの名前（セッションの短い ID）の文字数 | 8 文字（暫定） | 根と ID の長さの値は、設定の表で決める（[ADR-20261017-006][adr-tmp]）。8 文字にすると、`<根>/<ID>/claude-<uid>` が 44 バイト以内に収まる（uid は 19 桁まで） |
 | `sessionTmp.maxBytes` | `<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限。超えたら AI のセッションを起動しない | 44 バイト（[SAFE-10][safety]） | `<CLAUDE_CODE_TMPDIR>/claude-<uid>` が長いと、Claude Code は黙ってユーザーごとの一時フォルダに戻すので、進行 Bot は起動の前に長さを数え、上限を超えたら起動しない（[SAFE-10][safety]、[ADR-20261017-006][adr-tmp]）。Claude Code の振る舞いで決まる値で、Claude Code はマシンごとに入れるので、マシンの設定に置く |
 
@@ -237,7 +239,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。
 [adr-planrev]: ../../adr/adr-20261018-004-ai-reviews-plans-in-shadow-first.md
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [design-change]: ../README.md#設計を変えるとき
-[places]: #マシンの中の置き場
+[places]: #マシンの中のフォルダ
 [flow]: ../../requirements/01-issue-flow.md
 [flow-rules]: ../../requirements/01-issue-flow.md
 [markers]: ../../requirements/04-external-text-and-markers.md
