@@ -33,7 +33,7 @@
 
 ## 間隔の運用
 
-- FLOW-11 間隔と件数の上限はリポの設定 1 つで変える（cron の設定と、進行 Bot の上限の両方。STRUCT-2）
+- FLOW-11 間隔と件数の上限はリポの設定 1 つで変える（定期の実行の間隔と、進行 Bot の上限の両方。STRUCT-2）。間隔は OS ごとの定期の実行の登録にも書くので、間隔を変える PR の後は、動かすマシンで `setup` を実行し直して登録し直す（登録し直すまで、`check` がずれを fail にして止まる。基本設計の「[導入と点検][design-setup]」）
 - FLOW-12 狭める条件：連続 7 回の実行で `needs-human` が 0 件、利用枠の消費が上限内。1 段ずつ狭める（1 日 1 回 → 12 時間 → 6 時間）
 - FLOW-13 測る指標を記録に残す：マージ率（着手した Issue のうちマージに届いた割合）、往復の回数、人が却下した指摘の割合（誤検知率）、**マージ後の revert 率**（Codex 6.1%・Devin 14.5%・人 11.5% という調査がある）、1 Issue あたりの利用枠。
   revert 率は「マージした後に壊れていた」を測る唯一の値なので、進行 Bot のマージの判定を信頼してよいか（マージ判定工程（段階 8）の出口と、将来マージの実行を進行 Bot に移すか）の判断に使う
@@ -73,7 +73,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | 番号 | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か、同じ指摘の再発（直したはずの指摘が再び出た） | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4） | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-6、IMPL-8、IMPL-14、IMPL-15、IMPL-18、IMPL-20、IMPL-27、SAFE-4、SAFE-12、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、SETUP-2、「運用の規則」 |
+| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4）、受け入れの下書きの前に付いた `agent-ready`（TEXT-12）、計画が変える見込みのパスが push しないパスに当たる（IMPL-10）、push する SHA が GitHub の作業ブランチの先端の子孫でない（IMPL-15、SAFE-13）、作業 AI が作業を終えたと返したのに新しい commit が無い（IMPL-5）、AI のセッションを止めた後にコマンドが残る（IMPL-14）、安全設定のファイルが作ったときと違うか、作業場所に local の設定のファイルがある（SAFE-2）。契機ごとの stop の理由の記号は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」 | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-5、IMPL-6、IMPL-8、IMPL-10、IMPL-14、IMPL-15、IMPL-18、IMPL-20、IMPL-27、SAFE-2、SAFE-4、SAFE-12、SAFE-13、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、TEXT-12、SETUP-2、「運用の規則」 |
 | FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受付 AI の拒否、依存の導入でレジストリにつながらない（IMPL-1）。3 回未満。次回に持ち越す） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-14 の表 |
 | FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
 | FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
@@ -103,7 +103,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - 状態の正は GitHub に置く（PR の有無と draft、印、Status、Agent 欄、ラベル）。進行 Bot は毎回そこから状態を組み立てる。各手順は「すでに済んでいれば何もしない」（PR があれば作らない、コメントがあれば足さない）
 - 手元の記録は判定に使わず、実行をまたぐ上限の数え上げにだけ使う：同じ Issue で続いた実行の失敗の回数、受付 AI が拒否した Issue の次のモデル、Issue ごとの累計の利用枠、1 日の利用枠（[ADR-20261015-006][adr-flow]）
 - 記録を失ったときは、上限が黙って効かなくなる側に倒さない。`setup` は記録のフォルダに、作った日時を書いた印のファイルを置く。印のファイルが無ければ `check` は fail にする（人が `setup` をやり直して、失ったことを認める）。
-  計画の印か結びつく PR がある Issue に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受付 AI は `haiku`（完全な ID。IMPL-29）で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
+  着手した Issue（Status が `In Progress`・`In Review`・`Ready to Merge` か、計画の印か結びつく PR がある Issue。[ADR-20261015-006][adr-flow] の決定 4 の「進行中の Issue」）に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受付 AI は `haiku`（完全な ID。IMPL-29）で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
 - 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、定期の実行と同じジョブを起こし（macOS は `launchctl kickstart`（`-k` なし。`-k` は動いている進行 Bot を殺す）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin]）、同じ lock を取る。
   `setup` が進行 Bot のプログラムの写しを作り直すときも、同じ lock を取る（STRUCT-3）。lock には PID・ホスト名・起動時刻を書き、PID が生きていなければ古い lock として奪う（電源断の後に全実行が「多重起動」で止まり続けないため）。
   lock で見送った実行と、マシンのスリープや停止で定期の実行が起動しなかった日は記録に残し、`check` が warn に出す（受け入れ工程（段階 4）の「7 回の実行」はこれらを除いて数える）
@@ -136,3 +136,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [design-settings]: ../design/basic/01-settings.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[design-setup]: ../design/basic/04-setup-and-check.md

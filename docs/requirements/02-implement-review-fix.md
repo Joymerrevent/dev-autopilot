@@ -75,7 +75,7 @@
   検査の実装は dev-autopilot 自身の `plugin/src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（MERGE-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
   push の前に、diff が「進行 Bot・次のセッション・CI が実行するか、規則として読むパス」（`.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）。設定に持つ）に触れていれば push せず `needs-human`
   （MERGE-4 の判定より前。CI が AI の書いたワークフローを secrets 付きで実行しないため。レビュー AI と修正のセッションが、作業 AI の書き換えた正典を規則として読まないため。[ADR-20261017-002][adr-review]）。`dev-autopilot/**` は、dev-autopilot を別のリポに移して business-os から消した後も残す（外すのは安全の境界を緩める変更で、残せば同じ名前のフォルダが business-os に戻ったときにも止まる。[ADR-20261016-003][adr-move] の決定 5）。
-  push は進行 Bot の clone から `git push origin <検証した SHA>:refs/heads/<型>/issue-<番号>` の形で行い、ブランチ名でなく SHA を送る。API の head（初回は base）が送る SHA の祖先であること（fast-forward で届くこと）を確かめる
+  push は進行 Bot の clone から `git push origin <検証した SHA>:refs/heads/<型>/issue-<番号>` の形で行い、ブランチ名でなく SHA を送る。API の head（初回は、作業場所を作ったときに進行 Bot の clone で控えた base の SHA。SAFE-13）が送る SHA の祖先であること（fast-forward で届くこと）を確かめる
 
 ## レビュー（レビュー AI）
 

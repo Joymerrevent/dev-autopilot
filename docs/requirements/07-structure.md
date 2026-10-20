@@ -13,7 +13,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     skills/
       dev-autopilot/SKILL.md   人が呼ぶ入口（/dev-autopilot：状態の表示、手動の 1 回実行）
       setup/SKILL.md           導入（SETUP-1。足りない基盤を作り、Plugin の版をマシンに写し、定期の実行を登録する。冪等）
-      check/SKILL.md           点検の入口（`plugin/src/check.ts` を呼ぶ包み。判定のロジックは持たない）
+      check/SKILL.md           点検の入口（記録の置き場に依頼のファイルを置き、定期の実行と同じジョブを起こして、結果を表示する。進行 Bot を直接起動せず、判定のロジックは持たない。SETUP-2）
       review/SKILL.md          レビュー AI の手順（change-review v2 の正本。08-review-skill.md）
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
       intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。進行 Bot は agents/brief/triager.md を起動する。人の操作は agent-ready だけ
@@ -29,10 +29,12 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       select.ts                例：Issue の選定
       marker.ts                印の形の正本（1 定数）
       check.ts                 点検の正本（進行 Bot が毎回の最初に回す）
-  test/                        テスト。Plugin に同封しないように `plugin/` の外に置く
-    unit/                      単体テスト。`plugin/src/` と同じ形の路で置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
-                               結合テスト（偽の gh を差し替えて進行 Bot を端から端まで回す）も test/ に置く。分け方は基本設計の「テスト」（docs/design/basic/05-tests.md）
-  fixtures/                    テストの前提データ（偽の gh の応答、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査の見本）
+  test/                        テスト。Plugin に同封しないように `plugin/` の外に置く。分け方は基本設計の「テスト」（docs/design/basic/05-tests.md）
+    unit/                      単体テスト。`plugin/src/` と同じ形のパスで置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
+    integration/               結合テスト（偽の gh と claude を差し替えて、進行 Bot を端から端まで回す）と偽物（`fakes/`）
+    repo/                      構成の検査（単体テストの有無、`plugin/` の中にテストが無いこと、import の形）
+  fixtures/                    テストの前提データ（偽の gh の状態、偽の claude の筋書き、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査の見本、構成の検査の木）
+  evals/                       review Skill の評価の入口とケース（人が手で回す。CI では回さない。08-review-skill.md）
   docs/                        要件（requirements/）、設計判断（adr/）、構造仕様（design/）、図（diagrams/。要件の写し）
   README.md                    使い方。業務の固有名詞を書かない
   package.json                 検査のスクリプトと依存（STRUCT-4）
@@ -47,11 +49,11 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行 Bot に渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
   要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
-  - リポと Project：owner / repo、base ブランチ（マシン。リポの設定を読む前に要るため。[ADR-20261017-007][adr-stop]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）、GitHub App の ID とインストールの ID（[ADR-20261020-002][adr-app]）
+  - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
   - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
   - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
-  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）
+  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
@@ -68,7 +70,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行 Bot のコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。Plugin のパスを手順に埋め込まない。
   `setup` は、dev-autopilot 自身のリポでは何も作らずに止まる（「分離の時期の目安」）
 - STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーで、`setup` が登録する（cron は、マシンが眠っていた間の実行を逃すので使わない。構造仕様の「導入と点検」。[ADR-20261017-003][adr-plugin] の決定 3）。
-  進行 Bot の本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。
+  進行 Bot の本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ、登録の中身の確かめ、動かしてよい OS かの確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。進行 Bot が毎回の実行の最初に回す点検も、`check` と同じ OS ごとの部分を使う。
   Windows と、GitHub Actions などのクラウドで動かすことは、今は対応しない。広げるときは、進行 Bot の本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（クラウドの論点は UNDECIDED-21）。
   Linux の sandbox の振る舞いは確かめ直すまで（UNDECIDED-49）、Linux で進行 Bot を動かさない
 - STRUCT-4 **検査は dev-autopilot のリポが持つ。** dev-autopilot のリポが、自分の `package.json`（検査のスクリプト）・依存とロックファイル・`.markdownlint-cli2.jsonc` と、コードを足すときの `tsconfig.json`・`vitest.config.ts` を持ち、business-os と共有しない（[ADR-20261016-003][adr-move] の決定 4）。
