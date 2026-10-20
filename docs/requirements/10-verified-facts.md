@@ -221,9 +221,9 @@ macOS、Claude Code 2.1.285、haiku の別名で確かめた。試験の場所�
 |---|---|---|---|
 | FACT-54 | 非公開のリポで、fine-grained PAT でチェックの実行を読めるか。読めないなら、ほかの API で必須チェックの結果を読めるか | **チェックの実行は読めず、Actions のジョブからなら読める。** `commits/{ref}/check-runs` と `check-suites` は 403（`Resource not accessible by personal access token`。要る権限は `checks=read`）だった。`actions/runs?head_sha=` と `actions/runs/{id}/jobs` は 200（要る権限は `actions=read`）で、ワークフローのパスと、ジョブの名前・結果が読めた。ジョブには、対応するチェックの実行の URL があった。business-os では、ジョブの名前（マトリクスの `check (ubuntu-latest)` などを含む）が、チェックの実行の名前と同じだった。コミットの結合した状態は、状態が 0 件で `pending` だった（FACT-53 と同じ）。認証なしでは 404 だった | 実行 |
 
-## エージェント定義の道具と、作業フォルダの local の設定を確かめた事実（2026-10-20）
+## エージェント定義の道具と、作業フォルダの local の設定と、取り込みの検査を確かめた事実（2026-10-20）
 
-基本設計の再レビューで確かめた。macOS、Claude Code 2.1.285、`claude-haiku-4-5-20251001` で、試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/` の下に試験ごとのフォルダを作った）。どれも `claude -p --setting-sources local --no-session-persistence --output-format stream-json --verbose` で起動し、終わった後に試験のフォルダと、人のホームに残った空のフォルダ（FACT-51）を消した。費用は合わせて 0.083 USD。
+基本設計の再レビューで確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/` の下に試験ごとのフォルダを作った）。FACT-57 は git だけで試した。FACT-55・56 は、macOS、Claude Code 2.1.285、`claude-haiku-4-5-20251001` で、どれも `claude -p --setting-sources local --no-session-persistence --output-format stream-json --verbose` で起動し、終わった後に試験のフォルダと、人のホームに残った空のフォルダ（FACT-51）を消した。費用は合わせて 0.083 USD。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
