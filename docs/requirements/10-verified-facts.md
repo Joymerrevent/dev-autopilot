@@ -184,6 +184,18 @@ AI のセッションと同じ安全設定（`denyRead` に `~/` と置き場）
 |---|---|---|---|
 | FACT-46 | sandbox の中の AI のコマンドが、人のシェルのスナップショットと、その置き場をどう扱えるか | **読めず、人の関数も当たらない。** `~/.claude/shell-snapshots/` の一覧は出せず、ほかのセッションのスナップショットは `operation not permitted` で読めなかった。人のシェルの関数は 0 個（スナップショットには 15 個ある）、別名は zsh にもともとある 2 つ（`run-help`、`which-command`）だけで、`PATH` は進行 Bot が渡した値のままだった。人の `~/.zshrc` には `export` の行が 3 つあったが、スナップショットの `export` は `PATH` の 1 行だけだった。公式文書は、セッションの始めにシェルの設定ファイルを読み込み、別名・関数・シェルのオプションを取り出して Bash のコマンドに当てるとする（[tools-reference][doc-tools]） | 実行 |
 
+## 安全設定の env と費用の数え方を確かめた事実（2026-10-20）
+
+macOS、Claude Code 2.1.285、`claude-haiku-5-5`（完全な ID で渡した）、Node 24.3.0、npm 11.4.2 で確かめた。試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/dapv-<時刻>/`）。
+基本設計の「[AI のセッション][design-ai]」の安全設定と同じ形（sandbox、`denyRead` に `~/` と置き場、通信の許可先は `registry.npmjs.org` だけ、`env`、`permissions`）の設定ファイルと、基本設計の環境変数の表の名前だけで `claude -p` を 1 回実行した（`--agent` は付けない。表示の費用は 0.249 USD。FACT-48）。Bash で試しのスクリプトを 1 回動かし、Read ツールでファイルを 2 つ読ませた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-47 | 安全設定の `env` に書いた値が、sandbox の中の Bash に届くか。npm のキャッシュと Node の `fetch` に効くか | **届き、効く。** `NODE_USE_ENV_PROXY` は `1`、`npm_config_cache` は `${TMPDIR}/npm-cache` のまま届いた（Claude Code は展開しない）。`npm config get cache` は `<短い一時フォルダ>/claude-<uid>/npm-cache` を返し（展開したのは npm）、`npm view` が通って、キャッシュも同じフォルダにできた。許可した通信先への Node の `fetch` は、`NODE_USE_ENV_PROXY` があれば 200 で、外すと `ENOTFOUND` で届かなかった。許可していない通信先は sandbox が止めた。sandbox の中の `$TMPDIR` は、渡した短い一時フォルダの下の `claude-<uid>` だった | 実行 |
+| FACT-48 | Claude Code が `claude-haiku-5-5` の費用をどう数えるか | **単価を知らず、Opus 5.5 の単価で数える。** 起動のときに `unrecognized_model` の警告が出て、`result` の `modelUsage` の `costBasis` は `unknown` だった。モデルは API が受け付けて動いた（`modelUsage` のキーは `claude-haiku-5-5`）。`total_cost_usd` の 0.2489072 USD は、トークン数（入力 4、出力 965、キャッシュの読み取り 27,276、1 時間のキャッシュの書き込み 28,017）を Opus 5.5 の単価（100 万トークンあたり、入力 4 USD、出力 20 USD、キャッシュの読み取り 0.20 USD、1 時間のキャッシュの書き込み 8 USD）で数えた値と一致した。FACT-40 から FACT-46 の費用は、`haiku` の別名（Haiku 4.5 に解けた）で起動した値で、Claude Code が単価を知っているモデルの値 | 実行 |
+| FACT-49 | Read ツールの拒否が記録に載るか。写しの `skills/` を読めるか。道具の一覧に `Agent` と `Task` が出るか。短い試しが何ターンで終わるか | **拒否は `permission_denials` に載り、`Agent` も `Task` も一覧に出ない。** 作業フォルダの外のファイルを Read ツールで読ませると、結果が `is_error` になり、`result` の `permission_denials` に道具の名前とファイルのパスが載った。`permissions.allow` の `Read(//<写し>/skills/**)` に当たるファイルは読めた。`permissions.deny` に `Agent` を入れると、初期化の記録の道具の一覧に `Agent` も `Task` も無かった。一覧には、別の道具の `TaskStop` があった。試しのスクリプトの実行と 2 つの読み取りは、4 ターン・7 秒で終わった | 実行 |
+| FACT-50 | AI のセッションが、短い一時フォルダの外と人のホームに何を残すか | **短い一時フォルダの直下と、人のホームの会話の記録に残す。** 短い一時フォルダ（`CLAUDE_CODE_TMPDIR`）の直下に、`claude-<uid>` のほかに `cc-socks`、`node-compile-cache`、`npm-cache` ができた。人のホームの `~/.claude/projects/` の下に、作業フォルダのパスから名前を付けたフォルダができ、会話の記録（`.jsonl`）が残った | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -201,3 +213,4 @@ AI のセッションと同じ安全設定（`denyRead` に `~/` と置き場）
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [doc-env]: https://code.claude.com/docs/en/env-vars
 [doc-tools]: https://code.claude.com/docs/en/tools-reference#bash-tool-behavior
+[design-ai]: ../design/basic/03-ai-sessions.md
