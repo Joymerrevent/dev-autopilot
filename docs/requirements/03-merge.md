@@ -23,12 +23,12 @@
   - 判定は diff の状態も見る：削除（D）・改名（R）・種類の変更（T。シンボリックリンク化など）・実行属性の変更は、パスが許可一覧にあっても `merge=human`
   - 許可一覧に **含めない**（常に `merge=human`）の例：`docs/adr/**` `docs/design/**` `ROADMAP.md`、`CLAUDE.md` `.claude/**`、**`dev-autopilot/**`（自己改変）**、`.claude-plugin/**` `.github/**`、
     `plugin/hooks/**` `plugin/agents/**` `plugin/templates/**`（利用者の CC で動く防衛と雛形）、`plugin/scripts/check-repo.ts` など `check:*` の実装、`package.json` `pnpm-lock.yaml` `pnpm-workspace.yaml` `.node-version` `tsconfig.json` `vitest.config.ts` `eslint.config.*` `commitlint.config.*` `.gitleaks.toml` `.gitignore` `.markdownlint*`、`release/*` ブランチと `main` 向けの PR
-- MERGE-5 人がマージするときは `gh pr merge --squash --match-head-commit <印の head SHA>` を使い、印の SHA と実際の head の一致をサーバ側でも強制する（人の手順として利用の文書に書く。将来、実行を進行 Bot に移すときも同じコマンド）。1 回の実行で `merge=ready` にするのは 1 件まで（人が 1 件マージするごとに、残りは載せ直しと CI を経て判定し直す）。判定する順は PR の番号の小さい順。2 件目以降の、`merge=ready` になるはずの PR は、判定を次の実行に回して `merge` の印を書かず（`merge=human` にしない）、Status は `Ready to Merge` のままにする。`merge=human` の判定は 1 件の上限に数えない（[ADR-20261016-001][adr-pr]）。
+- MERGE-5 人がマージするときは `gh pr merge --squash --match-head-commit <印の head SHA>` を使い、印の SHA と実際の head の一致をサーバ側でも強制する（人の手順として利用の文書に書く。将来、実行を進行 Bot に移すときも同じコマンド）。1 回の実行で `merge=ready` にするのは 1 件まで（人が 1 件マージするごとに、残りは載せ直しと CI を経て判定し直す）。判定する順は PR の番号の小さい順。1 件目の `merge=ready` の PR がマージされない間は、1 件目の印を変えず、2 件目以降を判定せずに待つ。2 件目以降の、`merge=ready` になるはずの PR は、判定を次の実行に回して `merge` の印を書かず（`merge=human` にしない）、Status は `Ready to Merge` のままにする。`merge=human` の判定は 1 件の上限に数えない（[ADR-20261016-001][adr-pr]）。
   ruleset（SETUP-1 が作る）に「base と最新であること」（必須チェックの strict）を入れ、古い base で pass した PR はマージされない。載せ直しは進行 Bot が自分の clone で `git merge origin/develop` を行い、結果の SHA を push する（force push を使わない。worktree の中では git を実行しない。「[安全側に倒す設計][f05]」）
 - MERGE-6 **載せ直しで head が変わったときの扱い**。載せ直しは進行 Bot が行う。載せ直しの前後で `develop` に対する差分の patch-id（`git patch-id --stable --verbatim`。行番号を無視し、周辺の行と空白は含む。`--verbatim` を付けるのは、既定では空白の違いを無視し、インデントだけの変更を同一と読むため）が同一なら、
   進行 Bot が同じ内容（round・件数・verdict・findings）の印を新しい head に付け直す。再レビューはせず、往復（IMPL-24）にも数えない。CI は新しい head で改めて緑を要求する。
   patch-id が変わった（周辺が変わった、衝突した）ときだけ再レビューを行い、往復に数える。衝突の解消は作業 AI の修正セッション（IMPL-23 と同じ形）で行い、その結果に再レビューを掛ける
-- MERGE-7 マージ後（進行 Bot は次回の実行でマージされた PR を検出する）：Issue を閉じる（`develop` 向けのため自動では閉じない）、作業場所（clone と worktree）をフォルダごと消す（ブランチはリポ設定 `delete_branch_on_merge` が消す）、依存していた PR を MERGE-6 の手順で載せ直す
+- MERGE-7 マージ後（進行 Bot は次回の実行でマージされた PR を検出する）：Issue を閉じる（`develop` 向けのため自動では閉じない）、作業場所（clone と worktree）をフォルダごと消す（ブランチはリポ設定 `delete_branch_on_merge` が消す）。依存していた PR は、片付けの中で載せ直さず、依存していた PR の Issue の載せ直し（FLOW-25。MERGE-6 の手順で、基線が緑のときだけ）で載せ直す
 - MERGE-8 マージの実行を人に残すので、利用者の全体ルール「PR のマージは Claude が実行しない」の例外は要らない。進行 Bot は `gh pr merge` を呼ばない。判定（MERGE-2）の実装は vitest で検査する
 - MERGE-9 マージの実行を進行 Bot に移すか（将来の選択肢）。マージ判定工程（段階 8）の出口（10 件で人の判断と進行 Bot の判定が全件一致、revert 0 件）を満たしても自動では移さない。移すなら ADR で決め、そのときに揃える条件は「[同じ仕組みの有無と、業界の実践][f11]」の 4 つ（向き先が `develop`、方針に係るパスの除外、revert 率の監視、人の判断と判定の一致）と、利用者の全体ルールの例外の扱い
 
