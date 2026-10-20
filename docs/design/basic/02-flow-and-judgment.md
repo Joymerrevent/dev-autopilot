@@ -170,6 +170,27 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 - 上限が初期値（1 回）のとき、計画の工程は最大 5 つのセッション（計画 AI が 3 つ、計画のレビューが 2 つ）を起動し、1 セッションの上限 45 分なら最大 225 分かかる。1 回の実行の所要時間の上限（`run.maxMinutes` の初期値 180 分）を超えたら、ほかの Issue を次の実行に回す
 - マージ判定工程（段階 8）以降に、6 で `fix` のまま上限に達した計画を止めるか（`needs-human` にするか）は、マージ判定工程（段階 8）に進む前に別の ADR で決める（[ADR-20261018-004][adr-planrev] の決定 3）
 
+## push の手順
+
+![push の手順][fig-push]
+
+作業 AI の commit を GitHub に届ける手順（[IMPL-15][impl]、[ADR-20261013-001][adr-workspace] の「取り込み」）。実装・修正・衝突の解消のセッションの後に行う。AI が書いた commit は、進行 Bot が検査してから、進行 Bot の clone から送る。
+
+| 順 | すること | うまくいかないとき |
+| --- | --- | --- |
+| 1 | 作業 AI の出力契約を取り出す（「[AI のセッション][design-ai]」の「役ごとの出力契約」） | 実行の失敗として次の実行に持ち越す。止まった理由（`stopReason`）を返したら、push せず、止まった理由で `needs-human` を付ける |
+| 2 | 進行 Bot の clone で、AI の作業場所から作業ブランチを取り込み（`git fetch <置き場>/sessions/<セッションの名前>/worktree <ブランチ>`）、取り込んだ先端の SHA を控える。AI の作業場所の clone では git を実行しない（[ADR-20261013-001][adr-workspace]） | 取り込みが objects の検査で失敗したら、`needs-human` を付ける（`workspace-tampered`）。AI が objects を書き換えたおそれがあるため（FACT-18） |
+| 3 | 差分（作業場所を作ったときの SHA から、控えた SHA まで）が触れるパスを、push しないパス（`push.blockedPaths`）と照らす | 当たれば push せず、`needs-human` を付ける（`blocked-path`） |
+| 4 | 漏えいの検査を、差分、commit のメッセージと作者、PR の題名と本文の案に掛ける。検査は `plugin/src/` の中のものを使い、worktree の中の検査は使わない（[IMPL-15][impl]） | 引っかかれば push せず、`needs-human` を付ける（`leak`） |
+| 5 | GitHub の API で、作業ブランチの今の先端（まだ無ければ base ブランチの先端）を読み、控えた SHA の祖先であることを確かめる（fast-forward で届くこと） | 祖先でなければ push せず、`needs-human` を付ける（`not-fast-forward`）。AI が履歴を書き換えたか、ほかの誰かが push したため |
+| 6 | 全体の止める合図を読み直し、書かずに試す合図（`run.dryRun`）を見る（[運用の規則][flow]） | 合図が `run` でなければ push せずに止まる。`dryRun` が `true` なら push せず、送るつもりだった SHA を手元の記録に残す |
+| 7 | 進行 Bot の clone から、deploy key で `git push origin <控えた SHA>:refs/heads/<型>/issue-<番号>` を送る。ブランチ名でなく SHA を送り、force push はしない（[IMPL-15][impl]） | 断られたら（ruleset など）、実行の失敗として次の実行に持ち越す |
+| 8 | GitHub の API で、作業ブランチの先端が送った SHA になったことを読み戻す。初回は PR を draft で作る（[IMPL-11][impl]）。題名と本文は、4 で検査した案を使う | 読み戻した SHA が違えば、`needs-human` を付ける（`unrecoverable`） |
+
+- 載せ直し（[MERGE-6][merge]）は、AI のセッションを起こさずに、進行 Bot の clone で base ブランチを作業ブランチに取り込み（`git merge`）、3〜8 を同じく行う。衝突したら取り込みをやめ、修正のセッション（作業 AI の衝突の解消）で解く。差分の patch-id を比べて、印を付け直すか再レビューに回すかは、上の「作業中」の順 18
+- push した実行では、push した Issue を次の実行まで進めない（上の「次の工程」）
+- 手順 2 で控えた SHA を、手順 3〜8 のすべてで使う。途中で作業ブランチを読み直さないので、検査した commit と送る commit が同じになる
+
 ## 判定
 
 次の工程の表の順 14〜20 で使う判定を決める。判定には、GitHub にある署名付きの印と、PR と必須チェックの状態だけを使う（[ADR-20261015-006][adr-flow] の決定 4）。
@@ -283,6 +304,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `session-not-stopped` | AI のセッションを止めた後、コマンドの残りが止まったと確かめられない（[IMPL-14][impl]） |
 | `leak` | 漏えいの検査に引っかかった（[IMPL-15][impl]） |
 | `blocked-path` | diff が、push しないパスに触れている（[IMPL-15][impl]） |
+| `not-fast-forward` | push する SHA が、GitHub の作業ブランチの今の先端（まだ無ければ base ブランチの先端）の子孫でない（[IMPL-15][impl]、上の「push の手順」） |
 | `plan-blocked-path` | 計画が変える見込みのパスが、push しないパスに当たる（[IMPL-10][impl]、[ADR-20261019-004][adr-policy]） |
 | `approved-before-intake` | 受け入れの下書きの前に、`agent-ready` が付いた（[TEXT-12][text]。人が下書きを読む前の承認を通さない） |
 | `brief-changed` | 渡す文のハッシュが、承認したときと違う（[TEXT-4][text]） |
@@ -298,7 +320,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `ci-action-required` | CI のワークフローの実行に、人の承認が要る（[IMPL-27][impl]） |
 | `ci-stale` | CI の結果が、取り消しなどのまま時間を過ぎても変わらない（[IMPL-27][impl]） |
 | `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
-| `workspace-tampered` | 作業場所の `commondir` か `gitdir` が、作ったときの値と違う（[SAFE-12][safety]、[ADR-20261013-001][adr-workspace]） |
+| `workspace-tampered` | 作業場所の `commondir` か `gitdir` が、作ったときの値と違う。または、取り込みの fetch が objects の検査で失敗した（[SAFE-12][safety]、[ADR-20261013-001][adr-workspace]、上の「push の手順」） |
 | `settings-tampered` | セッションの安全設定のファイルが、作ったときのハッシュと違う（起動の直前か、セッションの後。[SAFE-2][safety] の (e)、[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `records-missing` | 進行中の Issue の手元の記録が無い（[運用の規則][flow]） |
 | `unrecoverable` | GitHub の状態から、次の工程を決められない（[運用の規則][flow]） |
@@ -321,6 +343,45 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 | 名前から Issue か PR を引けない。または、引けた番号が設定した Project に無い | Issue に紐づかない残骸。点検を fail にし、実行は作業に入らずに止まる。人が中身を確かめて消す（[運用の規則][flow]、[SETUP-2][setup]、[SAFE-4][safety]） |
 
 進行 Bot が、名前から引けない残骸を消さないのは、何のフォルダか分からないものを消すと、人が調べる材料を失うため。作業に入らないのは、判定できない状態で作業を増やさないため（[SAFE-4][safety]）。
+
+## 手元の記録
+
+![手元の記録][fig-records]
+
+進行 Bot は、記録の置き場（`paths.records`。[設定][design-settings]の「マシンの設定」）に、実行と AI のセッションの記録を残す（[FLOW-5][flow]）。記録は、判定に使わず、上限の数え上げと、段階の出口の数え上げと、人が読むためにだけ使う（[ADR-20261015-006][adr-flow] の決定 4）。AI は sandbox の中から読めず、書けない。
+
+### 置くもの
+
+| ファイル | 1 件 | 欄 |
+| --- | --- | --- |
+| `runs.jsonl` | 1 回の実行（lock で見送った実行も） | 実行 ID、起動と終わりの時刻、終わり方（作業した・点検だけ・合図で止めた・点検の fail で止めた・lock で見送った）、段階（`run.stage`）、`run.dryRun`、リポの設定を読んだ base ブランチの SHA、点検の fail と warn、基線の結果（緑でない必須チェックの名前）、起動しなかった定期の実行の時刻、Issue ごとの結果（進めた工程、待たせた理由か止めた理由（stop の理由の記号）、マージの判定と理由の記号）、使った時間 |
+| `sessions.jsonl` | AI のセッション 1 回 | [FLOW-5][flow] の固定の欄（実行 ID、Issue の番号、ラウンド、役、指定したモデルと effort、実際に使われたモデル（`modelUsage`）、費用、ターン数、実行の成否、作業の成否）。加えて、セッションの名前、PR の番号、起動と終わりの時刻、終わり方と費用の数え方（「[AI のセッション][design-ai]」の「費用の数え方」）、モデルごとのトークン、出力が分からないメッセージがあったか、拒否（`stop_reason: refusal`）で止まったか |
+| `outputs/<実行 ID>/<セッションの名前>.json` | AI のセッションの出力契約 1 つ | 取り出した出力契約をそのまま残す。受け入れの判定、直す前の計画と計画のレビューの結果、計画 AI の自己申告、見落としの軸と比べるためのレビューの結果も、ここから読む |
+| `writes/<実行 ID>.jsonl` | GitHub に書いた 1 件（`run.dryRun` の間は、書くつもりだった 1 件） | 書く先（Issue か PR の番号）、種類（コメント・ラベル・Project の欄・PR・push）、本文か値、実際に書いたか |
+| `dry-run-objections.md` | 人が書く異議 | `## 異議` の見出し（上の「1 回の実行の流れ」） |
+
+- ファイルは 1 行に 1 件の JSON（JSON Lines）で、後ろに足すだけにし、書き直さない。書くたびに、ファイルを閉じる前にディスクへ書き出す（電源が切れても、前の行を失わないため）
+- 最後の行が途中で切れていたら（書いている途中で電源が切れた）、切れた行を読まずに点検で warn に出す。途中の行が読めなければ点検を fail にする。数え上げが少なく出て、上限が効かなくなる側に倒さないため（[運用の規則][flow]）
+- 点検の依頼と結果、状態の表示のファイル（`status.json`）、lock、印のファイルの置き場も記録の置き場（「[導入と点検][design-setup]」、[運用の規則][flow]）
+
+### 段階の出口の数え方
+
+段階の出口と、段階で記録する値（[段階の表][setup]）は、上の記録と GitHub から、数えるときに数える。数えるための欄を別に持たない（[ADR-20261018-003][adr-raise] と同じ考え方）。
+
+| 段階 | 数えるもの | 数える元 |
+| --- | --- | --- |
+| 受け入れ工程（段階 4） | 実行の回数（lock で見送った実行と、起動しなかった定期の実行の時刻を除く）、投稿ありの実行 | `runs.jsonl`、`writes/` |
+| 受け入れ工程（段階 4） | 人が `## 異議` の見出しで書いた回数 | Issue のコメントと `dry-run-objections.md` |
+| 受け入れ工程（段階 4） | 方針に係る要望の判定と、人が `agent-ready` を付けたか（[ADR-20261019-004][adr-policy]） | `outputs/` の受付 AI、Issue の timeline |
+| 計画・実装工程（段階 5） | 人が手直しせずにマージした PR（手直しは、人が PR に commit を足したか、close して作り直したこと） | PR の commit の作者、閉じた PR |
+| 計画・実装工程（段階 5） | `plan=` の判定への異議、`fable` にした計画と `opus` の計画の違い、自己申告で捨てた計画 | `outputs/` の受付 AI と計画 AI、Issue のコメント |
+| 計画・実装工程（段階 5）から修正工程（段階 7） | 計画のレビューの結果と、計画し直したこと | `outputs/` の計画のレビューと、直す前の計画 |
+| 計画・実装工程（段階 5）から修正工程（段階 7） | 作業 AI の最初の実装のモデルと、Issue の種類（作業ブランチの型）ごとの結果 | `sessions.jsonl` の作業 AI、`review` の印、PR |
+| レビュー工程（段階 6） | 一致率と却下率、`opus` と `fable` の比べ、見落としの軸の 2 つの数 | `outputs/` のレビュー AI（3 つの軸、比べるための実行、見落としの軸）、人のレビューの結果、`## 却下` のコメント |
+| 修正工程（段階 7） | 往復の回数、`opus` に上げた件数、上げた後に Ready to Merge まで進んだ件数 | `review` の印、`sessions.jsonl` の作業 AI、Project の Status |
+| 修正工程（段階 7）とマージ判定工程（段階 8） | マージの判定と人の操作が合ったか | `runs.jsonl` のマージの判定、PR のマージと「判定と違う判断」のコメント |
+
+- 記録を消す時期は決めない。段階の出口と見直しに使うため。大きくなりすぎたら、人が古い実行の分を別の場所に移す（移した分は数え上げに使わない）
 
 [adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-settings]: ../../adr/adr-20261015-005-settings-values-and-machine-settings.md
@@ -358,3 +419,7 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-intake]: ../../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
 [adr-tmp]: ../../adr/adr-20261017-006-per-session-short-tmpdir.md
 [design-setup]: ./04-setup-and-check.md
+[fig-push]: ./diagrams/02-push.drawio.svg
+[fig-records]: ./diagrams/02-records.drawio.svg
+[adr-raise]: ../../adr/adr-20261018-003-count-model-raise-at-stage-7.md
+[design-settings]: ./01-settings.md
