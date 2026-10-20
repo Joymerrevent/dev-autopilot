@@ -35,6 +35,7 @@
 | ADR-20261019-004 | [方針に係る要望は、受付 AI が見分けて下書きに書き添え、計画が push しないパスに触れるなら実装の前に人に渡す][adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths] | accepted | 2026-10-19 |
 | ADR-20261020-001 | [自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ][adr-20261020-001-bot-accounts-as-list] | accepted | 2026-10-20 |
 | ADR-20261020-002 | [進行 Bot は、GitHub に書き始める前に GitHub App に切り替え、自動化用のアカウントを分ける][adr-20261020-002-switch-to-github-app-before-writing] | accepted | 2026-10-20 |
+| ADR-20261021-001 | [レビュー AI に Skill の道具を持たせず、進行 Bot が review Skill の本文に引数を入れて渡す][adr-20261021-001-review-skill-text-without-skill-tool] | accepted | 2026-10-21 |
 | ADR-20261021-002 | [書かずに試すのは受け入れ工程（段階 4）だけにし、試した下書きは同じ文の間は作り直さず、試した回の費用を Issue の累計に数えない][adr-20261021-002-dry-run-only-at-intake-stage] | proposed | 2026-10-21 |
 
 <!--
@@ -77,4 +78,5 @@
 [adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths]: ./adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
 [adr-20261020-001-bot-accounts-as-list]: ./adr-20261020-001-bot-accounts-as-list.md
 [adr-20261020-002-switch-to-github-app-before-writing]: ./adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-20261021-001-review-skill-text-without-skill-tool]: ./adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-20261021-002-dry-run-only-at-intake-stage]: ./adr-20261021-002-dry-run-only-at-intake-stage.md
