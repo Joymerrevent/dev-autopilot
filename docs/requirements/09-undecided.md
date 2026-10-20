@@ -112,7 +112,7 @@
 ## 基本設計の中で決めてよいもの
 
 - UNDECIDED-18 **欠番**（基本設計の「[AI のセッション][design-ai]」の「レビューの軸の起こし方」で決めた。レビュー AI と批評 AI は品質ゲートの全体を回さず、CI の結果で判定する。指摘を確かめるための実行は行ってよい）：~~レビュー側で `pnpm check` を実行するか（CI の結果を待つだけにするか）~~
-- UNDECIDED-19 **欠番**（基本設計の「[設定][design-settings]」の「マシンの中の置き場」で決めた）：~~実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）~~
+- UNDECIDED-19 **欠番**（基本設計の「[設定][design-settings]」の「マシンの中のフォルダ」で決めた）：~~実行の記録の置き場（記録と lock の置き場はマシンの設定の項目になった（[ADR-20261015-005][adr-settings]）ので、既定のパスを構造仕様の設定の表で決める。`setup` が作る「記録のフォルダ」の場所。SETUP-1）~~
 - UNDECIDED-20 自動化用の GitHub アカウントを分けるか（SETUP-13）。分けるなら machine user と GitHub App のどちらか。レビュー工程（段階 6。レビュー AI と批評 AI を足す段階）で、1 つのアカウントで印の判定が動くこと（GitHub のレビュー状態は使わない。IMPL-18）を実機で確かめてから決める
 - UNDECIDED-22 **欠番**（基本設計の「[テスト][design-tests]」の「前提データ」で決めた。検疫の見本は `fixtures/quarantine/` に置く）：~~検疫の見本（指示の文例、区切りを模した文、見えない文字）の置き場。TEXT-11 は `test/` の前提データとし、STRUCT-4 と「[分離を見越した構成][f07]」の構成の図は、前提データを `fixtures/` に置き、`test/` には結合テストだけを置くとしている。要件メモの時点からある食い違い（[04-external-text-and-markers.md][f04]、[07-structure.md][f07]）~~
 - UNDECIDED-27 **欠番**（基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」で決めた）：~~作業場所の残骸の決め方。[ADR-20261013-001][adr-workspace] では、セッションのフォルダ（`sessions/<セッションの名前>/`）は同じ名前で作り直すか片付ける（FLOW-27）まで残るので、作業中の Issue のフォルダがあるのは普通の状態になる。
@@ -126,7 +126,7 @@
 - UNDECIDED-43 **欠番**（基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた。`/verify-issue` は `dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）：~~`/verify-issue` から dev-autopilot を呼ぶ形。STRUCT-6 は business-os の `/verify-issue` が検疫のモジュールと `dev-autopilot:brief:triager` を呼ぶとし、「[分離を見越した構成][f07]」は business-os が dev-autopilot を import しないとする。呼び出しなら許すのか、どう呼ぶか（Skill を呼ぶ、`plugin/src/` のコマンドを実行する）を決める~~
 - UNDECIDED-46 **欠番**（`.gitleaks.toml` に規則を足して決めた。メールアドレス・電話番号・法人格・円の金額を、commit のフックと CI の全履歴の検査で止める。決まった形の無い固有名詞は見つけられない）：~~業務の固有名詞の混入を探す検査。business-os の中にあった間は、business-os の `check:leak`（メールアドレス・電話番号・法人格・金額・許可リストに無いドメインを探す）が dev-autopilot の文書も見ていた。dev-autopilot のリポの gitleaks は秘密の値だけを探すので、固有名詞の混入を探す検査が無い（「[決まっていること][f00]」の置き場所の行）。検査を足すか、足すならどう足すか（gitleaks の独自の規則、TypeScript の検査など）を決める~~
 - UNDECIDED-52 **欠番**（基本設計の「[設定][design-settings]」の `models.workByType` で決めた。Issue の種類は作業ブランチの型にする）：~~Issue の種類の分け方。最初の実装で使うモデルは Issue の種類ごとに決める（IMPL-25、[ADR-20261018-003][adr-model]）が、要件は Issue をどう種類に分けるか（ブランチの型（IMPL-2）か、別の分け方か）を書いていない。計画・実装工程（段階 5）の記録の欄を決めるときに決める~~
-- UNDECIDED-56 AI のセッションの会話の記録の扱い。`claude -p` は、作業フォルダのパスから名前を付けたフォルダに、会話の記録を人のホームの `~/.claude/projects/` の下に残す（FACT-50）。進行 Bot が動かすと、セッションごとに記録がたまる。消すか、残すならどこにいつまで残すかを決める
+- UNDECIDED-56 **欠番**（基本設計の「[AI のセッション][design-ai]」の「起動の形」で決めた。`--no-session-persistence` で会話の記録を人のホームに残さず、進行 Bot が受け取った `stream-json` を記録の置き場に残す。FACT-51）：~~AI のセッションの会話の記録の扱い。`claude -p` は、作業フォルダのパスから名前を付けたフォルダに、会話の記録を人のホームの `~/.claude/projects/` の下に残す（FACT-50）。進行 Bot が動かすと、セッションごとに記録がたまる。消すか、残すならどこにいつまで残すかを決める~~
 
 ## 確かめること
 
