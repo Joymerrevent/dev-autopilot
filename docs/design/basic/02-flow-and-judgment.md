@@ -64,8 +64,9 @@ AI が受け持つ工程を、段取り（P）・作業（D）・検証（C）�
 | 読むもの | 読む先 | 判定での使い方 |
 | --- | --- | --- |
 | Status と Agent 欄 | Project（GraphQL） | 今の工程と、人の意思表示（`human`・`paused`） |
-| ラベル、マイルストーン、依存（blocked by）、開閉、`agent-ready` を付けた人 | Issue と Issue の timeline | 候補の条件を満たすか（[FLOW-1][flow]）、作業を止めるか（[TEXT-8][text]）、付けた人が push 以上の権限を持つか（[TEXT-10][text]） |
-| 印 | Issue のコメント（`intake` `intake-final` `plan` `note`）と、PR のコメント（`review` `fix` `merge` `note`） | どこまで進んだか。投稿者・未編集・署名の 3 つを満たす印だけを読む（[IMPL-20][impl]） |
+| ラベル、マイルストーン、依存（blocked by）、開閉。ラベル（`agent-ready`・`needs-human`・`plan:*`）を付けた人と外した人と、その時刻 | Issue と Issue の timeline（`LabeledEvent`・`UnlabeledEvent`） | 候補の条件を満たすか（[FLOW-1][flow]）、作業を止めるか（[TEXT-8][text]）、付けた人と外した人が push 以上の権限を持つか、`agent-ready` を付けた時刻（[TEXT-10][text]） |
+| 印 | Issue のコメント（`intake` `intake-final` `plan` `note`）と、PR のコメント（`review` `fix` `merge` `note`） | どこまで進んだか。投稿者・未編集・署名の 3 つを満たす印だけを読む。`intake` の印だけは、人が下書きを直す前提なので、未編集の条件を掛けない（[IMPL-20][impl]、[印と固定の見出しの一覧][markers]） |
+| 人のコメント | Issue と PR のコメント（`## 作業指示` などの固定の見出しのコメントと、受け入れの下書きのコメント）と、その編集の記録（`userContentEdits`） | 渡す文（作業指示コメントか、承認された下書き。[TEXT-1][text]）、書いた人と編集した人が push 以上の権限を持つか、最後に編集した時刻（[TEXT-10][text]）、人の却下と判定と違う判断（[FLOW-14][flow]、[MERGE-3][merge]） |
 | 結びついた PR | PR の一覧。結びつきは、ブランチ名・同じリポ・結びつきの印の 3 つで決める（[IMPL-6][impl]） | 開いているか、マージされたか、draft か、head の SHA |
 | 必須チェックの結果 | PR の head の SHA と、base ブランチの先端のチェック | CI が緑か（[IMPL-27][impl]）、基線が緑か（[IMPL-9][impl]） |
 | 手元の記録 | 記録の置き場 | 実行の失敗の回数、受付 AI の拒否、累計と 1 日の利用枠。上限の数え上げにだけ使う |
@@ -84,12 +85,12 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | --- | --- | --- |
 | 1 | 結びついた PR がマージされた | 片付け（軽い）：Issue を閉じ、作業場所を消し、依存していた PR を載せ直す。Agent 欄とラベルは書き換えない。順 2 の除外より先に見る（[FLOW-27][flow]、[MERGE-7][merge]、[ADR-20261015-006][adr-flow] の決定 3） |
 | 2 | Agent 欄が `human` か `paused`。または `needs-human` がある | 触らない（[Issue の状態の遷移][flow]の決まり、[FLOW-1][flow]） |
-| 3 | 着手した後（Status が `In Progress` 以降）に、Issue が閉じられた・別のリポに移された・`agent-ready` かマイルストーンが外された | `needs-human` にする。作業ブランチと PR は残す（[TEXT-8][text]） |
+| 3 | 着手した後（Status が `In Progress` 以降）に、Issue が閉じられた・別のリポに移された・`agent-ready` かマイルストーンが外された | `needs-human` にし（`issue-changed`）、作業ブランチと PR は残す（[TEXT-8][text]） |
 | 4 | 結びつく PR がマージされずに閉じられた。または、ブランチ名が一致するのに結びつきの印が無い PR がある | `needs-human` にする。印の無い PR のときは `note kind=stop reason=unlinked-pr` を書く（[IMPL-6][impl]） |
-| 5 | 進行 Bot の印のうち、未編集か署名の条件を満たさないものがある。または、`review` の印の `round` が欠けている | `needs-human` にし、`note kind=stop reason=marker-invalid` を書く（[IMPL-20][impl]、[IMPL-18][impl]） |
-| 6 | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） | `needs-human` にする（[FLOW-29][flow]） |
-| 7 | 依存（blocked by）の相手に、閉じていない Issue がある | 待つ（欄は変えない）。作業中なら、レビューと修正も止める（[FLOW-33、FLOW-34][flow]） |
-| 8 | Status が、印と PR から決まる値と違う | 人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たるなら、Status に従う。ほかは想定外の Status として `needs-human` にする（[Issue の状態の遷移][flow]の決まり、[SAFE-4][safety]、[TEXT-10][text]） |
+| 5 | 進行 Bot の印のうち、未編集（`intake` の印には掛けない）か署名の条件を満たさないものがある。または、`review` の印の `round` が欠けている | `needs-human` にし、`note kind=stop reason=marker-invalid` を書く（[IMPL-20][impl]、[IMPL-18][impl]） |
+| 6 | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） | `needs-human` にする（`workspace-residue`。[FLOW-29][flow]） |
+| 7 | 依存（blocked by）の相手に、閉じていない Issue がある | 待つ（欄は変えない）。待つことを、`note kind=wait` の印付きのコメントで 1 回だけ書く（[FLOW-10][flow]）。作業中なら、レビューと修正も止める（[FLOW-33、FLOW-34][flow]） |
+| 8 | Status が、印と PR から決まる値と違う | 人が戻す手順（`needs-human` を外して `Todo` か `In Review` に戻す）に当たり、`needs-human` を外した人が push 以上の権限を持つなら、Status に従う。push 未満の人が外したなら、`needs-human` を付け直す（`unauthorized-resume`。[TEXT-10][text]）。ほかは想定外の Status として `needs-human` にする（`unexpected-status`。[Issue の状態の遷移][flow]の決まり、[SAFE-4][safety]） |
 
 `needs-human` にするときは、どの契機でも Status を `Blocked` にする（[Issue の状態の遷移][flow]の決まり）。
 
@@ -99,9 +100,30 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
-| 9 | 受け入れの印（`intake`）が無い。`from-review` の Issue は、マイルストーンが付くまで除く | 受け入れ（重い）。1 回の実行の件数の上限（`limits.intakePerRun`）まで（[FLOW-16][flow]、[TEXT-12][text]、[IMPL-26][impl]） |
-| 10 | 受け入れの印があり、人が `agent-ready` を付けたが、`intake-final` の印が無い | 承認の確定（軽い）：`agent-ready` を付けた人の権限を確かめ、渡す文のハッシュを `intake-final` の印に書き、依存とマイルストーンを確定する（[FLOW-18][flow]、[TEXT-4][text]、[TEXT-10][text]、[TEXT-12][text]） |
-| 11 | `intake-final` の印があり、候補の条件をすべて満たす（[FLOW-1][flow]） | 着手（軽い）：Status を `In Progress`、Agent 欄を `worker` にし、続けて計画（重い）に進む。基線が緑で、着手の件数と進行中の Issue の数が上限の内のときだけ（[FLOW-19][flow]、[FLOW-20][flow]、[FLOW-3][flow]、[IMPL-9][impl]） |
+| 9 | 受け入れの印（`intake`）が無い。`from-review` の Issue は、マイルストーンが付くまで除く | `agent-ready` が無ければ、受け入れ。1 回の実行の件数の上限（`limits.intakePerRun`）まで（[FLOW-16][flow]、[TEXT-12][text]、[IMPL-26][impl]、[ADR-20261015-003][adr-intake]）。中の順番は下の「受け入れと承認の確定で確かめること」。`agent-ready` が先に付いていれば、受け入れをせずに `needs-human` を付け（`approved-before-intake`）、`agent-ready` を外して下書きを待つよう案内する |
+| 10 | 受け入れの印があり、人が `agent-ready` を付けたが、`intake-final` の印が無い | 承認の確定（軽い）：下の「受け入れと承認の確定で確かめること」を満たせば、渡す文のハッシュを `intake-final` の印に書き、依存とマイルストーンを確定する。満たさなければ、`intake-final` を書かずに `needs-human` を付ける（[FLOW-18][flow]、[TEXT-4][text]、[TEXT-10][text]、[TEXT-12][text]） |
+| 11 | `intake-final` の印があり、候補の条件をすべて満たす（[FLOW-1][flow]） | 計画・実装工程（段階 5）以降なら、着手（軽い）：Status を `In Progress`、Agent 欄を `worker` にし、続けて計画（重い）に進む。基線が緑で、着手の件数と進行中の Issue の数（下の「進行中の Issue の数え方」）が上限の内のときだけ（[FLOW-19][flow]、[FLOW-20][flow]、[FLOW-3][flow]、[IMPL-9][impl]）。着手の前に、渡す文のハッシュが `intake-final` の印と同じか（違えば `brief-changed`。[TEXT-4][text]）と、渡す文に秘密の形（鍵の形式、メールアドレスなど）が無いか（あれば `brief-sensitive`。[TEXT-7][text]）を確かめ、外れたら着手せずに `needs-human` を付ける。受け入れ工程（段階 4）では着手せず、候補の条件を満たしたこと（選定の結果）を手元の記録にだけ残す（[段階の表][setup]） |
+
+#### 受け入れと承認の確定で確かめること
+
+| 工程 | 確かめること | 外れたとき |
+| --- | --- | --- |
+| 受け入れ（順 9） | 題名・本文・コメントを検疫（[TEXT-11][text]）に通す | 受付 AI を起動せず、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）と、`quarantine=found` の `intake` の印だけを載せた「受け入れの下書き」コメントを書き、`needs-human` を付ける（`quarantine`。[TEXT-12][text]、[ADR-20261015-003][adr-intake]） |
+| 受け入れ（順 9） | 検疫で見つからなければ、受付 AI（重い）を起動する | 進行 Bot は、検疫の結果、作業指示の下書き、依存とマイルストーンの候補、計画の難しさの判定と根拠、方針に係る要望かの判定と根拠（方針の要望のときだけ）を載せた「受け入れの下書き」コメントを書く（[TEXT-12][text]） |
+| 承認の確定（順 10） | `agent-ready` を付けた人、`## 作業指示` のコメントを書いた人、下書きのコメントを編集した人が、push 以上の権限を持つ | push 未満の人が付けたラベルとした編集を無効として扱い、`needs-human` を付ける（`permission`。[TEXT-10][text]） |
+| 承認の確定（順 10） | 渡す文（作業指示コメントか、直した下書き）の投稿と最後の編集が、`agent-ready` を付けた時刻より前 | `needs-human` を付ける（`brief-edited-after-approval`。人は文を直してから `agent-ready` を付け直す。[TEXT-10][text]） |
+| 承認の確定（順 10） | `quarantine=found` の Issue では、`## 作業指示` のコメントがある。渡す文は作業指示コメントだけにする（`source=instruction`） | `needs-human` を付け直す（`quarantine`。[TEXT-12][text]、[ADR-20261015-003][adr-intake]） |
+
+- `agent-ready` が受け入れの下書きより先に付いた Issue は、受け入れの対象から外れ（[TEXT-12][text]）、承認の確定の条件（受け入れの印がある）にも当たらないので、何もしないと進まないまま残る。人が下書きを読む前の承認を通さないため、`needs-human` にして知らせる（順 9）
+
+#### 進行中の Issue の数え方
+
+進行中の Issue の数の上限（`limits.wip`）で数える Issue は、着手した後で、閉じていない Issue。
+
+- 着手したかは、計画の印か結びつく PR があるか、Status が `In Progress`・`In Review`・`Ready to Merge` かで見る
+- `Blocked` の Issue も、計画の印か結びつく PR があれば数える。人の対処を待つ作業があるうちに、新しい作業を積み増さないため
+- 受け入れで止まった Issue と、着手した直後に計画の前で止まった Issue（計画の印も PR も無い）は数えない。人が見る作業がまだ無いため
+- 要件は「進行中の Issue」を 2 通りに書いている（FLOW-3 の「`In Progress` 以降で `Done` でない」と、「運用の規則」の「`In Progress` 以降、または計画の印がある」）。要件を直す PR で、上の数え方にそろえる
 
 ### 作業中（Status が `In Progress` から `Ready to Merge`）
 
@@ -132,7 +154,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 | 順 | すること | 次に進む先 |
 | --- | --- | --- |
-| 1 | 計画 AI が計画を返す（印とラベルで決めたモデル。`models.plan` か `models.planHard`） | `opus` が自己申告したら 2。しなければ 3 |
+| 1 | 計画 AI が計画を返す（印とラベルで決めたモデル。`models.plan` か `models.planHard`。ラベル `plan:*` は、付けた人が push 以上の権限を持つときだけ使う。[TEXT-10][text]） | `opus` が自己申告したら 2。しなければ 3 |
 | 2 | 計画 AI が `fable` で計画し直す（1 回だけ。`models.planHard`） | 3 |
 | 3 | 進行 Bot が、計画の `plan.paths` を push しないパスの一覧（IMPL-15）と照らす | 1 つでも当たれば、計画を投稿せず、`needs-human` を付ける（`plan-blocked-path`。[ADR-20261019-004][adr-policy]）。当たらなければ 4 |
 | 4 | レビュー AI が計画をレビューし、`ok` か `fix` と指摘の一覧を返す（`models.planReview`） | `ok` なら 6。`fix` で、レビューの指摘で計画し直した回数が上限（`limits.planRevisions`）に達していなければ 5、達していれば 6 |
@@ -258,15 +280,17 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `leak` | 漏えいの検査に引っかかった（[IMPL-15][impl]） |
 | `blocked-path` | diff が、push しないパスに触れている（[IMPL-15][impl]） |
 | `plan-blocked-path` | 計画が変える見込みのパスが、push しないパスに当たる（[IMPL-10][impl]、[ADR-20261019-004][adr-policy]） |
+| `approved-before-intake` | 受け入れの下書きの前に、`agent-ready` が付いた（[TEXT-12][text]。人が下書きを読む前の承認を通さない） |
 | `brief-changed` | 渡す文のハッシュが、承認したときと違う（[TEXT-4][text]） |
+| `brief-edited-after-approval` | 渡す文（作業指示コメントか、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻より後（[TEXT-10][text]） |
 | `brief-sensitive` | 渡す文に、事業データか認証情報の形が混じっている（[TEXT-7][text]） |
-| `quarantine` | 受け入れの検疫で見つかった（[TEXT-12][text]） |
+| `quarantine` | 受け入れの検疫で見つかった。または、見つかった Issue に `## 作業指示` のコメントが無いまま `agent-ready` が付いた（[TEXT-12][text]） |
 | `issue-changed` | 作業中に、Issue が閉じられた・移された・`agent-ready` かマイルストーンが外された（[TEXT-8][text]） |
-| `permission` | ラベルや編集の権限が足りない（[FLOW-29][flow]） |
+| `permission` | `agent-ready` を付けた人、作業指示コメントを書いた人、下書きのコメントを編集した人が push 未満（[TEXT-10][text]、[FLOW-29][flow]） |
 | `unauthorized-resume` | push 未満の人が `needs-human` を外した（[TEXT-10][text]） |
 | `unlinked-pr` | ブランチ名が一致するのに、結びつきの印が無い PR がある（[IMPL-6][impl]） |
 | `pr-closed` | 結びつく PR が、マージされずに閉じられた（[IMPL-6][impl]） |
-| `marker-invalid` | 進行 Bot の印が、未編集か署名の条件を満たさない。または `review` の印の `round` が欠けている（[IMPL-20、IMPL-18][impl]） |
+| `marker-invalid` | 進行 Bot の印が、未編集（`intake` の印には掛けない）か署名の条件を満たさない。または `review` の印の `round` が欠けている（[IMPL-20、IMPL-18][impl]） |
 | `ci-action-required` | CI のワークフローの実行に、人の承認が要る（[IMPL-27][impl]） |
 | `ci-stale` | CI の結果が、取り消しなどのまま時間を過ぎても変わらない（[IMPL-27][impl]） |
 | `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
@@ -326,3 +350,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-pdca]: ./diagrams/02-pdca.drawio.svg
 [fig-plan-step]: ./diagrams/02-plan-step.drawio.svg
 [adr-policy]: ../../adr/adr-20261019-004-flag-policy-requests-and-stop-plans-on-blocked-paths.md
+[adr-intake]: ../../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
