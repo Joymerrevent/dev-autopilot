@@ -1,13 +1,15 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-17
+updated: 2026-10-21
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 1 回の実行では重い段を 1 つだけ進め、基線が緑でなければ新しい着手だけ止め、進行役は Agent 欄に人の値を書かず、手元の記録は上限の数え上げにだけ使う
 
+> **Amended by [ADR-20261021-002][adr-dry]（2026-10-21）**: 決定 4 の「判定には、手元の記録を使わない」に、書かずに試す間だけの例外を足した。書くつもりだった受け入れの下書きを、同じ文の間は書いたものとして扱い、受け入れの相手を選ぶときと選定の結果を作るときに使う。書き始めた後の判定は、GitHub の状態と印だけから決める。決定 4 の数え上げの (a) と (c) から、書かずに試した回を除いた。決定 4 のほかの項目と、決定 1〜3 は据え置く。
+>
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-006 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
 要件の UNDECIDED-5〜8（[決めていないこと][undecided]の「流れと段」）を決める。
@@ -229,3 +231,4 @@ decision-makers: メンテナ
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
+[adr-dry]: ./adr-20261021-002-dry-run-only-at-intake-stage.md
