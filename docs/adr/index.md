@@ -38,6 +38,8 @@
 | ADR-20261021-001 | [レビュー AI に Skill の道具を持たせず、進行 Bot が review Skill の本文に引数を入れて渡す][adr-20261021-001-review-skill-text-without-skill-tool] | accepted | 2026-10-21 |
 | ADR-20261021-002 | [書かずに試すのは受け入れ工程（段階 4）だけにし、試した下書きは同じ文の間は作り直さず、試した回の費用を Issue の累計に数えない][adr-20261021-002-dry-run-only-at-intake-stage] | accepted | 2026-10-21 |
 | ADR-20261021-003 | [承認は agent-ready の付け直しでやり直し、push 未満の人の作業指示は読まず、作業指示が 2 つ以上なら止める][adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions] | accepted | 2026-10-21 |
+| ADR-20261021-004 | [印の署名を確かめる鍵を一覧にしていつでも替えられるようにし、無効な印で止めた Issue は、人が needs-human を外せば知らせた印を数えずに続ける][adr-20261021-004-marker-key-list-and-resume-after-invalid-markers] | accepted | 2026-10-21 |
+| ADR-20261021-006 | [当てる先のリポの owner と名前は、リポの設定を読む前に要る項目として、base ブランチの名前と GitHub App の 2 つの ID と一緒にマシンの設定に置く][adr-20261021-006-repo-owner-and-name-in-machine-settings] | accepted | 2026-10-21 |
 | ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | proposed | 2026-10-21 |
 
 <!--
@@ -83,4 +85,6 @@
 [adr-20261021-001-review-skill-text-without-skill-tool]: ./adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-20261021-002-dry-run-only-at-intake-stage]: ./adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions]: ./adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
+[adr-20261021-004-marker-key-list-and-resume-after-invalid-markers]: ./adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
+[adr-20261021-006-repo-owner-and-name-in-machine-settings]: ./adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-20261021-007-compare-review-done-from-local-records]: ./adr-20261021-007-compare-review-done-from-local-records.md
