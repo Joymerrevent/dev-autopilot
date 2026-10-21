@@ -57,7 +57,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | 1 | FLOW-15 | Issue が起票され、Project に入る | 自動（Project の自動追加。SETUP-1） | `Todo` | 空 | 無し | SETUP-1 |
 | 2 | FLOW-16 | 受け入れ：検疫、作業指示の下書き、依存とマイルストーンの候補を「受け入れの下書き」コメントに書く（検疫で見つかったら、検疫の結果と印だけを書き、FLOW-29 の遷移で `needs-human` にする。TEXT-12） | 進行 Bot | 変えない | 変えない | 変えない | TEXT-12 |
 | 3 | FLOW-17 | 下書きを読み（必要なら直し）、処理対象にすると判断する | 人（コラボレータ） | 変えない | 変えない | `agent-ready` | TEXT-9、TEXT-12 |
-| 4 | FLOW-18 | `agent-ready` を検出し、渡す文のハッシュを取って `intake-final` の印を新しいコメントで投稿し（TEXT-12）、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ）で確定する | 進行 Bot | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
+| 4 | FLOW-18 | `agent-ready` を検出し、渡す文のハッシュを取って `intake-final` の印を新しいコメントで投稿し（TEXT-12）、依存（blocked by）とマイルストーンを候補（人が直した値があればそれ。`quarantine=found` の Issue では候補が無いので、人が Issue に付けた値）で確定する | 進行 Bot | 変えない | 変えない | 変えない | TEXT-12、FLOW-1、SETUP-7 |
 | 5 | FLOW-19 | 棚卸しで候補に選び、基線が緑なら着手する | 進行 Bot | `In Progress` | `worker` | 変えない | FLOW-1、IMPL-9 |
 | 6 | FLOW-20 | 計画 AI（印とラベルで決めたモデル）が計画を返し、進行 Bot が `plan` の印付きで Issue にコメントする。計画 AI の `opus` が自己申告したら、同じ回の実行で続けて `fable` で計画し直し、やり直した計画だけを投稿する（IMPL-10。[ADR-20261018-002][adr-redo]）。計画を投稿した実行では、どの段階でも実装に入らない（重い工程は 1 回の実行で 1 つ。FLOW-4）。計画を投稿する前に、計画が変える見込みのパスを push しないパスの一覧と照らし、当たれば計画を投稿せずに `needs-human` にする（IMPL-10、[ADR-20261019-004][adr-policy]）。当たらなければ、レビュー AI が計画をレビューし、直すべき点があれば、同じ回の実行で続けて計画 AI に計画し直させる（上限は設定。マージ判定工程（段階 8）の前は、レビューの結果も計画し直したことも Issue に書かない。IMPL-10、[ADR-20261018-004][adr-planrev]、[ADR-20261019-003][adr-replan]）。マージ判定工程（段階 8）の前は、人がすべての計画を読み、誤っていれば次回の実行までに止める（Agent 欄 `paused` か `needs-human`）。マージ判定工程（段階 8）以降は計画を記録として残す（IMPL-10） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-10 |
 | 7 | FLOW-21 | draft PR を作る（計画・実装工程（段階 5）ではレビュー AI が無いので、人がレビューする。Agent 欄は空） | 進行 Bot | `In Review` | `reviewer`（レビュー工程（段階 6）以降。計画・実装工程（段階 5）は空） | 変えない | IMPL-6、IMPL-7 |
@@ -73,7 +73,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | 番号 | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か、同じ指摘の再発（直したはずの指摘が再び出た） | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4）、受け入れの下書きの前に付いた `agent-ready`（TEXT-12）、push 以上の人の作業指示コメントが 2 つ以上（TEXT-12）、計画が変える見込みのパスが push しないパスに当たる（IMPL-10）、push する SHA が GitHub の作業ブランチの先端の子孫でない（IMPL-15、SAFE-13）、作業 AI が作業を終えたと返したのに新しい commit が無い（IMPL-5）、AI のセッションを止めた後にコマンドが残る（IMPL-14）、安全設定のファイルが作ったときと違うか、作業場所に local の設定のファイルがある（SAFE-2）。契機ごとの stop の理由の記号は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」 | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-5、IMPL-6、IMPL-8、IMPL-10、IMPL-14、IMPL-15、IMPL-18、IMPL-20、IMPL-27、SAFE-2、SAFE-4、SAFE-12、SAFE-13、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、TEXT-12、SETUP-2、「運用の規則」 |
+| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4）、受け入れの下書きの前に付いた `agent-ready`（TEXT-12）、push 以上の人の作業指示コメントが 2 つ以上（TEXT-12）、計画が変える見込みのパスが push しないパスに当たる（IMPL-10）、push する SHA が GitHub の作業ブランチの先端の子孫でない（IMPL-15、SAFE-13）、作業 AI が作業を終えたと返したのに新しい commit が無い（IMPL-5）、AI のセッションを止めた後にコマンドが残る（IMPL-14）、安全設定のファイルが作ったときと違うか、作業場所に local の設定のファイル（`.claude/settings.local.json`）か `CLAUDE.local.md` がある（SAFE-2）。契機ごとの stop の理由の記号は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」 | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-5、IMPL-6、IMPL-8、IMPL-10、IMPL-14、IMPL-15、IMPL-18、IMPL-20、IMPL-27、SAFE-2、SAFE-4、SAFE-12、SAFE-13、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、TEXT-12、SETUP-2、「運用の規則」 |
 | FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受付 AI の拒否、依存の導入でレジストリにつながらない（IMPL-1）。3 回未満。次回に持ち越す） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-14 の表 |
 | FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
 | FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
@@ -83,6 +83,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 止まった状態から戻す手順（人だけが行う）：
 
 - `needs-human`：原因を直してからラベルを外し、Status を戻す。PR が無ければ `Todo`（棚卸しで選び直す）、PR があれば `In Review`（進行 Bot が次回の実行で PR の状態から再開する）。Agent 欄が `human` なら `worker` に戻す
+- 結びつきの印の無い PR（`unlinked-pr`）：進行 Bot が PR を作った直後、結びつきの印を書く前に止まったときにも当たる（まれなので、人が確かめる。IMPL-6、[ADR-20261016-001][adr-pr] の決定 3）。人は PR の中身を確かめてから、PR を閉じ、作業ブランチを消し、`needs-human` を外して Status を `Todo` に戻す。進行 Bot は、人が戻す前に閉じられた印の無い PR では止めず、計画からやり直す
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
 - 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行 Bot が続ける。待ちを解きたければ人が依存（blocked by）を外す
@@ -143,3 +144,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [design-setup]: ../design/basic/04-setup-and-check.md
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
+[adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md

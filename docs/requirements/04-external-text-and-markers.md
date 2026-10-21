@@ -31,9 +31,9 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
   - `/verify-issue` は、人が手で深く確かめたいとき（hook・雛形・第三者のツールの再現）の補助として残す。最初の手順で検疫のモジュールを呼ぶ
 - TEXT-10 コラボレータの判定は `GET /repos/<owner>/<repo>/collaborators/<user>/permission`（push 以上）で、文を渡す直前に 1 人ずつ引く（一覧を取って持ち回らない）。
   作業指示コメントは、投稿者が push 以上のものだけを読み、push 未満の人の作業指示コメントは無いものとして扱い、止めない（固定の見出しの読み方（FLOW-14）にそろえる。公開のリポで、外の人が 1 つのコメントで承認を止められないようにするため。[ADR-20261021-003][adr-reapprove]）。
-  `agent-ready` を付けた人（Issue の timeline）とコメントを編集した人（`userContentEdits`）も確かめる（triage 権限でもラベルは付けられるため）。満たさなければそのラベルと編集は無効として扱い、`needs-human`。
+  `agent-ready` を付けた人（Issue の timeline の、最新の `agent-ready` の `LabeledEvent` の `actor`）とコメントを編集した人（`userContentEdits`）も確かめる（triage 権限でもラベルは付けられるため）。満たさなければそのラベルと編集は無効として扱い、`needs-human`。
   `needs-human` を外した人（`UnlabeledEvent` の `actor`）と `plan:fable` / `plan:opus` を付けた人（`LabeledEvent` の `actor`）も確かめる。push 未満の人が外した `needs-human` は付け直して `note kind=stop reason=unauthorized-resume` を投稿し、push 未満の人が付けた `plan:*` は無いものとして扱う。
-  渡す文（作業指示コメント、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻（`LabeledEvent` の `createdAt`。承認をやり直すときは、最新の `agent-ready` を付けた時刻）より後なら、`intake-final` を投稿せず `needs-human` にする（人は文を直してから `agent-ready` を付け直す。[ADR-20261015-004][adr-markers]）。
+  渡す文（作業指示コメント、直した下書き）の投稿か最後の編集が、`agent-ready` を付けた時刻（最新の `agent-ready` の `LabeledEvent` の `createdAt`。承認の確定でも承認のやり直しでも、付け直した最新の時刻で見る）より後なら、`intake-final` を投稿せず `needs-human` にする（人は文を直してから `agent-ready` を付け直す。[ADR-20261015-004][adr-markers]）。
   Issue の本文は渡さないので、本文の編集は、`agent-ready` より後の編集を止める規則に数えない（[ADR-20261016-002][adr-draft]）
   進行 Bot のアカウント（SETUP-13）もコラボレータだが、その投稿は常に AI の出力として扱う（TEXT-1、IMPL-20）
 - TEXT-11 **渡す直前の検疫**。進行 Bot は、AI に渡す文（受付 AI に渡す Issue の題名・本文・コメント、作業指示コメント、承認された下書き、計画コメント（IMPL-10）、再レビューの入力に含める前回の指摘（進行 Bot が PR の印のあるコメントから組み立てたもの。TEXT-1））を、**書いた人を問わず、渡す直前に毎回**、機械の検査に通す。
@@ -46,7 +46,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
 - TEXT-12 **受け入れの自動化**。Project に入った Issue のうち、`agent-ready` が無く、受け入れの印も無いもの（マイルストーンの有無は問わない。`from-review` の Issue だけは人がマイルストーンを付けるまで対象外。IMPL-26。[ADR-20261015-003][adr-intake]）に対し、進行 Bot が毎回の実行で次を行う。人の操作は、下書きを読んで `agent-ready` を付ける 1 つだけにする。
   1 回の実行で受け入れる件数に上限を持つ（設定。初回の実行で未処理の Issue すべてに走らないため。外の人が Issue を大量に立てたときの利用枠の歯止めでもある）
   - 検疫（TEXT-11）を題名・本文・コメントに通す。外の人の文も検疫の対象にする（読むのは機械で、AI には渡さない）。有りなら受付 AI を起動せず、作業指示の下書きも計画の難しさの判定も作らない。
-    進行 Bot は、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）、人への案内（処理対象にするなら `## 作業指示` のコメントを一から書き、`needs-human` を外して Status を `Todo` に戻してから `agent-ready` を付ける。「[止まった状態から戻す手順][f01]」）、`intake` の印（`quarantine=found` と `sig` だけ）を載せた「受け入れの下書き」コメントを投稿し、`needs-human` を付ける（[ADR-20261015-003][adr-intake]）
+    進行 Bot は、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）、人への案内（処理対象にするなら `## 作業指示` のコメントを一から書き、マイルストーン（要るなら依存（blocked by）も）を Issue に付け、`needs-human` を外して Status を `Todo` に戻してから `agent-ready` を付ける。「[止まった状態から戻す手順][f01]」）、`intake` の印（`quarantine=found` と `sig` だけ）を載せた「受け入れの下書き」コメントを投稿し、`needs-human` を付ける（[ADR-20261015-003][adr-intake]）
   - 作業指示の下書き：著者を問わずすべての Issue（検疫で見つかった Issue を除く）で、受付 AI（`dev-autopilot:brief:triager`）が Issue の文から下書きを書く（[ADR-20261016-002][adr-draft]）。
     コラボレータが本文を作業指示の形で書いていても、受付 AI が書き直す。本文のとおりに渡したいときは、人が下書きを直すか `## 作業指示` のコメントを書く。
     受付 AI は道具を持たず（Bash・Write・Edit・WebFetch・WebSearch なし）、読めるのはその Issue の文だけで、結果は出力契約（JSON）で返す。下書きも検疫に通す。下書きの形は「[作業指示（agent brief）の形][f08]」。
@@ -64,7 +64,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
     依存（blocked by）とマイルストーンは候補（人が直した値があればそれ）で確定する。以後は TEXT-4 のとおりハッシュの一致を確かめる
   - push 以上の人の作業指示コメントが 2 つ以上あれば、`intake-final` を投稿せず `needs-human` を付ける。人は 1 つを残してほかのコメントを消すか見出しを外してから、`agent-ready` を付け直す（[ADR-20261021-003][adr-reapprove]）
   - 承認のやり直し：`intake-final` の印があり、push 以上の人が `agent-ready` を付けた最新の時刻が最新の `intake-final` の印より後で、Status が `Todo`、`needs-human` が無く、開いている結びつく PR が無い Issue は、承認の確定と同じことを確かめ、新しい `intake-final` の印を新しいコメントで投稿する。進行 Bot は最新の `intake-final` の印だけを読み、計画の印が最新の `intake-final` の印より前なら計画し直す。着手した後に付け直した `agent-ready` は、やり直しとして扱わない（[ADR-20261021-003][adr-reapprove]）
-  - `quarantine=found` の Issue では、渡す文を人の作業指示コメントだけにする（`source=instruction`）。作業指示コメントが無いまま `agent-ready` が付いたら、`intake-final` を投稿せず、`needs-human` を付け直す（[ADR-20261015-003][adr-intake]）
+  - `quarantine=found` の Issue では、渡す文を人の作業指示コメントだけにする（`source=instruction`）。下書きに依存とマイルストーンの候補が無いので、依存（blocked by）とマイルストーンは人が Issue に付けた値をそのまま確定した値として読み、計画 AI のモデルは `plan=` が無いので既定の `opus`（人のラベルが優先。IMPL-10）にする。作業指示コメントが無いまま `agent-ready` が付いたら、`intake-final` を投稿せず、`needs-human` を付け直す（[ADR-20261015-003][adr-intake]）
   - 外の人の文は、受付 AI の下書きを通して作業 AI に影響しうる。この経路に人の目（下書きを読んで `agent-ready` を付ける）を必ず置くことが、TEXT-1 の「外の文は届かせない」を保つ条件になる。下書きを読まずに `agent-ready` を付けると関所が無くなる
 
 AI が読む文と、その出どころ（検疫を通す場所を決めるための一覧）：
@@ -92,10 +92,10 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `intake` | Issue の受け入れの下書きコメント | `brief=<sha256>`、`plan=opus\|fable`、`quarantine=none\|found`（`found` のときは `brief=` `plan=` を持たない。[ADR-20261015-003][adr-intake]） | 許す（人が直す前提。未編集の条件を掛けない） | 人。進行 Bot は `plan=` と `quarantine=` だけ読む | TEXT-12、[ADR-20261016-002][adr-draft] |
 | `intake-final` | `agent-ready` の後に進行 Bot が新しく投稿するコメント | `brief=<sha256>`（渡す文のハッシュ）、`source=instruction\|draft`、`plan=opus\|fable`（ラベルで上書き済みの値） | 許さない | 進行 Bot（TEXT-4 のハッシュの照合、計画 AI のモデル）。承認をやり直すと 2 つ以上並ぶので、最新の 1 つだけを読む | TEXT-12、FLOW-1、[ADR-20261016-002][adr-draft]、[ADR-20261021-003][adr-reapprove] |
 | `plan` | Issue の計画コメント | `head=<base の SHA>`、`plan=<sha256>`（計画のハッシュ）、`model=<別名>` | 許さない | 進行 Bot（作業 AI に渡す前の照合） | IMPL-10 |
-| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評 AI が落とした 🔴 の、PR ごとの累計）、`findings=<ID>,<ID>,...`（統合の後に残った 🔴 🟡 の指摘ごとの ID。同じ指摘の再発を見分ける。[ADR-20261019-001][adr-repeat]） | 許さない | 進行 Bot（収束の判定、マージの判定、同じ指摘の再発の判定） | IMPL-18、IMPL-22、IMPL-24 |
+| `review` | PR のレビュー結果のコメント | `round=<n>`、`head=<SHA>`、`high=<件数>`、`medium=<件数>`、`low=<件数>`、`verdict=pass\|fix`、`dropped_high=<件数>`（批評 AI が落とした 🔴 の、PR ごとの累計）、`findings=<ID>,<ID>,...`（統合の後に残った 🔴 🟡 の指摘ごとの ID。同じ指摘の再発を見分ける。[ADR-20261019-001][adr-repeat]）、`model=<別名>`（レビュー AI のモデル。ラウンド 2 以降も最初のラウンドの印と同じ値を書き、そのモデルで起こす。往復の途中で設定を変えても、往復の中のモデルを変えないため） | 許さない | 進行 Bot（収束の判定、マージの判定、同じ指摘の再発の判定、往復の途中のレビュー AI のモデル） | IMPL-18、IMPL-22、IMPL-24、IMPL-33 |
 | `fix` | PR の対応コメント | `round=<n>`、`head=<SHA>` | 許さない | 進行 Bot（対応済みのラウンドの判定） | IMPL-23 |
 | `merge` | PR のマージ判定のコメント | `head=<SHA>`、`merge=ready\|human`、`reasons=<満たさない条件の記号>` | 許さない | 人（マージの判断）、進行 Bot（一致の集計） | MERGE-3 |
-| `note` | Issue か PR の、進行 Bot のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由、PR と Issue の結びつき、作業 AI のモデルを上げたこと、🟢 の重複） | `kind=wait\|overlap\|remind\|stop\|link\|raise\|duplicate`、必要なら `reason=<短い記号>`（`stop` の記号の一覧は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」）。`link` は、Issue に置くときは `pr=<PR の番号>`、PR に置くときは `issue=<Issue の番号>` を持つ。`raise` は `from=<別名>` `to=<別名>`、`duplicate` は `pr=<PR の番号>` を持つ | 許さない | 進行 Bot（「1 回だけ書く」の判定：同じ `kind` と `reason`（`link` と `duplicate` は番号も）の有効な印があれば書かない。`stop` だけは `needs-human` を付けるたびに書く。`link` は PR と Issue の結びつけ。IMPL-6） | FLOW-8、FLOW-10、MERGE-3、IMPL-6、[ADR-20261015-004][adr-markers]、[ADR-20261016-001][adr-pr] |
+| `note` | Issue か PR の、進行 Bot のほかのコメント（依存の待ち、触る範囲の重なりの警告、催促、`needs-human` を付けた理由、PR と Issue の結びつき、作業 AI のモデルを上げたこと、🟢 の重複、レビュー工程（段階 6）で載せ直しが衝突して人の番にしたこと） | `kind=wait\|overlap\|remind\|stop\|link\|raise\|duplicate\|conflict`、必要なら `reason=<短い記号>`（`stop` の記号の一覧は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」）。`link` は、Issue に置くときは `pr=<PR の番号>`、PR に置くときは `issue=<Issue の番号>` を持つ。`raise` は `from=<別名>` `to=<別名>`、`duplicate` は `pr=<PR の番号>` を持つ。`conflict` は Issue に置き、`head=<PR の head の SHA>` を持つ | 許さない | 進行 Bot（「1 回だけ書く」の判定：同じ `kind` と `reason`（`link` と `duplicate` は番号も、`conflict` は `head` も）の有効な印があれば書かない。`stop` だけは `needs-human` を付けるたびに書く。`link` は PR と Issue の結びつけ。IMPL-6） | FLOW-8、FLOW-10、MERGE-3、MERGE-6、IMPL-6、[ADR-20261015-004][adr-markers]、[ADR-20261016-001][adr-pr] |
 
 人が書く固定の見出し（進行 Bot は、push 以上の権限を持つ人が書き、印を持たないコメントだけを読む。FLOW-14）：
 
