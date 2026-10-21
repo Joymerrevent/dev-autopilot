@@ -76,7 +76,7 @@
   push の前に、diff が「進行 Bot・次のセッション・CI が実行するか、規則として読むパス」（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）。設定に持つ）に触れていれば push せず `needs-human`
   （MERGE-4 の判定より前。CI が AI の書いたワークフローを secrets 付きで実行しないため。レビュー AI と修正のセッションが、作業 AI の書き換えた正典を規則として読まないため。[ADR-20261017-002][adr-review]）。`**/CLAUDE.local.md` は、どのフォルダに置いても次のセッションが指示として読む（下のフォルダのものは、そのフォルダのファイルを読んだときに読まれる。FACT-60）ので、すべてのフォルダで止める。`dev-autopilot/**` は、dev-autopilot を別のリポに移して business-os から消した後も残す（外すのは安全の境界を緩める変更で、残せば同じ名前のフォルダが business-os に戻ったときにも止まる。[ADR-20261016-003][adr-move] の決定 5）。
   push は進行 Bot の clone から `git push origin <検証した SHA>:refs/heads/<型>/issue-<番号>` の形で行い、ブランチ名でなく SHA を送る。API の head（初回は、作業場所を作ったときに進行 Bot の clone で控えた base の SHA。SAFE-13）が送る SHA の祖先であること（fast-forward で届くこと）を確かめる。
-  deploy key の push 先は、`setup` が作る ruleset で作業ブランチ（`<型>/issue-*`）に限り、タグの作成を禁じる（SETUP-1）。ruleset の bypass に入れてよいのは、組織の管理者とチームだけにする（リポの役（admin・maintain・write）を bypass に入れると、書き込みのある deploy key もその ruleset を素通りし、base ブランチの更新もタグの作成も通る。FACT-65）。bypass にリポの役・deploy key・GitHub App が入っていれば、点検（SETUP-2）が fail にする
+  deploy key の push 先は、`setup` が作る ruleset で作業ブランチ（`<型>/issue-*`）に限り、タグの作成を禁じる（SETUP-1）。ruleset の bypass に入れてよいのは、組織の管理者とチームだけにする（リポの役（admin・maintain・write）を bypass に入れると、書き込みのある deploy key もその ruleset を素通りし、base ブランチの更新もタグの作成も通る。FACT-65）。ただし、deploy key の push 先を限る 2 つの ruleset には、人がリポの設定の一覧で許したアプリ（例：Dependabot）も入れてよい。進行 Bot のアプリは、一覧にあっても入れない。bypass にリポの役・deploy key・一覧の外のアプリ・進行 Bot のアプリが入っていれば、点検（SETUP-2）が fail にする。ブランチの ruleset は、bypass の外の人とアプリによるブランチの作成と base ブランチの更新も止めるので、PR をマージする人は bypass（組織の管理者かチーム）に入れる（FACT-67）
 
 ## レビュー（レビュー AI）
 

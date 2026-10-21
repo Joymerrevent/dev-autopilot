@@ -31,9 +31,9 @@
 | ラベル 5 つ（`agent-ready`・`needs-human`・`from-review`・`plan:fable`・`plan:opus`） | 無いものだけ作る | 名前で読み戻す |
 | Project の Status の選択肢（`In Review`・`Ready to Merge`・`Blocked`）と、単一選択の Agent 欄（`worker`・`reviewer`・`human`・`paused`） | Status は、今ある選択肢を `id` 付きで含めて丸ごと送る（`id` を落とすと、今ある選択肢と項目の値が消える。FACT-15）。Agent 欄は無ければ作り、あって選択肢が足りなければ、Status と同じく今ある選択肢を `id` 付きで含めて足す | 選択肢の名前と `id` を読み戻し、リポの設定に書く |
 | base ブランチの ruleset（PR 必須、force push の禁止、必須チェックを strict（base ブランチと最新であることを求める設定）で登録、`require_extra_approval_for_unattributed_changes` は無効） | 無ければ、bypass を組織の管理者だけにして作る（下の「ruleset の形と確かめ方」）。必須チェックは、順 2 で一覧に入れた候補のうち、人が承認したものを登録する。あれば違いを示し、上書きしない。ただし、リポの設定の `checks.required` にあって ruleset に無い必須チェックは、承認を受けて足す（守りを強める向きの変更だけ） | 読み戻して項目を比べる（FACT-7）。点検は、左の欄の項目と、`enforcement`・対象・bypass を比べ、守りが弱い向きの違い（PR 必須でない、force push を許す、必須チェックが足りないか strict でない、`active` でない、base ブランチが対象に無い、bypass に組織の管理者とチームのほかがある）を fail にする（下の「ruleset の形と確かめ方」） |
-| deploy key の push 先を `<型>/issue-*` のブランチに限り、タグの作成を禁じる ruleset（ブランチの ruleset とタグの ruleset の 2 つ） | 無ければ、bypass を組織の管理者だけにして作る（下の「ruleset の形と確かめ方」）。あれば違いを示し、上書きしない。ただし、`labels.branchTypes` と `labels.defaultBranchType` の型の除外が足りなければ、承認を受けて足す | 読み戻して項目を比べる（[IMPL-15][impl]、FACT-65）。点検は、deploy key が push できるブランチが `<型>/issue-*` より広いとき（除外が型ごとの `refs/heads/<型>/issue-*` より広い）、作成・更新・削除のどれかを止めていないとき、タグの作成を許すとき、`active` でないとき、bypass に組織の管理者とチームのほかがあるときに fail にする |
+| deploy key の push 先を `<型>/issue-*` のブランチに限り、タグの作成を禁じる ruleset（ブランチの ruleset とタグの ruleset の 2 つ） | 無ければ、bypass を組織の管理者と `push.rulesetBypassApps` のアプリにして作る（下の「ruleset の形と確かめ方」）。あれば違いを示し、上書きしない。ただし、`labels.branchTypes` と `labels.defaultBranchType` の型の除外が足りないか、`push.rulesetBypassApps` のアプリが bypass に無ければ、承認を受けて足す | 読み戻して項目を比べる（[IMPL-15][impl]、FACT-65）。点検は、deploy key が push できるブランチが `<型>/issue-*` より広いとき（除外が型ごとの `refs/heads/<型>/issue-*` より広い）、作成・更新・削除のどれかを止めていないとき、タグの作成を許すとき、`active` でないとき、bypass に組織の管理者とチームと `push.rulesetBypassApps` のアプリのほかがあるとき（進行 Bot のアプリは、一覧にあっても fail）に fail にする |
 | 全体の止める合図（リポの変数 `DEV_AUTOPILOT_RUN`） | 無ければ値を `stop` で作る。あれば値を変えない | 読み戻す（[ADR-20261017-007][adr-stop]） |
-| リポの設定（`.claude/dev-autopilot.json`） | 表の初期値のうち当てる先に依らない値（許可一覧と方針のパスは空）と、API で引いた Project の ID と選択肢の ID と、順 2 で承認した必須チェックの候補（`checks.required`）と、人に聞いた規約（言語・Conventional Commits・changeset・規約の正典のパス）で作り、新しいブランチから base ブランチへの PR にする（base ブランチは PR 必須のため）。表に business-os の値として書いた初期値は、人が同じ PR に書き足す（[設定][design-settings]の「値の決まり方」）。人がマージする。前の `setup` が作った PR がまだ開いていれば、新しく作らずにその PR を示す | PR を示す。進行 Bot は base ブランチの先端から読むので、マージされるまで点検は fail になる |
+| リポの設定（`.claude/dev-autopilot.json`） | 表の初期値のうち当てる先に依らない値（許可一覧と方針のパスは空）と、API で引いた Project の ID と選択肢の ID と、順 2 で承認した必須チェックの候補（`checks.required`）と、人に聞いた規約（言語・Conventional Commits・changeset・規約の正典のパス）と、人に聞いた ruleset の bypass に入れるアプリ（`push.rulesetBypassApps`。Dependabot を使うリポなら `dependabot`）で作り、新しいブランチから base ブランチへの PR にする（base ブランチは PR 必須のため）。表に business-os の値として書いた初期値は、人が同じ PR に書き足す（[設定][design-settings]の「値の決まり方」）。人がマージする。前の `setup` が作った PR がまだ開いていれば、新しく作らずにその PR を示す | PR を示す。進行 Bot は base ブランチの先端から読むので、マージされるまで点検は fail になる |
 
 - Project の自動追加（組み込みのワークフロー）は公開の API が無いので、人が有効にする（[SETUP-1][setup]）。点検は有効かを読むだけ
 - 必須チェックの候補は、base ブランチの先端のコミットで動いたチェック（名前、出した app、ワークフローのパス）から作る。候補が無ければ（CI がまだ無い）、必須チェックを登録せずに ruleset を作り、`checks.required` を空のままにする。点検が fail にするので、人が CI を足して `checks.required` に書き、`setup` を実行し直すと、ruleset に足す（[SETUP-1][setup]、[IMPL-27][impl]）。`setup` が足すので、人が ruleset を手で直さずに済む（[SETUP-4][setup]）
@@ -49,13 +49,16 @@
 | deploy key の push 先を限る（タグ） | `tag` | include は `~ALL` | 作成（`creation`） |
 
 - 3 つとも、`enforcement` は `active` にする（`evaluate` と `disabled` は止めない）
-- bypass（`bypass_actors`）に入れてよいのは、組織の管理者（`OrganizationAdmin`）とチーム（`Team`）だけ。`setup` は、組織の管理者だけを入れて作る（[IMPL-15][impl]、[SETUP-1][setup]）。リポの役（`RepositoryRole`。admin・maintain・write）を入れると、書き込みのある deploy key も、リポの役を bypass に入れた ruleset を素通りし、base ブランチの更新もほかのブランチとタグの作成も通る（FACT-65）。deploy key（`DeployKey`）と GitHub App（`Integration`）も入れない
-- ブランチの ruleset は作業ブランチのほかのすべてのブランチを対象にするので、bypass に入っていない人も、作業ブランチのほかのブランチを作れない（FACT-65）
+- bypass（`bypass_actors`）に入れてよいのは、組織の管理者（`OrganizationAdmin`）とチーム（`Team`）だけ（deploy key の push 先を限る 2 つの ruleset では、下の `push.rulesetBypassApps` のアプリも）。`setup` は、人では組織の管理者だけを入れて作る（[IMPL-15][impl]、[SETUP-1][setup]）。リポの役（`RepositoryRole`。admin・maintain・write）を入れると、書き込みのある deploy key も、リポの役を bypass に入れた ruleset を素通りし、base ブランチの更新もほかのブランチとタグの作成も通る（FACT-65）。deploy key（`DeployKey`）も入れない
+- GitHub App（`Integration`）は、base ブランチの ruleset には入れない。deploy key の push 先を限る 2 つの ruleset には、リポの設定の `push.rulesetBypassApps` のアプリだけを入れる。進行 Bot のアプリ（マシンの設定の `githubApp.appId`）は、一覧にあっても入れない。進行 Bot のアプリに書き込みの権限を足したときに、作業ブランチのほかへ書ける経路にしないため
+  - `setup` は、一覧のアプリの名前を `GET /apps/<名前>` で ID に直し、`actor_type` を `Integration` にして入れる
+  - GitHub は、リポで使われていないアプリを bypass に入れるのを 422 で断る（Dependabot は、リポで 1 回動く前は、画面の候補にも出ない。FACT-67）。断られたら、`setup` はアプリを入れずに ruleset を作り、アプリをリポで使える状態にしてから `setup` をやり直すよう示す。Dependabot なら、`.github/dependabot.yml` を置いて 1 回動かす（1 回目は、ruleset に止められてブランチを作れない）
+- ブランチの ruleset は作業ブランチのほかのすべてのブランチを対象にするので、bypass に入っていない人とアプリは、作業ブランチのほかのブランチを作れず、base ブランチも更新できない（FACT-65、FACT-67）。bypass の外の人には、PR が `blocked` と出る（FACT-67）。そのため、PR をマージする人は bypass（組織の管理者か、bypass に入れたチーム）に入れる。`setup` は、終わりの案内でこの決まりを示す
 - 人が `labels.branchTypes` に型を足したら、人の手元のマシンで `setup` を実行し直し（GitHub の準備）、ブランチの ruleset の exclude に足す。足すまでは、新しい型の作業ブランチへの push が断られる（止まる側に倒れる）
 - 確かめ方
-  - `setup`（人の `gh` のログイン。組織の管理者）は、作った後と、すでにあったときに、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み戻して上の表と比べ、違いを示す。bypass の読み方の正本は、`setup` の読み戻し（`bypass_actors` は、ruleset に書き込める認証にだけ返る。[GitHub の公式文書][doc-rules]）
+  - `setup`（人の `gh` のログイン。組織の管理者）は、作った後と、すでにあったときに、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み戻して上の表と比べ、違いを示す。bypass の読み方の正本は、`setup` の読み戻し（[GitHub の公式文書][doc-rules]は、`bypass_actors` は ruleset に書き込める認証にだけ返るとする。Administration の権限の無い、組織の管理者の fine-grained PAT には返った。FACT-65）
   - 毎回の点検は、進行 Bot の GitHub の認証で、base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`。FACT-65）を読み、PR 必須・force push の禁止・必須チェック（strict）が効いていることを確かめる。続けて、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み、上の表より守りが弱い向きの違いを fail にする（上の「GitHub の準備」の表の確かめ方の欄）
-  - 進行 Bot の認証（PAT とアプリのトークン）で、どの欄を読めるかは確かめている途中。読めない欄があれば fail にし、読めない欄を確かめたものとして扱わない。確かめた結果で、読み方を決め直す
+  - 進行 Bot の認証のうち、組織の管理者の fine-grained PAT（Administration の権限なし）では、上の欄をすべて読めた（FACT-65）。組織の管理者でない人の PAT と、アプリのトークンで `bypass_actors` を読めるかは確かめていない。読めない欄があれば fail にし、読めない欄を確かめたものとして扱わない。確かめた結果で、読み方を決め直す
 
 ### マシンの準備
 
