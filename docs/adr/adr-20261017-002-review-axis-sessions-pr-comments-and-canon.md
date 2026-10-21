@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-21
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # レビューの 3 つの軸は進行ボットが軸ごとに別のセッションで動かしてどの役にも Agent ツールを与えず、PR のコメントは AI に渡さず、規約の正典に触れる diff は push しない
 
 > **Amended by [ADR-20261019-002][adr-gaps]（2026-10-19）**: 決定 1 のうち、「1 ラウンドのレビューは、軸ごとの 3 つのセッション（動作・仕様・規約）と、その後の批評 AI のセッションで行う」を改め、3 つの軸の後に 4 つ目の軸「見落とし」のセッションを足した。見落としの軸の結果は、修正工程（段階 7）に進む前に使うかを決めるまで記録だけに残す。決定 1 のほかの項目と、決定 2〜4 は据え置く。
+>
+> **Amended by [ADR-20261021-001][adr-review-skill]（2026-10-21）**: 決定 1 のうち、「どの軸を見るかを、進行ボットが固定の指示文と `review` Skill の引数で渡す」の引数の渡し方を改めた。レビュー AI に `Skill` の道具を持たせず、進行 Bot が `review` Skill の本文に引数を入れて、固定の指示文に続けて渡す。決定 2 の重ねる守り（`permissions.deny` の `Agent`）に、`Skill` を並べた。「軸ごとの手順は Skill の中に 1 回だけ書き、無人の入り口と人の入り口で同じものを使う」と、決定 1 のほかの項目、決定 2〜5 は据え置く。
 
 要件の UNDECIDED-32、UNDECIDED-33、UNDECIDED-34（[決めていないこと][undecided]の「レビューとマージ」）を決める。
 どれもレビュー AI が何を読み、どの道具で動くかの論点で、問いは 3 つある：3 つの軸をどう動かし Agent ツールを許すか、コラボレータの PR のコメントを AI に渡すか、規約の正典をどこから読ませるか。
@@ -286,3 +288,4 @@ decision-makers: メンテナ
 [doc-headless]: https://code.claude.com/docs/en/headless
 [da-pr-5]: https://github.com/Joymerrevent/dev-autopilot/pull/5
 [adr-gaps]: ./adr-20261019-002-review-gaps-axis-in-shadow-first.md
+[adr-review-skill]: ./adr-20261021-001-review-skill-text-without-skill-tool.md

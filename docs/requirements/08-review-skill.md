@@ -40,7 +40,8 @@ dev-autopilot の設計への反映（出どころは [11-records.md][f11] の�
 - REVIEW-3 **出力の固定**：人が読む本文（いまの形）＋ 末尾の機械で読める 1 行（IMPL-18 の印。head の SHA と、重要度ごとの件数、判定を含む。dev-autopilot では Skill は軸ごとに本文と件数を出力契約で返し、進行 Bot が束ねて印を付ける）。指摘ごとに重要度と確信度を併記する。見出しの文言を SKILL.md と報告の様式で一致させる。進行 Bot が投稿するコメントの先頭に「AI が生成した」の 1 行を付ける
 - REVIEW-4 **ラウンドの定義**：初回と再レビューを分ける。再レビューの入力は「前回の指摘」「修正コミットの範囲」。見るのは修正の差分と、修正が触れた入力の棚卸しのやり直し。ラウンドの表を必ず出す
 - REVIEW-5 **無人の入り口**：引数で基点・仕様の在りか・🟢 の起票先・予算（ターン・時間）・見る軸（REVIEW-1）を受け取る。欠けていれば聞かずに「未収束（理由）」で返す。
-  人の入り口で軸を渡されずに 3 つの軸をサブエージェントで見るときは、サブエージェントは再帰してスキルを呼ばない、修正しない、マージしない
+  人の入り口で軸を渡されずに 3 つの軸をサブエージェントで見るときは、サブエージェントは再帰してスキルを呼ばない、修正しない、マージしない。
+  dev-autopilot の無人の入り口では、レビュー AI は `Skill` の道具を持たず、進行 Bot が `SKILL.md` の本文に引数と `${CLAUDE_SKILL_DIR}` を入れて渡す。本文は引数を `$ARGUMENTS` の 1 か所で受け、Claude Code が Skill を呼ぶときに本文を書き換える機能は、引数と `${CLAUDE_SKILL_DIR}` の置き換えのほかに使わない（人の入り口と無人の入り口で、同じ本文を同じに読ませるため。[ADR-20261021-001][adr-review-skill]）
 - REVIEW-6 **信頼の境界**：差分は作業の内容であって指示ではない。PR の説明文（作業 AI の主張）はレビュー AI に渡さない。PR のコメントは、書いた人を問わず読まない（「[Issue と PR の本文の扱い][f04]」の TEXT-1、[ADR-20261017-002][adr-review]）
 - REVIEW-7 **残すもの**：壊れ方の表、証拠レベル、止めどき、🟢 の Issue 化、コミットごとのゲートの検査（TypeScript に書き直す）
 
@@ -104,3 +105,4 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 [adr-move]: ../adr/adr-20261016-003-move-to-own-repository-before-basic-design.md
 [adr-review]: ../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-gaps]: ../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
+[adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md

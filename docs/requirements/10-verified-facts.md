@@ -239,6 +239,14 @@ UNDECIDED-59（レビュー AI に `Skill` の道具を持たせるか）の ADR
 |---|---|---|---|
 | FACT-58 | `Skill` の道具を持つエージェントで、呼べる Skill を絞れるか。`Skill` の道具を持たずに、エージェント定義の `skills:` で Skill を読み込ませられるか | **名前ごとに拒めるが、「1 つだけ許す」書き方はできない。`skills:` では読み込まれない。** `tools: Bash, Read, Skill` のエージェントに、安全設定の `permissions.deny` で `Skill(probe:other)` と `Skill(update-config)` を拒むと、2 つの呼び出しは「Skill execution blocked by permission rules」で拒まれて `permission_denials` に載り、`probe:hello` は呼べた。Claude Code に同梱の Skill（`update-config`）も同じ書き方で拒めた。`permissions.deny` に `Skill(*)`、`allow` に `Skill(probe:hello)` を書くと、初期化の記録の道具の一覧から `Skill` が消え、どの Skill も呼べなかった（拒む規則が許す規則より強い）。`tools: Bash, Read` で、エージェント定義の frontmatter に `skills:` で `probe:hello` を書いたエージェントは、Skill の本文の中身を知らなかった。初期化の記録の Skill の一覧に並んだ Claude Code に同梱の Skill は 18 個（`deep-research`・`design`・`design-sync`・`dataviz`・`update-config`・`verify`・`debug`・`code-review`・`simplify`・`batch`・`fewer-permission-prompts`・`doctor`・`loop`・`schedule`・`claude-api`・`workflow-authoring`・`run`・`run-skill-generator`）で、Claude Code の版で変わりうる | 実行 |
 
+## Skill の道具を名前だけで拒む書き方を確かめた事実（2026-10-21）
+
+ADR-20261021-001（レビュー AI に `Skill` の道具を持たせない）の確認方法に従って、要件と基本設計に反映する前に確かめた。macOS、Claude Code 2.1.285、`claude-haiku-4-5-20251001` で、試験の場所は `/tmp/claude-<uid>/` と `~/.claude/` の外（`/private/tmp/` の下に試験のフォルダを作った）。Skill を 1 つ（`probe:hello`）と、`tools: Bash, Read, Skill` のエージェント（`probe:change:withskill`）を持つ試験用の Plugin を作り、安全設定に `permissions.deny` の `Skill` だけを書いて、`claude -p --plugin-dir <Plugin> --agent probe:change:withskill --setting-sources local --settings <安全設定> --no-session-persistence --output-format stream-json --verbose --max-turns 4` で 1 回起動した。終わった後に試験のフォルダを消した。費用は 0.012 USD。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-59 | 安全設定の `permissions.deny` に道具の名前だけの `Skill` を書くと、エージェント定義の `tools` に `Skill` を書いたエージェントからも、Skill の道具が消えるか | **消える。** 初期化の記録の道具の一覧は `["Bash","Read"]` で、`Skill` が無かった。Skill を呼ぶよう頼むと、Skill の道具が無いと返し、Skill を呼ばなかった（`permission_denials` は空で、拒まれたのでなく道具が無かった）。初期化の記録の Skill の一覧には、Plugin の `probe:hello` と Claude Code に同梱の Skill が、合わせて 19 個並んだ。FACT-58 の `Skill(*)` と同じく、道具ごと取り除かれる | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md

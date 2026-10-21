@@ -12,9 +12,9 @@
   (c) `.claude/**` `CLAUDE.md` `.mcp.json` `.github/**` `dev-autopilot/**` と規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）に触れる diff は push しない
   （IMPL-15。CI が AI の書いたワークフローを secrets 付きで実行しない。次のセッションが、作業 AI の書き換えた正典を規則として読まない。[ADR-20261017-002][adr-review]）。必須チェックは名前に加え app と base 側のワークフローのパスで照合する（IMPL-27）。
   (d) 進行 Bot はリポのコードとパッケージの lifecycle script を sandbox の外で実行しない（IMPL-1、IMPL-9）。漏えい検査は dev-autopilot 自身の `plugin/src/` で行う（IMPL-15）。
-  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（実機の試し（段階 2）で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行 Bot のプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Skill を呼ぶ `Skill` の道具は、`allow` に入れなくても使える。ただし、エージェント定義の `tools` に `Skill` を書いた役だけが使え、書いていない役は呼べない（FACT-42、FACT-55）。
+  (e) sandbox は Bash だけを覆い、Read・Write・Edit の各ツールは覆わない（実機の試し（段階 2）で確認）。ファイルの道具は `permissions` で絞る：`allow` は `Bash`（sandbox が境界。allow に入れないと `git commit` が承認待ちで拒否される）、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)` と、写しの Skill を読む `Read(//<進行 Bot のプログラムの写し>/skills/**)` だけで、ほかの `Read` は入れない（入れると worktree の外をすべて読める。FACT-13）。Skill を呼ぶ `Skill` の道具は、どの役にも持たせない（エージェント定義の `tools` に `Skill` を書いた役だけが使え、`allow` に入れなくても使える。FACT-42、FACT-55）。レビュー AI が使う `review` Skill の手順は、進行 Bot が本文に引数を入れて渡し、参照ファイルとスクリプトは写しの `skills/` から読む（[ADR-20261021-001][adr-review-skill]）。
   Read ツールは worktree の中と写しの `skills/` だけを読め、外を読もうとすると `-p` では自動で拒否される（FACT-22、FACT-32。[ADR-20261015-001][adr-read]、[ADR-20261017-004][adr-human]）。計画 AI が使う Grep と Glob も同じ（FACT-26）。`deny` に、重ねる守りとして `Read(//<秘密の置き場>/**)` と `Read(//<置き場>/controller/**)` と `Read(//<進行 Bot のプログラムの写し>/src/**)`（写しの全体を `deny` にすると、`deny` は `allow` より強いので `skills/` も読めない）、`Write` と `Edit` の `//<親 clone>/.git/**` `//<worktree>/.claude/**` `//<worktree>/CLAUDE.md` `//<worktree>/.mcp.json` を入れる。絶対パスは `//` 始まりで書く（`/` 始まりはプロジェクト相対）。
-  `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）。MCP の道具を取り除く `mcp__*` も入れる（SAFE-1）
+  `deny` には `Agent` も入れる（Agent ツールはどの役にも与えず、エージェント定義の `tools` にも書かない。道具の名前だけを書いた deny は、道具をモデルの文脈から取り除く。[ADR-20261017-002][adr-review]）。MCP の道具を取り除く `mcp__*` も入れる（SAFE-1）。Skill の道具を取り除く `Skill` も入れる（道具の名前だけの `Skill` で、`tools` に `Skill` を書いたエージェントからも道具が消える。FACT-59。[ADR-20261021-001][adr-review-skill]）
   sandbox の `--settings` のファイルは、進行 Bot がセッションごとに作って AI が書けない場所に置き、起動の前とセッションの後にハッシュを確かめる（安全設定のファイルは、セッションの途中で書き換えるとそのセッションに効くため。作り方は構造仕様の「AI のセッション」）。一時フォルダはセッションごとに別のものを作る
 - SAFE-3 `--max-turns` と時間の上限と `--max-budget-usd`（IMPL-13）で 1 回の作業の長さと費用を止める
 - SAFE-4 判定できない状態（API の失敗、想定外の Status、作業場所の残骸。見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）では、作業を増やさずに記録して止める（fail-closed）
@@ -77,3 +77,4 @@
 [adr-tmp]: ../adr/adr-20261017-006-per-session-short-tmpdir.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md

@@ -65,9 +65,9 @@
   段階 5〜7（計画と実装を AI に任せ、レビュー AI と対応ループを順に足す段階）では、人が計画を読んで止めることができるが、読むのは決まりではない。段階 8（進行ボットがマージしてよいかを判定し始める段階）以降は、計画は記録として残るだけになる（IMPL-10、FLOW-20）。
   計画が誤っていると、実装と修正の手直しが大きくなり、往復の回数と利用枠が増える。PR の出来が悪いときに、原因が作業 AI のモデルなのか計画なのかを分けられず、最初の実装に使うモデルの比べ方（[ADR-20261018-003][adr-model]）も狂う。
   計画を誰がレビューするか（AI、人、両方）、いつ行うか（計画を投稿する前か、段階 5〜7 だけか、段階 8 以降もか）、レビューで問題が見つかったときにどうするか（計画し直す回数）を決める（[02-implement-review-fix.md][f02]、[01-issue-flow.md][f01]）~~
-- UNDECIDED-59 **レビュー AI に `Skill` の道具を持たせるか。** IMPL-16 は、PR のレビューの 3 つの軸のセッションで、`review` Skill を手順として使い、見る軸を Skill の引数で渡すとする（REVIEW-5）。一方、「[登場するもの][f00]」と基本設計の「[AI のセッション][design-ai]」は、レビュー AI（`change/reviewer`）の道具を Bash と Read にしている。エージェント定義の `tools` に `Skill` が無いと、Skill を呼べない（FACT-55）。
+- UNDECIDED-59 **欠番**（[ADR-20261021-001][adr-review-skill] で決めた。どの役にも `Skill` の道具を持たせず、進行 Bot が `review` Skill の本文に引数を入れて渡す。安全設定の `permissions.deny` に `Skill` を入れる）：~~**レビュー AI に `Skill` の道具を持たせるか。** IMPL-16 は、PR のレビューの 3 つの軸のセッションで、`review` Skill を手順として使い、見る軸を Skill の引数で渡すとする（REVIEW-5）。一方、「[登場するもの][f00]」と基本設計の「[AI のセッション][design-ai]」は、レビュー AI（`change/reviewer`）の道具を Bash と Read にしている。エージェント定義の `tools` に `Skill` が無いと、Skill を呼べない（FACT-55）。
   `tools` に `Skill` を足すと、AI の道具を広げる変更になり、Claude Code に同梱の Skill（`update-config`・`schedule` など）も呼べるようになる（FACT-55）。
-  候補：(A) `change/reviewer` の `tools` に `Skill` を足し、`permissions` で `review` のほかの Skill を拒む（拒めるかを先に確かめる）。(B) エージェント定義の `skills:` で `review` Skill を先に読み込ませ、`Skill` の道具は足さない（効くかを先に確かめる）。(C) 進行 Bot が `review` Skill の本文を固定の指示文に写して渡し、Skill の引数の入口（REVIEW-5）は使わない。レビュー工程（段階 6）に入る前に決める（[02-implement-review-fix.md][f02]、[08-review-skill.md][f08]、[00-overview.md][f00]）
+  候補：(A) `change/reviewer` の `tools` に `Skill` を足し、`permissions` で `review` のほかの Skill を拒む（拒めるかを先に確かめる）。(B) エージェント定義の `skills:` で `review` Skill を先に読み込ませ、`Skill` の道具は足さない（効くかを先に確かめる）。(C) 進行 Bot が `review` Skill の本文を固定の指示文に写して渡し、Skill の引数の入口（REVIEW-5）は使わない。レビュー工程（段階 6）に入る前に決める（[02-implement-review-fix.md][f02]、[08-review-skill.md][f08]、[00-overview.md][f00]）~~
 
 ### 受け入れと印
 
@@ -211,3 +211,4 @@
 [doc-check-runs]: https://docs.github.com/en/rest/checks/runs
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
+[adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
