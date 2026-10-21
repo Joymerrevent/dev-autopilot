@@ -149,7 +149,7 @@
 
 | 組 | 主な項目（[SETUP-2][setup]） | 確かめ方 | 毎回の実行の最初 | `setup`・人の `check` |
 | --- | --- | --- | --- | --- |
-| 設定 | 設定ファイルの項目と型、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致と、`repository.*` とマシンの設定のフォルダのパスの一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前と固定した名前が無いこと、作業 AI のモデルに `fable` が無いこと、`safety.sandbox.toolDirs` が人の store を含まないこと（一覧は[設定][design-settings]の「`check` が設定について確かめること」） | ファイルを読む | 確かめる | 確かめる |
+| 設定 | 設定ファイルの項目と型、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致と、`repository.*` とマシンの設定のフォルダのパスの一致、`run.intervalHours` が 24 の約数であること、`run.dryRun` が `true` なら `run.stage` が 4 であること、`safety.env.names` に渡さない名前と固定した名前が無いこと、作業 AI のモデルに `fable` が無いこと、`safety.sandbox.toolDirs` が人の store を含まないこと（一覧は[設定][design-settings]の「`check` が設定について確かめること」） | ファイルを読む | 確かめる | 確かめる |
 | GitHub | ラベル、Project の欄と自動追加、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（上の「GitHub の準備」の表の項目）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、base ブランチの先端に `.claude/settings.local.json` が無いこと（FACT-56）、基線の必須チェック（warn） | 進行 Bot の GitHub の認証（切り替えの前は PAT、後はアプリのトークン）で読む。base ブランチの中身は進行 Bot の clone で読む | 確かめる | 確かめる |
 | PAT かアプリの権限 | 下の「PAT の権限」か「GitHub App の権限」の読み取りが通ること。書き込みの権限が無いこと（リポの変数を作れないこと。切り替えの前は、ラベルも作れないこと）。投稿に使うアカウントが `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]）。`run.dryRun` が `false` なら、アプリに切り替えてあり、PAT のファイルが無いこと（[ADR-20261020-002][adr-app]） | 読み取りと、書き込みの権限の試し（下の「PAT の権限」。403 で断られれば pass） | 確かめる | 読み取りは確かめる。書き込みの権限の試しは、合図が `run` のときだけ |
 | マシン | 動かしてよい OS か（今は macOS。UNDECIDED-49）、`claude` と Node 24 と `gh` の版、写しの中身が写したときの一覧とハッシュのとおりか（人が呼ぶ Skill では、入れた Plugin と写しの版の違いも warn）、写しと `controller/` が別のフォルダか、置き場と秘密の置き場の権限と実体のパス、短い一時フォルダの根の持ち主・リンクでないこと・権限 700（[AI のセッション][design-ai]の「起動の前の確かめ」の順 5）、記録と記録の目印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、進行 Bot の clone の objects のファイルのリンク数が 1 であること（ハードリンクで共有していない。FACT-19）、組み立てた安全設定の `allowRead` と `allowWrite` に共有の store が無いこと（[ADR-20261015-002][adr-store]） | ファイルとプロセスを読む。OS の部分は、点検の OS ごとの部分（[STRUCT-8][struct]） | 確かめる | 確かめる |
@@ -293,7 +293,7 @@ GitHub App に切り替えるまで（受け入れ工程（段階 4）で GitHub
 
 - 進行 Bot は、毎回の実行の終わりに、記録の置き場の `status.json` を書き直す。中身は、実行の時刻、全体の止める合図と `run.dryRun`・`run.stage` の値、点検の fail と warn、基線の結果（緑でない必須チェックの名前）、Issue ごとの Status・Agent 欄・次の工程・止めた理由（stop の理由の記号）。点検だけの実行は、点検の結果だけを書き直す
 - 計画・実装工程（段階 5）で Status が `In Review` の Issue と、レビュー工程（段階 6）で AI のレビューが直すべき点を返した Issue は、Agent 欄が空なので、「人の番」と出す（[ADR-20261015-006][adr-flow] の決定 3、[Issue の状態の遷移][flow-rules]の「段階による違い」）
-- 書かずに試す間（`run.dryRun` が `true`）は、最新の実行の記録の、書くつもりだった内容（受け入れの下書きなど）の一覧も出す。人が JSON Lines を直接読まずに済むようにするため
+- 書かずに試す間（`run.dryRun` が `true`）は、書いたものとして扱う受け入れの下書き（同じ文の間の、これまでの実行の分）と、最新の実行の選定の結果の一覧も出す。人が JSON Lines を直接読まずに済むようにするため（[ADR-20261021-002][adr-dry]）
 - `/dev-autopilot` は、マシンの設定（[設定][design-settings]の「マシンの設定」）から記録の置き場を見つけ、`status.json` を読んで表示する。GitHub を読まないので、表示は最新の実行の時点のもので、実行の時刻を添える
 - 手動の 1 回実行は、定期の実行と同じジョブを起こす（上の「定期の実行の登録」の手動の 1 回実行。`-k` を付けない）
 - `status.json` は記録の置き場にあり、AI は sandbox の中から読めず、書けない
@@ -326,3 +326,4 @@ GitHub App に切り替えるまで（受け入れ工程（段階 4）で GitHub
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-review-skill]: ../../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-store]: ../../adr/adr-20261015-002-no-shared-dependency-store.md
+[adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md

@@ -116,7 +116,7 @@
 
 | キー | 中身 | 初期値 | 根拠 |
 | --- | --- | --- | --- |
-| `run.dryRun` | GitHub に書かずに試すか（`true` なら、書くつもりだった内容を手元の記録にだけ残す） | `true`（受け入れ工程（段階 4）の最初。[運用の規則][flow]） | GitHub への書き込みをすべて手元の記録に残して試す合図で、受け入れ工程（段階 4）の最初と新しい段階に入るときに使う（[運用の規則][flow]、[ADR-20261017-007][adr-stop]）。`false` にする（書き始める）のは、安全の境界を緩める向きの変更なので PR に残す |
+| `run.dryRun` | GitHub に書かずに試すか（`true` なら、書くつもりだった内容を手元の記録にだけ残す） | `true`（受け入れ工程（段階 4）の最初。[運用の規則][flow]） | GitHub への書き込みをすべて手元の記録に残して試す合図で、受け入れ工程（段階 4）の最初だけに使う（[運用の規則][flow]、[ADR-20261017-007][adr-stop]、[ADR-20261021-002][adr-dry]）。`false` にする（書き始める）のは、安全の境界を緩める向きの変更なので PR に残す |
 | `run.stage` | 今の段階の番号（段階ごとの振る舞いを切り替える） | `4`（受け入れ工程。暫定） | 段階ごとの振る舞い（計画・実装工程（段階 5）では Agent 欄が空、修正工程（段階 7）では判定の印を書かない、など）を、設定の `stage` で切り替える（[Issue の状態の遷移][flow]）。Issue の流れは受け入れ工程（段階 4）から動く（[段階の表][stages]） |
 | `run.intervalHours` | 定期の実行の間隔。24 の約数（1・2・3・4・6・8・12・24）に限る（[導入と点検][design-setup]の「定期の実行の登録」） | 24 時間（1 日 1 回。[FLOW-12][flow]） | 間隔と件数の上限は、リポの設定 1 つで変える（[FLOW-11][flow]）。間隔は OS ごとの定期の実行の登録にも書くので、`check` がずれを確かめる（[STRUCT-2][struct]）。間隔を変える PR がマージされたら、動かすマシンで `setup` を実行し直して登録し直す。登録し直すまで、点検がずれを fail にして作業に入らない |
 | `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの Issue は次の実行に回す | 180 分（暫定） | 1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次の実行に回す。lock を長く持たないため（[FLOW-4][flow]）。上限は Issue の合間に見るので、動いている工程は止めない（計画の工程は、計画し直しを含めて最大 225 分かかりうる。`limits.planRevisions`）。180 分は、1 セッションで終わる重い工程（最大 45 分）なら、ほかの Issue の工程も進める余地を持たせる値で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
@@ -248,6 +248,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 - `run.intervalHours` が 24 の約数であること
 - `safety.botAccounts` が空でなく、投稿に使うアカウントが入っていること。GitHub App に切り替える前は PAT の持ち主（`GET /user` の `login`）、切り替えた後はアプリの投稿者の名前（取り方は「[導入と点検][design-setup]」の「GitHub App の権限」）（[ADR-20261020-001][adr-bots]、[ADR-20261020-002][adr-app]）。切り替えた後に、一覧にほかの名前が残っていれば warn にする（外し忘れを人に知らせる。前のアカウントの印が残る間は残してよい。[ADR-20261020-001][adr-bots] の決定 4）
 - `run.dryRun` が `false` なら、`githubApp.appId` と `githubApp.installationId` があり、秘密の置き場にアプリの秘密鍵があって、PAT のファイルが無いこと（書き始める前にアプリに切り替える。[ADR-20261020-002][adr-app]）
+- `run.dryRun` が `true` なら、`run.stage` が 4（受け入れ工程）であること。計画・実装工程（段階 5）より後で書かずに試すと、計画の印を書かないまま計画をやり直し続けるため（[ADR-20261021-002][adr-dry]）
 - `models.work`・`models.workByType`・`models.workRaised` に `fable` が無いこと（[IMPL-32][impl]）
 - `safety.env.names` に、AI のセッションに渡さない名前（`GH_TOKEN`、`PNPM_HOME` など。「[AI のセッション][design-ai]」の「環境変数」）と、プログラムに固定した名前が無いこと
 - `safety.sandbox.toolDirs` のどれも、人の pnpm の store を含まないこと（[ADR-20261015-002][adr-store]）
@@ -290,3 +291,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-store]: ../../adr/adr-20261015-002-no-shared-dependency-store.md
+[adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
