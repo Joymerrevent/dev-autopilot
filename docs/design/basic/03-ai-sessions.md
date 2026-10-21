@@ -193,6 +193,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
   - 着手した Issue（Status が `In Progress`・`In Review`・`Ready to Merge` か、計画の印か結びつく PR がある Issue）で、その Issue のセッションの記録（`sessions.jsonl`）が 1 つも無いのに、最後に `needs-human` を外した時刻（外していなければ着手した後）より後に進行 Bot が書いた印がある（記録を失った）なら、順 4 で起動せずに `needs-human` を付ける（`records-missing`）。実行の失敗が起きたときも、1 回目で `needs-human` にする
   - 当日の実行の記録に、AI のセッションを起動した実行があるのに、当日の費用の記録が無ければ、順 2 で、当日は起動しない。記録の目印のファイル（`records-created.json`）を作った日が今日なら、その日は起動しない（記録のフォルダごと失って `setup` をやり直した日に、当日の累計を 0 と読まないため）
 - Issue の累計と、実行の失敗の回数は、push 以上の人がその Issue の `needs-human` を最後に外した時刻より後の記録だけで数える。人が `needs-human` を外すのは、続けてよいという判断なので、外した後も前の累計で止め続けないため（外した人の権限は、[状態遷移と判定][design-flow]の次の工程の順 8 で確かめる）
+- Issue の累計と、実行の失敗の回数には、書かずに試した回（記録の `run.dryRun` が `true` のセッション）を数えない。書かずに試した下書きは投稿せず、書き始めた後に受け入れ直すため。書かずに試す間の失敗の回数は、書かずに試す間に受け入れ直すかの判断にだけ使う。1 日と 1 回の実行の累計には数える。受付 AI の拒否の記録は、書き始めた後も使う（[ADR-20261021-002][adr-dry]）
 - 実行の失敗の「続いた」回数は、同じ Issue の重い工程が成功する（出力契約を取り出して次に進む）か、人が `needs-human` を外すと 0 に戻る。止める合図と、1 日と 1 回の実行の上限で起動しなかった回は数えない。失敗が `limits.retry.count` 回目になったら、その回で `needs-human` を付ける（`retry-limit`。[IMPL-14][impl]）。失敗の後は、定期の実行を `limits.retry.intervalRuns` 回数えるまで、その Issue の重い工程を起動しない
 
 ### 止める手順
@@ -510,3 +511,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-review-skill]: ../../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
+[adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
