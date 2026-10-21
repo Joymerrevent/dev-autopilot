@@ -89,7 +89,7 @@ AI が受け持つ工程を、段取り（P）・作業（D）・検証（C）�
 Issue ごとに、表を上から順に見て、最初に当てはまった行の工程に進む。
 「重い」は AI のセッションを起動する工程で、Issue ごとに 1 回の実行で 1 つまで。「軽い」は起動しない工程で、重い工程の前後に同じ実行で続けてよい（[FLOW-4][flow]、[ADR-20261015-006][adr-flow] の決定 1）。
 push した実行（実装・修正・載せ直し）では、push した Issue をそれ以上進めない。CI の結果が要る工程（収束・マージの判定）は、CI の結果が出ている実行でだけ進める（[FLOW-4][flow]）。
-渡す文を AI に渡す工程（計画・実装・レビュー・修正・衝突の解消）は、起動の前に、渡す文のハッシュが `intake-final` の印と同じかを確かめ、違えば `needs-human` にする（`brief-changed`。[TEXT-4][text] の「着手時と対応ループの各回」）。
+渡す文を AI に渡す工程（計画・実装・レビュー・修正・衝突の解消）は、起動の前に、渡す文のハッシュが最新の `intake-final` の印と同じかを確かめ、違えば `needs-human` にする（`brief-changed`。[TEXT-4][text] の「着手時と対応ループの各回」）。渡す文は、承認の確定と同じ規則で選び、push 以上の人の作業指示コメントが 2 つ以上なら `needs-human` にする（`multiple-instructions`。[ADR-20261021-003][adr-reapprove]）。
 
 ### 止める・待つ・触らない（先に見る）
 
@@ -129,6 +129,19 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 - 計画の印が、最後に `needs-human` を外した時刻（timeline の `UnlabeledEvent`）より前なら、計画の印が無いものとして、着手の後に計画し直す（順 12）。止まった理由（`adr-required`、`plan-blocked-path` など）が計画にあることが多く、人が直したものを計画に入れるため。読むのは、最新の計画の印だけ
 - マージされずに閉じた PR が、最後に `needs-human` を外した時刻より前に閉じられていれば、その PR を結びつきから外す。作業ブランチは、人が消してから戻す（残っていれば、push の手順の順 5 で `not-fast-forward` になる）
 
+#### 承認のやり直し
+
+承認した後に渡す文を直したいとき、人は文を直して `Todo` に戻し、`agent-ready` を付け直す（[止まった状態から戻す手順][flow]、[ADR-20261021-003][adr-reapprove]）。進行 Bot は、次のように扱う。
+
+- 次をすべて満たす Issue を、承認のやり直しとして、承認の確定（順 10）に回す
+  - `intake-final` の印がある
+  - push 以上の人が `agent-ready` を付けた最新の時刻（timeline の `LabeledEvent`）が、最新の `intake-final` の印の投稿より後
+  - Status が `Todo` で、`needs-human` が無く、開いている結びつく PR が無い
+- 承認の確定と同じこと（下の「受け入れと承認の確定で確かめること」）を確かめ、満たせば新しい `intake-final` の印を新しいコメントで書く。時刻の確かめ（`brief-edited-after-approval`）は、最新の `agent-ready` を付けた時刻で見る
+- 進行 Bot は、最新の `intake-final` の印だけを読む。渡す文のハッシュの照らし（`brief-changed`）も、最新の印で行う
+- 計画の印が、最新の `intake-final` の印より前なら、計画の印が無いものとして、着手の後に計画し直す（順 12）
+- 着手した後（Status が `Todo` でない）に付け直した `agent-ready` は、やり直しとして扱わない。渡す文が変わっていれば、ハッシュの照らしで止まる（`brief-changed`）。人は、戻す手順で `Todo` に戻してから付け直す
+
 ### 着手まで（Status が `Todo`）
 
 ![次の工程：着手まで][fig-before-start]
@@ -136,7 +149,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
 | 9 | 受け入れの印（`intake`）が無い。`from-review` の Issue は、マイルストーンが付くまで除く | `agent-ready` が無ければ、受け入れ。1 回の実行の件数の上限（`limits.intakePerRun`）まで（[FLOW-16][flow]、[TEXT-12][text]、[IMPL-26][impl]、[ADR-20261015-003][adr-intake]）。中の順番は下の「受け入れと承認の確定で確かめること」。`agent-ready` が先に付いていれば、受け入れをせずに `needs-human` を付け（`approved-before-intake`）、`agent-ready` を外して下書きを待つよう案内する。書かずに試す間は、書いたものとして扱う下書きのある Issue を、同じ文の間は除く（上の「1 回の実行の流れ」） |
-| 10 | 受け入れの印があり、人が `agent-ready` を付けたが、`intake-final` の印が無い | 承認の確定（軽い）：下の「受け入れと承認の確定で確かめること」を満たせば、渡す文のハッシュを `intake-final` の印に書き、依存とマイルストーンを確定する。渡す文の秘密の形と検疫も、ここで確かめる（`intake-final` を書いた後に見つかると、人が文を直しても承認をやり直せないため）。満たさなければ、`intake-final` を書かずに `needs-human` を付ける（[FLOW-18][flow]、[TEXT-4][text]、[TEXT-10][text]、[TEXT-12][text]） |
+| 10 | 受け入れの印があり、人が `agent-ready` を付けたが、`intake-final` の印が無い。または、承認のやり直しに当たる（上の「承認のやり直し」） | 承認の確定（軽い）：下の「受け入れと承認の確定で確かめること」を満たせば、渡す文のハッシュを `intake-final` の印に書き、依存とマイルストーンを確定する。渡す文の秘密の形と検疫も、ここで確かめる（`intake-final` を書いた後に見つかると、着手した後に止まり、人が承認をやり直す手間が増えるため）。満たさなければ、`intake-final` を書かずに `needs-human` を付ける（[FLOW-18][flow]、[TEXT-4][text]、[TEXT-10][text]、[TEXT-12][text]） |
 | 11 | `intake-final` の印があり、候補の条件をすべて満たす（[FLOW-1][flow]） | 計画・実装工程（段階 5）以降なら、着手（軽い）：Status を `In Progress`、Agent 欄を `worker` にし、続けて計画（重い）に進む。基線が緑で、着手の件数と進行中の Issue の数（下の「進行中の Issue の数え方」。着手しようとする Issue 自身は数えない）が上限の内のときだけ（[FLOW-19][flow]、[FLOW-20][flow]、[FLOW-3][flow]、[IMPL-9][impl]）。着手の前に、渡す文のハッシュが `intake-final` の印と同じか（違えば `brief-changed`。[TEXT-4][text]）を確かめ、外れたら着手せずに `needs-human` を付ける。受け入れ工程（段階 4）では着手せず、候補の条件を満たしたこと（選定の結果）を手元の記録にだけ残す（[段階の表][setup]）。書かずに試す間の選定の結果は、上の「1 回の実行の流れ」の決まりで作る |
 
 #### 受け入れと承認の確定で確かめること
@@ -146,8 +159,9 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 受け入れ（順 9） | 題名・本文・コメントを検疫（[TEXT-11][text]）に通す | 受付 AI を起動せず、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）と、`quarantine=found` の `intake` の印だけを載せた「受け入れの下書き」コメントを書き、`needs-human` を付ける（`quarantine`。[TEXT-12][text]、[ADR-20261015-003][adr-intake]） |
 | 受け入れ（順 9） | 検疫で見つからなければ、受付 AI（重い）を起動する | 進行 Bot は、検疫の結果、作業指示の下書き、依存とマイルストーンの候補、計画の難しさの判定と根拠、方針に係る要望かの判定と根拠（方針の要望のときだけ）を載せた「受け入れの下書き」コメントを書く（[TEXT-12][text]） |
 | 受け入れ（順 9） | 受付 AI が返した文の欄（下書きの 4 つの欄、`planReason`、`policyReason`）を、投稿の前に検疫と漏えいの検査に通す（[TEXT-12][text] の「下書きも検疫に通す」、[ADR-20261016-002][adr-draft] の決定 1） | 見つかれば下書きを投稿せず、検疫の結果と `quarantine=found` の `intake` の印だけを載せた「受け入れの下書き」コメントを書き、`needs-human` を付ける（`quarantine`。上の行と同じ形） |
-| 承認の確定（順 10） | `agent-ready` を付けた人、`## 作業指示` のコメントを書いた人、下書きのコメントを編集した人が、push 以上の権限を持つ | push 未満の人が付けたラベルとした編集を無効として扱い、`needs-human` を付ける（`permission`。[TEXT-10][text]） |
-| 承認の確定（順 10） | 渡す文（作業指示コメントか、直した下書き）の投稿と最後の編集が、`agent-ready` を付けた時刻より前 | `needs-human` を付ける（`brief-edited-after-approval`。人は文を直してから `agent-ready` を付け直す。[TEXT-10][text]） |
+| 承認の確定（順 10） | `agent-ready` を付けた人と、下書きのコメントと読む作業指示コメントを編集した人が、push 以上の権限を持つ。`## 作業指示` のコメントは、書いた人が push 以上のものだけを読み、push 未満の人のものは無いものとして扱う（止めない。[ADR-20261021-003][adr-reapprove]） | push 未満の人が付けたラベルとした編集を無効として扱い、`needs-human` を付ける（`permission`。[TEXT-10][text]） |
+| 承認の確定（順 10） | push 以上の人の `## 作業指示` のコメントが 1 つまで | `intake-final` を書かずに `needs-human` を付ける（`multiple-instructions`）。人は 1 つを残してほかのコメントを消すか見出しを外してから、`agent-ready` を付け直す（[TEXT-12][text]、[ADR-20261021-003][adr-reapprove]） |
+| 承認の確定（順 10） | 渡す文（作業指示コメントか、直した下書き）の投稿と最後の編集が、`agent-ready` を付けた時刻（承認をやり直すときは、最新の時刻）より前 | `needs-human` を付ける（`brief-edited-after-approval`。人は文を直してから `agent-ready` を付け直す。[TEXT-10][text]） |
 | 承認の確定（順 10） | `quarantine=found` の Issue では、`## 作業指示` のコメントがある。渡す文は作業指示コメントだけにする（`source=instruction`） | `needs-human` を付け直す（`quarantine`。[TEXT-12][text]、[ADR-20261015-003][adr-intake]） |
 | 承認の確定（順 10） | 渡す文に、秘密の形（鍵の形式、メールアドレスなど）が無い（[TEXT-7][text]）。渡す文を検疫に通して見つからない（[TEXT-11][text]） | `intake-final` を書かずに `needs-human` を付ける（`brief-sensitive` か `quarantine`）。人は文を直してから `agent-ready` を付け直す（`intake-final` が無いので、承認の確定をやり直せる） |
 
@@ -175,7 +189,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
-| 12 | 計画の印（`plan`）が無い。または、最新の計画の印が、最後に `needs-human` を外した時刻より前（上の「戻した Issue のやり直し」） | 計画（重い。中の順番は下の「計画の工程の中の順番」）。基線が緑のときだけ（計画は新しい着手に含む。[IMPL-9][impl]、[ADR-20261015-006][adr-flow] の決定 2）。計画を投稿した実行では、実装に入らない（[FLOW-20][flow]、[IMPL-10][impl]） |
+| 12 | 計画の印（`plan`）が無い。または、最新の計画の印が、最後に `needs-human` を外した時刻より前（上の「戻した Issue のやり直し」）か、最新の `intake-final` の印より前（上の「承認のやり直し」） | 計画（重い。中の順番は下の「計画の工程の中の順番」）。基線が緑のときだけ（計画は新しい着手に含む。[IMPL-9][impl]、[ADR-20261015-006][adr-flow] の決定 2）。計画を投稿した実行では、実装に入らない（[FLOW-20][flow]、[IMPL-10][impl]） |
 | 13 | 計画の印があり、結びつく PR が無い | 実装と PR の作成（重い）。基線が緑のときだけ（[FLOW-21][flow]、[IMPL-9][impl]）。作業ブランチが origin にすでにあれば（push の後、PR を作る前に切れた）、実装し直さず、origin の作業ブランチに push の手順の順 3 と 4（照らしと漏えいの検査）を掛けてから、順 8 の PR の作成だけを行う（軽い。[運用の規則][flow]の「GitHub の状態から復旧する」） |
 | 14 | PR の head に、まだ `review` の印が無い | 計画・実装工程（段階 5）なら何もしない（人がレビューする番）。レビュー工程（段階 6）以降なら、レビュー（重い）。修正の後と人の push の後の再レビューも、ここに当たる（[FLOW-21、FLOW-22][flow]、[ADR-20261015-006][adr-flow] の決定 3） |
 | 15 | 最新の `review` の印が `fix` か、CI が赤で、そのラウンドの `fix` の印がまだ無い | 修正工程（段階 7）以降なら、修正（重い）。往復の回数がすでに上限（`limits.roundTrips`）に達しているか（`round-limit`）、同じ指摘の再発（直したはずの指摘が再び出た。`repeated-finding`）なら、修正せずに `needs-human` にする（[FLOW-22][flow]、[FLOW-28][flow]、[IMPL-23、IMPL-24][impl]。往復の数え方は下の「ラウンドと往復の数え方」）。レビュー工程（段階 6）では、AI は直さず、人の番にする（Agent 欄を空にする。[Issue の状態の遷移][flow]の「段階による違い」）。往復の上限と同じ指摘の再発は、AI が直す往復の歯止めなので、段階 6 では掛けない |
@@ -379,7 +393,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `brief-sensitive` | 渡す文に、事業データか認証情報の形が混じっている（承認の確定で確かめる。[TEXT-7][text]） |
 | `quarantine` | 受け入れの検疫で見つかった。受付 AI が返した文の欄で見つかった。見つかった Issue に `## 作業指示` のコメントが無いまま `agent-ready` が付いた（[TEXT-12][text]）。承認の確定か、AI に渡す直前か、計画を投稿する前の検疫で見つかった（[TEXT-11][text]、[AI のセッション][design-ai]の「起動の前の確かめ」） |
 | `issue-changed` | 作業中に、Issue が閉じられた・移された・`agent-ready` かマイルストーンが外された（[TEXT-8][text]） |
-| `permission` | `agent-ready` を付けた人、作業指示コメントを書いた人、下書きのコメントを編集した人が push 未満（[TEXT-10][text]、[FLOW-29][flow]） |
+| `permission` | `agent-ready` を付けた人か、下書きのコメントか読む作業指示コメントを編集した人が push 未満（[TEXT-10][text]、[FLOW-29][flow]）。push 未満の人が書いた作業指示コメントは読まないので、止めない |
 | `unauthorized-resume` | push 未満の人が `needs-human` を外した（[TEXT-10][text]） |
 | `unlinked-pr` | ブランチ名が一致するのに、結びつきの印が無い PR がある（[IMPL-6][impl]） |
 | `pr-closed` | 結びつく PR が、マージされずに閉じられた（[IMPL-6][impl]） |
@@ -389,7 +403,8 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
 | `workspace-tampered` | 作業場所の `commondir` か `gitdir` が、作ったときの値と違う。または、取り込みの fetch が objects の検査で失敗した（[SAFE-12][safety]、[ADR-20261013-001][adr-workspace]、上の「push の手順」） |
 | `local-settings` | AI のセッションの作業場所の worktree に `.claude/settings.local.json` がある（FACT-56、[SAFE-2][safety] の (a)、[AI のセッション][design-ai]の「起動の前の確かめ」） |
-| `draft-format` | 承認の確定で、受け入れの下書きの依存とマイルストーンの候補の 2 行を決まった形で読めない。または、push 以上の人の作業指示コメントが 2 つ以上ある（UNDECIDED-61 で決めるまで。[AI のセッション][design-ai]の「コメントの形」） |
+| `draft-format` | 承認の確定で、受け入れの下書きの依存とマイルストーンの候補の 2 行を決まった形で読めない（[AI のセッション][design-ai]の「コメントの形」） |
+| `multiple-instructions` | push 以上の人の作業指示コメントが 2 つ以上ある（承認の確定、着手、対応ループの各回。[TEXT-12][text]、[ADR-20261021-003][adr-reapprove]） |
 | `settings-tampered` | セッションの安全設定のファイルが、作ったときのハッシュと違う（起動の直前か、セッションの後。[SAFE-2][safety] の (e)、[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `records-missing` | 着手した Issue の手元の記録が無い（[運用の規則][flow]。見分け方は「[AI のセッション][design-ai]」の「起動の前の確かめ」） |
 | `unrecoverable` | GitHub の状態から、次の工程を決められない（次の工程の表の順 21。[運用の規則][flow]）。または、push した後に読み戻した作業ブランチの先端が違う |
@@ -513,3 +528,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-draft]: ../../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [adr-markers]: ../../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
+[adr-reapprove]: ../../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
