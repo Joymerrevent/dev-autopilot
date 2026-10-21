@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-20
+updated: 2026-10-21
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -101,7 +101,8 @@ decision-makers: メンテナ
 - **pnpm の store**：ホームの中の共有の store は読めなくなる。試行ではセッションの一時フォルダに空の store を作り、sandbox の中の `pnpm install` は 9 秒だった。
   共有の store を開けるかは UNDECIDED-25 で決める（開けるなら store を `allowRead` と `allowWrite` に足す）
 - **置き場の場所**：置き場は `~/.claude/` の下に置かない。試行では、`~/.claude/` の下に置いた worktree に、`allowWrite` に足しても何も書けなかった
-- `setup` が安全設定を書き、`check` が sandbox の中と Read ツールの両方から実際に試す（SAFE-5）
+- ~~`setup` が安全設定を書き、`check` が sandbox の中と Read ツールの両方から実際に試す（SAFE-5）~~
+  **訂正（2026-10-21）**: 安全設定は、`setup` が書く 1 つのファイルでなく、進行 Bot が AI のセッションを起動する直前に、セッションごとに作る。読み書きを許すパス（自分のセッションのフォルダ、worktree、短い一時フォルダ）がセッションごとに違うため（基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」。要件の UNDECIDED-40 として決めた）。安全設定を AI が書けない場所に置き、起動の前と後にハッシュを比べる。`check` は、本物のセッションと同じ組み立て方で安全設定を作り、sandbox の中と Read ツールの両方から実際に試す（SAFE-5）。AI が読める範囲を自分のセッションのフォルダに絞るという決定は変わらない
 
 ### 決定 2：秘密は進行役だけが読むファイルに置く
 
@@ -232,3 +233,4 @@ decision-makers: メンテナ
 [adr-human]: ./adr-20261017-004-plugin-skills-read-and-human-skills-auth.md
 [adr-tmp]: ./adr-20261017-006-per-session-short-tmpdir.md
 [adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
+[design-ai]: ../design/basic/03-ai-sessions.md
