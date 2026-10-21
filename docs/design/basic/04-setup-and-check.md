@@ -154,7 +154,7 @@
 | PAT かアプリの権限 | 下の「PAT の権限」か「GitHub App の権限」の読み取りが通ること。書き込みの権限が無いこと（リポの変数を作れないこと。切り替えの前は、ラベルも作れないこと）。投稿に使うアカウントが `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]）。`run.dryRun` が `false` なら、アプリに切り替えてあり、PAT のファイルが無いこと（[ADR-20261020-002][adr-app]） | 読み取りと、書き込みの権限の試し（下の「PAT の権限」。403 で断られれば pass） | 確かめる | 読み取りは確かめる。書き込みの権限の試しは、合図が `run` のときだけ |
 | マシン | 動かしてよい OS か（今は macOS。UNDECIDED-49）、`claude` と Node 24 と `gh` の版、写しの中身が写したときの一覧とハッシュのとおりか（人が呼ぶ Skill では、入れた Plugin と写しの版の違いも warn）、写しと `controller/` が別のフォルダか、置き場と秘密の置き場の権限と実体のパス、短い一時フォルダの根の持ち主・リンクでないこと・権限 700（[AI のセッション][design-ai]の「起動の前の確かめ」の順 5）、記録と記録の目印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、進行 Bot の clone の objects のファイルのリンク数が 1 であること（ハードリンクで共有していない。FACT-19）、組み立てた安全設定の `allowRead` と `allowWrite` に共有の store が無いこと（[ADR-20261015-002][adr-store]） | ファイルとプロセスを読む。OS の部分は、点検の OS ごとの部分（[STRUCT-8][struct]） | 確かめる | 確かめる |
 | 子プロセスと clone | 子プロセスに渡す環境変数に PAT・鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗すること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
-| sandbox と AI のセッション | 下の「試しのセッション」の「確かめる項目」の表（読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否と写しの `skills/` の読み取り、worktree の `gitdir` のファイルに書けないこと、道具の一覧に MCP の道具と `Agent`・`Task` が無いこと、短い一時フォルダ） | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
+| sandbox と AI のセッション | 下の「試しのセッション」の「確かめる項目」の表（読めない・書けないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否と写しの `skills/` の読み取り、worktree の `gitdir` のファイルに書けないこと、道具の一覧に MCP の道具と `Agent`・`Task`・`Skill` が無いこと、短い一時フォルダ） | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
 
 - 試しのセッションは利用枠を使うので、毎回は回さない。前の試しのセッションの記録が、次のすべてに当たるときだけ省き、前の結果（pass）をそのラウンドの sandbox の組の結果にする。1 つでも外れれば、作業の前に回す（[ADR-20261017-005][adr-mcp] と [ADR-20261017-006][adr-tmp] が基本設計に残した、確かめる回数）
   - 前の試しのセッションの結果が pass。fail・未確認・起動できなかった回の後は、毎回回し直す。前の結果を引き継いで fail のまま止まり続けず、fail を pass と読んで作業にも入らないため
@@ -222,12 +222,12 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
   | worktree で `git commit --allow-empty`、`pnpm install --frozen-lockfile`、`pnpm store path` | commit と install が通り、store のパスがセッションの `tmp/` の下 | スクリプトの結果 |
   | 安全設定の `env`（`NODE_USE_ENV_PROXY`、`npm config get cache`） | `1` と、`$TMPDIR` の下（FACT-47） | スクリプトの結果 |
   | 試験用のファイルと、写しの `skills/` の中のファイルを Read ツールで読む | 前者は拒否、後者は読める | `stream-json` の Read の結果と `permission_denials` |
-  | 道具の一覧と MCP のサーバーの一覧 | `mcp__` の道具と `Agent`・`Task` が無く、サーバーが空 | `init` のイベント |
+  | 道具の一覧と MCP のサーバーの一覧 | `mcp__` の道具と `Agent`・`Task`・`Skill` が無く、サーバーが空 | `init` のイベント |
 
 - 進行 Bot は、AI の返事ではなく、次で判定する
   - スクリプトが書いた結果のファイルと、書けないはずの場所にファイルができていないこと
   - Read ツール：`stream-json` の Read の呼び出しと結果を照らし、試験用のファイルが `result` の `permission_denials` にあること、写しの `skills/` の中のファイルの結果がエラーでないこと（[ADR-20261015-001][adr-read] の確認方法、[SETUP-2][setup]。拒否が `permission_denials` に載ることは FACT-49 で確かめた）
-  - 道具の一覧：初期化の記録（`init` のイベント）の一覧に、`mcp__` で始まる道具と `Agent`・`Task` が無く、MCP のサーバーの一覧が空であること（[ADR-20261017-005][adr-mcp] の決定 4。Agent は初期化の記録で `Task` の名前で出るので、両方を探す。[ADR-20261017-002][adr-review] の確認方法）。道具の名前は、名前の全体が一致するかで探す。一覧には `TaskStop` という別の道具があり、名前の前の部分で探すと取り違えるため（FACT-49）
+  - 道具の一覧：初期化の記録（`init` のイベント）の一覧に、`mcp__` で始まる道具と `Agent`・`Task`・`Skill` が無く、MCP のサーバーの一覧が空であること（[ADR-20261017-005][adr-mcp] の決定 4。Agent は初期化の記録で `Task` の名前で出るので、両方を探す。[ADR-20261017-002][adr-review] と [ADR-20261021-001][adr-review-skill] の確認方法）。道具の名前は、名前の全体が一致するかで探す。一覧には `TaskStop` という別の道具があり、名前の前の部分で探すと取り違えるため（FACT-49）
 - AI が決めたパスを読まなかったとき、ターンか時間か費用の上限に当たったとき、出力が解析できないときは fail にする。確かめられなかったものを pass と読まないため
 - 終わったら、「止め方と利用枠の数え方」の手順で残りを確かめ（[AI のセッション][design-ai]）、セッションのフォルダと試験用のファイルを消す。費用は実行の記録に残し、1 日の利用枠に数える。結果は、Claude Code の版と、安全設定と環境変数の名前のハッシュと一緒に記録に残す（上の「組と回数」の契機に使う）
 - 試しのセッションのフォルダが消せずに残ったら（途中で落ちた、残りが止まったと確かめられない）、名前から Issue か PR を引けない残骸として扱い、点検を fail にする。人が中身を確かめて消す（[状態遷移と判定][design-flow]の「作業場所の残骸」）
@@ -324,4 +324,5 @@ GitHub App に切り替えるまで（受け入れ工程（段階 4）で GitHub
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-review-skill]: ../../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-store]: ../../adr/adr-20261015-002-no-shared-dependency-store.md

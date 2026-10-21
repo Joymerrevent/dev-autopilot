@@ -144,8 +144,8 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `sandbox.network.allowedDomains` | リポの設定の `safety.network.allowedDomains` | 外への通信は、許可した先だけにする（[SAFE-10][safety]） |
 | `env` | `NODE_USE_ENV_PROXY`：`1`、`npm_config_cache`：`${TMPDIR}/npm-cache` | Node の `fetch` は、sandbox のプロキシの環境変数を使わないので、許可した通信先にも届かない。`NODE_USE_ENV_PROXY` でプロキシを使わせる。npm と `npx` のキャッシュは、ホームでなく sandbox の一時フォルダに置く（`${TMPDIR}` は npm が展開する）。どちらも、business-os の ADR 20261006-01（business-os の AI のセッションの sandbox の設定を決めたもの）の設定を写す（[SAFE-10][safety]、[ADR-20261015-002][adr-store]）。どちらも sandbox の中の Bash に届いて効き、`${TMPDIR}` は Claude Code でなく npm が展開する（FACT-47）。Claude Code の版が変わったときなどに、点検の試しのセッションで確かめ直す（「[導入と点検][design-setup]」の「試しのセッション」） |
 | `disableClaudeAiConnectors` | `true` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
-| `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。Skill を呼ぶ `Skill` の道具は、入れなくても使えるが、エージェント定義の `tools` に `Skill` を書いた役だけ（FACT-42、FACT-55。レビュー AI に持たせるかは UNDECIDED-59） |
-| `permissions.deny` | `Agent`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]） |
+| `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。`Skill` の道具は、どの役にも持たせない（`allow` に入れなくても、エージェント定義の `tools` に `Skill` を書いた役は使えるので、下の `deny` で取り除く。FACT-42、FACT-55、[ADR-20261021-001][adr-review-skill]） |
+| `permissions.deny` | `Agent`、`Skill`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]）。`Skill` は道具の名前だけで書き、`tools` に `Skill` を書いたエージェントからも道具を取り除く（FACT-59、[ADR-20261021-001][adr-review-skill]） |
 
 - sandbox のパスは、`/` 始まりが絶対パス、`~/` 始まりがホームの中。`permissions` のパスは、`//` 始まりが絶対パス（`/` 始まりはプロジェクトの中。[公式文書][doc-sandboxing]、FACT-13）
 - 受付 AI は worktree を作らない（「役とエージェント定義」）ので、worktree と親 clone のパスを含む項目（`permissions.allow` の `Write` と `Edit`、`denyWrite` の `gitdir`、`deny` の `Write` と `Edit`）を入れない
@@ -245,6 +245,9 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 - 3 つの軸のセッションは、並べて同時に起こす。3 つが終わってから見落としの軸のセッションを起こし、見落としの軸が終わってから批評 AI のセッションを起こす
 - 理由：3 つの軸を順に起こすと、1 ラウンドのレビューが、軸の 3 つと見落としと批評で最大 5 セッション分（1 セッションの上限 45 分なら 225 分）かかり、1 回の実行の所要時間の上限（`run.maxMinutes` の初期値 180 分）を超えて、lock を長く持つ（上限は Issue の合間に見るので、動いている工程は止まらない）。並べると、最大 3 セッション分（135 分）で済む
 - 見落としの軸には、3 つの軸が出した指摘（🔴 🟡 🟢 の見出しとファイルのパス）を渡す。結果は、修正工程（段階 7）に進む前に使うかを決めるまで手元の記録に残すだけで、批評 AI に渡さず、`review` の印にも入れない（[ADR-20261019-002][adr-gaps] の決定 2）。見落としの軸のセッションが失敗しても、そのラウンドのレビューは続け、失敗を記録に残す
+- 3 つの軸と見落としの軸のセッションには、写しの `skills/review/SKILL.md` の本文を、固定の指示文に続けて渡す。レビュー AI に `Skill` の道具は持たせない（[ADR-20261021-001][adr-review-skill]）。進行 Bot は、セッションを起こすたびに本文を読み、frontmatter を除いて、`$ARGUMENTS` を REVIEW-5 の引数（下の「役ごとの要素」の表のレビュー AI の行）に、`${CLAUDE_SKILL_DIR}` を写しの `skills/review/` の絶対パスに置き換える。引数の書き方は、人が `/review` に渡す形と同じにし、`review` Skill の v2 で決める
+- 置き換えた後の本文に、`$ARGUMENTS` か `${CLAUDE_` で始まる変数が残っていれば、セッションを起こさずに実行の失敗にする（[IMPL-14][impl]）。Claude Code が Skill を呼ぶときの置き換えと、進行 Bot の置き換えのずれを、黙って AI に渡さないため
+- 本文は、AI が書けない写しから読むので、固定の指示文と同じに扱い、区切った欄には入れない。レビュー AI は、本文が指す参照ファイルを Read ツールで読み、スクリプトを sandbox の中の Bash で動かす（写しの `skills/` は読める。[SAFE-10][safety]）
 - 3 つの軸のセッションと批評 AI のセッションには、IMPL-18 の 5 つの条件を掛ける。(1) 出力契約が解析できる、(2) レビューの Skill が指摘を出し切った（`converged` が真。[REVIEW-5][review-skill] の「未収束」でない）、(3) `result` の `is_error` が偽、(4) 件数（`counts`）がすべて数で返り、`findings` の件数と合う、(5) 実際に使われたモデル（`modelUsage`）が設定のモデルと一致する。時間かターンか費用の上限に当たった回は、(1) を満たさない
 - (5) の「一致」：`modelUsage` のキーのうち、出力のトークンが最も多いキーが、設定のモデルの系統であること（設定が別名なら、キーが `claude-<別名>-` で始まる。完全な ID なら同じ ID）。ほかのキー（Claude Code が中で使う別のモデル）は記録に残し、不一致にはしない。安全側の切り替えで別のモデルに回ったときは、出力の多いキーが別の系統になるので見つかる（[FLOW-5][flow]）
 - 批評 AI は Skill を使わず、件数を返さないので、(2) を掛けず、(4) を「渡した通し番号がすべて返り、`confidence` が 0〜100 の整数」に読み替える
@@ -283,7 +286,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 | 作業 AI（実装） | 規約の正典のパスと、正典を変えないこと（[IMPL-4][impl]）、品質ゲートのコマンド（`checks.qualityGate`）、push しないパス（`push.blockedPaths`）、止まる理由（`adr-required`・`canon-change`）、commit の形（設定の `conventions.*` の言語・Conventional Commits・changeset の要否。Issue の番号だけを写す。[TEXT-6][text]、[IMPL-4][impl]）、テストを消す・期待値を緩める変更をしないこと（[IMPL-12][impl]） | 渡す文、計画コメント（`plan` の印を確かめたもの。[IMPL-10][impl]） |
 | 作業 AI（修正） | 上に加えて、渡した指摘だけに対応し、🟢 は直さないこと（[IMPL-23][impl]） | 渡す文、最新のラウンドの 🔴 🟡（`review` のコメントから読んだ見出し・パス・失敗シナリオ・推奨・軸。通し番号を付ける。下の「作業 AI」の出力契約）。CI が赤なら、失敗した必須チェックの名前と結果（進行 Bot が機械で付けた事実。[IMPL-27][impl]） |
 | 作業 AI（衝突の解消） | 上に加えて、渡した base の SHA を取り込んで衝突を解くことだけを行うこと（[MERGE-6][merge]） | 渡す文、取り込む base の SHA（進行 Bot の clone で控えたもの。AI の clone の `origin/<base>` は使わせない。[SAFE-13][safety]）、衝突したファイルの一覧（進行 Bot が機械で付けた事実） |
-| レビュー AI（PR のレビュー。3 つの軸） | 基点（PR の base）、仕様の在りか（渡す文の欄）、🟢 の起票先（Issue。起票は進行 Bot が行う）、予算（ターンと時間）、見る軸（[REVIEW-5、REVIEW-8][review-skill]）、規約の正典のパス、品質ゲートの全体を回さないこと（上の「レビューの軸の起こし方」） | 渡す文、差分、CI の結果、変更ファイルの一覧（進行 Bot が機械で付けた事実）。再レビューでは、前回の印から読んだ値（ラウンド・件数・判定）と、前回の `review` のコメントから読んだ指摘（「レビューのコメントの形」）、修正コミットの範囲（SHA）（[IMPL-21][impl]、[REVIEW-4][review-skill]） |
+| レビュー AI（PR のレビュー。3 つの軸） | `review` Skill の本文（引数に、基点（PR の base）、仕様の在りか（渡す文の欄）、🟢 の起票先（Issue。起票は進行 Bot が行う）、予算（ターンと時間）、見る軸を入れたもの。[REVIEW-5、REVIEW-8][review-skill]、上の「レビューの軸の起こし方」）、規約の正典のパス、品質ゲートの全体を回さないこと | 渡す文、差分、CI の結果、変更ファイルの一覧（進行 Bot が機械で付けた事実）。再レビューでは、前回の印から読んだ値（ラウンド・件数・判定）と、前回の `review` のコメントから読んだ指摘（「レビューのコメントの形」）、修正コミットの範囲（SHA）（[IMPL-21][impl]、[REVIEW-4][review-skill]） |
 | レビュー AI（見落としの軸） | 3 つの軸と同じ。見る軸は見落とし（[ADR-20261019-002][adr-gaps]） | 3 つの軸と同じ欄に加えて、3 つの軸が出した指摘（🔴 🟡 🟢 の見出しとファイルのパス） |
 | 批評 AI | 指摘ごとに、反対する前提で、実際のコードで再現を試みること（[IMPL-22][impl]） | 3 つの軸の 🔴 🟡（見出し・パス・失敗シナリオ・推奨・軸。通し番号を付ける）、差分 |
 
@@ -506,3 +509,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [merge]: ../../requirements/03-merge.md
 [adr-bots]: ../../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-review-skill]: ../../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
