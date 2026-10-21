@@ -86,6 +86,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
 - 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行 Bot が続ける。待ちを解きたければ人が依存（blocked by）を外す
+- 承認のやり直し（承認した後に渡す文を直したいとき）：作業指示コメントか下書きを直す → `needs-human` があれば外し、Status を `Todo` に戻す → `agent-ready` を外して付け直す（文を直すのは付け直す前）。PR があれば、PR を閉じ、作業ブランチを消してから `Todo` に戻す。進行 Bot は、新しい `intake-final` の印を書いて計画からやり直す（TEXT-4、TEXT-12。[ADR-20261021-003][adr-reapprove]）
 
 決まり：
 
@@ -141,3 +142,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
+[adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md

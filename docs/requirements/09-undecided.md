@@ -85,9 +85,9 @@
   人が下書きを読んで `agent-ready` を付けなければ処理対象にならないので、今は人が見分けている。人が気づかずに `agent-ready` を付けると、計画と実装に進み、作業 AI が ADR の起票が要ると分かったとき（IMPL-8）か、正典に触れる diff を push する前（IMPL-15）に初めて止まり、それまでのセッションの利用枠を使う。
   受付 AI が方針に係る要望かを判定して出力契約で返し、下書きに書き添えるか、進行 Bot が計画の前に止めるか。Issue の種類の分け方（UNDECIDED-52）と合わせて決めるか。
   AI に方針の文書の下書きまで書かせるか（正典のパスを push しない決まりを緩めるので、安全の境界を変える）は、この論点に含めない（[04-external-text-and-markers.md][f04]、[02-implement-review-fix.md][f02]）~~
-- UNDECIDED-61 **承認した後に渡す文を直したいとき、承認をやり直す手順をどうするか。外の人の `## 作業指示` のコメントをどう扱うか。** TEXT-4 は、承認した時点の渡す文のハッシュを `intake-final` の印に書き、着手時と対応ループの各回で変わっていたら `needs-human` にする。人が文を直して `needs-human` を外しても、`intake-final` の印は残るので、同じハッシュの照らしで止まり続ける。承認の確定は `intake-final` の印が無いときだけ行うので、承認をやり直す手順が無い（「[止まった状態から戻す手順][f01]」にも無い）。計画コメントが渡す直前の検疫（TEXT-11）で見つかったときも、人は計画コメントを直せない（未編集の条件。IMPL-20）。
+- UNDECIDED-61 **欠番**（[ADR-20261021-003][adr-reapprove] で決めた。最新の `intake-final` の印より後に push 以上の人が付け直した `agent-ready` を承認のやり直しとして扱う。push 未満の人の作業指示コメントは読まない。push 以上の人の作業指示コメントが 2 つ以上なら止める）：~~**承認した後に渡す文を直したいとき、承認をやり直す手順をどうするか。外の人の `## 作業指示` のコメントをどう扱うか。** TEXT-4 は、承認した時点の渡す文のハッシュを `intake-final` の印に書き、着手時と対応ループの各回で変わっていたら `needs-human` にする。人が文を直して `needs-human` を外しても、`intake-final` の印は残るので、同じハッシュの照らしで止まり続ける。承認の確定は `intake-final` の印が無いときだけ行うので、承認をやり直す手順が無い（「[止まった状態から戻す手順][f01]」にも無い）。計画コメントが渡す直前の検疫（TEXT-11）で見つかったときも、人は計画コメントを直せない（未編集の条件。IMPL-20）。
   また、TEXT-10 は、`## 作業指示` のコメントを書いた人が push 未満なら `needs-human` にするとし、「[印と固定の見出しの一覧][f04]」は、固定の見出しは push 以上の人が書いたものだけを読むとする。公開のリポでは、外の人が `## 作業指示` のコメントを書くだけで、どの Issue の承認も止められる。作業指示のコメントが 2 つ以上あるときに、どれを渡すかも決まっていない。
-  候補の例：`intake-final` の印より後に push 以上の人が付け直した `agent-ready` を、承認のやり直しとして扱い、新しい `intake-final` の印を書く。push 未満の人の `## 作業指示` は読まない（止めない）。作業指示のコメントが 2 つ以上なら、止めて人に選ばせる。受け入れ工程（段階 4）で GitHub に書き始める前に決める（[04-external-text-and-markers.md][f04]、[01-issue-flow.md][f01]）
+  候補の例：`intake-final` の印より後に push 以上の人が付け直した `agent-ready` を、承認のやり直しとして扱い、新しい `intake-final` の印を書く。push 未満の人の `## 作業指示` は読まない（止めない）。作業指示のコメントが 2 つ以上なら、止めて人に選ばせる。受け入れ工程（段階 4）で GitHub に書き始める前に決める（[04-external-text-and-markers.md][f04]、[01-issue-flow.md][f01]）~~
 
 ### 安全と設定
 
@@ -213,3 +213,4 @@
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
+[adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
