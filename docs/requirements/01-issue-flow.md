@@ -84,6 +84,9 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 - `needs-human`：原因を直してからラベルを外し、Status を戻す。PR が無ければ `Todo`（棚卸しで選び直す）、PR があれば `In Review`（進行 Bot が次回の実行で PR の状態から再開する）。Agent 欄が `human` なら `worker` に戻す
 - 結びつきの印の無い PR（`unlinked-pr`）：進行 Bot が PR を作った直後、結びつきの印を書く前に止まったときにも当たる（まれなので、人が確かめる。IMPL-6、[ADR-20261016-001][adr-pr] の決定 3）。人は PR の中身を確かめてから、PR を閉じ、作業ブランチを消し、`needs-human` を外して Status を `Todo` に戻す。進行 Bot は、人が戻す前に閉じられた印の無い PR では止めず、計画からやり直す
+- 印が無効（`marker-invalid`）：`needs-human` は、どの場合も最後に外す（外すまで、進行 Bot は Issue に触らない）。人は、止めた理由のコメントに挙がった印のコメントを確かめる（誰がいつ編集したか、印の署名の鍵を替えたか）。印のコメントは、直さず、消さない。続けてよければ、Status を戻し（PR が無ければ `Todo`、あれば `In Review`）、`needs-human` を外す。進行 Bot は、挙がった印を数えず、無いものとして読む（IMPL-20、[ADR-20261021-004][adr-marker-keys]）
+  - 途中のラウンドの `review` の印が無効なときと、`review` の印が消されて `round` が欠けるとき：PR を続けると、`round` の欠けでまた止まる（IMPL-18）。PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、閉じた PR を結びつきから外し、計画からやり直す
+  - 印の署名の鍵が漏れて、漏れた鍵を一覧から外したとき（外す手順は、基本設計の「[状態遷移と判定][design-flow]」の「印の署名」）：漏れた鍵の印は、誰が作ったかが分からないので、続けない。PR があれば閉じて作業ブランチを消し、`agent-ready` を外し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、受け入れからやり直し、新しい下書きを書く。人は、新しい下書きを読んでから `agent-ready` を付ける
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
 - 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行 Bot が続ける。待ちを解きたければ人が依存（blocked by）を外す
@@ -144,5 +147,6 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [design-setup]: ../design/basic/04-setup-and-check.md
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
+[adr-marker-keys]: ../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [design-ai]: ../design/basic/03-ai-sessions.md
