@@ -44,6 +44,7 @@
 | ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | accepted | 2026-10-21 |
 | ADR-20261022-001 | [検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない][adr-20261022-001-quarantine-urls-outside-target-repo] | accepted | 2026-10-22 |
 | ADR-20261022-002 | [3 つの軸の 🔴 🟡 が 0 件のラウンドは批評 AI のセッションを起こさず、IMPL-18 の 5 つの条件を 3 つの軸のセッションにだけ掛ける][adr-20261022-002-skip-critic-when-no-high-or-medium-findings] | accepted | 2026-10-22 |
+| ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | proposed | 2026-10-22 |
 
 <!--
 行の例（表の最後に足す）:
@@ -94,3 +95,4 @@
 [adr-20261021-007-compare-review-done-from-local-records]: ./adr-20261021-007-compare-review-done-from-local-records.md
 [adr-20261022-001-quarantine-urls-outside-target-repo]: ./adr-20261022-001-quarantine-urls-outside-target-repo.md
 [adr-20261022-002-skip-critic-when-no-high-or-medium-findings]: ./adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
+[adr-20261022-004-intake-skill-via-request-file]: ./adr-20261022-004-intake-skill-via-request-file.md
