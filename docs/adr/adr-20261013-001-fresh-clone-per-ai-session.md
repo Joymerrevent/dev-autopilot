@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-13
-updated: 2026-10-17
+updated: 2026-10-22
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -121,7 +121,8 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 ### 確認方法（Confirmation）
 
 - 段階 3（`setup` と `check` を作る段階）の `check`（SETUP-2）で、次を実際に試す
-  - objects を書き換えた clone から進行役の clone へ fetch すると失敗し、進行役の clone に書き換えた中身が入らないこと
+  - ~~objects を書き換えた clone から進行役の clone へ fetch すると失敗し、進行役の clone に書き換えた中身が入らないこと~~
+    **訂正（2026-10-22）**: 試しで進行役（進行 Bot）の clone を汚さないように、取り込む先は試しのためだけに作る小さなリポにし、進行役の clone と同じ取り込みの設定（git に渡す環境変数と設定）で fetch する（要件の [SETUP-2][setup]）。clone に commit を足さずに objects を書き換えると、取り込む objects が無いので fetch は通る（FACT-61）。そのため、clone に足した commit の objects を書き換えてから fetch し、失敗して書き換えた中身が入らないことを確かめる。書き換えに依らない失敗と見分けるために、書き換えていない対照の clone からの fetch が通ることも確かめる（基本設計の「[導入と点検][design-setup]」の「モデルを使わない試し」）。AI が触った clone を、取り込みの fetch の取り出し元にだけ使うという決定は変わらない
   - 進行役の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと（`find <clone>/.git/objects -type f -links +1` の出力が空）
   - `.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと
 - 結合テストで、偽の git を使って次を検査する
@@ -195,5 +196,6 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 [struct]: ../requirements/07-structure.md
 [setup]: ../requirements/06-setup-and-stages.md
 [facts]: ../requirements/10-verified-facts.md
+[design-setup]: ../design/basic/04-setup-and-check.md
 [overview]: ../requirements/00-overview.md
 [prev]: https://github.com/Joymerrevent/business-os/blob/e1153bab318044dfafbf4232be6bc1a32668d4d7/dev-autopilot/docs/adr/adr-20261011-001-ai-worktree-clone-and-fetch-only.md

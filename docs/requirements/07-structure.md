@@ -67,7 +67,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   版を上げるのは、人が `setup` を実行したときだけ。Plugin が更新されても（自動の更新を含む）、写しは変わらない。写しを作り直すのは、進行 Bot が動いていない間に限る（実行の lock を取る）。
   配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行 Bot も配る。テスト・前提データ・文書は配らない。
   `/dev-autopilot` の手動の 1 回実行は、進行 Bot を直接起動せず、定期の実行と同じジョブを起こす（macOS は `launchctl kickstart`（`-k` なし）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin] の決定 3）。
-  人が呼ぶ Skill（`dev-autopilot` `setup` `check`）が進行 Bot のコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。Plugin のパスを手順に埋め込まない。
+  人が呼ぶ Skill のうち `check` と `/dev-autopilot` が進行 Bot のコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。`setup`（引数の `rollback` と `uninstall` を含む。基本設計の「[導入と点検][design-setup]」）は、入れた Plugin の `${CLAUDE_PLUGIN_ROOT}/src/` のコードで動かす（初めての `setup` にはマシンの設定も写しも無く、Plugin を更新した後の `setup` で新しい版の準備を 1 回で入れるため）。Plugin のパスを手順に埋め込まない。
   `setup` は、dev-autopilot 自身のリポでは何も作らずに止まる（「分離の時期の目安」）
 - STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーで、`setup` が登録する（cron は、マシンが眠っていた間の実行を逃すので使わない。構造仕様の「導入と点検」。[ADR-20261017-003][adr-plugin] の決定 3）。
   進行 Bot の本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ、登録の中身の確かめ、動かしてよい OS かの確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。進行 Bot が毎回の実行の最初に回す点検も、`check` と同じ OS ごとの部分を使う。
@@ -147,5 +147,6 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-usage]: ../adr/adr-20261018-001-stop-session-and-count-usage.md
 [doc-plugin-agents]: https://code.claude.com/docs/en/plugins/components#organize-agents-in-subfolders
 [design-tests]: ../design/basic/05-tests.md
+[design-setup]: ../design/basic/04-setup-and-check.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md

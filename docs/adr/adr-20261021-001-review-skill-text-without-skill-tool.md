@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -72,6 +72,8 @@ decision-makers: メンテナ
 - レビュー AI は、本文が `${CLAUDE_SKILL_DIR}` で指す参照ファイルを Read で読み、スクリプト（`scripts/per-commit-gates.ts`）を sandbox の中の Bash で動かす。読める範囲は今のまま（写しの `skills/`）で、広げない
 - 人の入り口は変えない。人は `review` を Skill として呼び（`/review <引数>`）、Claude Code が同じ本文に同じ置き換えをする
 
+> **［2026-10-22 追記］** REVIEW-5 の無人の入り口の引数に、品質ゲートを回すかを足した。進行 Bot は、CI の結果をレビュー AI に渡すので「回さない」を入れて渡し、`review` Skill の本文は、品質ゲートの全体とコミットごとのゲートの検査（REVIEW-7）を飛ばして壊れ方の表から始める。本文の手順（品質ゲートから始める）と固定の指示文（品質ゲートの全体を回さない）が、1 つのセッションの中で食い違わないようにするため（基本設計の「[AI のセッション][design-ai]」の「レビューの軸の起こし方」）。進行 Bot が本文に引数を入れて渡すという決定は変わらない。
+
 ### 影響（Consequences）
 
 - 良い点: レビュー AI の道具は Bash と Read のまま。Claude Code の版で同梱の Skill が増えても、AI は呼べない
@@ -136,3 +138,4 @@ decision-makers: メンテナ
 [safety]: ../requirements/05-safety.md
 [undecided]: ../requirements/09-undecided.md
 [facts]: ../requirements/10-verified-facts.md
+[design-ai]: ../design/basic/03-ai-sessions.md
