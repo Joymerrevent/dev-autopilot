@@ -226,7 +226,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | --- | --- | --- |
 | 1 | 計画 AI が計画を返す（モデルは `intake-final` の印の `plan=`。承認したときのラベル `plan:*` で上書き済みの値で、承認の後に付いたラベルは読まない。`models.plan` か `models.planHard`。[TEXT-10][text]、[ADR-20261018-002][adr-redo]） | `opus` が自己申告したら 2。しなければ 3 |
 | 2 | 計画 AI が `fable` で計画し直す（1 回だけ。`models.planHard`） | 3 |
-| 3 | 進行 Bot が、計画の `plan.paths` を push しないパスの一覧（IMPL-15）と照らす | 1 つでも当たれば、計画を投稿せず、`needs-human` を付ける（`plan-blocked-path`。[ADR-20261019-004][adr-policy]）。当たらなければ 4 |
+| 3 | 進行 Bot が、計画の `plan.paths` を push しないパスの一覧（IMPL-15 が名指しするパスと `push.blockedPaths` を合わせた一覧。[ADR-20261021-005][adr-blocked]）と照らす | 1 つでも当たれば、計画を投稿せず、`needs-human` を付ける（`plan-blocked-path`。[ADR-20261019-004][adr-policy]）。当たらなければ 4 |
 | 4 | レビュー AI が計画をレビューし、`ok` か `fix` と指摘の一覧を返す（`models.planReview`） | `ok` なら 6。`fix` で、レビューの指摘で計画し直した回数が上限（`limits.planRevisions`）に達していなければ 5、達していれば 6 |
 | 5 | 計画 AI が、渡す文・直す前の計画・指摘の一覧を受け取って計画し直す（直す前の計画と同じモデル。自己申告は無視して記録に残す） | 3 |
 | 6 | 最後の計画の文の欄を、検疫（[TEXT-11][text]）と漏えいの検査に通してから、`plan` の印付きで投稿する | 計画を投稿した実行では、実装に入らない。検疫か漏えいの検査で見つかれば、投稿せずに `needs-human` を付ける（`quarantine` か `leak`）。計画の印が無いので、人が戻せば計画からやり直す |
@@ -249,7 +249,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | --- | --- | --- |
 | 1 | 作業 AI の出力契約を取り出す（「[AI のセッション][design-ai]」の「役ごとの出力契約」）。進行 Bot だけで行う載せ直しでは、とばす | 取り出せなければ、実行の失敗として次の実行に持ち越す。取り出せて、止まった理由（`stopReason`）を返していれば、push せず、止まった理由で `needs-human` を付ける |
 | 2 | 進行 Bot の clone で、AI の作業場所から作業ブランチを取り込み（`git fetch <置き場>/sessions/<セッションの名前>/worktree <ブランチ>`）、取り込んだ先端の SHA を控える。AI の作業場所の clone では git を実行しない（[ADR-20261013-001][adr-workspace]）。控えた SHA が、作業場所を作ったときの SHA と同じ（新しい commit が無い）なら、push しない | 取り込みが objects の検査で失敗したら、`needs-human` を付ける（`workspace-tampered`）。AI が objects を書き換えたおそれがあるため（FACT-18、FACT-57）。作業 AI が `done` を返したのに新しい commit が無ければ、`needs-human` を付ける（`no-new-commit`。全部 `unable` の修正と、直せなかった CI の赤を含む）。印を書かずに止めるのは、`fix` の印を同じ head に書くと次の工程の表のどの行にも当たらず、書かないと毎回同じ修正をやり直すため |
-| 3 | 範囲の commit ごとに、差分が触れるパスを、push しないパス（`push.blockedPaths`）と照らす。merge の commit は、どの親とも違う部分（`git show --cc`）を照らす。あわせて、PR の全体の差分（`git diff <base>...<控えた SHA>`）も照らす | 当たれば push せず、`needs-human` を付ける（`blocked-path`）。途中の commit で触れて後の commit で戻しても、途中の commit が GitHub に届くので止める |
+| 3 | 範囲の commit ごとに、差分が触れるパスを、push しないパス（進行 Bot のプログラムに固定した、IMPL-15 が名指しするパスと、`push.blockedPaths` を合わせた一覧。[ADR-20261021-005][adr-blocked]）と照らす。merge の commit は、どの親とも違う部分（`git show --cc`）を照らす。あわせて、PR の全体の差分（`git diff <base>...<控えた SHA>`）も照らす | 当たれば push せず、`needs-human` を付ける（`blocked-path`）。途中の commit で触れて後の commit で戻しても、途中の commit が GitHub に届くので止める |
 | 4 | GitHub に書く文を組み立てる。初回は PR の題名と本文、修正は対応コメント（出力契約の `responses`）。題名は、作業 AI の案（出力契約の `pr.title`）を規約（`conventions.*`。Conventional Commits の形と言語）に照らしてから使い、外れていれば、Issue の文を使わない固定の形で作る（`conventions.language` が `ja` なら `<作業ブランチの型>: issue #<Issue の番号> の対応`。言語ごとの固定の文は進行 Bot のプログラムに持つ。[TEXT-6][text]、[IMPL-6][impl]）。本文は、「AI が生成した」の 1 行、`Closes #<Issue の番号>`、作業 AI が確かめた検査の結果（出力契約の `checks`）、本文の案（`pr.body`）の順に並べる。続けて、漏えいの検査を、範囲の commit ごとの差分（merge の commit は `git show --cc`）、commit ごとのメッセージと作者、組み立てた文（最後に使う題名を含む）に掛け、組み立てた文のうち AI の文の欄に検疫（[TEXT-11][text]）を掛ける。検査は `plugin/src/` の中のものを使い、worktree の中の検査は使わない（[IMPL-15][impl]） | 漏えいの検査に引っかかれば push せず、`needs-human` を付ける（`leak`）。途中の commit で足して後の commit で消した秘密も、途中の commit が GitHub に届くので止める。検疫で見つかれば push せず、`needs-human` を付ける（`quarantine`。投稿する AI の文ごとの扱いは「[AI のセッション][design-ai]」の「共通の決まり」の表）。push の後に見つけて、push だけ済んだ状態で止めないため |
 | 5 | 進行 Bot の clone から `git ls-remote` で、作業ブランチの今の先端を読み、控えた SHA の祖先であることを確かめる（fast-forward で届くこと）。作業ブランチがまだ無ければ、作業場所を作ったときに控えた base の SHA で確かめる（[IMPL-15][impl]、[SAFE-13][safety]） | 祖先でなければ push せず、`needs-human` を付ける（`not-fast-forward`）。AI が履歴を書き換えたか、ほかの誰かが push したため |
 | 6 | 全体の止める合図を読み直し、書かずに試す合図（`run.dryRun`）を見る（[運用の規則][flow]） | 合図が `run` でなければ push せずに止まる。`dryRun` が `true` なら push せず、送るつもりだった SHA を手元の記録に残す |
@@ -550,3 +550,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [undecided]: ../../requirements/09-undecided.md
+[adr-blocked]: ../../adr/adr-20261021-005-required-push-blocked-paths-in-program.md

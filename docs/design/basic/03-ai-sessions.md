@@ -295,7 +295,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 | 計画 AI（計画） | 規約の正典のパス（[IMPL-4][impl]）、計画の形 | 渡す文（作業指示コメントか、承認された下書き） |
 | 計画 AI（計画し直し） | 上に加えて、レビューの指摘で計画し直すこと | 上に加えて、直す前の計画と、計画のレビューの指摘（[ADR-20261019-003][adr-replan]） |
 | レビュー AI（計画のレビュー） | 規約の正典のパス、計画のレビューの観点（[IMPL-10][impl]） | 渡す文、計画 |
-| 作業 AI（実装） | 規約の正典のパスと、正典を変えないこと（[IMPL-4][impl]）、品質ゲートのコマンド（`checks.qualityGate`）、push しないパス（`push.blockedPaths`）、止まる理由（`adr-required`・`canon-change`）、commit の形（設定の `conventions.*` の言語・Conventional Commits・changeset の要否。Issue の番号だけを写す。[TEXT-6][text]、[IMPL-4][impl]）、テストを消す・期待値を緩める変更をしないこと（[IMPL-12][impl]） | 渡す文、計画コメント（`plan` の印を確かめたもの。[IMPL-10][impl]） |
+| 作業 AI（実装） | 規約の正典のパスと、正典を変えないこと（[IMPL-4][impl]）、品質ゲートのコマンド（`checks.qualityGate`）、push しないパス（IMPL-15 が名指しするパスと `push.blockedPaths` を合わせた一覧。[ADR-20261021-005][adr-blocked]）、止まる理由（`adr-required`・`canon-change`）、commit の形（設定の `conventions.*` の言語・Conventional Commits・changeset の要否。Issue の番号だけを写す。[TEXT-6][text]、[IMPL-4][impl]）、テストを消す・期待値を緩める変更をしないこと（[IMPL-12][impl]） | 渡す文、計画コメント（`plan` の印を確かめたもの。[IMPL-10][impl]） |
 | 作業 AI（修正） | 上に加えて、渡した指摘だけに対応し、🟢 は直さないこと（[IMPL-23][impl]） | 渡す文、最新のラウンドの 🔴 🟡（`review` のコメントから読んだ見出し・パス・失敗シナリオ・推奨・軸。通し番号を付ける。下の「作業 AI」の出力契約）。CI が赤なら、失敗した必須チェックの名前と結果（進行 Bot が機械で付けた事実。[IMPL-27][impl]） |
 | 作業 AI（衝突の解消） | 上に加えて、渡した base の SHA を取り込んで衝突を解くことだけを行うこと（[MERGE-6][merge]） | 渡す文、取り込む base の SHA（進行 Bot の clone で控えたもの。AI の clone の `origin/<base>` は使わせない。[SAFE-13][safety]）、衝突したファイルの一覧（進行 Bot が機械で付けた事実） |
 | レビュー AI（PR のレビュー。3 つの軸） | `review` Skill の本文（引数に、基点（PR の base）、仕様の在りか（渡す文の欄）、🟢 の起票先（Issue。起票は進行 Bot が行う）、予算（ターンと時間）、見る軸、品質ゲートを回さないこと（CI の結果を進行 Bot が渡すため）を入れたもの。[REVIEW-5、REVIEW-8][review-skill]、上の「レビューの軸の起こし方」）、規約の正典のパス | 渡す文、差分、CI の結果、変更ファイルの一覧（進行 Bot が機械で付けた事実）。再レビューでは、前回の印から読んだ値（ラウンド・件数・判定）と、前回の `review` のコメントから読んだ指摘（「レビューのコメントの形」）、修正コミットの範囲（SHA）（[IMPL-21][impl]、[REVIEW-4][review-skill]） |
@@ -555,3 +555,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-reapprove]: ../../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [adr-intake]: ../../adr/adr-20261015-003-intake-scope-and-quarantine-report.md
 [doc-skills]: https://code.claude.com/docs/en/skills
+[adr-blocked]: ../../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
