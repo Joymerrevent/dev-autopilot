@@ -73,8 +73,10 @@
   設定に持つ上限は、1 セッションの時間とターンと費用（IMPL-13、`--max-budget-usd`）に加え、1 Issue の累計の利用枠（往復を含む）、実行の失敗の再試行の回数（3）と間隔、1 回の実行と 1 日の利用枠（SETUP-12）。1 Issue の累計の利用枠と 1 日の利用枠は、費用（Claude Code が出す USD 換算の値）で数え、トークンはモデルごとに記録に残す（[ADR-20261018-001][adr-usage]）。累計が上限に当たったら `needs-human`。数え上げは手元の記録で行い、記録を失ったときの扱いは「[運用の規則][f01]」
 - IMPL-15 **漏えいの検査と push**。進行 Bot は、GitHub に書くすべての文（diff、commit メッセージと author、PR の題名と本文、計画・レビュー・対応・受け入れのコメント、🟢 から起票する Issue）に、漏えいの検査（鍵の形式、メールアドレス、機械上のパス、進行 Bot の設定と記録の内容）を掛ける。引っかかれば書かずに `needs-human`。
   検査の実装は dev-autopilot 自身の `plugin/src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（MERGE-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
-  push の前に、diff が「進行 Bot・次のセッション・CI が実行するか、規則として読むパス」（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`）。設定に持つ）に触れていれば push せず `needs-human`
+  push の前に、diff が「進行 Bot・次のセッション・CI が実行するか、規則として読むパス」（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`））に触れていれば push せず `needs-human`
   （MERGE-4 の判定より前。CI が AI の書いたワークフローを secrets 付きで実行しないため。レビュー AI と修正のセッションが、作業 AI の書き換えた正典を規則として読まないため。[ADR-20261017-002][adr-review]）。`**/CLAUDE.local.md` は、どのフォルダに置いても次のセッションが指示として読む（下のフォルダのものは、そのフォルダのファイルを読んだときに読まれる。FACT-60）ので、すべてのフォルダで止める。`dev-autopilot/**` は、dev-autopilot を別のリポに移して business-os から消した後も残す（外すのは安全の境界を緩める変更で、残せば同じ名前のフォルダが business-os に戻ったときにも止まる。[ADR-20261016-003][adr-move] の決定 5）。
+  名指しした 6 つのパス（`.claude/**` から `dev-autopilot/**` まで。以下「名指しのパス」）は、進行 Bot のプログラムに固定し、リポの設定の値に関わらず push しないパスに必ず入れる。リポの設定には、当てる先のリポごとに違う足す分（規約の正典のパスなど）だけを持つ（STRUCT-2 の `denyRead` と同じ形）。push の前の検査と、計画が変える見込みのパスとの照らし（IMPL-10）で使う push しないパスの一覧は、名指しのパスと足す分を合わせたもの。
+  名指しのパスを外すのは、設定の値の変更でなく、IMPL-15 と進行 Bot のプログラムの変更で、安全の境界を緩めるので ADR で決める（[ADR-20261021-005][adr-blocked]）。
   push は進行 Bot の clone から `git push origin <検証した SHA>:refs/heads/<型>/issue-<番号>` の形で行い、ブランチ名でなく SHA を送る。API の head（初回は、作業場所を作ったときに進行 Bot の clone で控えた base の SHA。SAFE-13）が送る SHA の祖先であること（fast-forward で届くこと）を確かめる。
   deploy key の push 先は、`setup` が作る ruleset で作業ブランチ（`<型>/issue-*`）に限り、タグの作成を禁じる（SETUP-1）。ruleset の bypass に入れてよいのは、組織の管理者とチームだけにする（リポの役（admin・maintain・write）を bypass に入れると、書き込みのある deploy key もその ruleset を素通りし、base ブランチの更新もタグの作成も通る。FACT-65）。ただし、deploy key の push 先を限る 2 つの ruleset には、人がリポの設定の一覧で許したアプリ（例：Dependabot）も入れてよい。進行 Bot のアプリは、一覧にあっても入れない。bypass にリポの役・deploy key・一覧の外のアプリ・進行 Bot のアプリが入っていれば、点検（SETUP-2）が fail にする。ブランチの ruleset は、bypass の外の人とアプリによるブランチの作成と base ブランチの更新も止めるので、PR をマージする人は bypass（組織の管理者かチーム）に入れる（FACT-67）
 
@@ -201,3 +203,4 @@
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
+[adr-blocked]: ../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
