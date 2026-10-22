@@ -46,7 +46,7 @@
 | ADR-20261022-002 | [3 つの軸の 🔴 🟡 が 0 件のラウンドは批評 AI のセッションを起こさず、IMPL-18 の 5 つの条件を 3 つの軸のセッションにだけ掛ける][adr-20261022-002-skip-critic-when-no-high-or-medium-findings] | accepted | 2026-10-22 |
 | ADR-20261022-003 | [往復の回数は、作業 AI が直すか衝突を解いて push した回数（fix の印の数）で数え、同じ指摘の再発は、AI の変更の後のラウンドでだけ判定する][adr-20261022-003-count-round-trips-by-ai-pushes] | accepted | 2026-10-22 |
 | ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | accepted | 2026-10-22 |
-| ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | proposed | 2026-10-22 |
+| ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | accepted | 2026-10-22 |
 
 <!--
 行の例（表の最後に足す）:
