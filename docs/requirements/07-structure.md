@@ -33,7 +33,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     unit/                      単体テスト。`plugin/src/` と同じ形のパスで置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
     integration/               結合テスト（偽の gh と claude を差し替えて、進行 Bot を端から端まで回す）と偽物（`fakes/`）
     repo/                      構成の検査（単体テストの有無、`plugin/` の中にテストが無いこと、import の形）
-  fixtures/                    テストの前提データ（偽の gh の状態、偽の claude の筋書き、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査の見本、構成の検査の木）
+  fixtures/                    テストの前提データ（偽の gh の状態、偽の claude の筋書き、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査とパスの照らし方の見本、構成の検査の木）
   evals/                       review Skill の評価の入口とケース（人が手で回す。CI では回さない。08-review-skill.md）
   docs/                        要件（requirements/）、設計判断（adr/）、構造仕様（design/）、図（diagrams/。要件の写し）
   README.md                    使い方。業務の固有名詞を書かない
