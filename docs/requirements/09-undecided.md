@@ -140,8 +140,8 @@
 - UNDECIDED-64 **IMPL-15 が名指しする push しないパスを、設定の PR で外せない形にするか。** IMPL-15 は push しないパスの一覧を設定に持つとし、STRUCT-2 と [ADR-20261015-005][adr-settings] の決定 1 は、IMPL-15 の一覧からパスを外すのを、安全の境界を緩める値の変更として ADR で決めるとしている。点検（SETUP-2）は一覧の中身を見ないので、人の誤りの PR 1 本で `.github/**` が外れると、作業 AI の書いたワークフローが push され、同じリポの PR の CI が secrets 付きで動く（IMPL-15 が止めたい経路）。守りは PR のレビューと「ADR で決める」の運用だけになる。
   一方、sandbox の `denyRead` と、子プロセスに渡す環境変数の名前は、要件と ADR が決めた分を進行 Bot のプログラムに固定し、設定には足す分だけを持つ（STRUCT-2）。
   候補：(a) IMPL-15 が名指しするパス（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**`）を進行 Bot のプログラムに固定し、設定には足す分（規約の正典のパスなど）だけを持つ。`denyRead` と環境変数の名前と同じ形にそろい、読み方が 1 つで済む。(b) 点検で、名指しのパスが一覧にあることを確かめ、無ければ fail にする。(c) 今の形を保つ。(a) と (b) は [ADR-20261015-005][adr-settings] の決定 1 を改めるので、ADR で決める。計画・実装工程（段階 5）で作業 AI の変更を push し始める前に決める（[02-implement-review-fix.md][f02]、[07-structure.md][f07]）
-- UNDECIDED-65 **当てる先のリポの owner と名前をマシンの設定に置くことを、ADR でどう残すか。** STRUCT-2 は、owner と名前を、base ブランチと GitHub App の 2 つの ID と一緒にマシンの設定に置くとする（リポの設定を読む前に、進行 Bot の clone を作る先と全体の止める合図を読む先に要るため）。一方、[ADR-20261015-005][adr-settings] の決定 2 は「リポと Project の ID」をリポの設定に置き、[ADR-20261017-007][adr-stop] の決定 4 は base ブランチの名前だけをマシンの設定に移して、ほかの項目の割り振りは据え置くとしている。owner と名前をマシンの設定に移した ADR が無いので、ADR だけを読む人は owner と名前をリポの設定に置く（GitHub App の 2 つの ID は、[ADR-20261020-002][adr-app] の決定 3 が置き場を基本設計に任せている）。
-  候補：(a) owner と名前をマシンの設定に置くことを新しい ADR で決め、承認の後に [ADR-20261015-005][adr-settings] へ Amended by を足し、基本設計の「[設定][design-settings]」の根拠を直す。(b) 「リポの ID」に owner と名前は入らないと読み、[ADR-20261015-005][adr-settings] の決定 2 に訂正の注記を足す（注記で済ませると、読んだ人は決定が変わったと読む。ADR の README の判断の基準）。導入と点検の実装（段階 3）で `setup` を作る前に決める（[07-structure.md][f07]）
+- UNDECIDED-65 **欠番**（[ADR-20261021-006][adr-repo] で決めた。owner と名前は、base ブランチの名前と GitHub App の 2 つの ID と一緒にマシンの設定に置き、`setup` が origin から書き、点検でマシンの設定のフォルダのパスと照らす）：~~**当てる先のリポの owner と名前をマシンの設定に置くことを、ADR でどう残すか。** STRUCT-2 は、owner と名前を、base ブランチと GitHub App の 2 つの ID と一緒にマシンの設定に置くとする（リポの設定を読む前に、進行 Bot の clone を作る先と全体の止める合図を読む先に要るため）。一方、[ADR-20261015-005][adr-settings] の決定 2 は「リポと Project の ID」をリポの設定に置き、[ADR-20261017-007][adr-stop] の決定 4 は base ブランチの名前だけをマシンの設定に移して、ほかの項目の割り振りは据え置くとしている。owner と名前をマシンの設定に移した ADR が無いので、ADR だけを読む人は owner と名前をリポの設定に置く（GitHub App の 2 つの ID は、[ADR-20261020-002][adr-app] の決定 3 が置き場を基本設計に任せている）。
+  候補：(a) owner と名前をマシンの設定に置くことを新しい ADR で決め、承認の後に [ADR-20261015-005][adr-settings] へ Amended by を足し、基本設計の「[設定][design-settings]」の根拠を直す。(b) 「リポの ID」に owner と名前は入らないと読み、[ADR-20261015-005][adr-settings] の決定 2 に訂正の注記を足す（注記で済ませると、読んだ人は決定が変わったと読む。ADR の README の判断の基準）。導入と点検の実装（段階 3）で `setup` を作る前に決める（[07-structure.md][f07]）~~
 
 ## 基本設計の中で決めてよいもの
 
@@ -233,3 +233,4 @@
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [adr-replan]: ../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
+[adr-repo]: ../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
