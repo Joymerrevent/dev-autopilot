@@ -103,7 +103,7 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 2 | Agent 欄が `human` か `paused`。または `needs-human` がある。または、`needs-human` が無く、最後に `needs-human` を外した人（timeline の最新の `UnlabeledEvent` の `actor`）が push 未満 | Agent 欄が `human` か `paused` か、`needs-human` があれば、触らない（[Issue の状態の遷移][flow]の決まり、[FLOW-1][flow]）。push 未満の人が `needs-human` を外したなら、Status を問わず `needs-human` を付け直す（`unauthorized-resume`。[TEXT-10][text]、[ADR-20261015-004][adr-markers] の決定 2） |
 | 3 | 着手した後に、Issue が閉じられた・別のリポに移された・`agent-ready` かマイルストーンが外された。着手した後かは、下の「進行中の Issue の数え方」と同じ見方（計画の印か結びつく PR があるか、Status が `In Progress`・`In Review`・`Ready to Merge`）で見る。閉じた Issue は Project が Status を `Done` にするので、計画の印か結びつく PR で見る。外されたかは、外した記録でなく今の値で見る（付け直せば止めない） | `needs-human` にし（`issue-changed`）、作業ブランチと PR は残す（[TEXT-8][text]）。別のリポに移された Issue は、上の「状態の組み立て」で結びつく PR から見つけ、結びつく PR に `needs-human` を付けて、stop のコメントに移った先の Issue を書く（当てる先のリポの Issue ではなくなったので、Issue には書かない）。PR に `needs-human` があれば、何もしない |
 | 4 | 結びつく PR がマージされずに閉じられた。または、ブランチ名が一致するのに結びつきの印が無い PR がある | 閉じた PR なら `needs-human` にする（`pr-closed`）。印の無い PR は、作者を問わず `needs-human` にする（`unlinked-pr`）。PR を作った直後、結びつきの印を書く前に切れたときも当たる（まれなので、人が確かめる。[IMPL-6][impl]、[ADR-20261016-001][adr-pr] の決定 3）。ただし、閉じた PR（印の無い PR を含む）が、人が戻した時刻（下の「戻した Issue のやり直し」。承認のやり直しの時刻を含む）より前に閉じられていて、Status が `Todo` なら、止めずに、閉じた PR を結びつきから外し、計画からやり直す |
-| 5 | 進行 Bot の印のうち、未編集（`intake` の印には掛けない）か署名の条件を満たさないものがある。または、`review` の印の `round` が欠けている | `needs-human` にし、`note kind=stop reason=marker-invalid` を書く（[IMPL-20][impl]、[IMPL-18][impl]）。印の置き場が PR のときは、PR と、結びつく Issue の両方に `needs-human` を付ける。進行 Bot が `needs-human` を読むのは Issue だけで、PR だけに付けても止まらないため |
+| 5 | 進行 Bot の印のうち、未編集（`intake` の印には掛けない）か署名の条件を満たさないものがある（下の「数えない無効な印」に当たる印を除く）。または、`review` の印の `round` が欠けている | `needs-human` にし、`note kind=stop reason=marker-invalid` を書く（[IMPL-20][impl]、[IMPL-18][impl]）。止めた理由の印は、無効な印のある置き場（Issue か PR）ごとに書き、`comments=` に、書く置き場の無効な印のコメントの ID を挙げ、人向けの本文に、挙げたコメントへのリンクを書く（[印と固定の見出しの一覧][markers]、[ADR-20261021-004][adr-marker-keys] の決定 4）。印の置き場が PR のときは、PR と、結びつく Issue の両方に `needs-human` を付ける。進行 Bot が `needs-human` を読むのは Issue だけで、PR だけに付けても止まらないため |
 | 6 | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） | `needs-human` にする（`workspace-residue`。[FLOW-29][flow]） |
 | 7 | 依存（blocked by）の相手に、閉じていない Issue がある。かつ、`intake-final` の印があるか、Status が `In Progress` 以降 | 待つ（欄は変えない）。待つことを、`note kind=wait` の印付きのコメントで 1 回だけ書く（[FLOW-10][flow]）。作業中なら、レビューと修正も止める（[FLOW-33、FLOW-34][flow]）。`intake-final` の印の前（受け入れと承認の確定）は、依存で止めない（[TEXT-12][text] の受け入れの対象は依存を問わない） |
 | 8 | Status が、印と PR から許す値（下の「印と PR から許す Status」）に無い | 人が戻す手順に当たれば、Status に従う。当たるのは、push 以上の人が `needs-human` を外して `Todo` か `In Review` に戻し、最後に外した時刻が進行 Bot の最後の印より後のときと、承認のやり直し（下の「承認のやり直し」）に当たる `Todo` のとき。push 未満の人が外したときは、順 2 で付け直す（[TEXT-10][text]）。ほかは想定外の Status として `needs-human` にする（`unexpected-status`。[Issue の状態の遷移][flow]の決まり、[SAFE-4][safety]） |
@@ -147,6 +147,21 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 - 進行 Bot は、最新の `intake-final` の印だけを読む。渡す文のハッシュの照らし（`brief-changed`）も、最新の印で行う
 - 計画の印が、最新の `intake-final` の印より前なら、計画の印が無いものとして、着手の後に計画し直す（順 12）
 - 着手した後（Status が `Todo` でない）に付け直した `agent-ready` は、やり直しとして扱わない。渡す文が変わっていれば、ハッシュの照らしで止まる（`brief-changed`）。人は、戻す手順で `Todo` に戻してから付け直す
+
+#### 数えない無効な印
+
+人が `marker-invalid` で止めた Issue を戻したとき（[止まった状態から戻す手順][flow]）、進行 Bot は、次をすべて満たす無効な印を、順 5 で止める契機に数えない（[IMPL-20][impl]、[ADR-20261021-004][adr-marker-keys] の決定 4）。
+
+- 印の置き場の Issue で（置き場が PR なら、結びつく Issue で）、push 以上の人が `needs-human` を外した。外した人は、timeline の最新の `UnlabeledEvent` の `actor` で確かめる（[TEXT-10][text]）。push 未満の人が外したときは、順 2 で付け直す（`unauthorized-resume`）
+- 最後に `needs-human` を外した時刻より前に書いた、有効な `note kind=stop reason=marker-invalid` の印のどれかの `comments=` に、無効な印のコメントの ID がある。読む止めた理由の印は、Issue と、結びつく PR のもの
+- 無効な印のコメントが、最後に `needs-human` を外した時刻より後に編集されていない（`lastEditedAt` が無いか、外した時刻より前）。外した後に編集されたら、新しく無効になった印として数える
+
+数えない印と、条件に当たらない無効な印は、次のように扱う。
+
+- 数えない印は、無いものとして読み、中身（判定・件数・ハッシュなど）を判定に使わない。無いものとして読んだ結果、ほかの判定（`review` の印の `round` の欠け、受け入れの下書きの前の `agent-ready`、承認の確定など）に当たれば、当たった判定に従う
+- 止めた理由の印に挙がっていない無効な印は、1 つでもあれば止める。外した後に新しく無効になった印と、鍵を一覧から外して確かめられなくなった印も、まず止めて知らせ、人が `needs-human` を外した後に、数えない対象になる
+- `review` の印の `round` の欠けは、数えない対象にしない。欠けは印のコメントが無いことで、挙げるコメントが無いため。途中のラウンドの `review` の印を数えないと `round` が欠けるので、人は PR を閉じて計画からやり直す（[止まった状態から戻す手順][flow]）
+- 止めた理由の印は、有効なものだけを読む。`comments=` は署名の対象に入るので、止めた理由の印を別の Issue に写しても、直しても、数えない印は増えない
 
 ### 着手まで（Status が `Todo`）
 
@@ -342,14 +357,39 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 
 ### 印の署名
 
-印の `sig`（[IMPL-20][impl] の (c)）は、HMAC-SHA256 で作る。
+印の `sig`（[IMPL-20][impl] の (c)）は、HMAC-SHA256 で作る。署名を確かめる鍵は一覧で持ち、進行中の Issue と着手の前の Issue があっても替えられる（[ADR-20261021-004][adr-marker-keys]）。
 
-- 鍵：秘密の置き場の `marker-signing-key`（32 バイトの乱数を base64 で書いたもの。[設定][design-settings]の「秘密の置き場のファイル」）。人が作り（初めて導入するときは、`setup` が作り方のコマンドを示す。例：`openssl rand -base64 32`）、進行 Bot だけが読む。動かすマシンを替えるときは、作り直さずに前のマシンから写す
-- 鍵の読み方：ファイルの末尾の空白と改行を除き、base64 を解いた 32 バイトを HMAC の鍵にする。解けないか、解いた値が 32 バイトでなければ、点検を fail にする。人がエディタで保存し直して改行が変わっても鍵が変わらず、短い文字列の弱い鍵で署名しないため
+- 鍵の一覧：秘密の置き場の `marker-signing-keys`（1 行に 1 つ、32 バイトの乱数を base64 で書いたもの。[設定][design-settings]の「秘密の置き場のファイル」）。人が作り（初めて導入するときは、`setup` が作り方のコマンドを示す。例：`openssl rand -base64 32`）、進行 Bot だけが読む。AI のセッションには渡さない。HMAC は書く鍵と確かめる鍵が同じで、確かめにだけ使う鍵でも印を作れるので、どの行の鍵も同じに秘密として扱う。動かすマシンを替えるときは、作り直さずに前のマシンから一覧を写す
+- 書く鍵と確かめる鍵：印を書くときは、一覧の先頭の行の鍵で署名する。印を確かめるときは、一覧の鍵を先頭の行から順に試し、どれかで通れば、署名の条件を満たすとする。一覧に無い鍵で書いた印は、署名の条件を満たさない。印に、どの鍵で書いたかを示す欄は持たない（署名の対象は変えない。[ADR-20261015-004][adr-markers] の決定 1）
+- 鍵の読み方：行ごとに末尾の空白と改行を除き、空の行は読まない。各行の base64 を解いた 32 バイトを HMAC の鍵にする。解けない行か、解いた値が 32 バイトでない行が 1 つでもあれば、点検を fail にする。鍵の行が 1 つも無いとき（空のファイル）も、点検を fail にする。人がエディタで保存し直して改行が変わっても鍵が変わらず、短い文字列の弱い鍵で署名しないため
 - 署名する文字列：1 行目に印の種類、2 行目にリポ（`owner/repo`）、3 行目に置き場の Issue か PR の番号、4 行目から `sig` 以外の欄を `<欄>=<値>` の形で欄の名前の順（Unicode の符号の順）に 1 行ずつ並べ、改行（LF）でつなぐ（種類・リポ・番号は欄として書かず、署名にだけ入れる。[ADR-20261015-004][adr-markers] の決定 1）
 - `sig` の値：HMAC-SHA256 の結果の 16 進の 64 文字
-- 鍵を替えると、前の鍵で書いた印が署名の条件を満たさなくなり、印のある開いた Issue と PR（着手の前の Issue の `intake` と `intake-final` の印を含む）が `marker-invalid` で止まる。鍵の替え方と、止まった Issue の戻し方は、UNDECIDED-63 で決める（[決めていないこと][undecided]）
-- 点検は、投稿に使うアカウントが書いた最新の未編集の印の署名を今の鍵で確かめ、通らなければ fail にする。マシンを替えたときの鍵の取り違えを、開いた Issue と PR が止まる前に見つけるため（[設定][design-settings]の「`check` が設定について確かめること」）
+- 点検は、投稿に使うアカウントが書いた最新の未編集の印の署名を一覧の鍵で確かめ、どの鍵でも通らなければ warn にする。マシンを替えたときの鍵の取り違えを、人に知らせるため。fail にしないのは、下の「鍵を替えるとき」の、鍵が漏れたときの順 3 の実行で、漏れた鍵の印のある Issue と PR を止めるため。一覧に 2 つ以上の鍵があるときは、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR を warn に出す（[設定][design-settings]の「`check` が設定について確かめること」、「[導入と点検][design-setup]」の「組と回数」）
+
+#### 鍵を替えるとき
+
+鍵は、進行中の Issue の有無を問わず、いつでも替えてよい（[ADR-20261021-004][adr-marker-keys] の決定 2）。鍵が漏れていないときは、次の順に替える。
+
+| 順 | する人 | すること |
+| --- | --- | --- |
+| 1 | 人 | 新しい鍵を作り、一覧の先頭の行に足す。前の鍵は、2 行目より後に残す |
+| 2 | 進行 Bot | 次の実行から、新しい鍵で書き、一覧のどれかの鍵で確かめる（進行 Bot は、起動したときに秘密を読む。[ADR-20261015-001][adr-read] の決定 2） |
+| 3 | 進行 Bot | 点検の warn に、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR の番号を出す。残りが無くなったら、前の鍵を外してよいことを warn に出す（出し方は「[導入と点検][design-setup]」の「組と回数」） |
+| 4 | 人 | 前の鍵でだけ確かめられる印が残る開いた Issue と PR が無くなったら、前の鍵を一覧から外す。外し忘れて、印を作れる鍵が多いまま残らないため |
+
+- 動かすマシンを替えて、新しいマシンで鍵を作るときも、鍵を替えたものとして同じ順に従う（前の鍵を一覧に残す。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
+- 承認を待つ Issue が長く開いていて急ぐときは、残りがあっても前の鍵を外してよい。前の鍵の印のある開いた Issue と PR は `marker-invalid` で止まるので、人が「[止まった状態から戻す手順][flow]」で戻す。数えない印は無いものとして読む（上の「数えない無効な印」）ので、受け入れか計画からやり直すことがある
+
+鍵が漏れたとき（漏れたかもしれないときを含む）は、漏れた鍵を確かめにも使わない。人が次の順に行う（[ADR-20261021-004][adr-marker-keys] の決定 3）。
+
+| 順 | すること |
+| --- | --- |
+| 1 | 全体の止める合図（[ADR-20261017-007][adr-stop]）を `stop` にする。鍵の一覧はマシンの中にあり、替え終わるまでに時間がかかりうるので、替え終わるまでの間に、漏れた鍵で作られた印を読まないため |
+| 2 | 新しい鍵を作って一覧の先頭の行に足し、漏れた鍵を一覧から外す。漏れた鍵は、確かめにも残さない（漏れた鍵を持つ人は、確かめの通る印を作れるため） |
+| 3 | 全体の止める合図を `run` に戻す。漏れた鍵で署名した印が残る開いた Issue と PR は、次の実行で `marker-invalid` で止まる（次の工程の順 5） |
+| 4 | 止まった Issue ごとに、印のあるコメントと GitHub の状態（PR の差分、作業ブランチ）を確かめ、「[止まった状態から戻す手順][flow]」の、鍵が漏れたときの手順で戻す（受け入れからやり直す） |
+
+- 秘密の置き場のほかの秘密（PAT かアプリの秘密鍵、deploy key）を替えるかは、漏れた経路を見て人が決める
 
 ### 印が付く順
 
@@ -377,7 +417,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `overlap` | 触る範囲が、ほかの進行中の PR と重なったとき。作業 AI の commit を取り込んだとき（「push の手順」の 2）に、変更ファイルの一覧をほかの進行中の PR の変更ファイルと比べる（[FLOW-8][flow]） | Issue | — | 同じ `kind` の有効な印があれば書かない |
 | `remind` | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま日数を過ぎたとき（[MERGE-3][merge]） | PR | — | 同じ `kind` の有効な印があれば書かない |
 | `link` | PR を作った直後（[IMPL-6][impl]） | Issue と PR | Issue には `pr=<PR の番号>`、PR には `issue=<Issue の番号>` | 同じ番号の有効な印があれば書かない |
-| `stop` | `needs-human` を付けるとき | Issue か PR | `reason=<記号>`（下の「stop の理由の記号」） | 1 回だけにしない。`needs-human` を付けるたびに書く |
+| `stop` | `needs-human` を付けるとき | Issue か PR | `reason=<記号>`（下の「stop の理由の記号」）。`marker-invalid` は、無効だった印のコメントの ID を `comments=<ID>,<ID>,...` で持つ（次の工程の順 5） | 1 回だけにしない。`needs-human` を付けるたびに書く |
 | `raise` | 作業 AI のモデルを `sonnet` から `opus` に上げたとき（[IMPL-25][impl]） | Issue | `from=<別名>`、`to=<別名>` | 同じ `kind` の有効な印があれば書かない（1 つの Issue で上げるのは 1 回） |
 | `duplicate` | 🟢 を Issue にするときに、同じ見出しの開いている Issue があり、新しく作らずに PR 番号を足すとき（[IMPL-26][impl]） | すでにある 🟢 の Issue | `pr=<PR の番号>` | 同じ番号の有効な印があれば書かない |
 | `conflict` | レビュー工程（段階 6）で、載せ直し（次の工程の順 18）が衝突し、人の番にしたとき（[MERGE-6][merge]） | Issue | `head=<PR の head の SHA>` | 同じ `head` の有効な印があれば書かない（base が先に進んでいる間、毎回の実行で載せ直しを試して同じコメントを書かないため） |
@@ -414,7 +454,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `unlinked-pr` | ブランチ名が一致するのに、結びつきの印が無い PR がある。PR を作った直後、結びつきの印を書く前に切れたときも当たる（作者を問わない。[IMPL-6][impl]、[ADR-20261016-001][adr-pr] の決定 3） |
 | `pr-closed` | 結びつく PR が、マージされずに閉じられた（[IMPL-6][impl]）。stop のコメントに、人が戻した後に進行 Bot が消すフォルダ（閉じた PR の番号の名前のセッションのフォルダ）を書く（下の「作業場所の残骸」） |
 | `branch-without-pr` | 計画の印があり、結びつく PR が無いのに、作業ブランチが origin にある（次の工程の順 13）。push の後、PR を作る前に切れたときも当たる。人は作業ブランチの中身を確かめて消してから戻す |
-| `marker-invalid` | 進行 Bot の印が、未編集（`intake` の印には掛けない）か署名の条件を満たさない。または `review` の印の `round` が欠けている（[IMPL-20、IMPL-18][impl]） |
+| `marker-invalid` | 進行 Bot の印が、未編集（`intake` の印には掛けない）か署名の条件を満たさない。または `review` の印の `round` が欠けている（[IMPL-20、IMPL-18][impl]）。止めた理由の印の `comments=` に、無効だった印のコメントの ID を挙げる（`round` の欠けだけのときは持たない）。人が `needs-human` を外した後は、挙げた印を数えない（上の「数えない無効な印」。[ADR-20261021-004][adr-marker-keys] の決定 4） |
 | `ci-action-required` | CI のワークフローの実行に、人の承認が要る（[IMPL-27][impl]） |
 | `ci-stale` | CI の結果が、取り消しなどのまま時間を過ぎても変わらない（[IMPL-27][impl]） |
 | `workspace-residue` | Issue に紐づく作業場所の残骸がある（下の「作業場所の残骸」） |
@@ -549,5 +589,6 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-markers]: ../../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
-[undecided]: ../../requirements/09-undecided.md
 [adr-blocked]: ../../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
+[adr-marker-keys]: ../../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
+[adr-read]: ../../adr/adr-20261015-001-read-allowlist-and-secret-file.md

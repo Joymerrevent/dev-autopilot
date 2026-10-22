@@ -74,10 +74,10 @@
 | `github-pat` | 進行 Bot の fine-grained PAT（GitHub App に切り替えるまで。読むだけ。「[導入と点検][design-setup]」の「PAT の権限」） | `githubApp.appId` と `githubApp.installationId` が空のときだけ。切り替えた後は作らない（作ると、点検の「PAT のファイルが無いこと」が fail になるため） | 新しく作る（人が新しい PAT を発行して書く）。前のマシンの PAT は、新しいマシンの最初の実行が通った後に GitHub で消す |
 | `github-app-key.pem` | GitHub App の秘密鍵（切り替えた後。[ADR-20261020-002][adr-app]） | `githubApp.appId` と `githubApp.installationId` があるときだけ | 新しく作る（人がアプリの新しい秘密鍵を作って書く）。前のマシンの秘密鍵は、新しいマシンの最初の実行が通った後に GitHub で取り消す |
 | `deploy-key` | 作業ブランチに push する deploy key の秘密鍵（[IMPL-15][impl]） | いつも | 新しく作る（人が新しい鍵を作り、deploy key として GitHub に登録する）。前のマシンの deploy key は、新しいマシンの最初の実行が通った後に GitHub から消す |
-| `marker-signing-key` | 印の署名の鍵（[IMPL-20][impl]。形と読み方は「[状態遷移と判定][design-flow]」の「印の署名」） | いつも | 前のマシンから写す。作り直さない（作り直すと、前の鍵で書いた印がすべて署名の条件を満たさなくなり、開いている Issue と PR が `marker-invalid` で止まるため） |
+| `marker-signing-keys` | 印の署名の鍵の一覧（[IMPL-20][impl]。1 行に 1 つ。印は先頭の行の鍵で署名し、どの行の鍵でも確かめる。形と読み方と替え方は「[状態遷移と判定][design-flow]」の「印の署名」） | いつも | 前のマシンから一覧を写す（行の順も変えない）。新しいマシンで鍵を作るときは、鍵を替える手順（「印の署名」）のとおり、新しい鍵を先頭の行に足し、前の鍵を残す。前の鍵を外すと、前の鍵で書いた印が署名の条件を満たさなくなり、開いている Issue と PR が `marker-invalid` で止まるため（[ADR-20261021-004][adr-marker-keys] の決定 2） |
 
 - 秘密の値を、設定ファイル・定期の実行の定義・記録に書かない。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す（[SAFE-15][safety]）
-- `setup` が示す秘密の作り方（印の署名の鍵なら `openssl rand -base64 32` など）は、初めて導入するときのもの。`setup` は、印の署名の鍵を「初めて導入するときは作り、動かすマシンを替えるときは前のマシンから写す」と分けて示す（上の表の右の欄。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
+- `setup` が示す秘密の作り方（印の署名の鍵なら `openssl rand -base64 32` など）は、初めて導入するときのもの。`setup` は、印の署名の鍵の一覧を「初めて導入するときは鍵を 1 つ作って 1 行目に書き、動かすマシンを替えるときは前のマシンから一覧を写す」と分けて示す（上の表の右の欄。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
 - `GIT_SSH_COMMAND` は進行 Bot のプログラムに固定し、設定に持たない。`ssh` を名前で呼び（定期の実行の定義の `PATH` から見つける）、`-F /dev/null`（人の `~/.ssh/config` を読まない）、`-i <秘密の置き場>/deploy-key`、`-o IdentitiesOnly=yes`（渡した鍵のほかを出さない）、`-o IdentityAgent=none`（ssh-agent の鍵を使わない）、`-o UserKnownHostsFile=<置き場>/known_hosts`、`-o StrictHostKeyChecking=yes` を付ける。人の鍵で push して、deploy key の push 先を限る ruleset（[IMPL-15][impl]）を外れないため。`GIT_SSH_COMMAND` と同じ形の ssh で、deploy key の push 先が ruleset で限られることを確かめた（FACT-65）
 - `<置き場>/known_hosts` は、進行 Bot が、ファイルが無ければ最初の push か fetch の前に、GitHub の API の `meta` が返す SSH のホストの鍵から書く。`meta` は、ほかの GitHub の読み取りと同じく、子プロセスの `gh api meta` に進行 Bot の認証（`GH_TOKEN`）を渡して読む（「[導入と点検][design-setup]」の「依存」）。`setup` のマシンの準備は GitHub の認証を使わず、`gh` は認証が無いと公開の API も読まないので、進行 Bot の clone と同じく `setup` では書かない。結合テストでは、偽の `gh` が `meta` に答えるので、本物の GitHub に触れない。書いた後は、進行 Bot は書き直さない。ファイルが GitHub のホストの鍵と合わなければ、`ssh` が止まり、push と fetch は実行の失敗になる（止まる側に倒れる）。GitHub がホストの鍵を替えたときは、人がファイルを消し、進行 Bot が次の実行で書き直す
 
@@ -281,8 +281,8 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 - `safety.env.names` に、AI のセッションに渡さない名前（`GH_TOKEN`、`PNPM_HOME` など。「[AI のセッション][design-ai]」の「環境変数」）と、プログラムに固定した名前が無いこと。`safety.env.names` の名前がすべて進行 Bot の環境変数にあること（値はマシンの設定の `safety.env.values` から定期の実行の定義に写す）。`safety.env.values` の値に秘密の形（漏えいの検査の鍵の形式など。[IMPL-15][impl]）が無いこと
 - `safety.sandbox.toolDirs` の各フォルダが、ホーム（`~/`）自体でなく、`node`・`pnpm`・`git` の実体のどれかを含み、人の pnpm の store・`~/.ssh`・`~/.config/gh`・`~/.claude/`・マシンの設定のフォルダ・マシンの中のフォルダを含まないこと（[ADR-20261015-002][adr-store]、[SAFE-10][safety]）
 - `<sessionTmp.root の実体のパス>/<sessionTmp.idLength の文字数の ID>/claude-<uid>` の長さが `sessionTmp.maxBytes` 以内で、`sessionTmp.maxBytes` が 44 以下であること（[SAFE-10][safety]、FACT-37）。根を長くすると、起動の前の確かめで AI のセッションを黙って起こさなくなり、上限を 45 以上にすると、Claude Code がユーザーごとの一時フォルダに戻したまま起動するため
-- 秘密の置き場の `marker-signing-key` が、末尾の空白と改行を除いて base64 として解け、解いた値が 32 バイトであること（読み方は「[状態遷移と判定][design-flow]」の「印の署名」）
-- 投稿に使うアカウントが当てる先のリポに書いた、最新の未編集の印の署名が、今の `marker-signing-key` で通ること。動かすマシンを替えたときの鍵の取り違えを、作業の前に見つけるため（印が 1 つも無いときは、比べる印が無いので確かめない）
+- 秘密の置き場の `marker-signing-keys` に鍵の行が 1 つ以上あり、どの行も、末尾の空白と改行を除いて base64 として解け、解いた値が 32 バイトであること（読み方は「[状態遷移と判定][design-flow]」の「印の署名」）。鍵の行が 1 つも無ければ fail にする（空のファイルを「無い」と読む。[ADR-20261021-004][adr-marker-keys] の決定 1）
+- 投稿に使うアカウントが当てる先のリポに書いた、最新の未編集の印の署名が、`marker-signing-keys` のどれかの鍵で通ること。通らなければ warn にする。動かすマシンを替えたときの鍵の取り違えを、人に知らせるため（印が 1 つも無いときは、比べる印が無いので確かめない）。fail にしないのは、鍵が漏れて一覧から外したときに、進行 Bot が次の実行で、漏れた鍵の印のある開いた Issue と PR を `marker-invalid` で止めるため（fail にすると、進行 Bot が作業に入らず、止められない。[ADR-20261021-004][adr-marker-keys] の決定 3）。取り違えても、前の鍵の印のある Issue と PR は `marker-invalid` で止まり、先へは進まない
 - 費用の上限 4 つが、上の「[費用の上限の値][cost-values]」の関係を保つこと（`run.stage` の段階で、1 つの重い工程が起こしうるセッションの数を決める）
 - 定期の実行の定義が渡すマシンの設定のパスと、人が呼ぶ Skill が origin から見つけるパスが一致すること。定期の実行の間隔が `run.intervalHours` と一致すること
 
@@ -328,3 +328,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-repo]: ../../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-blocked]: ../../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
+[adr-marker-keys]: ../../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
