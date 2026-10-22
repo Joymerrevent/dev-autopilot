@@ -273,6 +273,14 @@ GitHub の試し（FACT-65〜67）は、Joymerrevent に非公開の試しのリ
 | FACT-69 | GitHub の Issue に添付した画像などの URL の形 | **`https://github.com/user-attachments/assets/<ID>`。** 公開のリポの Issue 3 件の本文で、添付の URL はどれもこの形だった（読むだけ。モデルは使っていない） | 実行 |
 | FACT-70 | sandbox の中の Bash と Write の道具が、大文字と小文字を変えた `.claude` のフォルダに書けるか | **どちらも書けない。** sandbox を有効にし（`failIfUnavailable`、`allowUnsandboxedCommands: false`）、`permissions.allow` を `Bash` にした安全設定で、`.Claude/settings.local.json` と `.CLAUDE/settings.local.json` への書き込みは `operation not permitted`（終了コード 1）でファイルができなかった（同じ設定で `.claude/other2.txt` は書けた。費用 0.02 USD）。`permissions.deny` に `Write(//<リポ>/.claude/**)` と `Edit(//<リポ>/.claude/**)` を書いた安全設定で、Write の道具で `.Claude/settings.local.json`・`.CLAUDE/notes.txt`・`.Claude/settings.json`・`.claude/notes3.txt` に書かせると、どれも「File is in a directory that is denied by your permission settings.」で拒まれ、ファイルはできなかった（費用 0.04 USD）。git の objects は書けるので、ファイルを書かずに大文字を混ぜたパスの commit は作れる（FACT-68） | 実行 |
 
+## 基本設計の 4 回目の再レビューで確かめた事実（2026-10-22）
+
+基本設計の 4 回目の再レビュー（2026-10-22）の指摘を直す前に確かめた。macOS、Claude Code 2.1.285。Claude Code の試しは `claude-haiku-4-5-20251001` で、`claude -p --setting-sources local --no-session-persistence` で起動した。試験の場所は `/private/tmp/` の下とホームの下に試験のフォルダを作り（`/tmp/claude-<uid>/` と `~/.claude/` の外）、終わった後に消した。費用は 0.06 USD。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-71 | sandbox を有効にした Claude Code の Bash から、作業フォルダの外のフォルダ（記録の置き場に見立てたもの）にファイルを書けるか | **書けない。** sandbox を有効にし（`failIfUnavailable`、`allowUnsandboxedCommands: false`）、`permissions.allow` を `Bash` にした安全設定で、作業フォルダ（`/private/tmp/` の下の試しの git のリポ）の外の、ホームの下の試しのフォルダと `/private/tmp/` の下の試しのフォルダに `mkdir -p` とファイルの書き込みをさせると、どちらも `Operation not permitted`（終了コード 1）で、ファイルはできなかった。人が sandbox を有効にした Claude Code で呼ぶ Skill が、作業フォルダの外の記録の置き場に依頼のファイルを書くときは、sandbox の外でコマンドを動かす許可が要る | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
