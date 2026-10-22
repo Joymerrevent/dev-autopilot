@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-18
+updated: 2026-10-22
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -16,6 +16,10 @@ decision-makers: メンテナ
 > base ブランチの名前をリポの設定からマシンの設定に移した（進行ボットがリポの設定を base ブランチの先端から読むので、読む前に要るため）。ほかの項目の割り振りと、項目ごとに置き場を 1 つにすることと、ほかの決定は据え置く。
 >
 > **Amended by [ADR-20261018-005][adr-table]（2026-10-18）**: 決定 1 のうち、「要件が初期値を決めている項目は、表に値を写さず、要件の番号を指す」を改めた。表には要件が決めた初期値も値で書き、出典の要件へリンクする。値の正本は要件のままで、要件の初期値を変える PR では表も直す（番号だけでは表を読んでも初期値が分からないため）。決定 1 のほかの項目と決定 2 は据え置く。
+>
+> **Amended by [ADR-20261021-005][adr-blocked]（2026-10-22）**: 決定 1 の「安全の境界を緩める変更」のうち、「進行役が実行するパスの一覧（IMPL-15）からパスを外す」を、設定の値の変更として ADR で決める形を改めた。IMPL-15 が名指しする push しないパス（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**`）は進行 Bot のプログラムに固定して設定の値でなくし、外すのは要件と進行 Bot のプログラムの変更として新しい ADR で決める。リポの設定の push しないパスは足す分（規約の正典のパスなど）だけになる。足す分からパスを外すのを ADR で決めることと、決定 1 のほかの項目と、決定 2 は据え置く。
+>
+> **Amended by [ADR-20261021-006][adr-repo]（2026-10-22）**: 決定 2 の割り振りのうち、当てる先のリポの owner と名前を、リポの設定でなくマシンの設定に置くことにした（リポの設定を読む前に、進行 Bot の clone を作る先と全体の止める合図を読む先に要るため）。ほかの項目の割り振りは据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-005 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
@@ -175,3 +179,5 @@ STRUCT-2 は、リポ固有の値をすべて設定ファイル 1 つ（例：bu
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-table]: ./adr-20261018-005-settings-table-shows-required-values.md
+[adr-blocked]: ./adr-20261021-005-required-push-blocked-paths-in-program.md
+[adr-repo]: ./adr-20261021-006-repo-owner-and-name-in-machine-settings.md

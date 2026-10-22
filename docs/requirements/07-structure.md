@@ -48,14 +48,14 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   マシンの設定は、OS ごとの決まった場所に、当てる先のリポ（owner/repo）ごとに置く（例：macOS は `~/Library/Application Support/dev-autopilot/<owner>/<repo>/`、Linux は `$XDG_CONFIG_HOME/dev-autopilot/<owner>/<repo>/`。場所の値は構造仕様の表で決める）。
   人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行 Bot に渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
-  要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 の一覧からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
-  - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
+  要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 が名指しする push しないパスを外す（要件と進行 Bot のプログラムの変更。[ADR-20261021-005][adr-blocked]）、push しないパスの足す分からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
+  - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261021-006][adr-repo]、[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
   - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
   - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
   - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
-  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスの一覧（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。規約の正典のパスを含む。IMPL-15）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
+  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスに足すパスの一覧（規約の正典のパスなど、当てる先のリポごとに違うパス。IMPL-15 が名指しするパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス）は進行 Bot が必ず入れ、設定には足す分だけを持つ。[ADR-20261021-005][adr-blocked]）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
   - 安全：印を書いたと認める進行 Bot のアカウント名の一覧（IMPL-20。[ADR-20261020-001][adr-bots]）、sandbox の `--settings` の置き場（マシン）と、`denyRead` `denyWrite` に足すパスの一覧（要件が決めたパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」、基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」）、外への通信の許可先、子プロセスに渡す環境変数のうち、足す名前の一覧（SAFE-10 の git と pnpm のための環境変数、`CLAUDE_CODE_TMPDIR`、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）など、要件と ADR が決めた名前は、設定の PR で消せないように進行 Bot のプログラムに固定する。「[安全側に倒す設計][f05]」、基本設計の「[AI のセッション][design-ai]」の「環境変数」）、
     セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT（切り替えの後は GitHub App の秘密鍵）と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
@@ -150,3 +150,5 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [design-setup]: ../design/basic/04-setup-and-check.md
 [adr-bots]: ../adr/adr-20261020-001-bot-accounts-as-list.md
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-repo]: ../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
+[adr-blocked]: ../adr/adr-20261021-005-required-push-blocked-paths-in-program.md

@@ -14,7 +14,7 @@
 - FLOW-3 1 回の実行で着手する件数に上限を持つ（最初は 1 件）。進行中の Issue（着手した後で閉じていない Issue。計画の印か結びつく PR があるものと、Status が `In Progress` から `Ready to Merge` のもの。数え方は基本設計の「[状態遷移と判定][design-flow]」の「進行中の Issue の数え方」）の数にも上限を持つ（WIP の上限。マージ判定工程（段階 8）までは 1）。上限に達していれば新しい Issue に着手しない
 - FLOW-4 **1 回の実行で進める範囲**。進行 Bot は、AI のセッションを起動する工程（重い工程：受け入れ、計画、実装と PR の作成、レビュー（批評を含む）、修正）を、Issue ごとに 1 回の実行で 1 つだけ進める。
   AI のセッションを起動しない工程（軽い工程：承認の確定、収束、マージの判定、載せ直し、催促、片付け）は、重い工程の前後に同じ実行で続けてよい。CI の結果が要る工程（収束、マージの判定）は CI の結果が出ている実行でだけ進め、push した実行では push した Issue を次の実行まで進めない（[ADR-20261015-006][adr-flow]）。
-  進行中の Issue は、毎回の実行で GitHub の状態（Status、PR の有無と draft、最新の印の種類と `head`、必須チェックの結果）から「次の工程」を決定的に決めて再開する。手元の記録は判定に使わない（上限の数え上げにだけ使う。例外は書かずに試す間の受け入れ。「運用の規則」）。
+  進行中の Issue は、毎回の実行で GitHub の状態（Status、PR の有無と draft、最新の印の種類と `head`、必須チェックの結果）から「次の工程」を決定的に決めて再開する。手元の記録は判定に使わない（上限の数え上げにだけ使う。例外は書かずに試す間の受け入れと、比べるためのレビュー（IMPL-19）を起こすか。「運用の規則」）。
   CI は実行の中で待たず、次回の実行で結果を読む（IMPL-27）。1 回の実行の所要時間の上限を設定に持ち、超えたら残りの Issue は次回に回す（lock を長く持たない）。
   1 日 1 回の間隔では 1 Issue に 1 週間ほどかかる。間隔を狭める判断は FLOW-12
 - FLOW-5 実行の記録（選んだ Issue、待たせた Issue と理由、使った時間）を追跡しないフォルダに残す。
@@ -84,6 +84,9 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 - `needs-human`：原因を直してからラベルを外し、Status を戻す。PR が無ければ `Todo`（棚卸しで選び直す）、PR があれば `In Review`（進行 Bot が次回の実行で PR の状態から再開する）。Agent 欄が `human` なら `worker` に戻す
 - 結びつきの印の無い PR（`unlinked-pr`）：進行 Bot が PR を作った直後、結びつきの印を書く前に止まったときにも当たる（まれなので、人が確かめる。IMPL-6、[ADR-20261016-001][adr-pr] の決定 3）。人は PR の中身を確かめてから、PR を閉じ、作業ブランチを消し、`needs-human` を外して Status を `Todo` に戻す。進行 Bot は、人が戻す前に閉じられた印の無い PR では止めず、計画からやり直す
+- 印が無効（`marker-invalid`）：`needs-human` は、どの場合も最後に外す（外すまで、進行 Bot は Issue に触らない）。人は、止めた理由のコメントに挙がった印のコメントを確かめる（誰がいつ編集したか、印の署名の鍵を替えたか）。印のコメントは、直さず、消さない。続けてよければ、Status を戻し（PR が無ければ `Todo`、あれば `In Review`）、`needs-human` を外す。進行 Bot は、挙がった印を数えず、無いものとして読む（IMPL-20、[ADR-20261021-004][adr-marker-keys]）
+  - 途中のラウンドの `review` の印が無効なときと、`review` の印が消されて `round` が欠けるとき：PR を続けると、`round` の欠けでまた止まる（IMPL-18）。PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、閉じた PR を結びつきから外し、計画からやり直す
+  - 印の署名の鍵が漏れて、漏れた鍵を一覧から外したとき（外す手順は、基本設計の「[状態遷移と判定][design-flow]」の「印の署名」）：漏れた鍵の印は、誰が作ったかが分からないので、続けない。PR があれば閉じて作業ブランチを消し、`agent-ready` を外し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、受け入れからやり直し、新しい下書きを書く。人は、新しい下書きを読んでから `agent-ready` を付ける
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
 - 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行 Bot が続ける。待ちを解きたければ人が依存（blocked by）を外す
@@ -103,7 +106,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 ## 運用の規則
 
 - 状態の正は GitHub に置く（PR の有無と draft、印、Status、Agent 欄、ラベル）。進行 Bot は毎回そこから状態を組み立てる。各手順は「すでに済んでいれば何もしない」（PR があれば作らない、コメントがあれば足さない）
-- 手元の記録は判定に使わず、実行をまたぐ上限の数え上げにだけ使う：同じ Issue で続いた実行の失敗の回数、受付 AI が拒否した Issue の次のモデル、Issue ごとの累計の利用枠、1 日の利用枠（[ADR-20261015-006][adr-flow]）。例外として、書かずに試す間（`dryRun` が `true`）だけ、書くつもりだった受け入れの下書きを、受け入れの相手を選ぶときと選定の結果を作るときに使う（下の「書かずに試す合図」。[ADR-20261021-002][adr-dry]）
+- 手元の記録は判定に使わず、実行をまたぐ上限の数え上げにだけ使う：同じ Issue で続いた実行の失敗の回数、受付 AI が拒否した Issue の次のモデル、Issue ごとの累計の利用枠、1 日の利用枠（[ADR-20261015-006][adr-flow]）。例外として、書かずに試す間（`dryRun` が `true`）だけ、書くつもりだった受け入れの下書きを、受け入れの相手を選ぶときと選定の結果を作るときに使う（下の「書かずに試す合図」。[ADR-20261021-002][adr-dry]）。もう 1 つの例外として、レビュー工程（段階 6）で比べるためのレビュー（IMPL-19）を起こすかを決めるときだけ、最新の `review` の印のラウンドの比べが済んだかを、比べのセッションの記録で見分ける。記録が無ければ済んでいないとして比べを起こし直し（比べの結果は本番の判定に使わないので、本番の流れは変わらない）、記録を失ったかの見分けには比べのセッションの記録を使わない（[ADR-20261021-007][adr-compare]）
 - 記録を失ったときは、上限が黙って効かなくなる側に倒さない。`setup` は記録のフォルダに、作った日時を書いた記録の目印のファイルを置く。目印のファイルが無ければ `check` は fail にする（人が `setup` をやり直して、失ったことを認める）。
   着手した Issue（Status が `In Progress`・`In Review`・`Ready to Merge` か、計画の印か結びつく PR がある Issue。[ADR-20261015-006][adr-flow] の決定 4 の「進行中の Issue」）に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受付 AI は `haiku`（完全な ID。IMPL-29）で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
 - 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、定期の実行と同じジョブを起こし（macOS は `launchctl kickstart`（`-k` なし。`-k` は動いている進行 Bot を殺す）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin]）、同じ lock を取る。
@@ -144,5 +147,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [design-setup]: ../design/basic/04-setup-and-check.md
 [adr-dry]: ../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-reapprove]: ../adr/adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
+[adr-marker-keys]: ../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
 [adr-pr]: ../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-compare]: ../adr/adr-20261021-007-compare-review-done-from-local-records.md
