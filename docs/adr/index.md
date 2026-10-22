@@ -42,6 +42,7 @@
 | ADR-20261021-005 | [push しないパスのうち要件が名指しするものは進行 Bot のプログラムに固定し、リポの設定には足す分だけを持つ][adr-20261021-005-required-push-blocked-paths-in-program] | accepted | 2026-10-21 |
 | ADR-20261021-006 | [当てる先のリポの owner と名前は、リポの設定を読む前に要る項目として、base ブランチの名前と GitHub App の 2 つの ID と一緒にマシンの設定に置く][adr-20261021-006-repo-owner-and-name-in-machine-settings] | accepted | 2026-10-21 |
 | ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | accepted | 2026-10-21 |
+| ADR-20261022-001 | [検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない][adr-20261022-001-quarantine-urls-outside-target-repo] | accepted | 2026-10-22 |
 
 <!--
 行の例（表の最後に足す）:
@@ -90,3 +91,4 @@
 [adr-20261021-005-required-push-blocked-paths-in-program]: ./adr-20261021-005-required-push-blocked-paths-in-program.md
 [adr-20261021-006-repo-owner-and-name-in-machine-settings]: ./adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-20261021-007-compare-review-done-from-local-records]: ./adr-20261021-007-compare-review-done-from-local-records.md
+[adr-20261022-001-quarantine-urls-outside-target-repo]: ./adr-20261022-001-quarantine-urls-outside-target-repo.md
