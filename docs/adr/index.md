@@ -44,6 +44,7 @@
 | ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | accepted | 2026-10-21 |
 | ADR-20261022-001 | [検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない][adr-20261022-001-quarantine-urls-outside-target-repo] | accepted | 2026-10-22 |
 | ADR-20261022-002 | [3 つの軸の 🔴 🟡 が 0 件のラウンドは批評 AI のセッションを起こさず、IMPL-18 の 5 つの条件を 3 つの軸のセッションにだけ掛ける][adr-20261022-002-skip-critic-when-no-high-or-medium-findings] | accepted | 2026-10-22 |
+| ADR-20261022-003 | [往復の回数は、作業 AI が直すか衝突を解いて push した回数（fix の印の数）で数え、同じ指摘の再発は、AI の変更の後のラウンドでだけ判定する][adr-20261022-003-count-round-trips-by-ai-pushes] | proposed | 2026-10-22 |
 
 <!--
 行の例（表の最後に足す）:
@@ -94,3 +95,4 @@
 [adr-20261021-007-compare-review-done-from-local-records]: ./adr-20261021-007-compare-review-done-from-local-records.md
 [adr-20261022-001-quarantine-urls-outside-target-repo]: ./adr-20261022-001-quarantine-urls-outside-target-repo.md
 [adr-20261022-002-skip-critic-when-no-high-or-medium-findings]: ./adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
+[adr-20261022-003-count-round-trips-by-ai-pushes]: ./adr-20261022-003-count-round-trips-by-ai-pushes.md
