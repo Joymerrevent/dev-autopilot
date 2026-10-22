@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-21
+updated: 2026-10-22
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -13,6 +13,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261016-002][adr-draft]（2026-10-16）**: 決定 2 の時刻の規則の対象から、Issue の本文を外した（Issue の本文は、著者を問わず AI に渡さなくなったため）。時刻の規則の対象は、作業指示コメントと直した下書きの 2 つになる。ほかの決定は据え置く。
 >
 > **Amended by [ADR-20261021-003][adr-reapprove]（2026-10-21）**: 決定 2 の時刻の規則の「`agent-ready` を付けた時刻」を、承認をやり直したときは、最新の `agent-ready` を付けた時刻と読む。権限を確かめる相手と、push 未満の人の操作の扱いは据え置く。
+>
+> **Amended by [ADR-20261021-004][adr-marker-keys]（2026-10-22）**: 決定 1 の「印が無効になっていたら止める」に、人が `needs-human` を外す前に進行 Bot が止めた理由の印で知らせた無効な印は、外した後は止める契機に数えない例外を足した。「署名が検証できる」は、署名を確かめる鍵の一覧のどれかの鍵で検証できることと読む。署名の対象、未編集の条件、`review` の印の `round` の欠けで止めること、決定 2 は据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-004 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
@@ -184,3 +186,4 @@ decision-makers: メンテナ
 [adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
 [adr-bots]: ./adr-20261020-001-bot-accounts-as-list.md
 [adr-reapprove]: ./adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
+[adr-marker-keys]: ./adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
