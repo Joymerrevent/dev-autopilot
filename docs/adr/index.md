@@ -45,7 +45,7 @@
 | ADR-20261022-001 | [検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない][adr-20261022-001-quarantine-urls-outside-target-repo] | accepted | 2026-10-22 |
 | ADR-20261022-002 | [3 つの軸の 🔴 🟡 が 0 件のラウンドは批評 AI のセッションを起こさず、IMPL-18 の 5 つの条件を 3 つの軸のセッションにだけ掛ける][adr-20261022-002-skip-critic-when-no-high-or-medium-findings] | accepted | 2026-10-22 |
 | ADR-20261022-003 | [往復の回数は、作業 AI が直すか衝突を解いて push した回数（fix の印の数）で数え、同じ指摘の再発は、AI の変更の後のラウンドでだけ判定する][adr-20261022-003-count-round-trips-by-ai-pushes] | accepted | 2026-10-22 |
-| ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | proposed | 2026-10-22 |
+| ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | accepted | 2026-10-22 |
 
 <!--
 行の例（表の最後に足す）:
