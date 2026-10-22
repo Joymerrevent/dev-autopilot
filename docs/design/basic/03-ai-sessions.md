@@ -502,6 +502,7 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 - 呼び出しは許す。Skill を呼ぶことは、business-os が dev-autopilot のファイルを取り込む（import する）ことでなく、Plugin の入口を使うことなので、STRUCT-1 に反しない
 - `/verify-issue` は、dev-autopilot の `plugin/src/` を直接実行しない。Plugin の中のファイルのパスは版で変わりうるので、約束の境目を Skill の名前と引数にする
 - 人が呼んだ intake の Skill は、GitHub に印を書かない。印の署名の鍵は進行 Bot だけが読み、人のセッションは秘密を読まない（[ADR-20261015-001][adr-read] の決定 2、[ADR-20261017-004][adr-human]）。進行 Bot の受け入れ（[状態遷移と判定][design-flow]の次の工程の順 9）とは別に、人の確かめの助けとして動く
+- 人が呼んだ intake の Skill の受付 AI のセッション（`verify-intake-issue-<Issue の番号>`）の費用は、進行 Bot の記録（Issue ごとの累計と 1 日の累計）に数えない。人は手元のマシンで呼び、進行 Bot は専用マシンで動きうるので、進行 Bot の記録に足せないため。1 セッションの上限（時間・ターン・費用）は、進行 Bot の受け入れと同じ起動の形で掛かる。intake の Skill は、セッションの費用を結果に出して人に示す
 - business-os の `/verify-issue` を直すのは、business-os の PR で行う（導入と点検の実装（段階 3）の「`/verify-issue` の拡張」。「[段階][stages]」の表）
 
 [adr-review]: ../../adr/adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md

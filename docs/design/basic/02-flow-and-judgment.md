@@ -382,7 +382,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | `duplicate` | 🟢 を Issue にするときに、同じ見出しの開いている Issue があり、新しく作らずに PR 番号を足すとき（[IMPL-26][impl]） | すでにある 🟢 の Issue | `pr=<PR の番号>` | 同じ番号の有効な印があれば書かない |
 | `conflict` | レビュー工程（段階 6）で、載せ直し（次の工程の順 18）が衝突し、人の番にしたとき（[MERGE-6][merge]） | Issue | `head=<PR の head の SHA>` | 同じ `head` の有効な印があれば書かない（base が先に進んでいる間、毎回の実行で載せ直しを試して同じコメントを書かないため） |
 
-- `raise` と `duplicate` は、要件の印の一覧の種類（`wait` `overlap` `remind` `link` `stop`）に寄せず、基本設計で足した。`raise` を `stop` に寄せると止まったと読まれる。`duplicate` を `link` に寄せると、PR と Issue の結びつき（[IMPL-6][impl] の判定に使う）を誤る
+- `raise` と `duplicate` は、ほかの種類（`stop` と `link`）に寄せず、別の種類にする（要件の印の一覧の `note` の `kind`。[印と固定の見出しの一覧][markers]）。`raise` を `stop` に寄せると止まったと読まれる。`duplicate` を `link` に寄せると、PR と Issue の結びつき（[IMPL-6][impl] の判定に使う）を誤る
 - `stop` だけは、`needs-human` を付けるたびに書く。`needs-human` の Issue は進行 Bot が触らないので、同じ理由で重ねて書くことは無い。人が `needs-human` を外した後に、同じ理由で再び止まったとき、前の印を見て書かないと、今回止まったことが人に伝わらないため
 
 ### stop の理由の記号

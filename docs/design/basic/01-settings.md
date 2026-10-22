@@ -79,7 +79,7 @@
 - 秘密の値を、設定ファイル・定期の実行の定義・記録に書かない。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す（[SAFE-15][safety]）
 - `setup` が示す秘密の作り方（印の署名の鍵なら `openssl rand -base64 32` など）は、初めて導入するときのもの。`setup` は、印の署名の鍵を「初めて導入するときは作り、動かすマシンを替えるときは前のマシンから写す」と分けて示す（上の表の右の欄。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
 - `GIT_SSH_COMMAND` は進行 Bot のプログラムに固定し、設定に持たない。`ssh` を名前で呼び（定期の実行の定義の `PATH` から見つける）、`-F /dev/null`（人の `~/.ssh/config` を読まない）、`-i <秘密の置き場>/deploy-key`、`-o IdentitiesOnly=yes`（渡した鍵のほかを出さない）、`-o IdentityAgent=none`（ssh-agent の鍵を使わない）、`-o UserKnownHostsFile=<置き場>/known_hosts`、`-o StrictHostKeyChecking=yes` を付ける。人の鍵で push して、deploy key の push 先を限る ruleset（[IMPL-15][impl]）を外れないため。`GIT_SSH_COMMAND` と同じ形の ssh で、deploy key の push 先が ruleset で限られることを確かめた（FACT-65）
-- `<置き場>/known_hosts` は、`setup` のマシンの準備が、GitHub の API の `meta`（認証の要らない公開の API）が返す SSH のホストの鍵から書く。ファイルが無いか、GitHub のホストの鍵と合わなければ、`ssh` が止まり、push と fetch は実行の失敗になる（止まる側に倒れる）
+- `<置き場>/known_hosts` は、進行 Bot が、ファイルが無ければ最初の push か fetch の前に、GitHub の API の `meta` が返す SSH のホストの鍵から書く。`meta` は、ほかの GitHub の読み取りと同じく、子プロセスの `gh api meta` に進行 Bot の認証（`GH_TOKEN`）を渡して読む（「[導入と点検][design-setup]」の「依存」）。`setup` のマシンの準備は GitHub の認証を使わず、`gh` は認証が無いと公開の API も読まないので、進行 Bot の clone と同じく `setup` では書かない。結合テストでは、偽の `gh` が `meta` に答えるので、本物の GitHub に触れない。書いた後は、進行 Bot は書き直さない。ファイルが GitHub のホストの鍵と合わなければ、`ssh` が止まり、push と fetch は実行の失敗になる（止まる側に倒れる）。GitHub がホストの鍵を替えたときは、人がファイルを消し、進行 Bot が次の実行で書き直す
 
 ## 設定ファイルの外の合図
 

@@ -65,7 +65,7 @@
 | 作るもの | 置き場 | 中身 |
 | --- | --- | --- |
 | マシンの設定 | マシンの設定のフォルダの `settings.json` | マシンの 17 項目（[設定][design-settings]）。`repository.*` は開いているプロジェクトの origin から、`baseBranch` は順 2 で決めた値を書く。`githubApp.*` は `null` で作る（切り替えのときに人が書く）。`program.previousVersion` は `null`、`program.pinned` は `false`、`safety.env.values` は空で作る。`safety.sandbox.toolDirs` は、`node`・`pnpm`・`git` の実体の場所から書く |
-| 置き場 | `paths.workspace` | `sessions/`、`program/`（下の「プログラムの写し」）、`known_hosts`（GitHub の API の `meta` が返す SSH のホストの鍵。[設定][design-settings]の「秘密の置き場のファイル」の `GIT_SSH_COMMAND`） |
+| 置き場 | `paths.workspace` | `sessions/`、`program/`（下の「プログラムの写し」） |
 | 安全設定の置き場 | `paths.sandboxSettings` | 権限 700 で作る（既定は置き場の中の `sandbox-settings/`。[設定][design-settings]の「マシンの中のフォルダ」） |
 | 記録と lock の置き場 | `paths.records` | 作った日時を書いた記録の目印のファイル（`records-created.json`。[運用の規則][flow-rules]、[状態遷移と判定][design-flow]の「手元の記録」） |
 | 秘密の置き場 | `paths.secrets` | フォルダを権限 700 で作り、[設定][design-settings]の「秘密の置き場のファイル」の表のファイルを、`githubApp.*` の値に合わせて、空のまま権限 600 で作る。値は人が書く（[SAFE-15][safety]） |
@@ -73,6 +73,7 @@
 | 定期の実行の登録 | OS ごと | 下の「定期の実行の登録」 |
 
 - 進行 Bot の clone（`<置き場>/controller/`）は、`setup` では作らない。clone には deploy key が要り、`setup` のマシンの準備は秘密のファイルを読まないため。進行 Bot が最初の実行で作る
+- SSH のホストの鍵（`<置き場>/known_hosts`）も、`setup` では書かない。GitHub の API の `meta` を `gh` で読むには認証が要り、`setup` のマシンの準備は GitHub の認証を使わないため。進行 Bot が、最初の push か fetch の前に、自分の認証の `gh api meta` から書く（[設定][design-settings]の「秘密の置き場のファイル」の `GIT_SSH_COMMAND`）
 
 ## プログラムの写し
 
