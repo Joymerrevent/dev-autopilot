@@ -84,7 +84,7 @@
 ## 設定ファイルの外の合図
 
 - 全体の止める合図は、当てる先のリポの Actions の変数 `DEV_AUTOPILOT_RUN`。値が `run` のときだけ動き、ほかの値・変数が無い・読めないときは止まる（「[運用の規則][flow-rules]」、[ADR-20261017-007][adr-stop]）
-- 変数の名前は設定に持たない。進行 Bot は、リポの設定を読む前の実行の最初に合図を読むため。合図を読む先（当てる先のリポの owner と名前）と、読むときの認証（GitHub App の 2 つの ID）も、同じ理由でマシンの設定に置く（[STRUCT-2][struct]）
+- 変数の名前は設定に持たない。進行 Bot は、リポの設定を読む前の実行の最初に合図を読むため。合図を読む先（当てる先のリポの owner と名前）と、読むときの認証（GitHub App の 2 つの ID）も、同じ理由でマシンの設定に置く（[STRUCT-2][struct]、[ADR-20261021-006][adr-repo]）
 
 ## 項目
 
@@ -245,8 +245,8 @@
 
 | キー | 中身 | 形 | 初期値 | 根拠 |
 | --- | --- | --- | --- | --- |
-| `repository.owner`、`repository.name` | 当てる先のリポの owner と名前 | 文字列 | `setup` が、開いているプロジェクトの origin から書く | 当てる先のリポを設定に持つ（[STRUCT-2][struct]）。進行 Bot の clone を作る先と、全体の止める合図を読む先なので、リポの設定を読む前に要る。そのためマシンの設定に置く（base ブランチと同じ理由。[ADR-20261017-007][adr-stop] の決定 4） |
-| `githubApp.appId`、`githubApp.installationId` | 進行 Bot が使う GitHub App の ID と、当てる先のリポへのインストールの ID | 数か `null` | `null`（数か `null`。切り替えのときに人が書く。`null` の間は PAT で読む） | 受け入れ工程（段階 4）で GitHub に書き始める前に、進行 Bot を GitHub App に切り替える（[ADR-20261020-002][adr-app]）。全体の止める合図を読む前の認証に使うので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261020-002][adr-app] の決定 3 は、置き場を基本設計に任せた）。どちらも秘密でない。秘密鍵は秘密の置き場に置く。進行 Bot を動かすマシンを替えたら、新しいマシンにも書く |
+| `repository.owner`、`repository.name` | 当てる先のリポの owner と名前 | 文字列 | `setup` が、開いているプロジェクトの origin から書く | 当てる先のリポを設定に持つ（[STRUCT-2][struct]）。進行 Bot の clone を作る先と、全体の止める合図を読む先なので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261021-006][adr-repo] の決定 1。base ブランチと同じ理由） |
+| `githubApp.appId`、`githubApp.installationId` | 進行 Bot が使う GitHub App の ID と、当てる先のリポへのインストールの ID | 数か `null` | `null`（数か `null`。切り替えのときに人が書く。`null` の間は PAT で読む） | 受け入れ工程（段階 4）で GitHub に書き始める前に、進行 Bot を GitHub App に切り替える（[ADR-20261020-002][adr-app]）。全体の止める合図を読む前の認証に使うので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261021-006][adr-repo] の決定 1。[ADR-20261020-002][adr-app] の決定 3 は、置き場を基本設計に任せた）。どちらも秘密でない。秘密鍵は秘密の置き場に置く。進行 Bot を動かすマシンを替えたら、新しいマシンにも書く |
 | `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 文字列 | 無し。`setup` のマシンの準備で人が指定する（business-os は `develop`。[IMPL-6][impl]、[MERGE-2][merge]） | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
 | `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | 文字列（絶対パス） | `setup` が `<paths.workspace>/program/<版>/` を書く（暫定） | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
 | `program.previousVersion` | 直前まで使っていた進行 Bot のプログラムの版（`setup` の `rollback` の戻す先で、写しの片付けで残す版） | 文字列か `null` | `null`（`setup` が版を上げるときに、上げる前の版を書く） | 直前の版を持たないと、同じ版で `setup` を実行し直したときに戻す先の写しを消し、`rollback` が戻す先を決められない（「[導入と点検][design-setup]」の「プログラムの写し」） |
@@ -326,3 +326,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-store]: ../../adr/adr-20261015-002-no-shared-dependency-store.md
 [adr-dry]: ../../adr/adr-20261021-002-dry-run-only-at-intake-stage.md
+[adr-repo]: ../../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
