@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-19
-updated: 2026-10-20
+updated: 2026-10-22
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 方針に係る要望は、受付 AI が見分けて下書きに書き添え、計画が push しないパスに触れるなら実装の前に人に渡す
+
+> **Amended by [ADR-20261021-005][adr-blocked]（2026-10-22）**: 決定 2 の照らす相手を、push しないパスの一覧（IMPL-15。設定に持つ）から、IMPL-15 が名指しするパス（進行 Bot のプログラムに固定）とリポの設定の `push.blockedPaths`（足す分）を合わせた一覧に改めた。計画を投稿する前に、計画が変える見込みのパスを照らし、当たれば人に渡すことは据え置く。
 
 要件の UNDECIDED-53（[決めていないこと][undecided]の「方針に係る要望の Issue を、受け入れで見分けるか」）を決める。
 
@@ -104,3 +106,4 @@ decision-makers: メンテナ
 [markers]: ../requirements/04-external-text-and-markers.md
 [impl]: ../requirements/02-implement-review-fix.md
 [stages]: ../requirements/06-setup-and-stages.md
+[adr-blocked]: ./adr-20261021-005-required-push-blocked-paths-in-program.md
