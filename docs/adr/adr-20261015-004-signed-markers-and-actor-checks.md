@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-22
+updated: 2026-10-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -95,6 +95,9 @@ decision-makers: メンテナ
   人は、文を直してから `agent-ready` を付け直す（付け直した時刻より前の文なら確定する）。`intake-final` の後の変化は、今のまま TEXT-4 のハッシュの照合で止める
 - Status と Agent 欄は、操作した人を確かめない（値を最後に変えた人を API で取れるか確かめていない。UNDECIDED-29）。代わりに次の形で扱う
   - Status：進行役は、印と PR の状態から決まる Status と、Project の Status を比べる。違っていれば、人が戻す手順（「[止まった状態から戻す手順][flow]」：`needs-human` を外して `Todo` か `In Review` に戻す）に当たるときだけ従い、`needs-human` を外した人の権限で確かめる。ほかの違いは、想定外の Status として `needs-human`（SAFE-4）
+
+    > **［2026-10-23 追記］** 括弧の中の人が戻す手順の順は、[ADR-20261022-005][adr-unlink] の決定 2 で読む。人は `Todo` か `In Review` に戻してから、最後に `needs-human` を外す。人が戻す手順に当たるときだけ Status の違いに従うことと、`needs-human` を外した人の権限で確かめることは変わらない。
+
   - Agent 欄：止める向き（`human`・`paused` にする）は、操作した人を問わず従う。再開の向き（`paused` から戻す、`human` から `worker` に戻す）は今のまま従う。Project に書ける人がリポの push 以上の人に限られることを、運用の前提にする（UNDECIDED-29 で確かめる）
 
   > **［2026-10-16 追記］** UNDECIDED-29 を確かめた。Project の欄の値の `creator` は値を最初に入れた人で、値を変えても変わらない。Issue のタイムラインの Status の変更のイベントは変えた人を持つが、Agent 欄の変更では出ず、Status でも抜けがある（[FACT-27 と FACT-28][facts]）。
@@ -187,3 +190,4 @@ decision-makers: メンテナ
 [adr-bots]: ./adr-20261020-001-bot-accounts-as-list.md
 [adr-reapprove]: ./adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [adr-marker-keys]: ./adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
+[adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
