@@ -118,7 +118,8 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
   着手した Issue（Status が `In Progress`・`In Review`・`Ready to Merge` か、計画の印か結びつく PR がある Issue。[ADR-20261015-006][adr-flow] の決定 4 の「進行中の Issue」）に記録が無ければ、実行の失敗は 1 回目で `needs-human`、累計の利用枠は次のセッションを起こさずに `needs-human`（`note kind=stop reason=records-missing`）。拒否の記録が無ければ受付 AI は `haiku`（完全な ID。IMPL-29）で起動する。当日の利用枠の記録が無ければ、当日の残りの AI のセッションを起こさない
 - 多重起動を lockfile で防ぐ。人の `/dev-autopilot` の手動実行は、定期の実行と同じジョブを起こし（macOS は `launchctl kickstart`（`-k` なし。`-k` は動いている進行 Bot を殺す）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin]）、同じ lock を取る。
   `setup` が進行 Bot のプログラムの写しを作り直すときも、同じ lock を取る（STRUCT-3）。lock には、lock を取ったプロセスの PID と起動の時刻（OS が返す時刻を、時刻帯に依らない値にしたもの。書く側と比べる側で同じ取り方にする）を書く。PID が生きていないか、PID のプロセスの起動の時刻が lock の起動の時刻と違えば、古い lock として奪う（電源断の後の再起動で PID が使い回されたときに、全実行が「多重起動」で止まり続けないため）。PID が生きていて起動の時刻が同じなら、持ち主が動いているので奪わない。lock にはホスト名も書くが、人が読むためだけに使い、奪うかの判定に使わない（macOS では、つないだネットワークでホスト名が変わりうるため。動かすマシンを替えるときは lock を写さない。基本設計の「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）。古い lock を奪うときは、2 つのプロセスが同時に古い lock と読んでも片方だけが lock を取れる手順で取る（取り方は基本設計の「[状態遷移と判定][design-flow]」の「1 回の実行の流れ」の順 2）。
-  lock で見送った実行と、マシンのスリープや停止で定期の実行が起動しなかった日は記録に残し、`check` が warn に出す（受け入れ工程（段階 4）の「7 回の実行」はこれらを除いて数える）
+  lock を取るのは、進行 Bot の実行と `setup`（写しを作り直すときと、引数 `uninstall` のとき）だけにする。人が `/verify-issue` などから呼ぶ受け入れの Skill（`intake`）の下書きは、lock を取らず、`claude` を起こさず、記録の置き場に受け入れの依頼のファイルを置いて、定期の実行と同じジョブを起こす（`check` と `/dev-autopilot` と同じ形）。受付 AI のセッションは、依頼で起こされた進行 Bot の実行が、ほかの AI のセッションと同じ確かめと止め方で起こし、GitHub には書かない。人の Skill が待つのをやめた後に残った依頼のファイルで、定期の実行が作業を飛ばさない（扱いは基本設計の「[導入と点検][design-setup]」の「見送った実行と、起動しなかった定期の実行」。[ADR-20261022-004][adr-intake-req] の決定 1・2・5）。
+  lock で見送った実行と、マシンのスリープや停止で定期の実行が起動しなかった日は記録に残し、`check` が warn に出す（受け入れ工程（段階 4）の「7 回の実行」は、これらと、受け入れの依頼で起こされた実行を除いて数える）
 - 止める合図：全体を止めるのは、当てる先のリポの変数（Actions の変数。名前は構造仕様で決める。例：`DEV_AUTOPILOT_RUN`）。値が `run` のときだけ動き、ほかの値・変数が無い・読めないときは止まる。
   `setup` の GitHub の準備が値を `stop` にして作り、人が `check` の後に `run` にする。人は GitHub の画面（スマートフォンを含む）か人の `gh` で変え、PR は要らない（変えられるのは push 以上の人。org のリポでは、変えた人が org の監査ログに残る）。
   進行 Bot の PAT は変数を読むだけで、変えられない（GitHub App に切り替えた後も同じ。[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）。その Issue だけを止めるのは、Project の Agent 欄 `paused`。
@@ -159,3 +160,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [design-ai]: ../design/basic/03-ai-sessions.md
 [adr-compare]: ../adr/adr-20261021-007-compare-review-done-from-local-records.md
 [adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
+[adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md

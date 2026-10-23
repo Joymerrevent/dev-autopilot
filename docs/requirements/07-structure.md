@@ -16,7 +16,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       check/SKILL.md           点検の入口（記録の置き場に依頼のファイルを置き、定期の実行と同じジョブを起こして、結果を表示する。進行 Bot を直接起動せず、判定のロジックは持たない。SETUP-2）
       review/SKILL.md          レビュー AI の手順（change-review v2 の正本。08-review-skill.md）
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
-      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。進行 Bot は agents/brief/triager.md を起動する。人の操作は agent-ready だけ
+      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。下書きは、記録の置き場に受け入れの依頼のファイルを置いて定期の実行と同じジョブを起こし、進行 Bot が起こした受付 AI の結果を表示する（lock を取らず、claude を起こさない）。進行 Bot は agents/brief/triager.md を起動する。人の操作は agent-ready だけ
     agents/                    エージェント定義。フォルダはループ（成果物）、ファイルは役（STRUCT-9）
       brief/triager.md         受付 AI（道具なし。作業指示の下書きと、計画の難しさと方針に係る要望かの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
       plan/planner.md          計画 AI（読むだけ。計画を出力契約で返す）
@@ -53,7 +53,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
   - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
-  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間
+  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間と、人が呼ぶ `intake` が受け入れの依頼の結果を待つ時間（[ADR-20261022-004][adr-intake-req]）
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスに足すパスの一覧（規約の正典のパスなど、当てる先のリポごとに違うパス。IMPL-15 が名指しするパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス）は進行 Bot が必ず入れ、設定には足す分だけを持つ。[ADR-20261021-005][adr-blocked]）、deploy key の push 先を限る 2 つの ruleset の bypass に入れるアプリの一覧（IMPL-15。足すのはリポの設定の PR で、ADR は要らない）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
@@ -67,6 +67,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   版を上げるのは、人が `setup` を実行したときだけ。Plugin が更新されても（自動の更新を含む）、写しは変わらない。写しを作り直すのは、進行 Bot が動いていない間に限る（実行の lock を取る）。
   配布物は `plugin/` に閉じ（business-os の ADR 20261009-02 と同じ考え方）、進行 Bot も配る。テスト・前提データ・文書は配らない。
   `/dev-autopilot` の手動の 1 回実行は、進行 Bot を直接起動せず、定期の実行と同じジョブを起こす（macOS は `launchctl kickstart`（`-k` なし）。Linux は登録した仕組みで同じジョブを起こす操作。[ADR-20261015-001][adr-read]、[ADR-20261017-003][adr-plugin] の決定 3）。
+  `intake`（`/verify-issue` などから呼ぶ受け入れの入口）の下書きも、進行 Bot と `claude` を直接起動せず、実行の lock を取らず、記録の置き場に受け入れの依頼のファイルを置いて、定期の実行と同じジョブを起こす。受付 AI のセッションは、依頼で起こされた進行 Bot の実行が起こす（[ADR-20261022-004][adr-intake-req] の決定 1・2）。
+  人が呼ぶ Skill のうち、記録の置き場に依頼のファイルを置くもの（`check`、`/dev-autopilot` の手動の 1 回実行、`intake` の下書き）は、依頼のファイルを置くコマンドと、示した後に結果のファイルを消すコマンド（結果を読む `check` と `intake`）を、sandbox の外で動かす許可を人に求めてから動かす。sandbox を有効にした Claude Code の Bash の道具からは、作業フォルダの外にある記録の置き場に書けないため（FACT-71）。人の設定が sandbox の外のコマンドを許していないか、人が許可しなければ、依頼を置かず、ジョブも起こさずに、理由を示して止まる（[ADR-20261022-004][adr-intake-req] の決定 6）。
   人が呼ぶ Skill のうち `check` と `/dev-autopilot` と `intake`（`/verify-issue` などから呼ぶ受け入れの入口）が進行 Bot のコードを使うときは、マシンの設定（[ADR-20261015-005][adr-settings]）の `devAutopilotPath`（写しの絶対パス）から `src/` の場所を知る。マシンの設定は、開いているプロジェクトの origin から引いた場所で見つける（STRUCT-2）。`intake` は、マシンの設定があるマシン（進行 Bot を動かすマシン）でだけ動き、マシンの設定が無ければ何もせずに止まる（基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」。専用マシンに移したときの形は UNDECIDED-71）。`setup`（引数の `rollback` と `uninstall` を含む。基本設計の「[導入と点検][design-setup]」）は、入れた Plugin の `${CLAUDE_PLUGIN_ROOT}/src/` のコードで動かす（初めての `setup` にはマシンの設定も写しも無く、Plugin を更新した後の `setup` で新しい版の準備を 1 回で入れるため）。Plugin のパスを手順に埋め込まない。
   `setup` は、dev-autopilot 自身のリポでは何も作らずに止まる（「分離の時期の目安」）
 - STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーで、`setup` が登録する（cron は、マシンが眠っていた間の実行を逃すので使わない。構造仕様の「導入と点検」。[ADR-20261017-003][adr-plugin] の決定 3）。
@@ -94,7 +96,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - business-os 側の ADR は、dev-autopilot を business-os に置いた橋渡しの ADR 20261008-01 と、それを置き換える「分離した」ADR（[ADR-20261016-003][adr-move] の決定 5）だけにし、dev-autopilot の中身の判断は dev-autopilot の ADR に書く
 - STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:brief:triager` に置き、進行 Bot が自動で呼ぶ（人の操作は `agent-ready` だけ。TEXT-12）。
   business-os の `/verify-issue` は、business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初に検疫のモジュール（TEXT-11）を呼び、最後に `dev-autopilot:brief:triager` で下書きを作る（TEXT-9、SETUP-17 と同じ順）。
-  business-os からはリポをまたいだ呼び出しになる。呼び方は、基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた（`dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）
+  business-os からはリポをまたいだ呼び出しになる。呼び方は、基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた（`dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）。受付 AI のセッションは、`intake` の Skill が置いた受け入れの依頼のファイルで起こされた進行 Bot の実行が起こす（[ADR-20261022-004][adr-intake-req]）
 
 - STRUCT-7 **Skill と進行 Bot は Plugin に同封し、ほかの人に配るときは `review` だけ同じフォルダから単体でも入れられるようにする。** 別に公開して組み合わせる形は採らない
   - 同封する理由：進行 Bot・agent・Skill は出力契約や引数で結びついていて、版がずれると黙って壊れる。Plugin の 1 つの版で一緒に検査し、一緒に配る（進行 Bot の同封は [ADR-20261017-003][adr-plugin] の決定 1）
@@ -152,3 +154,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-repo]: ../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-blocked]: ../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
+[adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
