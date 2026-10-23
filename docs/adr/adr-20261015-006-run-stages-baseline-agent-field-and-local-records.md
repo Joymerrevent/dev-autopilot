@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-22
+updated: 2026-10-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261021-002][adr-dry]（2026-10-21）**: 決定 4 の「判定には、手元の記録を使わない」に、書かずに試す間だけの例外を足した。書くつもりだった受け入れの下書きを、同じ文の間は書いたものとして扱い、受け入れの相手を選ぶときと選定の結果を作るときに使う。書き始めた後の判定は、GitHub の状態と印だけから決める。決定 4 の数え上げの (a) と (c) から、書かずに試した回を除いた。決定 4 のほかの項目と、決定 1〜3 は据え置く。
 >
 > **Amended by [ADR-20261021-007][adr-compare]（2026-10-22）**: 決定 4 の「判定には、手元の記録を使わない」に、2 つ目の例外を足した。レビュー工程（段階 6）で比べるためのレビューを起こすかを決めるときだけ、最新の `review` の印のラウンドの比べのセッションに終わりの行があるかを手元の記録で見る。記録が無ければ済んでいないとして比べを起こし直し、記録を失ったかの見分けには比べのセッションの記録を使わない。決定 4 の数え上げの (a)（同じ Issue で続いた実行の失敗の回数）と (c)（Issue ごとの累計の利用枠）から、比べのセッションを除いた。比べるためのレビューは、決定 1 の重い工程として数える。決定 4 の (b) と (d)、記録を失ったときの扱い、決定 1〜3 は据え置く。
+>
+> **Amended by [ADR-20261022-004][adr-intake-req]（2026-10-23）**: 決定 4 の数え上げの (a)（同じ Issue で続いた実行の失敗の回数）から、人が `/verify-issue` から呼んだ intake の Skill の依頼で起こした実行（受け入れの依頼の実行）の受付 AI のセッションを除いた。比べのセッションを除いたのと同じ形にした。(c)（Issue ごとの累計の利用枠）には例外を作らず、受け入れの依頼の実行のセッションも数える。決定 4 の (b) と (d)、記録を失ったときの扱い、決定 1〜3 は据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-006 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
 
@@ -235,3 +237,4 @@ decision-makers: メンテナ
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [adr-dry]: ./adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-compare]: ./adr-20261021-007-compare-review-done-from-local-records.md
+[adr-intake-req]: ./adr-20261022-004-intake-skill-via-request-file.md
