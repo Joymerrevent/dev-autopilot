@@ -218,9 +218,9 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 作業中の Issue では、表を見る前に、次の 4 つを順に見る。
 
 - PR の head の必須チェックの結果を、IMPL-27 の表の上の行から順に当てる。`action_required` があれば `needs-human` にし（`ci-action-required`）、`cancelled` `skipped` `neutral` `stale` のまま完了から `limits.ciStaleHours` を過ぎていれば `needs-human` にして（`ci-stale`）、表には進まない。ほかの結果（赤、まだ無い、動いている途中）は、表の順 15（修正）と順 16（CI を待つ）で扱う（[IMPL-27][impl]、[ADR-20261016-001][adr-pr]）
-- 依存の相手の Issue に結びつく PR がマージされ、依存の相手の PR のマージの commit が、PR の head にまだ含まれていなければ、表を見る前に載せ直す（順 18 と同じ手順。基線が緑のときだけ。[FLOW-9][flow]、[FLOW-34][flow]、[MERGE-7][merge]）。待ちの印（順 7 の `note kind=wait`）の有無は問わない。待ちの印を書く前に切れた Issue と、待つ前に先行が閉じた Issue も、先行の変更を取り込むため。基線が緑でない間は、取り込まずにレビューと修正を続ける（[IMPL-9][impl]、[ADR-20261015-006][adr-flow] の決定 2）。依存の相手に閉じていない Issue があれば、ここに来る前に順 7 で待つ
+- 依存の相手の Issue に結びつく PR がマージされ、依存の相手の PR のマージの commit が、PR の head にまだ含まれていなければ、表を見る前に載せ直す（順 18 と同じ手順。基線が緑のときだけ。[FLOW-9][flow]、[FLOW-34][flow]、[MERGE-7][merge]）。待ちの印（順 7 の `note kind=wait`）の有無は問わない。待ちの印を書く前に切れた Issue と、待つ前に先行が閉じた Issue も、先行の変更を取り込むため。基線が緑でない間は、取り込まずにレビューと修正を続ける（[IMPL-9][impl]、[ADR-20261015-006][adr-flow] の決定 2）。依存の相手に閉じていない Issue があれば、ここに来る前に順 7 で待つ。ただし、作業 AI が直す番（修正工程（段階 7）以降で、最新の `review` の印が `fix` か CI が赤で、そのラウンドの、PR に届いた `fix` の印（順 15）がまだ無い間）は、表を見る前に載せ直さず、修正（順 15）を先に行う。載せ直しは、修正の push の後の実行で、再レビュー（順 14）の前にここで行い、再レビューは載せ直した head で行う（[ADR-20261022-003][adr-rounds] の決定 5）。修正の前の載せ直しが衝突すると、衝突の解消の `fix` の印がまだ直していないラウンドに付き、順 15 が直したラウンドと読んで修正に進まず、次のラウンドで直していない指摘を同じ指摘の再発と読むため。修正の前の載せ直しで差分が変われば、まだ直していない変更をもう一度レビューする分の利用枠も使う。作業 AI が直す番でない PR（レビュー工程（段階 6）で人が直す番の PR を含む）は、今のとおり表を見る前に載せ直す
 - PR の head が、最新の `review` の印の `head` を 1 つ目の親に、base ブランチの commit（進行 Bot の clone で fetch した base ブランチの先端の祖先）を 2 つ目の親に持つ merge の commit（載せ直しで進行 Bot が作る形）で、head に `review` の印が無ければ、差分の patch-id を最新の `review` の印の `head` と比べ直す。同じなら印を付け直し（順 18 と同じ。軽い）、違えば下の確かめと順 14 で再レビューに回す。載せ直しの push の後、印を付け直す前に切れても、差分が同じ PR を再レビューせず、往復にも数えないため（[MERGE-6][merge]）
-- Status が `Ready to Merge` で、PR の head が最新の `review` の印の `head` と違う（人の push か、修正。載せ直しで差分が同じときは、印を付け直すので当たらない）なら、Agent 欄を `reviewer` にしてから、Status を `In Review` に戻す（軽い）。新しい head をレビューし、収束（順 17）で 🟢 を Issue にしてから `Ready to Merge` に戻すため（[MERGE-6][merge]、[IMPL-26][impl]）
+- Status が `Ready to Merge` で、PR の head が最新の `review` の印の `head` と違う（人の push か、修正か衝突の解消。載せ直しで差分が同じときは、印を付け直すので当たらない）なら、Agent 欄を `reviewer` にしてから、Status を `In Review` に戻す（軽い）。新しい head をレビューし、収束（順 17）で 🟢 を Issue にしてから `Ready to Merge` に戻すため（[MERGE-6][merge]、[IMPL-26][impl]）
 
 | 順 | 条件 | 次の工程 |
 | --- | --- | --- |
@@ -228,10 +228,10 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 13 | 計画の印があり、結びつく PR が無い | 実装と PR の作成（重い）。基線が緑のときだけ（[FLOW-21][flow]、[IMPL-9][impl]）。PR を作った後に、Agent 欄（計画・実装工程（段階 5）は空、レビュー工程（段階 6）以降は `reviewer`）を書いてから、Status を `In Review` にする（下の「push の手順」の順 8）。作業ブランチ（`<型>/issue-<番号>`。型を問わず、番号が同じもの）が origin にすでにあれば、実装せずに `needs-human` にする（`branch-without-pr`）。push の後、PR を作る前に切れた場面と、閉じた PR の作業ブランチが残った場面を GitHub の状態から見分けられず、古い渡す文と計画で作った commit を PR にしないため。人は作業ブランチの中身を確かめて消してから戻す |
 | 14 | PR の head に、まだ `review` の印が無い | 計画・実装工程（段階 5）なら何もしない（人がレビューする番）。レビュー工程（段階 6）以降なら、Agent 欄を `reviewer` にしてから（すでに `reviewer` なら書かない）、レビュー（重い）。修正の後と人の push の後の再レビューも、ここに当たる（[FLOW-21、FLOW-22][flow]、[ADR-20261015-006][adr-flow] の決定 3） |
 | 22 | レビュー工程（段階 6）で、最新の `review` の印の `head` が PR の head と同じ（順 14 に当たらない）。かつ、最新の `review` の印のラウンドの比べるためのレビューが済んでいない（下の「比べるためのレビューが済んだかの見分け方」） | 比べるためのレビュー（重い）：3 つの軸を `models.reviewComparison` のモデルで起こし、印を書かず、結果を手元の記録にだけ残す（起こし方は「[AI のセッション][design-ai]」の「セッションの名前」。[IMPL-19][impl]）。順 15〜18 の軽い工程にも当たるときは、軽い工程を先に進める（下の「比べるためのレビューに進む順番」）。基線が緑でなくても起こす（PR の head の上の作業で、base ブランチを取り込まないため。[ADR-20261015-006][adr-flow] の決定 2）。修正工程（段階 7）以降では起こさない（[ADR-20261021-007][adr-compare] の決定 1） |
-| 15 | 最新の `review` の印が `fix` か、CI が赤で、そのラウンドの `fix` の印がまだ無い | 修正工程（段階 7）以降なら、修正（重い）。修正のセッションを起こす前に Agent 欄を `worker` にし、push して `fix` の印を書いた後に `reviewer` にする（[FLOW-22][flow]）。往復の回数がすでに上限（`limits.roundTrips`）に達しているか（`round-limit`）、同じ指摘の再発（直したはずの指摘が再び出た。`repeated-finding`）なら、修正せずに `needs-human` にする（[FLOW-22][flow]、[FLOW-28][flow]、[IMPL-23、IMPL-24][impl]。往復の数え方は下の「ラウンドと往復の数え方」）。レビュー工程（段階 6）では、AI は直さず、人の番にする（Agent 欄を空にする。[Issue の状態の遷移][flow]の「段階による違い」）。往復の上限と同じ指摘の再発は、AI の修正の往復に掛けるので、AI が直さない段階 6 では当てはまらない（[IMPL-24][impl]） |
+| 15 | 最新の `review` の印が `fix` か、CI が赤で、そのラウンドの `fix` の印のうち、PR に届いたもの（`head` が PR の head か、PR の head の祖先の印）がまだ無い | 修正工程（段階 7）以降なら、修正（重い）。修正のセッションを起こす前に Agent 欄を `worker` にし、`fix` の印を書いて push した後に `reviewer` にする（[FLOW-22][flow]、下の「push の手順」の順 7・8）。push が断られたか、`fix` の印を書いた後、push の前に実行が切れたときは、`fix` の印が PR に届かないので、次の実行でここに当たり、修正をやり直す。届かなかった `fix` の印も往復に数える（[ADR-20261022-003][adr-rounds] の決定 4）。往復の回数がすでに上限（`limits.roundTrips`）に達しているか（`round-limit`）、同じ指摘の再発（直したはずの指摘が再び出た。`repeated-finding`）なら、修正せずに `needs-human` にする（[FLOW-22][flow]、[FLOW-28][flow]、[IMPL-23、IMPL-24][impl]。往復の数え方は下の「ラウンドと往復の数え方」）。レビュー工程（段階 6）では、AI は直さず、人の番にする（Agent 欄を空にする。[Issue の状態の遷移][flow]の「段階による違い」）。往復の上限と同じ指摘の再発は、AI の変更の往復に掛けるので、AI が直さないレビュー工程（段階 6）では当てはまらない（段階 6 には `fix` の印が無く、段階 6 から持ち越した PR は往復を 0 回から数える。[IMPL-24][impl]） |
 | 16 | 最新の `review` の印が `pass` で、CI の結果がまだ出ていない | 待つ。次の実行で読み直す（[IMPL-27][impl]） |
 | 17 | 最新の `review` の印が `pass` で、CI が緑。Status が `In Review` | 収束（軽い）：🟢 を Issue にしてから、PR を ready にし、Agent 欄を空にしてから、Status を `Ready to Merge` にする（[FLOW-23][flow]、[IMPL-26、IMPL-27][impl]）。レビュー工程（段階 6）から行う |
-| 18 | Status が `Ready to Merge` で、base ブランチが PR の head より先に進んでいる | 載せ直し（軽い）。基線が緑のときだけ。差分の patch-id（行番号を除いた差分から git が作る、変更の中身の指紋）が同じなら印を付け直し、変わったら Agent 欄を `reviewer` にしてから、Status を `In Review` に戻して再レビューに回す。衝突したら、修正工程（段階 7）以降は修正のセッション（重い）で解き、レビュー工程（段階 6）では人の番にする（Agent 欄を空にし、衝突したことを `note kind=conflict` の印付きのコメントで Issue に書く。PR の head ごとに 1 回だけ）（[FLOW-25][flow]、[MERGE-6][merge]） |
+| 18 | Status が `Ready to Merge` で、base ブランチが PR の head より先に進んでいる | 載せ直し（軽い）。基線が緑のときだけ。差分の patch-id（行番号を除いた差分から git が作る、変更の中身の指紋）が同じなら印を付け直し、変わったら Agent 欄を `reviewer` にしてから、Status を `In Review` に戻して再レビューに回す。衝突したら、修正工程（段階 7）以降は作業 AI の衝突の解消のセッション（重い）で解き、修正と同じく対応コメントと `fix` の印を書く（下の「push の手順」の順 7）。衝突の解消の作業 AI を起こす前に往復の回数を確かめ、すでに上限（`limits.roundTrips`）に達していれば、衝突を解かずに `needs-human` にする（`round-limit`。[ADR-20261022-003][adr-rounds] の決定 2）。レビュー工程（段階 6）では人の番にする（Agent 欄を空にし、衝突したことを `note kind=conflict` の印付きのコメントで Issue に書く。PR の head ごとに 1 回だけ。`fix` の印は書かない）（[FLOW-25][flow]、[MERGE-6][merge]） |
 | 19 | Status が `Ready to Merge` で、head に `merge` の印が無く、CI が緑で、base ブランチが PR の head より先に進んでいない | 修正工程（段階 7）以降なら、マージの判定（軽い）。修正工程（段階 7）は判定を記録にだけ残し、印を書かない。マージ判定工程（段階 8）以降は印を書く。`merge=ready` にするのは 1 回の実行で 1 件まで。`merge=ready` の印があってマージされていない、開いている PR がほかにあれば、`merge=ready` になる判定を次の実行に回す（1 件目がマージされるまで待つ）。`merge=human` の判定は 1 件の上限に数えず、書く（[FLOW-24][flow]、[MERGE-2、MERGE-3、MERGE-5][merge]、[ADR-20261016-001][adr-pr] の決定 2） |
 | 20 | `merge=ready` の PR が、マージも「判定と違う判断」のコメントも無いまま `limits.remindDays` 日を過ぎ、催促の印（`note kind=remind`）がまだ無い | 催促（軽い）（[MERGE-3][merge]） |
 | 21 | どれにも当てはまらない | 次の待ちに当たれば、何もしない：基線が緑でない（新しい着手・最初の実装・載せ直しを止めている）、人のレビューか修正の番（段階 5・6）、CI の結果、人のマージ（`merge` の印のある PR と、段階 6・7 の `Ready to Merge` の PR）。どれにも当たらなければ、GitHub の状態から次の工程を決められない組み合わせとして `needs-human` にする（`unrecoverable`。[運用の規則][flow]） |
@@ -293,13 +293,14 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 | 1 | 作業 AI の出力契約を取り出す（「[AI のセッション][design-ai]」の「役ごとの出力契約」）。進行 Bot だけで行う載せ直しでは、とばす | 取り出せなければ、実行の失敗として次の実行に持ち越す。取り出せて、止まった理由（`stopReason`）を返していれば、push せず、止まった理由で `needs-human` を付ける |
 | 2 | 進行 Bot の clone で、AI の作業場所から作業ブランチを取り込み（`git fetch <置き場>/sessions/<セッションの名前>/worktree <ブランチ>`）、取り込んだ先端の SHA を控える。AI の作業場所の clone では git を実行しない（[ADR-20261013-001][adr-workspace]）。控えた SHA が、作業場所を作ったときの SHA と同じ（新しい commit が無い）なら、push しない | 取り込みが objects の検査で失敗したら、`needs-human` を付ける（`workspace-tampered`）。AI が objects を書き換えたおそれがあるため（FACT-18、FACT-57）。作業 AI が `done` を返したのに新しい commit が無ければ、`needs-human` を付ける（`no-new-commit`。全部 `unable` の修正と、直せなかった CI の赤を含む）。印を書かずに止めるのは、`fix` の印を同じ head に書くと次の工程の表のどの行にも当たらず、書かないと毎回同じ修正をやり直すため |
 | 3 | 範囲の commit ごとに、差分が触れるパスを、push しないパス（進行 Bot のプログラムに固定した、IMPL-15 が名指しするパスと、`push.blockedPaths` を合わせた一覧。[ADR-20261021-005][adr-blocked]）と照らす。merge の commit は、どの親とも違う部分（`git show --cc`）を照らす。あわせて、PR の全体の差分（`git diff <base>...<控えた SHA>`）も照らす | 当たれば push せず、`needs-human` を付ける（`blocked-path`）。途中の commit で触れて後の commit で戻しても、途中の commit が GitHub に届くので止める |
-| 4 | GitHub に書く文を組み立てる。初回は PR の題名と本文、修正は対応コメント（出力契約の `responses`）。題名は、作業 AI の案（出力契約の `pr.title`）を規約（`conventions.*`。Conventional Commits の形と言語）に照らしてから使い、外れていれば、Issue の文を使わない固定の形で作る（`conventions.language` が `ja` なら `<作業ブランチの型>: issue #<Issue の番号> の対応`。言語ごとの固定の文は進行 Bot のプログラムに持つ。[TEXT-6][text]、[IMPL-6][impl]）。本文は、「AI が生成した」の 1 行、`Closes #<Issue の番号>`、作業 AI が確かめた検査の結果（出力契約の `checks`）、本文の案（`pr.body`）の順に並べる。続けて、漏えいの検査を、範囲の commit ごとの差分（merge の commit は `git show --cc`）、commit ごとのメッセージと作者、組み立てた文（最後に使う題名を含む）に掛け、組み立てた文のうち AI の文の欄に検疫（[TEXT-11][text]）を掛ける。検査は `plugin/src/` の中のものを使い、worktree の中の検査は使わない（[IMPL-15][impl]） | 漏えいの検査に引っかかれば push せず、`needs-human` を付ける（`leak`）。途中の commit で足して後の commit で消した秘密も、途中の commit が GitHub に届くので止める。検疫で見つかれば push せず、`needs-human` を付ける（`quarantine`。投稿する AI の文ごとの扱いは「[AI のセッション][design-ai]」の「共通の決まり」の表）。push の後に見つけて、push だけ済んだ状態で止めないため |
+| 4 | GitHub に書く文を組み立てる。初回は PR の題名と本文、修正と衝突の解消は対応コメント（修正は出力契約の `responses`、衝突の解消は固定の文と出力契約の `checks`。形は「[AI のセッション][design-ai]」の「コメントの形」）。題名は、作業 AI の案（出力契約の `pr.title`）を規約（`conventions.*`。Conventional Commits の形と言語）に照らしてから使い、外れていれば、Issue の文を使わない固定の形で作る（`conventions.language` が `ja` なら `<作業ブランチの型>: issue #<Issue の番号> の対応`。言語ごとの固定の文は進行 Bot のプログラムに持つ。[TEXT-6][text]、[IMPL-6][impl]）。本文は、「AI が生成した」の 1 行、`Closes #<Issue の番号>`、作業 AI が確かめた検査の結果（出力契約の `checks`）、本文の案（`pr.body`）の順に並べる。続けて、漏えいの検査を、範囲の commit ごとの差分（merge の commit は `git show --cc`）、commit ごとのメッセージと作者、組み立てた文（最後に使う題名を含む）に掛け、組み立てた文のうち AI の文の欄に検疫（[TEXT-11][text]）を掛ける。検査は `plugin/src/` の中のものを使い、worktree の中の検査は使わない（[IMPL-15][impl]） | 漏えいの検査に引っかかれば push せず、`needs-human` を付ける（`leak`）。途中の commit で足して後の commit で消した秘密も、途中の commit が GitHub に届くので止める。検疫で見つかれば push せず、`needs-human` を付ける（`quarantine`。投稿する AI の文ごとの扱いは「[AI のセッション][design-ai]」の「共通の決まり」の表）。push の後に見つけて、push だけ済んだ状態で止めないため |
 | 5 | 進行 Bot の clone から `git ls-remote` で、作業ブランチの今の先端を読み、控えた SHA の祖先であることを確かめる（fast-forward で届くこと）。作業ブランチがまだ無ければ、作業場所を作ったときに控えた base の SHA で確かめる（[IMPL-15][impl]、[SAFE-13][safety]） | 祖先でなければ push せず、`needs-human` を付ける（`not-fast-forward`）。AI が履歴を書き換えたか、ほかの誰かが push したため |
 | 6 | 全体の止める合図を読み直し、書かずに試す合図（`run.dryRun`）を見る（[運用の規則][flow]） | 合図が `run` でなければ push せずに止まる。`dryRun` が `true` なら push せず、送るつもりだった SHA を手元の記録に残す |
-| 7 | 進行 Bot の clone から、deploy key で `git push origin <控えた SHA>:refs/heads/<型>/issue-<番号>` を送る。ブランチ名でなく SHA を送り、force push はしない（[IMPL-15][impl]） | 断られたら（ruleset など）、実行の失敗として次の実行に持ち越す |
-| 8 | `git ls-remote` で、作業ブランチの先端が送った SHA になったことを読み戻す。初回は、順 4 で組み立てて検査した題名と本文で PR を draft で作り、すぐに結びつきの印（`note kind=link`）を Issue と PR に書き、続けて Agent 欄（計画・実装工程（段階 5）は空、レビュー工程（段階 6）以降は `reviewer`）を書いてから、Status を `In Review` にする（[IMPL-11][impl]、[IMPL-6][impl]、[IMPL-7][impl]、[FLOW-21][flow]）。修正は、順 4 で組み立てて検査した対応コメントを、`fix` の印付きで PR に書き、続けて Agent 欄を `reviewer` にする（[FLOW-22][flow]） | 読み戻した SHA が違えば、`needs-human` を付ける（`unrecoverable`）。PR を作れなければ、実行の失敗にする。作業ブランチだけが残るので、次の実行は順 13 で `needs-human` にする（`branch-without-pr`） |
+| 7 | 修正と衝突の解消では、順 4 で組み立てて検査した対応コメントを、`fix` の印（`round` は最新の `review` の印の `round`、`head` は控えた SHA）付きで PR に書いてから送る。push の後に実行が切れても、修正を往復に数え、次のラウンドで同じ指摘の再発を判定し、対応コメントも PR に出るため（[ADR-20261022-003][adr-rounds] の決定 4）。進行 Bot の clone から、deploy key で `git push origin <控えた SHA>:refs/heads/<型>/issue-<番号>` を送る。ブランチ名でなく SHA を送り、force push はしない（[IMPL-15][impl]） | 対応コメントを書けなければ、push せずに、実行の失敗として次の実行に持ち越す。push が断られたら（ruleset など）、実行の失敗として次の実行に持ち越す。書いた `fix` の印は PR に届かないので、修正は次の実行の順 15 でやり直し、衝突の解消は、base ブランチが PR の head より先に進んだままなので、次の実行の載せ直しからやり直す（往復の上限の確かめを含む）。届かなかった `fix` の印も往復に数える（止まる側） |
+| 8 | `git ls-remote` で、作業ブランチの先端が送った SHA になったことを読み戻す。初回は、順 4 で組み立てて検査した題名と本文で PR を draft で作り、すぐに結びつきの印（`note kind=link`）を Issue と PR に書き、続けて Agent 欄（計画・実装工程（段階 5）は空、レビュー工程（段階 6）以降は `reviewer`）を書いてから、Status を `In Review` にする（[IMPL-11][impl]、[IMPL-6][impl]、[IMPL-7][impl]、[FLOW-21][flow]）。修正は、Agent 欄を `reviewer` にする（対応コメントと `fix` の印は順 7 で書いた。[FLOW-22][flow]） | 読み戻した SHA が違えば、`needs-human` を付ける（`unrecoverable`）。PR を作れなければ、実行の失敗にする。作業ブランチだけが残るので、次の実行は順 13 で `needs-human` にする（`branch-without-pr`） |
 
-- 載せ直し（[MERGE-6][merge]）は、AI のセッションを起こさずに、進行 Bot の clone で base ブランチを作業ブランチに取り込み（`git merge`）、順 3〜8 を同じく行う。衝突したら取り込みをやめ、修正のセッション（作業 AI の衝突の解消）で解く（レビュー工程（段階 6）では人の番にし、`note kind=conflict` の印付きのコメントを Issue に書く）。差分の patch-id を比べて、印を付け直すか再レビューに回すかは、上の「作業中」の順 18
+- 載せ直し（[MERGE-6][merge]）は、AI のセッションを起こさずに、進行 Bot の clone で base ブランチを作業ブランチに取り込み（`git merge`）、順 3〜8 を同じく行う。衝突したら取り込みをやめ、作業 AI の衝突の解消のセッションで解き、順 1〜8 を修正と同じく行う（対応コメントと `fix` の印を順 7 で書く）。作業 AI を起こす前に、往復の回数が上限に達していないかを確かめる（上の「作業中」の順 18）。レビュー工程（段階 6）では人の番にし、`note kind=conflict` の印付きのコメントを Issue に書く。差分の patch-id を比べて、印を付け直すか再レビューに回すかは、上の「作業中」の順 18
+- 衝突の解消で、作業 AI が merge の commit の後に commit を足しても、merge の commit を作らずに衝突を解いても、`fix` の印 1 つで往復 1 回に数える。head が merge の commit 1 つだけかは確かめない（[ADR-20261022-003][adr-rounds] の決定 2）
 - 進行 Bot の clone は作業ツリーを持ち、取り込み（`git merge`）に使う。取り込む前に毎回、進行 Bot の clone で動いている git のプロセスが無いことを確かめ（lock を持つ実行の中なので、あれば前の実行の残り）、残った `index.lock` を消し、取り込みの途中の状態（`MERGE_HEAD`）があれば取り込みをやめ（`git merge --abort`）、作業ツリーと index を先端にそろえる（`git reset --hard` と `git clean -ffdx`）。前の実行が取り込みの途中で落ちても、後の実行の git が失敗し続けないため。git のプロセスが残っていれば、取り込まずに実行の失敗にする
 - 進行 Bot の clone の git は、ホームの個人設定とシステムの設定を読まず（`GIT_CONFIG_GLOBAL=/dev/null`、`GIT_CONFIG_NOSYSTEM=1`）、`core.hooksPath` を空のフォルダにし、署名しない（`commit.gpgsign=false`）で動かす（[SAFE-16][safety]）。載せ直しの merge の commit の作者は、投稿に使うアカウントの名前と、GitHub の noreply のアドレスにする（作業 AI の commit と同じ。「[AI のセッション][design-ai]」の「環境変数」）。手元の Mac で、人の鍵で署名した commit を送らないため
 - push した実行では、push した Issue を次の実行まで進めない（上の「次の工程」）
@@ -314,20 +315,26 @@ push した実行（実装・修正・載せ直し）では、push した Issue 
 ![ラウンドと往復の数え方][fig-rounds]
 
 - ラウンドは、PR のレビューの 1 回。`review` の印の `round` は 1 から始め、レビューするたびに 1 増やす。欠けていたら `needs-human` にする（[IMPL-18][impl]）
-- 修正の後の再レビューと、載せ直しで差分（patch-id）が変わったときの再レビューは、新しいラウンドにする。載せ直しで差分が同じときは、ラウンドを増やさず、同じ内容の印を新しい head に付け直す（[MERGE-6][merge]）
-- `fix` の印の `round` は、直した対象の `review` の印の `round` と同じにする（[IMPL-27][impl]）
-- 往復の回数は、PR の有効な `fix` の印の数（作業 AI が直して push した回数）と、載せ直しで差分が変わった再レビューのラウンドの数（[MERGE-6][merge]）の和。人の push の後の再レビューは、新しいラウンドにするが、往復に数えない。レビュー工程（段階 6）から持ち越した PR の、人が直した後のラウンドも、`fix` の印が無いので数えない（[IMPL-24][impl]）
-- 載せ直しで差分が変わった再レビューのラウンドかは、ラウンドの `review` の印の `head` が、1 つ前のラウンドの最後の head（1 つ前のラウンドに `fix` の印があれば `fix` の印の `head`、無ければ `review` の印の `head`）を 1 つ目の親に、base ブランチの commit を 2 つ目の親に持つ merge の commit かで見分ける。上の「作業中」の表の前に見る、載せ直しの merge の commit と同じ形で、印の欄は足さない。衝突の解消（順 18）の後のラウンドも、作業 AI が base ブランチを取り込んだ merge の commit が head になるので、載せ直しのラウンドとして 1 回に数え、`fix` の印の数と二重に数えない
-- 最新のラウンドが `fix` か CI が赤で、往復の回数がすでに上限（`limits.roundTrips`）に達していれば、修正せずに `needs-human` にする（[IMPL-24][impl]、[FLOW-28][flow]）
-- 数える元は GitHub の印と commit だけで、手元の記録を使わない。人が base ブランチを取り込んだ merge の commit を載せ直しと読むような数えすぎは、止まる側に倒れる
+- 修正か衝突の解消の後の再レビュー、進行 Bot だけの載せ直しで差分（patch-id）が変わったときの再レビュー、人の push の後の再レビューは、新しいラウンドにする。載せ直しで差分が同じときは、ラウンドを増やさず、同じ内容の印を新しい head に付け直す（[MERGE-6][merge]）
+- `fix` の印の `round` は、最新の `review` の印の `round`（修正では、直した対象のラウンド）と同じにする（[IMPL-27][impl]、[MERGE-6][merge]）
+- 往復の回数は、PR の有効な `fix` の印の数（作業 AI が変更を push した回数）。`fix` の印は、作業 AI の変更を push するたびに 1 つ書き、レビューの `fix` を直したとき（[IMPL-23][impl]）、CI の赤を直したとき（[IMPL-27][impl]）、載せ直しの衝突を解いたとき（[MERGE-6][merge]）のどれも 1 回に数える。`fix` の印は push の前に書くので、push が GitHub に届かなかった回の印も数える（上の「push の手順」の順 7）。届かなかった回の数えすぎは、止まる側に倒れる（[IMPL-24][impl]、[ADR-20261022-003][adr-rounds] の決定 1、決定 4）
+- 進行 Bot だけで行う載せ直し（AI のセッションを起こさない）で差分が変わった再レビューと、人の push の後の再レビュー（人が GitHub の画面で base ブランチを取り込んだ後を含む）は、新しいラウンドにするが、往復に数えない。base ブランチが進んで差分が変わるたびに起こすレビューは、往復の上限でなく、1 Issue の累計の費用の上限（`limits.issueCostUsd`）で止まる
+- レビュー工程（段階 6）では作業 AI が直さないので、`fix` の印が無い。段階 6 から修正工程（段階 7）に持ち越した PR は、往復を 0 回から数える
+- 数える元は GitHub の `fix` の印だけで、commit の親の形も手元の記録も使わない。1 つのラウンドを、`fix` の印と載せ直しのラウンドの 2 回に数える形は無い。衝突の解消で作業 AI が merge の commit の後に commit を足しても、`fix` の印 1 つで 1 回に数える（上の「push の手順」）
+- 最新のラウンドが `fix` か CI が赤で、往復の回数がすでに上限（`limits.roundTrips`）に達していれば、修正せずに `needs-human` にする（`round-limit`。[IMPL-24][impl]、[FLOW-28][flow]）。載せ直しが衝突したときも、往復の回数がすでに上限に達していれば、衝突の解消の作業 AI を起こさずに `needs-human` にする（`round-limit`。上の「作業中」の順 18）
+- 往復の回数は PR の初めから数え、人が `needs-human` を外しても数え直さない（1 Issue の累計の費用と同じ。下の「stop の理由の記号」の `round-limit`、[止まった状態から戻す手順][flow]）
+- 修正工程（段階 7）の記録の「AI が直した回数（往復の回数）」（[IMPL-25][impl]、[段階の表][setup]）は、この往復の回数と同じ数にし、2 つの数に分けない。衝突の解消の回数を分けて見たいときは、手元の記録のセッションの名前（衝突の解消は `rebase-pr-<PR の番号>`。「[AI のセッション][design-ai]」の「セッションの名前」）で分ける（[ADR-20261022-003][adr-rounds] の決定 1）
 
 | ラウンド | 起きたこと | 往復の回数 |
 | --- | --- | --- |
 | 1 | 最初のレビューが `fix` を返し、作業 AI が直す | 0 回 |
 | 2 | 修正の後の再レビューが `fix` を返し、作業 AI が直す | 1 回 |
-| 3 | 修正の後の再レビューが `fix` を返す。作業 AI が直す前に、人が push する | 2 回 |
-| 4 | 人の push の後の再レビューが `fix` を返し、作業 AI が直す | 2 回。人の push の後のラウンドは数えない |
-| 5 | 修正の後の再レビューが `fix` を返す | 3 回。上限（3 回）に達しているので、修正せずに `needs-human` にする |
+| 3 | 修正の後の再レビューが `pass` を返す。base ブランチが進み、進行 Bot だけの載せ直しで差分が変わる | 2 回 |
+| 4 | 載せ直しの後の再レビューが `fix` を返す。作業 AI が直す前に、人が push する | 2 回。進行 Bot だけの載せ直しは数えない |
+| 5 | 人の push の後の再レビューが `pass` を返す。base ブランチが進み、載せ直しが衝突して、作業 AI が衝突を解く | 2 回。人の push は数えない |
+| 6 | 衝突の解消の後の再レビューが `fix` を返す | 3 回。衝突の解消を 1 回に数える。上限（3 回）に達しているので、修正せずに `needs-human` にする |
+
+表の往復の回数は、そのラウンドのレビューの時点の `fix` の印の数。
 
 ### 収束の判定
 
@@ -370,11 +377,20 @@ CI が緑なら、次の条件をすべて確かめ、満たさない条件の�
 
 ![同じ指摘の再発の判定][fig-repeat]
 
-往復に数えるラウンド（AI の修正の後か、載せ直しで差分が変わった後のラウンド）で、前のラウンドと同じ指摘がもう一度出たかを、`review` の印の `findings` で見分ける（[ADR-20261019-001][adr-repeat]、[IMPL-24][impl]）。
+AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後のラウンド）で、前のラウンドと同じ指摘がもう一度出たかを、`review` の印の `findings` で見分ける（[ADR-20261019-001][adr-repeat]、[ADR-20261022-003][adr-rounds] の決定 3、[IMPL-24][impl]）。
 
 - 進行 Bot は、`review` の印を書く前に、批評 AI の統合の後に残った 🔴 🟡 の指摘ごとに ID を計算し、`findings` に書く。ID は「軸」「正規化した見出し」「ファイルのパス」を改行でつないだ文字列の SHA-256 の先頭 8 文字（16 進）。正規化は、Unicode の NFKC にそろえ、先頭の重要度の記号と空白を除き、英字を小文字にする（[ADR-20261019-001][adr-repeat] の決定 1）
-- 往復に数えるラウンドの `findings` の ID が、前のどれかのラウンド（往復に数えないラウンドを含む）の `findings` にもあれば、同じ指摘の再発とする。間が空いていても数える。同じラウンドの中の重複は数えない（[ADR-20261019-001][adr-repeat] の決定 2）
-- AI の修正の後のラウンドは、1 つ前のラウンドに有効な `fix` の印があり、ラウンドの `review` の印の `head` が `fix` の印の `head` と同じラウンド。載せ直しのラウンドの見分け方は、上の「ラウンドと往復の数え方」。人の push の後のラウンドと、レビュー工程（段階 6）で人が直した後のラウンドでは判定しない（人が直す番では、同じ指摘の再発でも止めない。[IMPL-24][impl]）
+- AI の変更の後のラウンドの `findings` の ID が、前のどれかのラウンド（判定しないラウンドを含む）の `findings` にもあれば、同じ指摘の再発とする。間が空いていても数える。同じラウンドの中の重複は数えない（[ADR-20261019-001][adr-repeat] の決定 2）
+- AI の変更の後のラウンドは、1 つ前のラウンドに有効な `fix` の印があり、ラウンドの `review` の印の `head` が、次のどちらかに当たるラウンド
+  - 1 つ前のラウンドの `fix` の印の `head` と同じ
+  - 1 つ前のラウンドの `fix` の印の `head` を 1 つ目の親に、base ブランチの commit を 2 つ目の親に持つ merge の commit。修正の後に進行 Bot が依存の載せ直しを行ったラウンド（上の「作業中」の表の前の確かめ）に当たる。merge の commit の作者は問わず、人が base ブランチを取り込んだ merge の commit も、形が同じなら判定する。base ブランチを取り込んだだけの merge の commit では、レビューする変更が作業 AI の変更のままのため
+- 次のラウンドでは判定しない
+  - PR の最初のラウンド
+  - 進行 Bot だけの載せ直しで差分が変わったラウンド（1 つ前のラウンドに `fix` の印が無い）
+  - 人の push の後のラウンド（head が上の 2 つの形に当たらない）。人が直す番では、同じ指摘の再発でも止めない（[IMPL-24][impl]）
+  - レビュー工程（段階 6）のラウンドと、段階 6 から持ち越した PR の、作業 AI が直す前のラウンド
+- 判定しないラウンドの `review` の印にも、`findings` を書く。後のラウンドの比べる相手になるため
+- head の形の見分けは、同じ指摘の再発を判定するかにだけ使い、往復の回数（上の「ラウンドと往復の数え方」）には使わない。形を見誤っても、往復の上限は `fix` の印で効く
 - 同じ指摘の再発なら、往復の上限と同じく、修正せずに Status を `Blocked` にして `needs-human` を付け（`repeated-finding`）、再び出た指摘の見出しと、出たラウンドを Issue にコメントする（[IMPL-24][impl]、[FLOW-28][flow]）
 
 | ラウンド | `findings`（例） | 判定 |
@@ -383,7 +399,7 @@ CI が緑なら、次の条件をすべて確かめ、満たさない条件の�
 | 2 | C | A も B も出ていない。修正に進む |
 | 3 | A | A はラウンド 1 にも出ている。同じ指摘の再発として `needs-human` にする |
 
-表の例は、ラウンド 2 と 3 がどちらも AI の修正の後のラウンドのとき。
+表の例は、ラウンド 2 と 3 がどちらも AI の変更の後のラウンドのとき。ラウンド 3 が進行 Bot だけの載せ直しか人の push の後のラウンドなら、判定しない（ラウンド 3 の `findings` は、後のラウンドの比べる相手になる）。
 
 ## 印の種類
 
@@ -439,7 +455,7 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 | 3 | `plan` | Issue | 計画を投稿するとき（順 12） |
 | 4 | `note kind=link` | Issue と PR | PR を作った直後に、両方に書く（順 13。[IMPL-6][impl]） |
 | 5 | `review` | PR | ラウンドごとに、レビューの結果を投稿するとき（順 14。レビュー工程（段階 6）から） |
-| 6 | `fix` | PR | 修正を push した後（順 15。修正工程（段階 7）から） |
+| 6 | `fix` | PR | 修正か衝突の解消を push する前（順 15 と順 18。`head` は送る SHA。修正工程（段階 7）から） |
 | 7 | `merge` | PR | マージの判定のとき（順 19。マージ判定工程（段階 8）から） |
 
 このほかに、`note` の印を、待つとき・重なりを警告するとき・催促するとき・止めるとき・モデルを上げたとき・🟢 が重複したとき・載せ直しの衝突を人の番にしたときに書く（下の「note の種類」）。
@@ -466,8 +482,8 @@ UNDECIDED-39（進行 Bot のほかのコメントに付ける印の種類）を
 
 | `reason` | 止めた契機 |
 | --- | --- |
-| `round-limit` | 往復の回数が上限に達した（[IMPL-24][impl]） |
-| `repeated-finding` | 同じ指摘の再発（直したはずの指摘が再び出た。[IMPL-24][impl]、[ADR-20261019-001][adr-repeat]） |
+| `round-limit` | 往復の回数（`fix` の印の数）が上限に達した。修正（次の工程の順 15）と衝突の解消（順 18）の作業 AI を起こす前に確かめる（[IMPL-24][impl]、[ADR-20261022-003][adr-rounds]）。stop のコメントに、往復の回数は PR の初めから数え、`needs-human` を外しても数え直さないので、何もせずに外すと次の実行でまた止まることと、人がすること（人が直して push してから戻す。人の push の後の再レビューは往復に数えないが、再レビューが `fix` を返すと、往復の回数は上限のままなので、また止まる。作業 AI に続けさせるなら、リポの設定の `limits.roundTrips` を上げる PR をマージしてから戻す。[止まった状態から戻す手順][flow]）を書く |
+| `repeated-finding` | 同じ指摘の再発（直したはずの指摘が、AI の変更の後のラウンドで再び出た。[IMPL-24][impl]、[ADR-20261019-001][adr-repeat]、[ADR-20261022-003][adr-rounds]）。stop のコメントに、再び出た指摘の見出しと出たラウンド（上の「同じ指摘の再発の判定」）、`needs-human` を外しても同じラウンドの同じ判定で次の実行でまた止まることと、人がすること（人が直して push してから戻す。人の push の後のラウンドでは、同じ指摘の再発を判定しない。`limits.roundTrips` を上げても、同じ指摘の再発の止まり方は変わらない。[止まった状態から戻す手順][flow]）を書く |
 | `review-too-long` | レビューのコメントが、🟢 の失敗シナリオと推奨をすべて省いても 60,000 文字を超える（[IMPL-17][impl]、[AI のセッション][design-ai]の「レビューのコメントの形」） |
 | `adr-required` | 作業 AI が、ADR の起票か規約の正典の変更が要ると返した（[IMPL-8][impl]） |
 | `retry-limit` | 同じ Issue で実行の失敗が続き、回数の上限に達した（[IMPL-14][impl]） |
@@ -584,7 +600,7 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 | 計画・実装工程（段階 5）から修正工程（段階 7） | 計画のレビューの結果と、計画し直したこと。人が止めた計画（[ADR-20261018-004][adr-planrev] の確認方法。計画を投稿した後で、結びつく PR を作る前に止めたものだけ。上の「置くもの」の `runs.jsonl`。毎回の実行で重なるので、計画の印ごとに 1 件として数える）と、人の見比べの結果（[ADR-20261019-003][adr-replan] の確認方法） | `outputs/` の計画のレビューと、直す前の計画、`runs.jsonl` の Issue ごとの結果（人が止めた計画）、`plan-comparisons.md` |
 | 計画・実装工程（段階 5）から修正工程（段階 7） | 作業 AI の最初の実装のモデルと、Issue の種類（作業ブランチの型）ごとの結果 | `sessions.jsonl` の作業 AI、`review` の印、PR |
 | レビュー工程（段階 6） | 一致率と却下率、`opus` と `fable` の比べ（比べのセッションの失敗の数と終わり方、`opus` と `fable` の利用枠を含む。[ADR-20261021-007][adr-compare] の決定 3）、見落としの軸の 2 つの数（人の 🔴 🟡 のうち、3 つの軸が見落として見落としの軸が見つけたものの数と、見落としの軸だけが出して人が出さなかった 🔴 🟡 の数。[段階の表][setup]） | `outputs/` のレビュー AI（3 つの軸、比べるための実行、見落としの軸）、`sessions.jsonl` の終わりの行（3 つの軸と比べのセッションの終わり方と費用）、人のレビューの結果、`## 却下` のコメント |
-| 修正工程（段階 7） | 往復の回数（上の「ラウンドと往復の数え方」の数え方）、`opus` に上げた件数、上げた後に Ready to Merge まで進んだ件数 | `fix` の印と `review` の印（載せ直しのラウンドの見分けに、進行 Bot の clone の commit の親も読む）、`sessions.jsonl` の作業 AI、Project の Status |
+| 修正工程（段階 7） | 往復の回数（上の「ラウンドと往復の数え方」の数え方。衝突の解消の回数は、作業 AI のセッションの名前で分けて見る）、`opus` に上げた件数、上げた後に Ready to Merge まで進んだ件数。`round-limit` と `repeated-finding` で止めた件数と、止めたときの往復の回数とラウンド（作業 AI が直す前に止まった PR が無いかを人が確かめる。[ADR-20261022-003][adr-rounds] の確認方法） | `fix` の印（往復の回数）、`review` の印、`sessions.jsonl` の作業 AI（衝突の解消は `rebase-pr-<PR の番号>`）、`runs.jsonl` の Issue ごとの結果（止めた理由）、Project の Status |
 | 修正工程（段階 7）とマージ判定工程（段階 8） | マージの判定と人の操作が合ったか。修正工程（段階 7）は印を書かず毎回の実行で判定が重なるので、PR と head ごとに最後の判定を 1 件として数える | `runs.jsonl` のマージの判定、`merge` の印、PR のマージと「判定と違う判断」のコメント |
 | マージ判定工程（段階 8） | revert（マージから 14 日以内に、`develop` にその squash の commit を revert する commit か、本文でその PR の番号を「戻す」と言及する fix の PR がマージされたもの） | base ブランチの commit の履歴（進行 Bot の clone）、マージされた PR の本文 |
 | 並列化（段階 9） | 連続 7 回の実行で `needs-human` が 0 件か、利用枠が上限の内か（[FLOW-12][flow]） | `runs.jsonl`（止めた理由）、`sessions.jsonl`（費用） |
@@ -640,3 +656,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-read]: ../../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-compare]: ../../adr/adr-20261021-007-compare-review-done-from-local-records.md
 [adr-url]: ../../adr/adr-20261022-001-quarantine-urls-outside-target-repo.md
+[adr-rounds]: ../../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md

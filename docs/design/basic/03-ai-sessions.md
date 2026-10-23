@@ -384,7 +384,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
   | 受け入れの下書き（下書きの 4 つの欄、`planReason`、`policyReason`） | 投稿の前 | 下書きを投稿せず、検疫の結果・人への案内・`quarantine=found` の `intake` の印だけを載せた受け入れの下書きを書き、`needs-human` を付ける（`quarantine`。[状態遷移と判定][design-flow]の「受け入れと承認の確定で確かめること」） |
   | 計画（計画の文の欄） | 投稿の前（[状態遷移と判定][design-flow]の「計画の工程の中の順番」の順 6） | 投稿せず、`needs-human` を付ける（`quarantine` か `leak`） |
   | PR の題名と本文（`pr.title`、`pr.body`、`checks[].note`） | push の前（[状態遷移と判定][design-flow]の「push の手順」の順 4） | push せず、`needs-human` を付ける（`quarantine` か `leak`） |
-  | 対応コメント（`responses[].check`、`checks[].note`） | push の前（同じく順 4） | push せず、`needs-human` を付ける（`quarantine` か `leak`） |
+  | 対応コメント（修正と衝突の解消。`responses[].check`、`checks[].note`） | push の前（同じく順 4） | push せず、`needs-human` を付ける（`quarantine` か `leak`） |
   | 止まった理由の説明（`stopDetail`） | 投稿の前 | 説明を載せず、止まった理由（`stopReason`）の固定の文だけで stop のコメントを書き、`needs-human` を付ける（`quarantine`）。説明は手元の記録の出力契約に残る |
   | レビューのコメント（見出し、失敗シナリオ、推奨、下げた理由） | 投稿の前 | コメントと `review` の印を書かず、PR と Issue に `needs-human` を付ける（`quarantine` か `leak`） |
   | 🟢 から起票する Issue の本文（見出し、失敗シナリオ、推奨） | 起票の前（[状態遷移と判定][design-flow]の次の工程の順 17） | 起票せず、PR を ready にせず、`needs-human` を付ける（`quarantine` か `leak`） |
@@ -450,7 +450,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `responses` | 一覧。1 件は `id`（進行 Bot が渡した指摘の通し番号。整数）、`action`（`"fixed"` か `"unable"`）、`check`（文） | 修正で `done` のときだけ。渡した 🔴 🟡 の指摘ごとの対応と確認。渡した通し番号をすべて含む（[IMPL-23][impl]） |
 | `checks` | 一覧。1 件は `command`（文）、`result`（`"pass"`・`"fail"`・`"skipped"`）、`note`（文） | `done` のとき。確かめた検査とその結果（[IMPL-5][impl]） |
 
-- 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と、`stopped` のとき `stopReason` と `stopDetail`、`done` のとき `checks` を返す（衝突を解くのに正典を変える必要があるときも、止まった理由を返せるようにする）
+- 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と、`stopped` のとき `stopReason` と `stopDetail`、`done` のとき `checks` を返す（衝突を解くのに正典を変える必要があるときも、止まった理由を返せるようにする）。衝突の解消で `done` のときも、進行 Bot は修正と同じく対応コメントと `fix` の印を書く（形は下の「コメントの形」。[ADR-20261022-003][adr-rounds] の決定 2）
 - 作業の結果は、worktree の中の commit で返す。出力契約に diff を入れない（[IMPL-5][impl]）
 - `stopped` なら、進行 Bot は理由を Issue にコメントし、`needs-human` を付ける。stop の理由は、`stopReason` が `adr-required` でも `canon-change` でも `adr-required` にする。規約の正典を変えるのも ADR で決めるため（[IMPL-8][impl]、[状態遷移と判定][design-flow]）
 - `action` が `"unable"` の指摘は、次のラウンドのレビューで再び出れば、同じ指摘の再発として人に渡る（[IMPL-24][impl]）
@@ -515,6 +515,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
   - 渡す文（承認された下書き）は、`### 作業指示` の見出しの次の行から、次の深さ 3 以下の見出し（行の頭が `#`・`##`・`###` のどれかで、見出しの記号の後に空白が続く行。`####` の見出しは含めない）の前まで。人が直した後の文を使う。渡す文が空（空白と空の行だけ）なら、承認の確定で `intake-final` を書かずに `needs-human` を付ける（`draft-format`）
 - 作業指示コメント：`## 作業指示` の見出しの行の次から、コメントの終わりまでを渡す文にする。空なら、承認された下書きと同じく `draft-format` で止める。読むのは push 以上の人が書いた作業指示コメントだけで、push 未満の人のものは無いものとして扱う。push 以上の人の作業指示コメントが 2 つ以上あれば、承認の確定をせずに `needs-human` を付ける（`multiple-instructions`。[ADR-20261021-003][adr-reapprove]）
 - 計画のコメント：見出し `## 計画` の下に、`### 対象`、`### 手順`（手順ごとに完了条件を添える）、`### 検証`、`### 範囲外`、`### commit の分け方` を並べ、自己申告で計画し直したときは固定の文を書き添え、最後に `plan` の印を置く（[IMPL-10][impl]）
+- 対応コメント：見出し `## R<n> の指摘への対応（<コミット>）`（[IMPL-23][impl]。`<n>` は最新の `review` の印の `round`）の下に、修正では指摘ごとの対応と確認（`responses`）と確かめた検査の結果（`checks`）を、衝突の解消では固定の文「base ブランチを取り込んで衝突を解いた」（言語は `conventions.language`）と確かめた検査の結果（`checks`）を並べ、最後に `fix` の印を置く。どちらも push の前に書く（[状態遷移と判定][design-flow]の「push の手順」の順 7、[ADR-20261022-003][adr-rounds] の決定 2、決定 4）。対応コメントには、修正と衝突の解消のどちらも、push の手順の漏えいの検査と検疫を掛ける（上の「共通の決まり」の表）
 - ハッシュは、下の「ハッシュの取り方」で取る
 
 ### ハッシュの取り方
@@ -624,3 +625,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [design-tests]: ./05-tests.md
 [adr-compare]: ../../adr/adr-20261021-007-compare-review-done-from-local-records.md
 [adr-critic-skip]: ../../adr/adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
+[adr-rounds]: ../../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md

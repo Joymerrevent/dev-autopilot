@@ -148,7 +148,7 @@
 | `limits.startsPerRun` | 1 回の実行で新しく着手する Issue の数の上限 | 数（1 以上の整数。件） | 1 件（[FLOW-3][flow]） | 進行 Bot は、1 回の実行で着手する件数に上限を持つ（[FLOW-3][flow]） |
 | `limits.wip` | 進行中の Issue の数の上限（数え方は「[状態遷移と判定][design-flow]」の「進行中の Issue の数え方」） | 数（1 以上の整数。件） | 1 件（マージ判定工程（段階 8）まで。[FLOW-3][flow]） | 進行中の Issue の数にも上限を持ち、上限に達していれば新しい Issue に着手しない（[FLOW-3][flow]） |
 | `limits.intakePerRun` | 1 回の実行で受け入れる Issue の数の上限 | 数（1 以上の整数。件） | 5 件（暫定） | 1 回の実行で受け入れる件数に上限を持つ。初回の実行で未処理の Issue すべてに走らないためと、外の人が Issue を大量に立てたときの利用枠の歯止め（[TEXT-12][text]）。5 件は [ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
-| `limits.roundTrips` | レビューと修正の往復の回数の上限。往復の回数がすでに上限に達していて、さらに直す必要がある（もう 1 往復すると上限を超える）なら、修正せずに `needs-human`（数え方は「[状態遷移と判定][design-flow]」の「ラウンドと往復の数え方」） | 数（1 以上の整数。回） | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が再び出たとき（同じ指摘の再発）も同じ扱い（[IMPL-24][impl]） |
+| `limits.roundTrips` | レビューと修正の往復の回数の上限。往復の回数がすでに上限に達していて、さらに直す必要がある（もう 1 往復すると上限を超える）なら、修正せずに `needs-human`。載せ直しの衝突も、往復の回数がすでに上限に達していれば、作業 AI に解かせずに `needs-human`（数え方は「[状態遷移と判定][design-flow]」の「ラウンドと往復の数え方」。[ADR-20261022-003][adr-rounds]） | 数（1 以上の整数。回） | 3 回（[IMPL-24][impl]） | 往復の回数に上限を持ち、超えたら Status を Blocked にして `needs-human` を付ける。同じ指摘が再び出たとき（同じ指摘の再発）も同じ扱い（[IMPL-24][impl]） |
 | `limits.planRevisions` | 計画のレビューの指摘で計画し直す回数の、計画の工程ごとの上限。上限まで計画し直しても `fix` なら、マージ判定工程（段階 8）の前は最後の計画を投稿する | 数（1 以上の整数。回） | 1 回（[IMPL-10][impl]） | 計画は実行して確かめられないので、レビューのたびに直すところが出て、ループが終わらないおそれがある。1 回なら、計画の工程は最大 5 つのセッション（1 セッションの上限 45 分なら 225 分）で終わる（[IMPL-10][impl]、[ADR-20261019-003][adr-replan]） |
 | `limits.session.minutes` | AI のセッション 1 回の時間の上限。超えたら進行 Bot が止める | 数（1 以上の整数。分） | 45 分（[IMPL-13][impl]） | `claude` には時間の上限が無いので、進行 Bot が時間で止める（[IMPL-13][impl]）。止めた回は実行の失敗として次回に持ち越す（[IMPL-14][impl]） |
 | `limits.session.turns` | AI のセッション 1 回のターンの上限（`--max-turns`） | 数（1 以上の整数。ターン） | 200 ターン（[IMPL-13][impl]） | ターンの上限は `--max-turns` で掛ける（[IMPL-13][impl]。GitHub Agentic Workflows の既定は 500 ターン） |
@@ -333,3 +333,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-repo]: ../../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-blocked]: ../../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
 [adr-marker-keys]: ../../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
+[adr-rounds]: ../../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
