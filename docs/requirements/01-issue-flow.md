@@ -73,7 +73,7 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 | 番号 | 契機 | 変える人 | Status | Agent 欄 | ラベル | 根拠 |
 |---|---|---|---|---|---|---|
 | FLOW-28 | 往復の上限（3 回）か、同じ指摘の再発（直したはずの指摘が再び出た） | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-24 |
-| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4）、受け入れの下書きの前に付いた `agent-ready`（TEXT-12）、push 以上の人の作業指示コメントが 2 つ以上（TEXT-12）、計画が変える見込みのパスが push しないパスに当たる（IMPL-10）、push する SHA が GitHub の作業ブランチの先端の子孫でない（IMPL-15、SAFE-13）、作業 AI が作業を終えたと返したのに新しい commit が無い（IMPL-5）、AI のセッションを止めた後にコマンドが残る（IMPL-14）、🟢 の失敗シナリオと推奨をすべて省いてもレビューのコメントが 1 つのコメントに書ける長さを超える（IMPL-17。長さの上限は基本設計の「[AI のセッション][design-ai]」の「レビューのコメントの形」）、安全設定のファイルが作ったときと違うか、作業場所に local の設定のファイル（`.claude/settings.local.json`）か `CLAUDE.local.md` がある（SAFE-2）。契機ごとの stop の理由の記号は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」 | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-5、IMPL-6、IMPL-8、IMPL-10、IMPL-14、IMPL-15、IMPL-17、IMPL-18、IMPL-20、IMPL-27、SAFE-2、SAFE-4、SAFE-12、SAFE-13、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、TEXT-12、SETUP-2、「運用の規則」 |
+| FLOW-29 | ADR の起票が要る、同じ実行の失敗が 3 回、累計の利用枠の上限、漏えいの検査、push しないパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス。IMPL-15）への変更、渡す文の変更、検疫、Issue の状態の変化、ラベルや編集の権限不足、復旧できない状態、Issue に紐づく作業場所の残骸（見分け方は基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）、印が無効か `review` の `round` の欠け（IMPL-20、IMPL-18）、結びつきの印の無い PR かマージされずに閉じられた PR（どちらも、人が戻した時刻より前に閉じた PR を除く。IMPL-6）、CI の `action_required` か、取り消しなどが時間を過ぎても変わらない（IMPL-27）、作業場所の `commondir` か `gitdir` が作ったときと違う（SAFE-12）、記録を失った（「運用の規則」）、想定外の Status（SAFE-4）、受け入れの下書きの前に付いた `agent-ready`（TEXT-12）、push 以上の人の作業指示コメントが 2 つ以上（TEXT-12）、計画が変える見込みのパスが push しないパスに当たる（IMPL-10）、push する SHA が GitHub の作業ブランチの先端の子孫でない（IMPL-15、SAFE-13）、作業 AI が作業を終えたと返したのに新しい commit が無い（IMPL-5）、AI のセッションを止めた後にコマンドが残る（IMPL-14）、🟢 の失敗シナリオと推奨をすべて省いてもレビューのコメントが 1 つのコメントに書ける長さを超える（IMPL-17。長さの上限は基本設計の「[AI のセッション][design-ai]」の「レビューのコメントの形」）、安全設定のファイルが作ったときと違うか、作業場所に local の設定のファイル（`.claude/settings.local.json`）か `CLAUDE.local.md` がある（SAFE-2）。契機ごとの stop の理由の記号は、基本設計の「[状態遷移と判定][design-flow]」の「stop の理由の記号」 | 進行 Bot | `Blocked` | 変えない | `needs-human` | IMPL-5、IMPL-6、IMPL-8、IMPL-10、IMPL-14、IMPL-15、IMPL-17、IMPL-18、IMPL-20、IMPL-27、SAFE-2、SAFE-4、SAFE-12、SAFE-13、TEXT-4、TEXT-7、TEXT-8、TEXT-10、TEXT-11、TEXT-12、SETUP-2、「運用の規則」 |
 | FLOW-30 | 実行の失敗（利用枠切れ、時間の上限、ターンの上限、`claude` の異常終了、出力契約の欠け、受付 AI の拒否、依存の導入でレジストリにつながらない（IMPL-1）。3 回未満。次回に持ち越す） | 進行 Bot | 変えない | 変えない | 変えない | IMPL-14 の表 |
 | FLOW-31 | 人が引き取る | 人 | 変えない | `human` | 変えない | 本節の決まり |
 | FLOW-32 | 人が一時停止する | 人 | 変えない | `paused` | 変えない | 「運用の規則」 |
@@ -82,13 +82,15 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 
 止まった状態から戻す手順（人だけが行う）：
 
-- `needs-human`：原因を直し、Status を戻し、Agent 欄が `human` なら `worker` に戻してから、最後に `needs-human` を外す（外すまで、進行 Bot は Issue に触らない）。Status は、結びつく開いた PR が無ければ `Todo`（棚卸しで選び直す）、あれば `In Review`（進行 Bot が次回の実行で PR の状態から再開する）。止めた理由ごとの手順が下にあるもの（`unlinked-pr`・`pr-closed`・`marker-invalid`・`usage-limit`・`round-limit`・`repeated-finding`）は、下の手順に従う
-- 結びつきの印の無い PR（`unlinked-pr`）：進行 Bot が PR を作った直後、結びつきの印を書く前に止まったときにも当たる（まれなので、人が確かめる。IMPL-6、[ADR-20261016-001][adr-pr] の決定 3）。人は PR の中身を確かめてから、PR を閉じ、作業ブランチを消し、`needs-human` を外して Status を `Todo` に戻す。進行 Bot は、人が戻す前に閉じられた印の無い PR では止めず、計画からやり直す
-- マージされずに閉じた PR（`pr-closed`）：閉じた PR が残るので、`In Review` に戻さない。人は作業ブランチの中身を確かめてから消し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、人が戻す前に閉じられた PR を結びつきから外し、閉じた PR の作業場所のフォルダを消して、計画からやり直す（IMPL-6）
+- `needs-human`：原因を直し、Status を戻し、Agent 欄が `human` なら `worker` に戻してから、最後に `needs-human` を外す（外すまで、進行 Bot は Issue に触らない）。Status は、結びつく開いた PR が無ければ `Todo`（棚卸しで選び直す）、あれば `In Review`（進行 Bot が次回の実行で PR の状態から再開する）。止めた理由ごとの手順が下にあるもの（`unlinked-pr`・`pr-closed`・`marker-invalid`・`usage-limit`・`round-limit`・`repeated-finding`・受け入れの検疫の `quarantine`）は、下の手順に従う。
+  下の手順と承認のやり直しも含めて、どの戻す手順も、Issue に `needs-human` が付いた状態で行い、手順の最後に `needs-human` を外す。`needs-human` がある間は、手順の途中に実行が入っても、進行 Bot は Issue に触らないので止まり直さない。手順の中で閉じた PR は、人が戻した時刻（最後に `needs-human` を外した時刻を含む、いくつかの時刻の最も遅いもの。IMPL-6）より前に閉じたことになるので、進行 Bot は止めずに結びつきから外す。最後に `needs-human` を外すのは push 以上の人（push 未満の人が外すと、進行 Bot が付け直す。TEXT-10。[ADR-20261022-005][adr-unlink] の決定 2）
+- 結びつきの印の無い PR（`unlinked-pr`）：進行 Bot が PR を作った直後、結びつきの印を書く前に止まったときにも当たる（まれなので、人が確かめる。IMPL-6、[ADR-20261016-001][adr-pr] の決定 3）。人は PR の中身を確かめてから、PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、最後に `needs-human` を外す。進行 Bot は、人が戻した時刻より前に閉じられた印の無い PR では止めず、計画からやり直す（IMPL-6、[ADR-20261022-005][adr-unlink] の決定 1）
+- マージされずに閉じた PR（`pr-closed`）：閉じた PR が残るので、`In Review` に戻さない。人は作業ブランチの中身を確かめてから消し、Status を `Todo` に戻してから、最後に `needs-human` を外す。進行 Bot は、人が戻した時刻より前に閉じられた PR を結びつきから外し、閉じた PR の作業場所のフォルダを消して、計画からやり直す（IMPL-6、[ADR-20261022-005][adr-unlink] の決定 1）
 - 印が無効（`marker-invalid`）：`needs-human` は、どの場合も最後に外す（外すまで、進行 Bot は Issue に触らない）。人は、止めた理由のコメントに挙がった印のコメントを確かめる（誰がいつ編集したか、印の署名の鍵を替えたか）。印のコメントは、直さず、消さない。続けてよければ、Status を戻し（結びつく開いた PR が無ければ `Todo`、あれば `In Review`）、`needs-human` を外す。進行 Bot は、挙がった印を数えず、無いものとして読む（IMPL-20、[ADR-20261021-004][adr-marker-keys]）。無いものとして読んだ結果、ほかの止め方（`review` の印の `round` の欠けなど）に当たったら、当たった止め方の戻し方に従う（[ADR-20261021-004][adr-marker-keys] の決定 4）。挙がった印に PR の結びつきの印（`note kind=link`）があれば、PR を続けると、結びつきの印の無い PR（`unlinked-pr`）に当たってまた止まるので、PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、`needs-human` を外す
   - 途中のラウンドの `review` の印が無効なときと、`review` の印が消されて `round` が欠けるとき：PR を続けると、`round` の欠けでまた止まる（IMPL-18）。PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、閉じた PR を結びつきから外し、計画からやり直す
   - 印の署名の鍵が漏れて、漏れた鍵を一覧から外したとき（外す手順は、基本設計の「[状態遷移と判定][design-flow]」の「印の署名」）：漏れた鍵の印は、誰が作ったかが分からないので、続けない。PR があれば閉じて作業ブランチを消し、`agent-ready` を外し、Status を `Todo` に戻してから、`needs-human` を外す。進行 Bot は、受け入れからやり直し、新しい下書きを書く。人は、新しい下書きを読んでから `agent-ready` を付ける
 - 1 Issue の累計の利用枠の上限（`usage-limit`）：1 Issue の累計は Issue の初めから数え、人が `needs-human` を外しても数え直さない（IMPL-14）。上限を変えずに外すと、次のセッションの前にまた止まる。続けるなら、人がリポの設定の 1 Issue の累計の上限（`limits.issueCostUsd`）を上げる PR をマージしてから、Status を戻し、`needs-human` を外す。上げないなら、Issue を閉じるか、小さい Issue に分けて元の Issue を閉じる（下の「着手した Issue をやめるとき」）
+- 受け入れの検疫で止まったとき（`quarantine`。受け入れの下書きに作業指示の下書きが無く、検疫の結果と人への案内だけがある）：処理対象にするなら、`## 作業指示` のコメントを一から書き、マイルストーン（要るなら依存（blocked by）も）を Issue に付け、Status を `Todo` に戻し、`agent-ready` を付けてから、最後に `needs-human` を外す（TEXT-12 の人への案内と同じ順。[ADR-20261022-005][adr-unlink] の決定 2）
 - 往復の上限（`round-limit`）：往復の回数は PR の初めから数え、人が `needs-human` を外しても数え直さない（IMPL-24、[ADR-20261022-003][adr-rounds] の決定 6）。何もせずに外すと、次の実行でまた止まる。続けるなら、次のどちらかをしてから、Status を `In Review` に戻し、`needs-human` を外す
   - 人が直して、作業ブランチに push する。人の push の後の再レビューは往復に数えないが、再レビューが `fix` を返すと、往復の回数は上限のままなので、また止まる
   - 作業 AI に続けさせるなら、人がリポの設定の往復の上限（`limits.roundTrips`）を上げる PR をマージする
@@ -96,12 +98,18 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 - `human`：返すときは Agent 欄を `worker` に戻す。Status は触った内容に合わせて人が直す
 - `paused`：再開するときは Agent 欄を空か `worker` に戻す
 - 依存の待ち（FLOW-33・FLOW-34）：人の操作は要らない。先行の Issue が閉じれば、次回の実行で進行 Bot が続ける。待ちを解きたければ人が依存（blocked by）を外す
-- 承認のやり直し（承認した後に渡す文を直したいとき）：作業指示コメントか下書きを直す → `needs-human` があれば外し、Status を `Todo` に戻す → `agent-ready` を外して付け直す（文を直すのは付け直す前）。PR があれば、PR を閉じ、作業ブランチを消してから `Todo` に戻す。進行 Bot は、新しい `intake-final` の印を書いて計画からやり直す（TEXT-4、TEXT-12。[ADR-20261021-003][adr-reapprove]）
+- 承認のやり直し（承認した後に渡す文を直したいとき）：次の 6 つの順に行う。文を直すのは、`agent-ready` を付け直す前にする。進行 Bot は、`needs-human` が外れた後の実行で、新しい `intake-final` の印を書いて計画からやり直す。手順の中で閉じた PR は、人が戻した時刻より前に閉じた PR として、結びつきから外す（TEXT-4、TEXT-12、IMPL-6。[ADR-20261021-003][adr-reapprove]、[ADR-20261022-005][adr-unlink] の決定 2）
+  1. `needs-human` が無ければ付ける（Status は変えなくてよい。`needs-human` がある間は、進行 Bot は Status を問わず Issue に触らず、Status は 4 の手順で `Todo` に戻す）
+  2. 作業指示コメントか下書きを直す
+  3. PR があれば閉じ、作業ブランチを消す
+  4. Status を `Todo` に戻す
+  5. `agent-ready` を外して付け直す
+  6. 最後に `needs-human` を外す
 - 着手した Issue をやめるとき（作業を続けない）：開いた PR があれば閉じ、作業ブランチを消し、Issue を閉じる。`needs-human` は外さない（閉じた Issue から外しても、進行 Bot が Issue の状態の変化（TEXT-8）としてまた付ける）。閉じた Issue の作業場所のフォルダが残っていれば、進行 Bot は消さずに `needs-human`（`workspace-residue`）を付け、stop のコメントに、消すフォルダの組（セッションのフォルダと短い一時フォルダ）と消す順を書く（基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」）。人は中身を確かめてから、書かれたフォルダの組を、書かれた順に消す（片方だけを消すと、残った短い一時フォルダがどの Issue のものか分からない残骸になり、点検が fail になってほかの Issue も止まる）
 
 決まり：
 
-- `needs-human` を付けるときは、どの契機でも Status を `Blocked` にする（`Todo` のままだと翌日また選ばれるため）
+- `needs-human` を付けるときは、どの契機でも Status を `Blocked` にする（`Todo` のままだと翌日また選ばれるため）。人が戻す手順の最初に付けるとき（`needs-human` の無い Issue の承認のやり直し）は、Status を変えなくてよい（`needs-human` がある間は、進行 Bot は Status を問わず Issue に触らず、人は手順の中で Status を `Todo` に戻すため。[ADR-20261022-005][adr-unlink] の決定 2）
 - 進行 Bot は Agent 欄を `human` と `paused` にしない。この 2 つは人の意思表示で、進行 Bot は読むだけ。`human` の Issue と PR には進行 Bot は触らない
 - 例外として、片付け（FLOW-27、MERGE-7）は `needs-human`・`human`・`paused` の除外より先に判定する。PR がマージされていれば Issue を閉じて作業場所を消し、Agent 欄とラベルは書き換えない（マージは人の最後の操作なので、人の意思表示に反しない。[ADR-20261015-006][adr-flow]）
 - 進行 Bot が起票する 🟢 の Issue（`from-review`）は、Project に入れて Status を `Todo` にし、マイルストーンと `agent-ready` は付けない。人がマイルストーンを付けたら受け入れ（TEXT-12）が下書きを用意し、人が `agent-ready` を付けるかを決める（IMPL-26）
@@ -161,3 +169,4 @@ Issue の状態は 3 つの欄で表し、正は GitHub に置く（「運用の
 [adr-compare]: ../adr/adr-20261021-007-compare-review-done-from-local-records.md
 [adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
 [adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
+[adr-unlink]: ../adr/adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md

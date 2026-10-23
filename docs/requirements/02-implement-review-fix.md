@@ -14,7 +14,8 @@
   PR の作成・draft/ready の切り替え・Status と Agent 欄の更新・Issue と PR へのコメントは、すべて進行 Bot が出力を検証してから行う（gh-aw の safe outputs と同じ）
 - IMPL-6 進行 Bot が PR を `develop` 向けに draft で作る。本文に `Closes #<番号>` と検査の結果を書く（`Closes #<番号>` は人向けの表示。`develop` 向けの PR には GitHub が Issue との結びつきを張らないので、結びつけには使わない）。題名は Conventional Commits の規約（小文字か日本語で始める。squash の件名になり commitlint が検査する）に進行 Bot が照らしてから使う。
   PR と Issue は、(1) head のブランチ名が `<型>/issue-<番号>`（IMPL-2）、(2) head のリポが base と同じ（fork でない）、(3) 進行 Bot の署名付きの結びつきの印がある、の 3 つで結びつける。PR を作った直後に、Issue に `note kind=link pr=<PR の番号>`、PR に `note kind=link issue=<Issue の番号>` の印付きのコメントを投稿する。作者のアカウントは条件にしない（SETUP-13）。
-  同じリポに、ブランチ名が一致するのに結びつきの印が無い PR があれば、Issue を `needs-human` にし、`note kind=stop reason=unlinked-pr` を投稿する。fork からの PR は、本文が Issue を参照していても扱わない。Issue 1 件に結びつく PR は 1 件で、マージされずに閉じられていれば `needs-human`（[ADR-20261016-001][adr-pr]）
+  同じリポに、ブランチ名が一致するのに結びつきの印が無い PR があれば、Issue を `needs-human` にし、`note kind=stop reason=unlinked-pr` を投稿する。fork からの PR は、本文が Issue を参照していても扱わない。Issue 1 件に結びつく PR は 1 件で、マージされずに閉じられていれば `needs-human`（`pr-closed`。[ADR-20261016-001][adr-pr]）。
+  ただし、マージされずに閉じた PR（結びつく PR と、ブランチ名が一致するのに結びつきの印が無い PR の両方）が、Issue を人が戻した時刻より前に閉じられていれば、Status を問わず、止めずに結びつきから外し、ほかに結びつく PR が無ければ計画からやり直す。人が戻した時刻は着手の後も GitHub の記録から同じ値に決まるので、着手の後も同じ閉じた PR を外し続ける。人が戻した時刻より後に閉じた PR は `pr-closed`（印の無い PR は `unlinked-pr`）で止め、開いている印の無い PR は `unlinked-pr` で止める。結びつきから外した PR は、Issue 1 件に結びつく PR の数に入れない。人が戻した時刻の決め方は、基本設計の「[状態遷移と判定][design-flow]」の「戻した Issue のやり直し」（[ADR-20261022-005][adr-unlink] の決定 1）
 - IMPL-7 PR を作ったら進行 Bot が Status を In Review にし、担当者（Assignee）はメンテナのまま。AI の担当は Project の単一選択欄「Agent」で表す（値：`worker` `reviewer` `human` `paused`）
 - IMPL-8 ADR の起票が要ると分かったら、作業 AI は実装せずに「止まった理由」を出力契約で返し、進行 Bot が Issue へコメントして `needs-human` を付ける（ADR が先、実装は承認後）。規約の正典（IMPL-4）を変える必要があると分かったときも同じ
 - IMPL-9 着手の前に、基線が緑であることを確かめる。緑でない（赤、無い、保留）なら、新しい着手（計画を含む）・最初の実装・載せ直しをせず、Issue に `needs-human` は付けない。作った PR のレビュー・修正・収束・マージの判定・片付けと、受け入れ・承認の確定は続け、基線が緑に戻った実行から自動で再開する（壊れた基線の上に積まない。Anthropic の harness の「まず動くことを確かめる」。[ADR-20261015-006][adr-flow]）。
@@ -220,3 +221,4 @@
 [adr-critic-skip]: ../adr/adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
 [adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
 [adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
+[adr-unlink]: ../adr/adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md

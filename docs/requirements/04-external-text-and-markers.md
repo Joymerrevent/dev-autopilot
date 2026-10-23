@@ -50,7 +50,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
 - TEXT-12 **受け入れの自動化**。Project に入った Issue のうち、`agent-ready` が無く、受け入れの印も無いもの（マイルストーンの有無は問わない。`from-review` の Issue だけは人がマイルストーンを付けるまで対象外。IMPL-26。[ADR-20261015-003][adr-intake]）に対し、進行 Bot が毎回の実行で次を行う。人の操作は、下書きを読んで `agent-ready` を付ける 1 つだけにする。
   1 回の実行で受け入れる件数に上限を持つ（設定。初回の実行で未処理の Issue すべてに走らないため。外の人が Issue を大量に立てたときの利用枠の歯止めでもある）
   - 検疫（TEXT-11）を題名・本文・コメントに通す。外の人の文も検疫の対象にする（読むのは機械で、AI には渡さない）。有りなら受付 AI を起動せず、作業指示の下書きも計画の難しさの判定も作らない。
-    進行 Bot は、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）、人への案内（処理対象にするなら `## 作業指示` のコメントを一から書き、マイルストーン（要るなら依存（blocked by）も）を Issue に付け、`needs-human` を外して Status を `Todo` に戻してから `agent-ready` を付ける。「[止まった状態から戻す手順][f01]」）、`intake` の印（`quarantine=found` と `sig` だけ）を載せた「受け入れの下書き」コメントを投稿し、`needs-human` を付ける（[ADR-20261015-003][adr-intake]）。
+    進行 Bot は、検疫の結果（見つかった種類と場所。見つかった文の中身は写さない）、人への案内（処理対象にするなら `## 作業指示` のコメントを一から書き、マイルストーン（要るなら依存（blocked by）も）を Issue に付け、Status を `Todo` に戻し、`agent-ready` を付けてから、最後に `needs-human` を外す。「[止まった状態から戻す手順][f01]」、[ADR-20261022-005][adr-unlink] の決定 2）、`intake` の印（`quarantine=found` と `sig` だけ）を載せた「受け入れの下書き」コメントを投稿し、`needs-human` を付ける（[ADR-20261015-003][adr-intake]）。
     人への案内には、公式文書などのやり方を伝えたいときの渡し方も短く書く。AI は URL の先を読めず（TEXT-5、SAFE-10）、作業指示にある当てる先のリポの GitHub の URL のほかの URL は渡す直前の検疫で止まる（TEXT-11）ので、
     (1) 作業指示に要るところを文で書き、出典は文書の名前と節の名前で示す、(2) 当てる先のリポに文書として置き、パスかリポの GitHub の URL で示す（リポの中のファイルは、Markdown のリンクにせずにパスを書く。リンクにするときは、リンクの先を `./` で始める。`./`・`../`・`#` で始まらないリンクの先は、URL として渡す直前の検疫で止まるため。基本設計の「[AI のセッション][design-ai]」の「検疫が探す URL」）、(3) 人の手元の Claude Code で調べ、結果を (1) か (2) の形で渡す、の 3 つを書く。添付（画像など）の URL で止まったときのために、AI は添付の画像を見られないので、画像の中身を作業指示に文で書くことも書く（TEXT-9）
   - 作業指示の下書き：著者を問わずすべての Issue（検疫で見つかった Issue を除く）で、受付 AI（`dev-autopilot:brief:triager`）が Issue の文から下書きを書く（[ADR-20261016-002][adr-draft]）。
@@ -134,3 +134,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-url]: ../adr/adr-20261022-001-quarantine-urls-outside-target-repo.md
 [adr-marker-keys]: ../adr/adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
 [adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
+[adr-unlink]: ../adr/adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
