@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-10-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -108,6 +108,9 @@ decision-makers: メンテナ
   続けてよければ、Status を戻し（PR が無ければ `Todo`、あれば `In Review`）、`needs-human` を外す。進行 Bot は、挙がった印を数えず、無いものとして読む
 - 途中のラウンドの `review` の印が無効なときと、`review` の印が消されて `round` が欠けるときは、PR を続けると `round` の欠けでまた止まる。PR を閉じ、作業ブランチを消し、Status を `Todo` に戻してから、`needs-human` を外す。
   進行 Bot は、閉じた PR を結びつきから外し、計画からやり直す（基本設計の「[状態遷移と判定][design-flow]」の「戻した Issue のやり直し」）
+
+  > **［2026-10-23 追記］** 閉じた PR を結びつきから外すのは、[ADR-20261022-005][adr-unlink] の決定 1 の例外による。人が戻す手順の中で閉じた PR は、最後に `needs-human` を外すより前に閉じたので、人が戻した時刻より前に閉じた PR に当たる。人が戻した時刻より後に閉じた PR では、今のとおり `pr-closed` で止める。どの場合も `needs-human` を最後に外すことは変わらない。
+
 - 鍵が漏れたとき（決定 3）：漏れた鍵の印は、誰が作ったかが分からないので、続けない。PR があれば閉じて作業ブランチを消し、`agent-ready` を外し、Status を `Todo` に戻してから、`needs-human` を外す。
   進行 Bot は、受け入れからやり直し、新しい下書きを書く。人は、新しい下書きを読んでから `agent-ready` を付ける
 - 人は進行 Bot のコメントを編集しないこと（「止まった状態から戻す手順」の決まり）は据え置く
@@ -215,3 +218,4 @@ decision-makers: メンテナ
 [safety]: ../requirements/05-safety.md
 [setup]: ../requirements/06-setup-and-stages.md
 [undecided]: ../requirements/09-undecided.md
+[adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md

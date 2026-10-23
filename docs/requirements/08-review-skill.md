@@ -16,7 +16,7 @@ dev-autopilot の設計への反映（出どころは [11-records.md][f11] の�
 - **nit（🟢）はマージを止めない**を規則として固定する。すでに IMPL-26 で Issue 化と決めた
 - **実行の層と判断の層を分ける**（CSA）。すでに SETUP-18 で決めた。進行 Bot だけが書き込みを持つ
 - **誤検知率の目標値**を置く。業界の 5〜15% を参考に、レビュー工程（段階 6）で「人が却下した指摘の割合」を測り、しきい値を超えたらレビュー AI の予算や観点を見直す
-- **レビュー済みの往復が一定数を超えたら自動で止める**（CodeRabbit の 5 件、copilot-pr-autopilot の 10 ラウンド）。IMPL-24 の 3 回がこれに当たる
+- **レビュー済みの往復が一定数を超えたら自動で止める**（CodeRabbit の 5 件、copilot-pr-autopilot の 10 ラウンド）。IMPL-24 の 3 回がこれに当たる。ただし IMPL-24 は、レビューの回数でなく、作業 AI が変更を push した回数（直すか衝突を解いた回数）で数える（[ADR-20261022-003][adr-rounds]）
 - **指摘ごとに確信度を付け、しきい値で捨てる**（Anthropic 公式 Plugin の 0〜100 と 80 未満の除外）。重要度（影響の大きさ）と確信度（本当に起きるか）は別の軸。批評 AI（上の 3 体目）が確信度を付け、🟡 は確信度が低ければ 🟢 に下げる。🔴 は 🟡 より下げない（IMPL-22。sandbox で再現しにくい権限や通信の 🔴 が落ちて pass になるのを防ぐ）。しきい値は設定にし、レビュー工程（段階 6）で測った誤検知率で調整する
 - **判定は head の SHA に結びつける**（Copilot の「push で approve が消える」）。印に `head=<SHA>` を含め、進行 Bot は印の SHA と PR の head が一致するときだけ pass と読む。pass の後に push があれば、再レビューが要る。
   例外は進行 Bot 自身の載せ直しで `develop` に対する差分の patch-id が変わらないときだけで、そのときは進行 Bot が印を新しい head に付け直す（MERGE-6）
@@ -108,3 +108,4 @@ mattpocock の `triage` スキルの Agent Brief の原則を、「[Issue と PR
 [adr-gaps]: ../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
 [adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md

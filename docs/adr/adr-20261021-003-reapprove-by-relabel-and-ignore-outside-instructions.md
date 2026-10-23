@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 承認は agent-ready の付け直しでやり直し、push 未満の人の作業指示は読まず、作業指示が 2 つ以上なら止める
+
+> **Amended by [ADR-20261022-005][adr-unlink]（2026-10-23）**: 決定 2 の承認のやり直しの順（`needs-human` があれば外し、Status を `Todo` に戻す → `agent-ready` を外して付け直す）を、`needs-human` を付けたまま行って最後に外す順に改めた。`needs-human` が無ければ付ける → 作業指示コメントか下書きを直す → PR があれば閉じ、作業ブランチを消す → Status を `Todo` に戻す → `agent-ready` を外して付け直す → 最後に `needs-human` を外す、の 6 つの順で行う。文を直すのは `agent-ready` を付け直す前にすること、PR がある Issue では PR を閉じて作業ブランチを消すこと、計画コメントが渡す直前の検疫で見つかったときの扱いと、決定 1・3・4 は据え置く。
 
 要件の UNDECIDED-61（承認した後に渡す文を直したいとき、承認をやり直す手順をどうするか。外の人の `## 作業指示` のコメントをどう扱うか）を決める。
 
@@ -188,3 +190,4 @@ decision-makers: メンテナ
 [flow]: ../requirements/01-issue-flow.md
 [impl]: ../requirements/02-implement-review-fix.md
 [undecided]: ../requirements/09-undecided.md
+[adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
