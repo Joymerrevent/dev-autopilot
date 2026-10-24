@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-16
-updated: 2026-10-23
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,12 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261022-005][adr-unlink]（2026-10-23）**: 決定 3 の「マージされずに閉じられていれば `needs-human`（人が閉じた意図を確かめる）」と、ブランチ名が一致するのに結びつきの印が無い PR で `needs-human` にする文に、例外を足した。マージされずに閉じた PR（結びつきの印の無い PR を含む）が、Issue を人が戻した時刻より前に閉じられていれば、Status を問わず、止めずに結びつきから外し、ほかに結びつく PR が無ければ計画からやり直す。人が戻した時刻は、push 以上の人が最後に `needs-human` を外した時刻、最新の `intake-final` の印の時刻、承認のやり直しに当たる `agent-ready` を付けた時刻の、最も遅いもの。人が戻した時刻より後に閉じた PR と、開いている印の無い PR では、今のとおり止める。結びつけの 3 つの条件、fork からの PR を扱わないこと、`Closes #<番号>` を結びつけに使わないこと、Issue 1 件に結びつく PR は 1 件であること、結びついた PR がマージされていれば片付けへ進むことと、決定 1・2 は据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261016-001 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
+>
+> **Amended by [ADR-20261024-001][adr-20261024-001]（2026-10-24）**: 決定 1 の `needs-human` を停止中（`ci-action-required`・`ci-stale`）に、決定 2 の印の名前を `merge` の印の `result`（`ready`・`human`）に、決定 3 の結びつきの印（`note kind=link`）を `link` の印に改めた。決定 3 の「マージされずに閉じられていれば `needs-human`」と、ADR-20261022-005 で足した例外は、PR だけが閉じられたら停止中（`pr-closed`）にし、`## 再開 下書きから` か `## 再開 計画から` より前の PR は数えない形に置き換えた（決定 7）。結びつけの 3 つの条件、fork からの PR を扱わないこと、`Closes #<番号>` を結びつけに使わないこと、Issue 1 件に結びつく PR は 1 件であること、ブランチ名が一致するのに結びつきの印が無い PR で止めることは据え置く。
+>
+> **Amended by [ADR-20261024-003][adr-20261024-003]（2026-10-24）**: 決定 1 の `failure`・`timed_out` を、レビューの前に検査の失敗として作業 AI に直させる形に改めた。レビューの指摘とは混ぜず、「最新のラウンドの 🔴」として渡さない。最初のレビューの前の直しの `fix` の印の `round` は 0（決定 2）。必須チェックごとに結果を読むこと、再実行は最新の 1 件を採ること、CI のログを渡さないこと、往復に数えること、マージの判定の時点で緑でなければ判定を次の実行に回すことは据え置く。
+>
+> **［2026-10-24 追記］** 段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 要件の UNDECIDED-9、UNDECIDED-10、UNDECIDED-12（[決めていないこと][undecided]の「レビューとマージ」と「受け入れと印」）を決める。
 どれも進行役が PR をどう扱うかの論点で、問いは 3 つある：レビューが pass なのに CI が緑でないとき、2 件目以降の `merge=ready`、PR と Issue の結びつけ。
@@ -200,3 +206,6 @@ decision-makers: メンテナ
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-003]: ./adr-20261024-003-review-after-required-checks-pass.md

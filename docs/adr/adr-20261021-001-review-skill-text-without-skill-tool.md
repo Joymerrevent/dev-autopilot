@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # レビュー AI に Skill の道具を持たせず、進行 Bot が review Skill の本文に引数を入れて渡す
+
+> **［2026-10-24 追記］** 「レビュー工程（段階 6）に入る前の手動の確かめ」は、AI のレビューを初めて動かす前の手動の確かめと読む（[ADR-20261024-002][adr-20261024-002] の決定 8）。
 
 要件の UNDECIDED-59（レビュー AI に `Skill` の道具を持たせるか）を決める。
 
@@ -139,3 +141,4 @@ decision-makers: メンテナ
 [undecided]: ../requirements/09-undecided.md
 [facts]: ../requirements/10-verified-facts.md
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

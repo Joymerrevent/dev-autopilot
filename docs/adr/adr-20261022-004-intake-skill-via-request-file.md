@@ -1,12 +1,18 @@
 ---
 status: accepted
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める
+
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 4 の「段階の出口の数え上げから除く」と、書かずに試す間の文（`run.dryRun` の値に関わらない、`dry-run-drafts.md`）を外した。段階の出口の数え上げと、書かずに試すことを持たない（決定 2・6）。
+>
+> **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 3 の返す下書きの欄から、計画の難しさの判定（`planReason`）を外した。作業ごとに使うモデルの決め方を決めるまで、受付 AI は判定を返さない（決定 8）。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 要件の UNDECIDED-73（人が `/verify-issue` から呼ぶ intake の Skill を、進行 Bot を動かすマシンでどう動かすか。[決めていないこと][undecided]の「ADR で決めること」の「受け入れと印」）を決める。
 
@@ -262,3 +268,6 @@ decision-makers: メンテナ
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md

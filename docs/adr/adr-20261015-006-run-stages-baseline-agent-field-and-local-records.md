@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-23
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -15,6 +15,14 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261022-004][adr-intake-req]（2026-10-23）**: 決定 4 の数え上げの (a)（同じ Issue で続いた実行の失敗の回数）から、人が `/verify-issue` から呼んだ intake の Skill の依頼で起こした実行（受け入れの依頼の実行）の受付 AI のセッションを除いた。比べのセッションを除いたのと同じ形にした。(c)（Issue ごとの累計の利用枠）には例外を作らず、受け入れの依頼の実行のセッションも数える。決定 4 の (b) と (d)、記録を失ったときの扱い、決定 1〜3 は据え置く。
 >
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261015-006 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
+>
+> **Amended by [ADR-20261024-001][adr-20261024-001]（2026-10-24）**: 決定 3 の Agent 欄の扱い（進行 Bot が書く値は `worker`・`reviewer`・空、`human` と `paused` は人だけが書く）を、Agent 欄を使わない形に改めた（一時止める・引き取るは `agent-paused`・`agent-manual` のラベル。決定 4）。
+>
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 1 の「段階 8 以降も、計画と実装は別の実行で進める」を、どの作業でもと読む。決定 4 に足した 2 つの例外（書かずに試す間の受け入れ、比べるためのレビュー）は、書かずに試すことと比べるためのレビューを持たないので無くなり、判定には手元の記録を使わない（決定 5）。決定 3 の段階 5 の Agent 欄の文は、段階を持たないので要らなくなった。
+>
+> **Amended by [ADR-20261024-003][adr-20261024-003]（2026-10-24）**: 決定 1 の「CI の結果が要る段（収束、マージの判定）」にレビューを足した。レビューは、必須チェックがすべて通ってから行う（決定 1）。
+>
+> **Amended by [ADR-20261024-006][adr-20261024-006]（2026-10-24）**: 決定 3 の片付け（マージを見つけた実行で Issue を閉じて作業場所を消す）を、マージ済み・閉鎖済みの状態を挟んで進行 Bot が片付ける形に改め、中止の後の片付けを足した。片付けは軸の値を問わず行い、失敗し続けたら片付けの前の状態のまま停止中にする（決定 1）。決定 2 の止めるものの「載せ直し」は、レビュー合格の PR の載せ直しと読む（決定 4）。決定 1・4 の中身と、片付けで人の止め方を書き換えないことは据え置く。
 
 要件の UNDECIDED-5〜8（[決めていないこと][undecided]の「流れと段」）を決める。
 問いは 4 つある：1 回の実行で進める段の数え方、基線が赤のときの扱い、段階 5（計画と実装を動かし、レビューは人が行う段階。段階は dev-autopilot を少しずつ動かす導入の順番で、正本は「[段階][setup]」の表）の Agent 欄、手元の記録を使うかどうか。
@@ -238,3 +246,7 @@ decision-makers: メンテナ
 [adr-dry]: ./adr-20261021-002-dry-run-only-at-intake-stage.md
 [adr-compare]: ./adr-20261021-007-compare-review-done-from-local-records.md
 [adr-intake-req]: ./adr-20261022-004-intake-skill-via-request-file.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-003]: ./adr-20261024-003-review-after-required-checks-pass.md
+[adr-20261024-006]: ./adr-20261024-006-cleanup-states-and-dependencies.md

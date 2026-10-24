@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-23
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 印の署名を確かめる鍵を一覧にしていつでも替えられるようにし、無効な印で止めた Issue は、人が needs-human を外せば知らせた印を数えずに続ける
+
+> **Amended by [ADR-20261024-001][adr-20261024-001]（2026-10-24）**: 決定 4 の「人が `needs-human` を外す前に知らせた無効な印は、外した後は数えない」を、「push 以上の人が `## 再開` を書く前に、`stop` の印の `comments` に挙げた印は、再開の後は数えない」に改め、決定 5 の戻し方（Status を戻す、PR を閉じる、`agent-ready` を外す、`needs-human` を最後に外す）を、戻す先の選び方に改めた（決定 7）。鍵の一覧と替え方（決定 1〜3）と、挙げていない無効な印と再開の後に新しく書き換えられた印で止めることは据え置く。
 
 要件の UNDECIDED-63（無効な印で止めた Issue をどう戻すか。印の署名の鍵をどう替えるか）を決める。
 
@@ -219,3 +221,4 @@ decision-makers: メンテナ
 [setup]: ../requirements/06-setup-and-stages.md
 [undecided]: ../requirements/09-undecided.md
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md

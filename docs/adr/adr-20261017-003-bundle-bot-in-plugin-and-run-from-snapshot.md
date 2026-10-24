@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 進行ボットを Plugin に同封し、Plugin を入れたプロジェクトで setup が利用者のマシンに版を写して定期の実行を登録する
+
+> **［2026-10-24 追記］** 「段階 8 の後に決める」とした、ほかのリポへの適用の時期は、[ADR-20261024-002][adr-20261024-002] で段階 4〜8 を持たなくなったので決め直す。決め直すまでは、当てる先は business-os だけのまま。
 
 メンテナの要件「誰でも、Plugin をインストールしたプロジェクトで、dev-autopilot がすべて動く。Plugin を入れたら setup で GitHub の設定をして使えるようにする」（2026-10-17）を、配り方と動かし方の決定にする。
 
@@ -255,3 +257,4 @@ decision-makers: メンテナ
 [doc-loading]: https://code.claude.com/docs/en/plugins/loading
 [doc-plugins-ref]: https://code.claude.com/docs/en/plugins-reference
 [doc-discover]: https://code.claude.com/docs/en/discover-plugins
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

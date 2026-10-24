@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # 計画 AI の自己申告で計画し直すときは、次回の実行に回さずに続けて行い、やり直した計画だけを投稿する
 
 > **Amended by [ADR-20261019-003][adr-replan]（2026-10-19）**: 決定 1 のうち「計画の工程では、計画 AI のセッションを最大 2 つ起動する」を改めた。計画のレビューが `fix` を返したら、同じ回の実行で続けて計画 AI に計画し直させるので、計画 AI のセッションは最大 3 つ（計画し直す回数の上限が初期値のとき）になる。同じ回の実行で続けて行うこと、途中で実行が終わったら次の実行で最初の計画からやり直すこと、やり直した計画だけを投稿することと、決定 2 は据え置く。
+>
+> **［2026-10-24 追記］** 計画 AI のモデルを受け入れの印とラベル（`plan:*`）で決める文は、[ADR-20261024-004][adr-20261024-004] の決定 8 で読む。作業ごとに使うモデルの決め方を決めるまで、計画 AI はいつも `models.plan` で始め、計画 AI が自己申告したときだけ、同じ回の実行で `models.planHard` で計画し直す（本 ADR の決定のまま）。`needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 要件の UNDECIDED-30（[決めていないこと][undecided]の「計画のやり直しを同じ実行で行うか」）を決める。
 
@@ -109,3 +111,6 @@ decision-makers: メンテナ
 [adr-review]: ./adr-20261017-002-review-axis-sessions-pr-comments-and-canon.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-replan]: ./adr-20261019-003-replan-on-plan-review-from-stage-5.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md

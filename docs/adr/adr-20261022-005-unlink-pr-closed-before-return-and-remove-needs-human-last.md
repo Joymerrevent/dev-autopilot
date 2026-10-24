@@ -1,7 +1,7 @@
 ---
-status: accepted
+status: superseded by ADR-20261024-001
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -72,6 +72,8 @@ decision-makers: メンテナ
 - 案 2-C：順を変えず、要件の一般の手順の「最後に」を外し、承認のやり直しでは PR を閉じてから `needs-human` を外すことを書き添える（直しの計画の (iii)）
 
 ## 決定（Decision Outcome）
+
+> **［2026-10-24 追記・supersede］** 本 ADR の決定 1〜3 は、[ADR-20261024-001][adr-20261024-001] で置き換えた。人が止まった作業を戻す操作は `## 再開 <戻す先>` の見出しになり、`needs-human` を外す順の決まりは無くなった。閉じた PR は、戻す先が「下書きから」か「計画から」なら `## 再開` より前の PR を数えず、開いている前の PR は進行 Bot が閉じる。PR だけが閉じられたら停止中（`pr-closed`）にする（[ADR-20261024-001][adr-20261024-001] の決定 7）。以下の記述は当時の決定の記録として残す。
 
 採用した選択肢:「案 1-A」「案 2-A」。
 理由: 例外を承認済みの ADR の決定として正典に置き、[ADR-20261021-003][adr-reapprove] と [ADR-20261021-004][adr-marker-keys] が前提にした形を追認する。人が戻した時刻は GitHub の印とラベルの記録だけから決まり、着手の後も同じ値になる。
@@ -238,3 +240,4 @@ decision-makers: メンテナ
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md

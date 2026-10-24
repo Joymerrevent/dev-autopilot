@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 設定の表には、要件が決めた初期値も値で書いて要件へリンクし、要件の値を変えるときは同じ PR で表も直す
+
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 [ADR-20261015-005][adr-settings] の決定 1 のうち、「要件が初期値を決めている項目は、表に値を写さず、要件の番号を指す」を改める。決定 1 のほかの項目（要件が決めていない値は「暫定」と書いて段階の出口で見直す、今の値の正本は設定ファイル、安全の境界を緩める変更は ADR で決める）と、決定 2 は据え置く。
 
@@ -95,3 +97,4 @@ decision-makers: メンテナ
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [req-change]: ../requirements/README.md#要件を変えるとき
 [struct]: ../requirements/07-structure.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md

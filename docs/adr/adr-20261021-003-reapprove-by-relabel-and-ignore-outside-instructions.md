@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-23
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,10 @@ decision-makers: メンテナ
 # 承認は agent-ready の付け直しでやり直し、push 未満の人の作業指示は読まず、作業指示が 2 つ以上なら止める
 
 > **Amended by [ADR-20261022-005][adr-unlink]（2026-10-23）**: 決定 2 の承認のやり直しの順（`needs-human` があれば外し、Status を `Todo` に戻す → `agent-ready` を外して付け直す）を、`needs-human` を付けたまま行って最後に外す順に改めた。`needs-human` が無ければ付ける → 作業指示コメントか下書きを直す → PR があれば閉じ、作業ブランチを消す → Status を `Todo` に戻す → `agent-ready` を外して付け直す → 最後に `needs-human` を外す、の 6 つの順で行う。文を直すのは `agent-ready` を付け直す前にすること、PR がある Issue では PR を閉じて作業ブランチを消すこと、計画コメントが渡す直前の検疫で見つかったときの扱いと、決定 1・3・4 は据え置く。
+>
+> **Amended by [ADR-20261024-001][adr-20261024-001]（2026-10-24）**: 決定 2（止まった状態から戻す手順に、承認のやり直しを足す）を、`## 再開 下書きから` に置き換えた（決定 7）。
+>
+> **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 1（`intake-final` の後に付け直した `agent-ready` を承認のやり直しとする）と決定 4（作業指示コメントが 2 つ以上なら止める）を置き換えた。`agent-ready` は最新のマスターの下書きより後に付けたときだけ有効と読み、決めた後に依頼を変えるときは止めてから `## 再開 下書きから` で戻す。作業指示が 2 つ以上でも止めず、最新の 1 つを読む（決定 3・5・6）。決定 3（push 未満の人の作業指示コメントは読まない）は据え置く。
 
 要件の UNDECIDED-61（承認した後に渡す文を直したいとき、承認をやり直す手順をどうするか。外の人の `## 作業指示` のコメントをどう扱うか）を決める。
 
@@ -191,3 +195,5 @@ decision-makers: メンテナ
 [impl]: ../requirements/02-implement-review-fix.md
 [undecided]: ../requirements/09-undecided.md
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md

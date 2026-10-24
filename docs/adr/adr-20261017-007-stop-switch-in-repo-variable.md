@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-20
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,12 @@ decision-makers: メンテナ
 # 全体を止める合図はリポの変数に置いて実行の途中でも読み、書かずに試す合図はリポの設定に残し、リポの設定は base ブランチの先端から読む
 
 > **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 1 の「進行ボットの PAT には Variables の読み取りだけを与える」は、GitHub App に切り替えた後はアプリの権限（Variables の読み取りだけ）と読む。止める合図の置き場と読み方は据え置く。
+>
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 3（書かずに試す合図は、リポの設定に残す）を外した。書かずに試すこと（`dryRun`）を持たない（決定 2）。
+>
+> **Amended by [ADR-20261024-005][adr-20261024-005]（2026-10-24）**: 全体を止める手段に、進行 Bot が AI の書いた文で攻撃の疑いを見つけたときに開く全体の停止の Issue を足した。進行 Bot は、リポの変数が `run` で、全体の停止の Issue が無いときだけ AI のセッションを起こす（決定 3）。人が変えるリポの変数と実行の途中でも読むこと（決定 1・2）、進行 Bot にリポの変数を書く権限を与えないことは据え置く。
+>
+> **［2026-10-24 追記］** Issue ごとに止める合図（Agent 欄の `paused`）は、[ADR-20261024-001][adr-20261024-001] の決定 4 で `agent-paused` のラベルと読む。
 
 要件の UNDECIDED-38（[決めていないこと][undecided]の「安全と設定」の「全体を止める合図と、書かずに試す合図の置き場」）を決める。
 
@@ -207,3 +213,6 @@ decision-makers: メンテナ
 [gh-audit-review]: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/reviewing-the-audit-log-for-your-organization
 [gh-audit]: https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/audit-log-events-for-your-organization
 [adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-005]: ./adr-20261024-005-security-axis-and-halt-issue.md

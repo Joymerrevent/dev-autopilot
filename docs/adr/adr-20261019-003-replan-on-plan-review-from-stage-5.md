@@ -1,12 +1,16 @@
 ---
 status: accepted
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 計画のレビューで直すべき点が見つかったら、同じ回の実行で計画 AI に計画し直させる。計画・実装工程（段階 5）から始める
+
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 1 の「計画・実装工程（段階 5）から」を「最初から」に、「上限まで計画し直しても `fix` のときは、最後の計画を投稿する」を「計画を投稿せずに停止中（`plan-limit`）にし、止めた理由のコメントに最後の指摘を書く」に改めた。決定 2 の「段階 5〜7 では」を外し、どの作業でも確かめの結果を計画コメントに書かない。決定 3 を置き換えた（決定 3）。同じ回の実行で計画し直すこと、計画し直すセッションに渡すもの、自己申告を無視すること、指摘を GitHub に書かないこと、回数の上限を持つことは据え置く。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 [ADR-20261018-004][adr-planrev] の決定 2 のうち「段階 5〜7 では、AI のレビューの結果を記録だけに残す」と、決定 3 のうち「計画 AI に計画し直させるかも、段階 7 を終えるときに決める」を改める。
 [ADR-20261018-002][adr-redo] の決定 1 のうち「計画の工程で起動する計画 AI のセッションは最大 2 つ」を改める。
@@ -140,3 +144,5 @@ AI のレビューの結果で計画を止めるか（関所に使うか）を�
 [stages]: ../requirements/06-setup-and-stages.md
 [adr-redo]: ./adr-20261018-002-plan-redo-in-same-run.md
 [adr-planrev]: ./adr-20261018-004-ai-reviews-plans-in-shadow-first.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
