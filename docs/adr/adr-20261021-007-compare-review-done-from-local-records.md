@@ -1,7 +1,7 @@
 ---
-status: accepted
+status: superseded by ADR-20261024-002
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -57,6 +57,8 @@ decision-makers: メンテナ
 - 案 2-B：実行の失敗と同じ回数（`limits.retry.count`）まで、比べだけの失敗の回数を数えてやり直す
 
 ## 決定（Decision Outcome）
+
+> **［2026-10-24 追記・supersede］** 本 ADR の決定 1〜3 は、[ADR-20261024-002][adr-20261024-002] で置き換えた。比べるためのレビューは持たず、ADR-20261015-006 の決定 4 に足した 2 つ目の例外（比べのセッションの記録を判定に読む）も無くなった（[ADR-20261024-002][adr-20261024-002] の決定 5）。以下の記述は当時の決定の記録として残す。
 
 採用した選択肢:「案 1-A」「案 2-A」。
 理由: 比べの結果を判定に混ぜず、印も増やさずに、済んだかを見分けられる。手元の記録を判定に使う範囲は、比べるためのレビューを起こすかの 1 つだけに絞られ、記録を失っても比べを回し直すだけで、本番の流れは変わらない。
@@ -196,3 +198,4 @@ decision-makers: メンテナ
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-settings]: ../design/basic/01-settings.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

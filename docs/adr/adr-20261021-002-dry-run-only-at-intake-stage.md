@@ -1,7 +1,7 @@
 ---
-status: accepted
+status: superseded by ADR-20261024-002
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -47,6 +47,8 @@ decision-makers: メンテナ
 - 案 E：書かずに試さず、受け入れ工程（段階 4）の最初から GitHub に書く
 
 ## 決定（Decision Outcome）
+
+> **［2026-10-24 追記・supersede］** 本 ADR の決定 1〜4 は、[ADR-20261024-002][adr-20261024-002] で置き換えた。書かずに試すこと（`run.dryRun`）は持たず、進行 Bot は最初の実行から当てる先のリポに書く。GitHub App には、当てる先のリポに初めて書く前に切り替える（[ADR-20261024-002][adr-20261024-002] の決定 2）。以下の記述は当時の決定の記録として残す。
 
 採用した選択肢:「案 A」。
 理由: 手元の記録を判定に使う範囲を、書かずに試す間の受け入れだけに絞れる。実行を重ねると、すべての Issue に下書きと選定の結果が出る。書き始めた後の判定と上限は、書かずに試した回に左右されない。段階 5 より後の段階は、段階ごとの記録だけの仕組みと 1 件ずつの着手で、書く前に確かめる役を果たせる。
@@ -156,3 +158,4 @@ decision-makers: メンテナ
 [text]: ../requirements/04-external-text-and-markers.md
 [stages]: ../requirements/06-setup-and-stages.md
 [undecided]: ../requirements/09-undecided.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

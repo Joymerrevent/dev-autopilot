@@ -26,7 +26,7 @@
 | ADR-20261017-007 | [全体を止める合図はリポの変数に置いて実行の途中でも読み、書かずに試す合図はリポの設定に残し、リポの設定は base ブランチの先端から読む][adr-20261017-007-stop-switch-in-repo-variable] | accepted | 2026-10-17 |
 | ADR-20261018-001 | [AI のセッションは SIGTERM で止めて残ったコマンドも止め、途中で止めた回の費用は 1 セッションの費用の上限とみなし、利用枠は費用で数える][adr-20261018-001-stop-session-and-count-usage] | accepted | 2026-10-18 |
 | ADR-20261018-002 | [計画 AI の自己申告で計画し直すときは、次回の実行に回さずに続けて行い、やり直した計画だけを投稿する][adr-20261018-002-plan-redo-in-same-run] | accepted | 2026-10-18 |
-| ADR-20261018-003 | [作業 AI が最初の実装に `sonnet` を使ってよいかは、まず人が手直ししたかで仮に決め、AI のレビューと AI の修正の結果で見直す][adr-20261018-003-count-model-raise-at-stage-7] | accepted | 2026-10-18 |
+| ADR-20261018-003 | [作業 AI が最初の実装に `sonnet` を使ってよいかは、まず人が手直ししたかで仮に決め、AI のレビューと AI の修正の結果で見直す][adr-20261018-003-count-model-raise-at-stage-7] | superseded by ADR-20261024-002 | 2026-10-18 |
 | ADR-20261018-004 | [計画は AI がレビューする。人が計画を読む間は結果を記録だけに残して人の判断と比べ、計画を止めるのに使うかは、その結果を見て決める][adr-20261018-004-ai-reviews-plans-in-shadow-first] | accepted | 2026-10-18 |
 | ADR-20261018-005 | [設定の表には、要件が決めた初期値も値で書いて要件へリンクし、要件の値を変えるときは同じ PR で表も直す][adr-20261018-005-settings-table-shows-required-values] | accepted | 2026-10-18 |
 | ADR-20261019-001 | [直したはずの指摘がレビューで再び出たら、間が空いていても人に渡す。同じ指摘かは、指摘ごとの ID を review の印に書いて見分ける][adr-20261019-001-repeated-findings-by-ids] | accepted | 2026-10-19 |
@@ -36,17 +36,17 @@
 | ADR-20261020-001 | [自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ][adr-20261020-001-bot-accounts-as-list] | accepted | 2026-10-20 |
 | ADR-20261020-002 | [進行 Bot は、GitHub に書き始める前に GitHub App に切り替え、自動化用のアカウントを分ける][adr-20261020-002-switch-to-github-app-before-writing] | accepted | 2026-10-20 |
 | ADR-20261021-001 | [レビュー AI に Skill の道具を持たせず、進行 Bot が review Skill の本文に引数を入れて渡す][adr-20261021-001-review-skill-text-without-skill-tool] | accepted | 2026-10-21 |
-| ADR-20261021-002 | [書かずに試すのは受け入れ工程（段階 4）だけにし、試した下書きは同じ文の間は作り直さず、試した回の費用を Issue の累計に数えない][adr-20261021-002-dry-run-only-at-intake-stage] | accepted | 2026-10-21 |
+| ADR-20261021-002 | [書かずに試すのは受け入れ工程（段階 4）だけにし、試した下書きは同じ文の間は作り直さず、試した回の費用を Issue の累計に数えない][adr-20261021-002-dry-run-only-at-intake-stage] | superseded by ADR-20261024-002 | 2026-10-21 |
 | ADR-20261021-003 | [承認は agent-ready の付け直しでやり直し、push 未満の人の作業指示は読まず、作業指示が 2 つ以上なら止める][adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions] | accepted | 2026-10-21 |
 | ADR-20261021-004 | [印の署名を確かめる鍵を一覧にしていつでも替えられるようにし、無効な印で止めた Issue は、人が needs-human を外せば知らせた印を数えずに続ける][adr-20261021-004-marker-key-list-and-resume-after-invalid-markers] | accepted | 2026-10-21 |
 | ADR-20261021-005 | [push しないパスのうち要件が名指しするものは進行 Bot のプログラムに固定し、リポの設定には足す分だけを持つ][adr-20261021-005-required-push-blocked-paths-in-program] | accepted | 2026-10-21 |
 | ADR-20261021-006 | [当てる先のリポの owner と名前は、リポの設定を読む前に要る項目として、base ブランチの名前と GitHub App の 2 つの ID と一緒にマシンの設定に置く][adr-20261021-006-repo-owner-and-name-in-machine-settings] | accepted | 2026-10-21 |
-| ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | accepted | 2026-10-21 |
+| ADR-20261021-007 | [レビュー工程（段階 6）の比べるためのレビューは、本番のラウンドの後の実行に別の重い工程として起こし、済んだかを手元の記録で見分け、失敗を実行の失敗に、費用を Issue の累計に数えない][adr-20261021-007-compare-review-done-from-local-records] | superseded by ADR-20261024-002 | 2026-10-21 |
 | ADR-20261022-001 | [検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない][adr-20261022-001-quarantine-urls-outside-target-repo] | accepted | 2026-10-22 |
 | ADR-20261022-002 | [3 つの軸の 🔴 🟡 が 0 件のラウンドは批評 AI のセッションを起こさず、IMPL-18 の 5 つの条件を 3 つの軸のセッションにだけ掛ける][adr-20261022-002-skip-critic-when-no-high-or-medium-findings] | accepted | 2026-10-22 |
 | ADR-20261022-003 | [往復の回数は、作業 AI が直すか衝突を解いて push した回数（fix の印の数）で数え、同じ指摘の再発は、AI の変更の後のラウンドでだけ判定する][adr-20261022-003-count-round-trips-by-ai-pushes] | accepted | 2026-10-22 |
 | ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | accepted | 2026-10-22 |
-| ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | accepted | 2026-10-22 |
+| ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | superseded by ADR-20261024-001 | 2026-10-22 |
 | ADR-20261024-001 | [作業の単位の状態を主な流れと重ねる 3 本の軸で表し、人の操作はラベルと見出しのコメントで受け、Project の欄は表示だけにする][adr-20261024-001-work-unit-main-flow-and-overlay-axes] | accepted | 2026-10-24 |
 | ADR-20261024-002 | [段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う][adr-20261024-002-no-stages-4-to-8-and-no-trials] | accepted | 2026-10-24 |
 | ADR-20261024-003 | [AI のレビューは必須チェックがすべて通ってから行い、必須チェックが落ちた変更はレビューせずに AI が先に直す][adr-20261024-003-review-after-required-checks-pass] | accepted | 2026-10-24 |

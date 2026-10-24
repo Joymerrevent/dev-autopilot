@@ -1,7 +1,7 @@
 ---
-status: accepted
+status: superseded by ADR-20261024-002
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -37,6 +37,8 @@ decision-makers: メンテナ
 - 案 C：段階 5 で、人が手直しした `sonnet` の PR を `opus` で実装し直して比べる（切り替える場面を、段階 5 でも作る）
 
 ## 決定（Decision Outcome）
+
+> **［2026-10-24 追記・supersede］** 本 ADR の決定 1 は、[ADR-20261024-002][adr-20261024-002] で置き換えた。段階 4〜8 を持たないので、段階ごとの材料で最初の実装のモデルを決める形は無くなった。作業ごとに使うモデルの決め方は別に決め、決めるまでは設定の初期値（`models.*`）のモデルを使う（[ADR-20261024-002][adr-20261024-002] の決定 7）。以下の記述は当時の決定の記録として残す。
 
 採用した選択肢:「案 A」。
 理由: それぞれの段階で実際に起きることから決められ、`sonnet` を試すのも遅れない。AI のレビューと AI の修正の結果も使うので、人が手直しするほどではない問題も拾え、修正で `opus` に切り替える決まりが効いているかも確かめられる。
@@ -103,3 +105,4 @@ decision-makers: メンテナ
 [markers]: ../requirements/04-external-text-and-markers.md
 [stages]: ../requirements/06-setup-and-stages.md
 [undecided]: ../requirements/09-undecided.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
