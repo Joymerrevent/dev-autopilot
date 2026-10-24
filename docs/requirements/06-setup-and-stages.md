@@ -18,7 +18,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
     進行 Bot のプログラムの写し（インストールされた Plugin の版を、置き場の中の版ごとのフォルダに写す。STRUCT-3）、
     定期の実行の登録（macOS は launchd の plist、Linux は systemd のユーザーのタイマー。STRUCT-8）、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた記録の目印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、fine-grained PAT の発行と印の署名の鍵の一覧（IMPL-20）の作成、どちらも秘密の置き場への保管（SAFE-15）、GitHub App の登録と当てる先のリポへの導入と秘密鍵の保管（進行 Bot が当てる先のリポに初めて書く前。[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages]）、専用マシンの用意、利用枠の確認、
-    Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
+    Project の自動追加（起票された Issue を Project に入れ、作業の単位を起票済みにする（T1。FLOW-35）。組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、
     処理対象にする Issue を決めること（マスターの下書きを読み、要れば直すか差し戻してから、`agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行 Bot は毎回の実行の最初に同じ点検を回し、
   fail が 1 つでもあれば作業に入らず止まる（fail-closed）。人が呼ぶ `check` は進行 Bot を直接起動せず、定期の実行と同じジョブを起こす。GitHub の点検（ラベル、Project の欄、ruleset、PAT の権限）は進行 Bot が自分の PAT で行い、人のセッションは実行の記録を読んで表示する（点検だけで動かす仕組みは、基本設計の「[導入と点検][design-setup]」の「点検だけで動かす仕組み」で決めた。[ADR-20261017-004][adr-human] の決定 2）。
