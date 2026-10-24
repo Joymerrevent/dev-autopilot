@@ -281,6 +281,15 @@ GitHub の試し（FACT-65〜67）は、Joymerrevent に非公開の試しのリ
 |---|---|---|---|
 | FACT-71 | sandbox を有効にした Claude Code の Bash から、作業フォルダの外のフォルダ（記録の置き場に見立てたもの）にファイルを書けるか | **書けない。** sandbox を有効にし（`failIfUnavailable`、`allowUnsandboxedCommands: false`）、`permissions.allow` を `Bash` にした安全設定で、作業フォルダ（`/private/tmp/` の下の試しの git のリポ）の外の、ホームの下の試しのフォルダと `/private/tmp/` の下の試しのフォルダに `mkdir -p` とファイルの書き込みをさせると、どちらも `Operation not permitted`（終了コード 1）で、ファイルはできなかった。人が sandbox を有効にした Claude Code で呼ぶ Skill が、作業フォルダの外の記録の置き場に依頼のファイルを書くときは、sandbox の外でコマンドを動かす許可が要る | 実行 |
 
+## 作業の単位の状態遷移の ADR を起票する途中で確かめた事実（2026-10-24）
+
+ADR-20261024-004 と ADR-20261024-006 の前提を確かめた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-72 | 進行 Bot の認証（GitHub App）で、進行 Bot が投稿したコメントを「古い（outdated）」として畳めるか（前の版のマスターの下書きを畳む前提。[ADR-20261024-004][adr-master] の決定 1） | **畳める。** メンテナが、GitHub App の認証で、App が投稿したコメントを畳めることを確かめた | メンテナの答え（2026-10-24、ADR-20261024-004 の起票のとき）。確かめた手順と日時の記録は無い |
+| FACT-73 | push の権限を持たない人が、Issue を閉じられるか（push 以上の人が閉じたときだけ中止にする前提。[ADR-20261024-006][adr-cleanup] の決定 2） | **閉じられる。** Read の役でも、自分が開いた Issue を閉じられ、自分が閉じた Issue を開き直せる。Triage の役は、すべての Issue と PR を閉じ、開き直せる（Write・Maintain・Admin も同じ） | GitHub の公式文書の、組織のリポの役の表（「Close issues they opened themselves」「Close, reopen, and assign all issues and pull requests」の行。[公式文書][doc-repo-roles]）を、2026-10-24 に読んだ |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -299,3 +308,6 @@ GitHub の試し（FACT-65〜67）は、Joymerrevent に非公開の試しのリ
 [doc-env]: https://code.claude.com/docs/en/env-vars
 [doc-tools]: https://code.claude.com/docs/en/tools-reference#bash-tool-behavior
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-cleanup]: ../adr/adr-20261024-006-cleanup-states-and-dependencies.md
+[doc-repo-roles]: https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization
