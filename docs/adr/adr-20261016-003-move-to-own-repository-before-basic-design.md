@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-16
-updated: 2026-10-24
+updated: 2026-10-25
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -206,6 +206,7 @@ business-os の中に置いたままにすると、3 つの問題がある。
 - `dev-autopilot/docs/design/` → `docs/design/`、`dev-autopilot/src/` → `src/`、`dev-autopilot/plugin/` → `plugin/`（2026-10-17・決定 1 の移動による）。
   本文のほかの `dev-autopilot/` は、business-os の中のフォルダを指すので、business-os のパスのまま
 - ADR 一覧（`docs/adr/index.md`）の `dev-autopilot/` は、business-os の commit に固定したリンクの中だけにあり、注記は要らなかった
+- `docs/diagrams/` → `docs/requirements/diagrams/`（2026-10-25・要件の写しの図を、要件のフォルダの中に置くため）
 
 [structure]: ../requirements/07-structure.md
 [undecided]: ../requirements/09-undecided.md
@@ -215,7 +216,7 @@ business-os の中に置いたままにすると、3 つの問題がある。
 [merge]: ../requirements/03-merge.md
 [safety]: ../requirements/05-safety.md
 [review]: ../requirements/08-review-skill.md
-[diagrams]: ../diagrams/README.md
+[diagrams]: ../requirements/diagrams/README.md
 [adr-readme]: ./README.md
 [adr-index]: ./index.md
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md

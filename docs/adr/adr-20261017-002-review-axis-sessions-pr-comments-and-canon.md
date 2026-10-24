@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-24
+updated: 2026-10-25
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -274,6 +274,10 @@ decision-makers: メンテナ
   - ADR-20261015-005：タイトルの下に、決定 1 の Agent ツールの項目を本 ADR で改めた旨の注記を足す
   - 09-undecided.md：UNDECIDED-32、UNDECIDED-33、UNDECIDED-34 を欠番にする（元の文を取り消し線で残す）
 
+## パスの注記
+
+- `docs/diagrams/` → `docs/requirements/diagrams/`（2026-10-25・要件の写しの図を、要件のフォルダの中に置くため）
+
 [undecided]: ../requirements/09-undecided.md
 [facts]: ../requirements/10-verified-facts.md
 [overview]: ../requirements/00-overview.md
@@ -286,7 +290,7 @@ decision-makers: メンテナ
 [struct]: ../requirements/07-structure.md
 [review]: ../requirements/08-review-skill.md
 [records]: ../requirements/11-records.md
-[diagrams]: ../diagrams/README.md
+[diagrams]: ../requirements/diagrams/README.md
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-settings]: ./adr-20261015-005-settings-values-and-machine-settings.md
 [doc-subagents]: https://code.claude.com/docs/en/sub-agents

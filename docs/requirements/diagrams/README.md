@@ -56,14 +56,14 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 - フォルダの箱は、中身を動かす主の色にする（`src/` は青、`agents/` は緑、人が呼ぶ Skill は黄）。主が違うものは箱を分ける
 - 図を足すときと直すときに、この表と凡例の言葉で確かめる
 
-[req]: ../requirements/README.md
-[f00]: ../requirements/00-overview.md
-[f01]: ../requirements/01-issue-flow.md
-[f03]: ../requirements/03-merge.md
-[f04]: ../requirements/04-external-text-and-markers.md
-[f05]: ../requirements/05-safety.md
-[f06]: ../requirements/06-setup-and-stages.md
-[f07]: ../requirements/07-structure.md
+[req]: ../README.md
+[f00]: ../00-overview.md
+[f01]: ../01-issue-flow.md
+[f03]: ../03-merge.md
+[f04]: ../04-external-text-and-markers.md
+[f05]: ../05-safety.md
+[f06]: ../06-setup-and-stages.md
+[f07]: ../07-structure.md
 [overview]: ./overview.drawio.svg
 [issue-flow]: ./issue-flow.drawio.svg
 [isolation]: ./isolation-and-keys.drawio.svg
