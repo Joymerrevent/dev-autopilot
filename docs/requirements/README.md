@@ -18,6 +18,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 | [09-undecided.md][f09] | 決めていないこと |
 | [10-verified-facts.md][f10] | 実機で確かめた事実 |
 | [11-records.md][f11] | 調査とレビューの記録（要件ではない） |
+| [diagrams/][diagrams] | 図（要件の写し。正本は要件） |
 
 ## 読み方
 
@@ -79,7 +80,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 [f11]: ./11-records.md
 [adr]: ../adr/README.md
 [adr-index]: ../adr/index.md
-[diagrams]: ../diagrams/README.md
+[diagrams]: ./diagrams/README.md
 [design-settings]: ../design/basic/01-settings.md
 [adr-table]: ../adr/adr-20261018-005-settings-table-shows-required-values.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md

@@ -42,7 +42,7 @@ dev-autopilot の進行 Bot と、進行 Bot が起動する AI のセッショ�
 [undecided]: ../requirements/09-undecided.md
 [b01]: ./basic/01-settings.md
 [b02]: ./basic/02-flow-and-judgment.md
-[diagrams]: ../diagrams/README.md
+[diagrams]: ../requirements/diagrams/README.md
 [b03]: ./basic/03-ai-sessions.md
 [b04]: ./basic/04-setup-and-check.md
 [b05]: ./basic/05-tests.md
