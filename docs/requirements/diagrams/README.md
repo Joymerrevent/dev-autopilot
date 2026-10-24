@@ -6,7 +6,8 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 | 図 | 何を表すか | 元にした要件 |
 | --- | --- | --- |
 | [全体の構成][overview] | 進行 Bot・AI の 5 役・作業場所・GitHub・人（メンテナと外の人）の関係。誰が何に書けるか | [00-overview.md][f00]、[01-issue-flow.md][f01]、[04-external-text-and-markers.md][f04] の TEXT-12 と印の一覧、[05-safety.md][f05] |
-| [Issue の流れ][issue-flow] | Issue の起票（外の人でもコラボレータでも）からマージ後の片付けまでの正常な順と、止まる・待つ・戻す遷移。各工程の担い手と Project の Status。各工程が動き始める段階 | [01-issue-flow.md][f01] の FLOW-15〜34、[03-merge.md][f03] の MERGE-5・6、[04-external-text-and-markers.md][f04] の TEXT-12、[06-setup-and-stages.md][f06] の段階の表 |
+| [Issue の流れ][issue-flow] | 作業の単位（Issue と結びつく PR）の主な流れを、担い手（起票する人・人・進行 Bot・AI のセッション）ごとのレーンで表す。左に主な流れの枠、右に Project の「状態」の欄。止める・待つ・戻す（主な流れに重ねる 3 本の軸）は右の枠 | [01-issue-flow.md][f01] の FLOW-35〜45、[03-merge.md][f03] の MERGE-1・5 |
+| [作業の単位の状態遷移][work-unit-states] | 主な流れの 17 の状態と線（依頼・計画・変更・終了の枠）と、主な流れに重ねる 3 本の軸（止め方・先の依頼・安全）。主な流れの箱の色は次に動く担い手、軸の箱の色は値の意味 | [01-issue-flow.md][f01] の FLOW-35〜45 |
 | [隔離と鍵][isolation] | sandbox の境界、秘密の置き場、進行 Bot の clone（business-os の clone）とプログラムの写し、GitHub への書き込みの経路 | [05-safety.md][f05] の SAFE-1〜18 |
 | [フォルダ構成と起動][structure] | dev-autopilot のリポの構成（予定）と、Plugin の入れ方・写し・定期の実行・進行 Bot・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜9 |
 
@@ -17,6 +18,10 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 ## Issue の流れ
 
 ![Issue の流れ][issue-flow]
+
+## 作業の単位の状態遷移
+
+![作業の単位の状態遷移][work-unit-states]
 
 ## 隔離と鍵
 
@@ -47,7 +52,7 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 | 青 | `#dae8fc` / `#6c8ebf` | 進行 Bot（AI ではない決まった処理のプログラム）の工程と、進行 Bot のコード・写し・clone | 進行 Bot |
 | 緑 | `#d5e8d4` / `#82b366` | AI（受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI）のセッションと、AI が読むエージェント定義と Skill（`review`） | AI のセッション |
 | 紫 | `#e1d5e7` / `#9673a6` | GitHub（Issue・PR・Project とその欄・CI・ruleset・リポの変数） | GitHub |
-| 赤 | `#f8cecc` / `#b85450` | 止める・止まる（`needs-human` と Blocked、起動しない、push しない、実行の失敗）と、秘密。赤の破線と × は「できない」 | 止める |
+| 赤 | `#f8cecc` / `#b85450` | 止める・止まる（停止中、攻撃の疑い、起動しない、push しない、実行の失敗）と、秘密。赤の破線と × は「できない」 | 止める |
 | 橙 | `#ffe6cc` / `#d79b00` | 一部だけ止めて、ほかは続ける | 一部だけ止める |
 | 灰 | `#f5f5f5` / `#666666` | ファイル・設定・記録・OS の仕組み、起票する人（外の人を含む）、待つ・何もしない・残す | ファイル・仕組み、待つ |
 | 白 | `#ffffff` / `#666666` | 問い（分かれ道）と、箇条の注記 | 問い |
@@ -62,9 +67,9 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 [f03]: ../03-merge.md
 [f04]: ../04-external-text-and-markers.md
 [f05]: ../05-safety.md
-[f06]: ../06-setup-and-stages.md
 [f07]: ../07-structure.md
 [overview]: ./overview.drawio.svg
 [issue-flow]: ./issue-flow.drawio.svg
+[work-unit-states]: ./work-unit-states.drawio.svg
 [isolation]: ./isolation-and-keys.drawio.svg
 [structure]: ./structure.drawio.svg

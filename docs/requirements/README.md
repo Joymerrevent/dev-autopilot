@@ -32,7 +32,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 - エージェント定義の置き方は 2026-10-19 に、ループのフォルダと役の名前に改めた（STRUCT-9）。承認済みの ADR、[10-verified-facts.md][f10] の実機の記録、[11-records.md][f11]、欠番の取り消し線の中の元の文は、元の名前のまま残してある。`intake.md` は `brief/triager.md`、`planner.md` は `plan/planner.md`、`plan-reviewer.md` は `plan/reviewer.md`、`worker.md` は `change/worker.md`、`reviewer.md` は `change/reviewer.md`、`critic.md` は `change/verifier.md` と読み替える（`dev-autopilot:worker` などの `--agent` の値も同じ）
 - まだ決めていないことは [09-undecided.md][f09] に集めてある。ADR で決めること、基本設計の中で決めてよいもの、確かめることに分けてある
 - [11-records.md][f11] は調査とレビューの記録で、要件ではない
-- 全体の構成・Issue の流れ・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
+- 全体の構成・Issue の流れ・作業の単位の状態遷移・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
 
 ## 要件の番号の索引
 
@@ -40,7 +40,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 
 | 番号 | 中身 | ファイル |
 | --- | --- | --- |
-| FLOW-n | 棚卸し、並列と競合、間隔の運用、Issue の状態の遷移（正常な順と止まる遷移） | [01-issue-flow.md][f01] |
+| FLOW-n | 棚卸し、並列と競合、間隔の運用、Issue の状態の遷移（主な流れと重ねる軸。FLOW-15〜34 は欠番） | [01-issue-flow.md][f01] |
 | IMPL-n | 実装、レビュー、対応ループ、モデルの流れ | [02-implement-review-fix.md][f02] |
 | MERGE-n | マージ | [03-merge.md][f03] |
 | TEXT-n | 外から入る文の扱い | [04-external-text-and-markers.md][f04] |
