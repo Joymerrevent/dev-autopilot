@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-19
-updated: 2026-10-23
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # 直したはずの指摘がレビューで再び出たら、間が空いていても人に渡す。同じ指摘かは、指摘ごとの ID を review の印に書いて見分ける
 
 > **Amended by [ADR-20261022-003][adr-rounds]（2026-10-23）**: 決定 2 の「新しいラウンド」（同じ指摘の再発を判定するラウンド）を、AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後のラウンド）に限った。PR の最初のラウンド、進行 Bot だけの載せ直しで差分が変わったラウンド、人の push の後のラウンド、レビュー工程（段階 6）のラウンドと、段階 6 から持ち越した PR の作業 AI が直す前のラウンドでは判定しない。冒頭の用語の「修正の後のラウンド」は、衝突の解消の後を含む、AI の変更の後のラウンドと読む。確認方法の 1 つ目の項目の「前のラウンドとの比べ方」は、判定するラウンドとしないラウンドの組を含めて読む。決定 2 の 2026-10-22 の追記は、ADR-20261022-003 で決め直した。決定 1（`findings` の ID）、決定 2 のうち比べる相手（前のどのラウンドの `findings` でもよい）と同じラウンドの中の重なりを数えないこと、確認方法のほかの項目は据え置く。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 要件の UNDECIDED-41（[決めていないこと][undecided]の「振動の数え方」）を決める。あわせて、同じ指摘かを見分けるのに要る材料（どの指摘を出したか）を、判定に使える形で GitHub に残す方法を決める。
 
@@ -132,3 +134,5 @@ decision-makers: メンテナ
 [adr-flow]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [adr-rounds]: ./adr-20261022-003-count-round-trips-by-ai-pushes.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

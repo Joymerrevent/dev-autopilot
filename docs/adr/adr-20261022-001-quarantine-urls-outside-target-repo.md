@@ -1,12 +1,16 @@
 ---
 status: accepted
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 検疫は、当てる先のリポの GitHub の URL のほかの URL を探して止め、AI には GitHub に投稿する文にほかの URL を書かせない
+
+> **Amended by [ADR-20261024-005][adr-20261024-005]（2026-10-24）**: 決定 1・3 の「止めて `needs-human`」を、安全の軸に値を入れる形に改めた。AI に渡す前の文で見つかれば攻撃の疑い（入口）、AI が書いた文で見つかれば攻撃の疑い（AI の文）で、全体も止める（決定 1・3）。検疫が探す URL の範囲と、AI に外の URL を書かせない指示は据え置く。
+>
+> **［2026-10-24 追記］** 段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 要件の UNDECIDED-68（検疫が探す URL の範囲を、どこまでにするか）を決める。
 
@@ -119,3 +123,5 @@ decision-makers: メンテナ
 [impl]: ../requirements/02-implement-review-fix.md
 [undecided]: ../requirements/09-undecided.md
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-005]: ./adr-20261024-005-security-axis-and-halt-issue.md

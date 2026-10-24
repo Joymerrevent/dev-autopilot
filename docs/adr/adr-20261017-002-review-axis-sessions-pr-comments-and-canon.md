@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -15,6 +15,10 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261021-005][adr-blocked]（2026-10-22）**: 決定 5 のうち、「一覧はリポの設定に持ち（STRUCT-2）、初期値は構造仕様の設定の表で決める」を改めた。IMPL-15 が名指しするパス（`CLAUDE.md` を含む）は進行 Bot のプログラムに固定し、規約の正典のパスはリポの設定の足す分（`push.blockedPaths`）に持つ。規約の正典に触れる diff を push しないこと、正典のパスの初期値を構造仕様の表で決めること、正典のパスを外すのを ADR で決めることと、決定 1〜4 は据え置く。
 >
 > **Amended by [ADR-20261022-002][adr-critic-skip]（2026-10-22）**: 決定 1 のうち、批評 AI のセッションをどのラウンドでも起こすこと、どのラウンドでも批評 AI の統合の結果で印を書くこと、5 つの条件（IMPL-18）をどのラウンドでも批評 AI のセッションに掛けることの 3 つと、確認方法の 1 つ目の項目のうち、レビューの流れと 5 つの条件を掛ける範囲を改めた。3 つの軸がすべて 5 つの条件を満たし、🔴 🟡 が合わせて 0 件のラウンドは、批評 AI のセッションを起こさず、統合せずに 3 つの軸の指摘で 1 つの `review` の印とコメントを書く。5 つの条件は、ラウンドで起こしたセッション（見落としの軸を除く）のすべてに掛ける。決定 1 のほかの項目（軸ごとに別の作業場所で起こす、同じエージェント定義で起こす、進行 Bot が仕様 → 動作 → 規約の順に並べる、軸をまたいで束ねない、5 つの条件を 1 つでも満たさなければ印を書かずに実行の失敗にする、人が手でレビューするときの形）と、確認方法のほかの項目、決定 2〜5 は据え置く。
+>
+> **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 5（規約の正典に触れる diff は push せず、レビュー AI と修正のセッションは作業場所（PR の head）の正典を読む）を改めた。規約の正典は、maintain 以上の人の `## 仕組みの変更の承認` で認めれば AI が変えてよい「マージまで効かないもの」の組に入れ、レビュー AI と直しの AI は正典を base ブランチから読む（決定 9）。
+>
+> **［2026-10-24 追記］** 軸ごとにモデルを分けるかは、段階 6 でなく基本設計の設定の値で決め、「段階 8 までの記録を見て」は運用の記録を見てと読む（[ADR-20261024-002][adr-20261024-002] の決定 8）。`needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 要件の UNDECIDED-32、UNDECIDED-33、UNDECIDED-34（[決めていないこと][undecided]の「レビューとマージ」）を決める。
 どれもレビュー AI が何を読み、どの道具で動くかの論点で、問いは 3 つある：3 つの軸をどう動かし Agent ツールを許すか、コラボレータの PR のコメントを AI に渡すか、規約の正典をどこから読ませるか。
@@ -295,3 +299,6 @@ decision-makers: メンテナ
 [adr-review-skill]: ./adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-blocked]: ./adr-20261021-005-required-push-blocked-paths-in-program.md
 [adr-critic-skip]: ./adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md

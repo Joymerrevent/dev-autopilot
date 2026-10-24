@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,10 @@ decision-makers: メンテナ
 # 計画は AI がレビューする。人が計画を読む間は結果を記録だけに残して人の判断と比べ、計画を止めるのに使うかは、その結果を見て決める
 
 > **Amended by [ADR-20261019-003][adr-replan]（2026-10-19）**: 決定 2 のうち「段階 5〜7 では、AI のレビューの結果を記録だけに残す」と、決定 3 のうち「計画 AI に計画し直させるかも、段階 7 を終えるときに決める」を改めた。段階 5 から、レビューが `fix` を返したら同じ回の実行で計画 AI に計画し直させる。段階 5〜7 でレビューの結果を Issue に書かないこと、人がすべての計画を読むこと、AI のレビューで計画を止めるかを段階 7 を終えるときに決めることと、決定 1 は据え置く。
+>
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 2（段階 5〜7 では結果を記録だけに残し、人がすべての計画を読む）と決定 3（計画を止めるかを修正工程（段階 7）の後に決める）を置き換えた。計画の輪は最初から回し、上限まで計画し直しても直す点が残れば計画を投稿せずに停止中（`plan-limit`）にし、確かめの結果は計画コメントに書かない。人が計画を読むことは決まりにしない（決定 3）。決定 1（計画は、投稿する前に AI がレビューする）は据え置く。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 要件の UNDECIDED-51（[決めていないこと][undecided]の「計画をレビューするか（誰が、いつ）」）を決める。
 
@@ -116,3 +120,5 @@ decision-makers: メンテナ
 [undecided]: ../requirements/09-undecided.md
 [adr-redo]: ./adr-20261018-002-plan-redo-in-same-run.md
 [adr-replan]: ./adr-20261019-003-replan-on-plan-review-from-stage-5.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md

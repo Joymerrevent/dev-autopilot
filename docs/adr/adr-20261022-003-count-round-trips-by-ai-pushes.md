@@ -1,12 +1,20 @@
 ---
 status: accepted
 created: 2026-10-22
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 往復の回数は、作業 AI が直すか衝突を解いて push した回数（fix の印の数）で数え、同じ指摘の再発は、AI の変更の後のラウンドでだけ判定する
+
+> **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 段階で分けた文（レビュー工程（段階 6）では作業 AI が直さない、段階 6 から持ち越した PR、段階 6 の衝突は人の番、修正工程（段階 7）以降）を外し、作業 AI は最初から直すと読む（決定 1）。
+>
+> **Amended by [ADR-20261024-003][adr-20261024-003]（2026-10-24）**: 決定 3 の「1 つ前のラウンドの `fix` の印」を、1 つ前のラウンドの最新の有効な `fix` の印と読む。1 つのラウンドに、レビューの指摘の直しと検査の失敗の直しの `fix` の印が 2 つ以上つきうるため（決定 4）。
+>
+> **Amended by [ADR-20261024-006][adr-20261024-006]（2026-10-24）**: 決定 5（作業 AI が直す番は、依存の載せ直しを修正の後に回す）を置き換えた。載せ直しはレビュー合格の PR だけにするので、修正と載せ直しの順の決まりは要らない（決定 4）。往復の回数の数え方と、衝突の解消の扱い（決定 2）は据え置く。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 要件の UNDECIDED-72（[決めていないこと][undecided]の「ADR で決めること」の「レビューとマージ」。往復の数え方と、同じ指摘の再発を判定するラウンド）を決める。
 
@@ -261,3 +269,7 @@ AI の変更は、修正・衝突の解消・push が届かなかった回のど
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-003]: ./adr-20261024-003-review-after-required-checks-pass.md
+[adr-20261024-006]: ./adr-20261024-006-cleanup-states-and-dependencies.md

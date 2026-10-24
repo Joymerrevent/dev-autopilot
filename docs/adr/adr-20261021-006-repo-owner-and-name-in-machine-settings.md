@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 当てる先のリポの owner と名前は、リポの設定を読む前に要る項目として、base ブランチの名前と GitHub App の 2 つの ID と一緒にマシンの設定に置く
+
+> **［2026-10-24 追記］** リポの設定に置く Project の ID のうち、Status と Agent 欄の ID と選択肢の ID は、[ADR-20261024-001][adr-20261024-001] の決定 5 の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）の ID と選択肢の ID と読む。
 
 要件の UNDECIDED-65（当てる先のリポの owner と名前をマシンの設定に置くことを、ADR でどう残すか）を決める。
 
@@ -160,3 +162,4 @@ decision-makers: メンテナ
 [flow]: ../requirements/01-issue-flow.md
 [safety]: ../requirements/05-safety.md
 [undecided]: ../requirements/09-undecided.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md

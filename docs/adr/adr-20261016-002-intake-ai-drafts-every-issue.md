@@ -1,12 +1,16 @@
 ---
 status: accepted
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 受付 AI はすべての Issue で作業指示の下書きを書き、AI に渡す文は人が承認した下書きか作業指示コメントだけにする
+
+> **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 1 の「人が下書きのコメントを直すか、`## 作業指示` のコメントを書く（下書きより優先）」、決定 2 の渡す文の決め方と時刻の規則、決定 3 の印の欄を置き換えた。依頼の今の文はマスターの下書き 1 つにまとめ、人の直しは `## 作業指示` に全文を書いて検疫してからマスターに写し、AI に渡す文はいつも人が決めたマスター（決定 1・3・5）。受付 AI がすべての Issue で下書きを書くこと、Issue の本文を受付 AI のほかの AI に渡さないこと、渡す文を決めるのに Issue の著者の権限を引かないことは据え置く。
+>
+> **［2026-10-24 追記］** 決定 1 の「検疫で見つかった Issue では受付 AI を起動しない」は、安全の軸に値がある間は起動しないと読む（[ADR-20261024-005][adr-20261024-005] の決定 1・2）。`needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 受け入れ（TEXT-12）で作業指示の下書きを書く人と、`agent-ready` の後に AI に渡す文（TEXT-1）を、Issue の著者で分けるのをやめるかを決める。
 要件の UNDECIDED-35（進行ボットが起票した Issue の本文の見分け方。[決めていないこと][undecided]の「受け入れと印」）も、同じ決定で答えが出る。
@@ -156,3 +160,7 @@ decision-makers: メンテナ
 [structure]: ../requirements/07-structure.md
 [adr-intake]: ./adr-20261015-003-intake-scope-and-quarantine-report.md
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-20261024-005]: ./adr-20261024-005-security-axis-and-halt-issue.md

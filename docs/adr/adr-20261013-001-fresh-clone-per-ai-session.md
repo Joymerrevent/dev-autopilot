@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-13
-updated: 2026-10-22
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # AI の作業場所は AI のセッションごとに origin から clone し直し、進行役は AI が触った clone で git を実行しない
 
 > **［2026-10-17 追記］** 本文の PR と Issue の番号（`#<番号>`）は、business-os（<https://github.com/Joymerrevent/business-os>）のもの。ADR-20261013-001 は business-os の中で起票し、ADR-20261016-003 と ADR-20261017-001 の決定で Joymerrevent/dev-autopilot に移した。決定は変わらない。
+>
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。片付け（FLOW-27、MERGE-7）のときに `sessions/<名前>/` を消す文は、[ADR-20261024-006][adr-20261024-006] のマージの後と中止の後の片付け（T27・T28）と読む。決定は変わらない。
 
 要件の UNDECIDED-1〜4（[決めていないこと][undecided]の「AI の作業場所」）を決める。
 確かめることの UNDECIDED-24 は、本 ADR の決定で確かめる必要が無くなる。
@@ -199,3 +201,5 @@ UNDECIDED-1 を「AI が触った clone で進行役が `git fetch origin` を�
 [design-setup]: ../design/basic/04-setup-and-check.md
 [overview]: ../requirements/00-overview.md
 [prev]: https://github.com/Joymerrevent/business-os/blob/e1153bab318044dfafbf4232be6bc1a32668d4d7/dev-autopilot/docs/adr/adr-20261011-001-ai-worktree-clone-and-fetch-only.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-20261024-006]: ./adr-20261024-006-cleanup-states-and-dependencies.md

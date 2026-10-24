@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # AI のセッションは SIGTERM で止めて残ったコマンドも止め、途中で止めた回の費用は 1 セッションの費用の上限とみなし、利用枠は費用で数える
+
+> **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
 
 要件の UNDECIDED-47（[決めていないこと][undecided]の「安全と設定」の「途中で止めた回の消費の数え方」）を決める。
 あわせて、確かめることの UNDECIDED-44（作業中の `claude` を途中で止めたときに、孫プロセスと消費の記録がどうなるか）を実機で確かめた結果から、止め方を決める。
@@ -168,3 +170,4 @@ decision-makers: メンテナ
 [facts]: ../requirements/10-verified-facts.md
 [adr-tmp]: ./adr-20261017-006-per-session-short-tmpdir.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md

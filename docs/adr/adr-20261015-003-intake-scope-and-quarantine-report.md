@@ -1,12 +1,18 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-16
+updated: 2026-10-24
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 受け入れはマイルストーンを待たずに走らせ、検疫で見つかったら作業指示を書かずに検疫の結果と印だけを投稿する
+
+> **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 1 の「受け入れの印（`intake`）が無いもの」を「入口の検疫の印（`quarantine` の `target` が `issue`）が無いもの」と読み、マイルストーンの候補を確定する時を、人が決めた時（`decision` の印を書く時）と読む。マイルストーンを待たないこと、`from-review` の Issue は人がマイルストーンを付けるまで待つこと、着手の選定の条件は据え置く。
+>
+> **Amended by [ADR-20261024-005][adr-20261024-005]（2026-10-24）**: 決定 2（検疫で見つかったら作業指示を書かずに検疫の結果と印だけを投稿し、`needs-human` にし、人が `## 作業指示` を一から書く）を置き換えた。検疫で見つかったら安全の軸に値を入れ、maintain 以上の人が文を直して `## 安全の確認` を書いた後の検疫を通れば、受付 AI が下書きを書く。見つかった文の中身を写さないことは変わらない。
+>
+> **［2026-10-24 追記］** 段階 4〜8 に触れる文は、[ADR-20261024-002][adr-20261024-002] の決定 8 で読む（段階 4〜8 と段階の出口の数え上げを持たない）。
 
 要件の UNDECIDED-14 と UNDECIDED-15（[決めていないこと][undecided]の「受け入れと印」）を決める。
 どちらも受け入れ（TEXT-12）の論点で、問いは 2 つある：受け入れをどの Issue に走らせるか、検疫で見つかったときに Issue に何を残すか。
@@ -145,3 +151,6 @@ decision-makers: メンテナ
 [impl]: ../requirements/02-implement-review-fix.md
 [setup]: ../requirements/06-setup-and-stages.md
 [adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
+[adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-20261024-005]: ./adr-20261024-005-security-axis-and-halt-issue.md
