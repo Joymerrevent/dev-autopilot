@@ -48,7 +48,7 @@
 | ADR-20261022-004 | [人が呼ぶ intake の Skill は、check と同じく依頼のファイルで進行 Bot のジョブに受付 AI を起こさせ、人が呼ぶ Skill は依頼のファイルを sandbox の外で書く許可を人に求める][adr-20261022-004-intake-skill-via-request-file] | accepted | 2026-10-22 |
 | ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | accepted | 2026-10-22 |
 | ADR-20261024-001 | [作業の単位の状態を主な流れと重ねる 3 本の軸で表し、人の操作はラベルと見出しのコメントで受け、Project の欄は表示だけにする][adr-20261024-001-work-unit-main-flow-and-overlay-axes] | accepted | 2026-10-24 |
-| ADR-20261024-002 | [段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う][adr-20261024-002-no-stages-4-to-8-and-no-trials] | proposed | 2026-10-24 |
+| ADR-20261024-002 | [段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う][adr-20261024-002-no-stages-4-to-8-and-no-trials] | accepted | 2026-10-24 |
 
 <!--
 行の例（表の最後に足す）:
