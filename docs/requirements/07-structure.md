@@ -2,7 +2,7 @@
 
 dev-autopilot は、独立したリポ（Joymerrevent/dev-autopilot）で、ほかのリポにも当てられる Plugin として作る（[ADR-20261016-003][adr-move]）。
 Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 Bot を含めてすべて動く形にする（[ADR-20261017-003][adr-plugin]）。
-ほかのリポに当てることと、ほかの人に配ることの時期は、「分離の時期の目安」のとおりマージ判定工程（段階 8）の後に決める。
+ほかのリポに当てることと、ほかの人に配ることの時期は、「分離の時期の目安」のとおり、決める時期を決め直す（UNDECIDED-82）。
 
 ## 構成
 
@@ -16,7 +16,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       check/SKILL.md           点検の入口（記録の置き場に依頼のファイルを置き、定期の実行と同じジョブを起こして、結果を表示する。進行 Bot を直接起動せず、判定のロジックは持たない。SETUP-2）
       review/SKILL.md          レビュー AI の手順（change-review v2 の正本。08-review-skill.md）
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
-      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。下書きは、記録の置き場に受け入れの依頼のファイルを置いて定期の実行と同じジョブを起こし、進行 Bot が起こした受付 AI の結果を表示する（lock を取らず、claude を起こさない）。進行 Bot は agents/brief/triager.md を起動する。人の操作は agent-ready だけ
+      intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。下書きは、記録の置き場に受け入れの依頼のファイルを置いて定期の実行と同じジョブを起こし、進行 Bot が起こした受付 AI の結果を表示する（lock を取らず、claude を起こさない）。進行 Bot は agents/brief/triager.md を起動する。人の操作は、マスターを読んで直す・差し戻す・agent-ready を付けること
     agents/                    エージェント定義。フォルダはループ（成果物）、ファイルは役（STRUCT-9）
       brief/triager.md         受付 AI（道具なし。作業指示の下書きと、計画の難しさと方針に係る要望かの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
       plan/planner.md          計画 AI（読むだけ。計画を出力契約で返す）
@@ -49,13 +49,13 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行 Bot に渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
   要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 が名指しする push しないパスを外す（要件と進行 Bot のプログラムの変更。[ADR-20261021-005][adr-blocked]）、push しないパスの足す分からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
-  - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261021-006][adr-repo]、[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Status と Agent 欄の ID と選択肢の ID（SETUP-5、SETUP-6）
-  - ラベル名：`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
+  - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261021-006][adr-repo]、[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）の ID と選択肢の ID（SETUP-5、FLOW-39）
+  - ラベル名：`agent-ready` `agent-paused` `agent-manual` `security-suspected` `from-review`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 却下 R<n>` `## 判定と違う判断` `## 異議`（「[印と固定の見出しの一覧][f04]」）
-  - 進行 Bot の実行：`dryRun`（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、`stage`（段階ごとの振る舞い。「[Issue の状態の遷移][f01]」）、`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
+  - 進行 Bot の実行（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]。`dryRun` と `stage` は持たない。[ADR-20261024-002][adr-no-stages]）：`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
   - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間と、人が呼ぶ `intake` が受け入れの依頼の結果を待つ時間（[ADR-20261022-004][adr-intake-req]）
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
-  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、push しないパスに足すパスの一覧（規約の正典のパスなど、当てる先のリポごとに違うパス。IMPL-15 が名指しするパス（進行 Bot・次のセッション・CI が実行するか、規則として読むパス）は進行 Bot が必ず入れ、設定には足す分だけを持つ。[ADR-20261021-005][adr-blocked]）、deploy key の push 先を限る 2 つの ruleset の bypass に入れるアプリの一覧（IMPL-15。足すのはリポの設定の PR で、ADR は要らない）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
+  - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、変えてはいけないパスに足すパスの一覧（規約の正典のパスなど、当てる先のリポごとに違うパス。push で効くものとマージまで効かないものの 2 つの組に分けて持つ。IMPL-15 が名指しするパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。[ADR-20261021-005][adr-blocked]）、deploy key の push 先を限る 2 つの ruleset の bypass に入れるアプリの一覧（IMPL-15。足すのはリポの設定の PR で、ADR は要らない）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
   - 安全：印を書いたと認める進行 Bot のアカウント名の一覧（IMPL-20。[ADR-20261020-001][adr-bots]）、sandbox の `--settings` の置き場（マシン）と、`denyRead` `denyWrite` に足すパスの一覧（要件が決めたパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」、基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」）、外への通信の許可先、子プロセスに渡す環境変数のうち、足す名前の一覧（SAFE-10 の git と pnpm のための環境変数、`CLAUDE_CODE_TMPDIR`、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）など、要件と ADR が決めた名前は、設定の PR で消せないように進行 Bot のプログラムに固定する。「[安全側に倒す設計][f05]」、基本設計の「[AI のセッション][design-ai]」の「環境変数」）、
     セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。PAT（切り替えの後は GitHub App の秘密鍵）と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
@@ -94,7 +94,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - `README.md`：使い方
   - **Markdown の規則は、リポの root の `.markdownlint-cli2.jsonc` に持つ**（`md-lint-format` レシピ。MD054 は参照スタイル）。Markdown は Prettier で整形しない（`.prettierignore`）
   - business-os 側の ADR は、dev-autopilot を business-os に置いた橋渡しの ADR 20261008-01 と、それを置き換える「分離した」ADR（[ADR-20261016-003][adr-move] の決定 5）だけにし、dev-autopilot の中身の判断は dev-autopilot の ADR に書く
-- STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:brief:triager` に置き、進行 Bot が自動で呼ぶ（人の操作は `agent-ready` だけ。TEXT-12）。
+- STRUCT-6 **`/verify-issue` との分担。** 汎用の部分（検疫、作業指示の下書き、依存とマイルストーンの候補）は `dev-autopilot:brief:triager` に置き、進行 Bot が自動で呼ぶ（人の操作は、マスターを読んで直す・差し戻す・決めること。TEXT-12）。
   business-os の `/verify-issue` は、business-os 固有の確かめ方（hook・雛形・第三者のツールの再現）を残し、最初に検疫のモジュール（TEXT-11）を呼び、最後に `dev-autopilot:brief:triager` で下書きを作る（TEXT-9、SETUP-17 と同じ順）。
   business-os からはリポをまたいだ呼び出しになる。呼び方は、基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」で決めた（`dev-autopilot:intake` の Skill を呼び、`plugin/src/` を直接実行しない）。受付 AI のセッションは、`intake` の Skill が置いた受け入れの依頼のファイルで起こされた進行 Bot の実行が起こす（[ADR-20261022-004][adr-intake-req]）
 
@@ -109,7 +109,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     dev-autopilot のリポの `plugin/skills/review/` を skills CLI（`--copy` 付き）で入れる
 - STRUCT-9 **エージェント定義は、ループのフォルダに、役の名前で置く。** フォルダは、段取り・作業・検証・直す（PDCA）で回すループの成果物の名前にする（`brief` は作業指示、`plan` は計画、`change` は PR の変更。文書だけの変更も `change` に入る）。ファイルは、そのループで動く AI の役（「[登場するもの][f00]」）の名前にする。
   `--agent` で渡す名前は `dev-autopilot:<ループ>:<役>` になる（Plugin は `agents/` の下のフォルダも読み込み、Plugin の名前とフォルダとファイルの名前をコロンでつなぐ。[Plugin の部品の文書][doc-plugin-agents]、FACT-40）。frontmatter の `name` は名前のうちファイルの名前の部分だけを置き換えるので、ファイルの名前と同じにする
-  - 役の名前は `triager`（受付 AI）、`planner`（計画 AI）、`worker`（作業 AI）、`reviewer`（レビュー AI）、`verifier`（批評 AI）。`worker` と `reviewer` は、Project の Agent 欄の値と同じ
+  - 役の名前は `triager`（受付 AI）、`planner`（計画 AI）、`worker`（作業 AI）、`reviewer`（レビュー AI）、`verifier`（批評 AI）。Project の Agent 欄は使わなくなった（[ADR-20261024-001][adr-model-states]）
   - 各フォルダには、そのループで動く役だけを置く（5 役をそろえて置かない）。ループに役が加わったらファイルを足し、新しいループができたらフォルダを足す（例：受付 AI の下書きを AI が確かめるなら `brief/reviewer.md`）
   - 設定のキー（`models.plan` など）とセッションの名前（`plan-issue-…` など）は工程の名前で付け、エージェント定義の名前とは別にする（構造仕様）
 
@@ -122,11 +122,11 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 ## 分離の時期の目安
 
 置き場所は、基本設計の前に別のリポへ移した（2026-10-17。[ADR-20261016-003][adr-move]、[ADR-20261017-001][adr-history]）。
-ほかのリポに当てることと、ほかの人に配ること（marketplace への登録、skills CLI での `review` の単体導入。STRUCT-7）は、マージ判定工程（段階 8。進行 Bot がマージの判定の印を書く段階）の出口を越え、設定ファイルの項目だけで別のリポに当てられると確かめてから決める。
+ほかのリポに当てることと、ほかの人に配ること（marketplace への登録、skills CLI での `review` の単体導入。STRUCT-7）は、決める時期を UNDECIDED-82 で決め直す（今までは、マージ判定工程（段階 8）の出口を越えてから決めるとしていたが、段階 4〜8 は [ADR-20261024-002][adr-no-stages] で持たなくなった）。決めるときは、設定ファイルの項目だけで別のリポに当てられると確かめてから決める。
 2 つ目の適用先ができる前は、固有の値がコードに残っていても気づけないため。
 
-- それまで、進行 Bot が当てる先は business-os だけにする。1 台のマシンで複数のリポに当てる形も、マージ判定工程（段階 8）の後に決める
-- 形は、マージ判定工程（段階 8）の前から、Plugin を入れたプロジェクトで動く形（STRUCT-3）で作る。マージ判定工程（段階 8）の後に決めるのは、当てる先を広げることと、ほかの人への公開（marketplace への登録）の時期だけ（[ADR-20261017-003][adr-plugin]）
+- それまで、進行 Bot が当てる先は business-os だけにする。1 台のマシンで複数のリポに当てる形も、同じ時期に決める（UNDECIDED-82）
+- 形は、今から Plugin を入れたプロジェクトで動く形（STRUCT-3）で作る。後で決めるのは、当てる先を広げることと、ほかの人への公開（marketplace への登録）の時期だけ（[ADR-20261017-003][adr-plugin]）
 - dev-autopilot を、dev-autopilot 自身のリポに当てない。当てると、作業 AI が進行 Bot のコードを書き換える経路が戻る。`setup` は dev-autopilot 自身のリポでは止まる。当てるなら、別の ADR で決める
 
 [f00]: ./00-overview.md
@@ -155,3 +155,5 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-repo]: ../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
 [adr-blocked]: ../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
 [adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
+[adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-model-states]: ../adr/adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
