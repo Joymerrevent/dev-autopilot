@@ -22,13 +22,14 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 ## 読み方
 
 - 参照は、要件の番号（FLOW-1 など。下の索引）か、見出しの名前（「隔離と鍵の分け方」など）で書く。別のファイルを指す見出しの名前は、参照先のファイルへのリンクにしてある
-- 用語：**進行 Bot**＝AI ではなく、決まった処理をする Node のスクリプト（ボット）。**AI の 5 役**＝受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI（「[登場するもの][f00]」）。**工程**＝Issue を進める作業の区切り（受け入れ・計画・実装・レビュー・修正、承認の確定・収束・マージの判定など）。AI のセッションを起動する工程を重い工程と呼び、Issue ごとに 1 回の実行で 1 つまで進める（FLOW-4）。**段階**＝導入の順（1〜9。「[段階][f06]」）。「受け入れ工程（段階 4）」のように、名前と番号の組で呼ぶ（名前は段階の表）。**印**＝進行 Bot がコメントに書く、機械で読む 1 行（「[印と固定の見出しの一覧][f04]」）。**渡す文**＝AI に作業の内容として渡す文（TEXT-1）
+- 用語：**進行 Bot**＝AI ではなく、決まった処理をする Node のスクリプト（ボット）。**AI の 5 役**＝受付 AI・計画 AI・作業 AI・レビュー AI・批評 AI（「[登場するもの][f00]」）。**工程**＝Issue を進める作業の区切り（下書き・計画の輪・変更の作成・レビュー・直し、検疫・決定の印・マージの判定・片付けなど）。AI のセッションを起動する工程を重い工程と呼び、Issue ごとに 1 回の実行で 1 つまで進める（FLOW-4）。**段階**＝導入の順（1〜3 と 9。「[段階][f06]」。段階 4〜8 は [ADR-20261024-002][adr-no-stages] で持たなくなり、欠番にした）。「導入と点検の実装（段階 3）」のように、名前と番号の組で呼ぶ（名前は段階の表）。**印**＝進行 Bot がコメントに書く、機械で読む 1 行（HTML のコメントの中の JSON。「[印と固定の見出しの一覧][f04]」）。**作業の単位**＝Issue 1 件と、結びつく PR をまとめたもの。状態は主な流れと重ねる 3 本の軸で表す（FLOW-35）。**渡す文**＝AI に作業の内容として渡す文（TEXT-1）
 - 呼び方は 2026-10-16 に改めた。承認済みの ADR、[11-records.md][f11]、欠番の取り消し線の中の元の文は、当時の呼び方（進行役・受け入れ AI・計画役・批評者）のまま残してある。進行役は進行 Bot、受け入れ AI は受付 AI、計画役は計画 AI、批評者は批評 AI と読み替える
 - 「段」は 2026-10-18 に「工程」に改めた（「段」だけでは意味が通らないため。モデルの流れの表が同じものを「工程」と呼んでいた）。承認済みの ADR、[11-records.md][f11]、欠番の取り消し線の中の元の文は「段」のまま残してある。重い段は重い工程、軽い段は軽い工程、次の段は次の工程と読み替える
 - 段階は 2026-10-18 から、番号だけでなく名前と番号の組で呼ぶ（番号だけでは何の段階か分からないため）。承認済みの ADR、[11-records.md][f11]、欠番の取り消し線の中の元の文は「段階 5」のような番号だけのまま残してある。番号から名前は段階の表で引く
 - 「進行ボット」は 2026-10-18 に「進行 Bot」に改めた（受付 AI・計画 AI などの AI の役と同じく、英字で書くため）。承認済みの ADR（題を写した [ADR の一覧][adr-index]の行を含む）、[11-records.md][f11]、欠番の取り消し線の中の元の文は「進行ボット」のまま残してある。進行ボットは進行 Bot と読み替える
 - 「振動」は 2026-10-19 に「同じ指摘の再発」（AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後のラウンド。IMPL-24）で、前のラウンドと同じ指摘がもう一度出ること）に改めた（「振動」だけでは何が起きるかが分からないため）。承認済みの ADR、[11-records.md][f11]、欠番の取り消し線の中の元の文は「振動」のまま残してある。振動は同じ指摘の再発と読み替える
 - エージェント定義の置き方は 2026-10-19 に、ループのフォルダと役の名前に改めた（STRUCT-9）。承認済みの ADR、[10-verified-facts.md][f10] の実機の記録、[11-records.md][f11]、欠番の取り消し線の中の元の文は、元の名前のまま残してある。`intake.md` は `brief/triager.md`、`planner.md` は `plan/planner.md`、`plan-reviewer.md` は `plan/reviewer.md`、`worker.md` は `change/worker.md`、`reviewer.md` は `change/reviewer.md`、`critic.md` は `change/verifier.md` と読み替える（`dev-autopilot:worker` などの `--agent` の値も同じ）
+- 作業の単位の状態の表し方は 2026-10-24 に組み直した（[ADR-20261024-001][adr-model-states]〜[ADR-20261024-006][adr-cleanup]）。承認済みの ADR、[11-records.md][f11]、欠番の取り消し線の中の元の文は、組み直す前の言葉（Project の Status と Agent 欄、`needs-human`、`intake` と `intake-final` の印、`note` の印、受け入れの下書き、承認の確定、段階 4〜8、書かずに試す、比べるためのレビュー）のまま残してある。`needs-human`・Status・Agent 欄・`note` の印は [ADR-20261024-001][adr-model-states] の決定 11 で、段階 4〜8 は [ADR-20261024-002][adr-no-stages] の決定 8 で読み替える
 - まだ決めていないことは [09-undecided.md][f09] に集めてある。ADR で決めること、基本設計の中で決めてよいもの、確かめることに分けてある
 - [11-records.md][f11] は調査とレビューの記録で、要件ではない
 - 全体の構成・Issue の流れ・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
@@ -39,7 +40,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 
 | 番号 | 中身 | ファイル |
 | --- | --- | --- |
-| FLOW-n | 棚卸し、並列と競合、間隔の運用、Issue の状態の遷移（正常な順と止まる遷移） | [01-issue-flow.md][f01] |
+| FLOW-n | 着手の条件、並列と競合、間隔の運用、Issue の状態の遷移（主な流れと重ねる軸。FLOW-15〜34 は欠番） | [01-issue-flow.md][f01] |
 | IMPL-n | 実装、レビュー、対応ループ、モデルの流れ | [02-implement-review-fix.md][f02] |
 | MERGE-n | マージ | [03-merge.md][f03] |
 | TEXT-n | 外から入る文の扱い | [04-external-text-and-markers.md][f04] |
@@ -84,3 +85,6 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 [adr-table]: ../adr/adr-20261018-005-settings-table-shows-required-values.md
 [memo]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/dev-autopilot-requirements.md
 [req]: https://github.com/Joymerrevent/business-os/blob/b8bc13eef06d430e24483168cfa0ff8edc1987e0/dev-autopilot/docs/requirements.md
+[adr-model-states]: ../adr/adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-cleanup]: ../adr/adr-20261024-006-cleanup-states-and-dependencies.md
