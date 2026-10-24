@@ -32,7 +32,7 @@ dev-autopilot（自律開発ループ）の要件を、話題ごとのファイ�
 - エージェント定義の置き方は 2026-10-19 に、ループのフォルダと役の名前に改めた（STRUCT-9）。承認済みの ADR、[10-verified-facts.md][f10] の実機の記録、[11-records.md][f11]、欠番の取り消し線の中の元の文は、元の名前のまま残してある。`intake.md` は `brief/triager.md`、`planner.md` は `plan/planner.md`、`plan-reviewer.md` は `plan/reviewer.md`、`worker.md` は `change/worker.md`、`reviewer.md` は `change/reviewer.md`、`critic.md` は `change/verifier.md` と読み替える（`dev-autopilot:worker` などの `--agent` の値も同じ）
 - まだ決めていないことは [09-undecided.md][f09] に集めてある。ADR で決めること、基本設計の中で決めてよいもの、確かめることに分けてある
 - [11-records.md][f11] は調査とレビューの記録で、要件ではない
-- 全体の構成・Issue の流れ・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
+- 全体の構成・Issue の流れ・作業の単位の状態遷移・隔離と鍵・フォルダ構成は、[図][diagrams]で先に全体を掴める。図は要件の写しで、正本は要件
 
 ## 要件の番号の索引
 
