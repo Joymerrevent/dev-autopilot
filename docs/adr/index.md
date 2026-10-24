@@ -49,7 +49,7 @@
 | ADR-20261022-005 | [人が戻した時刻より前に閉じた PR は止めずに結びつきから外し、止まった状態から戻す手順はどれも needs-human を付けたまま行って最後に外す][adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last] | accepted | 2026-10-22 |
 | ADR-20261024-001 | [作業の単位の状態を主な流れと重ねる 3 本の軸で表し、人の操作はラベルと見出しのコメントで受け、Project の欄は表示だけにする][adr-20261024-001-work-unit-main-flow-and-overlay-axes] | accepted | 2026-10-24 |
 | ADR-20261024-002 | [段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う][adr-20261024-002-no-stages-4-to-8-and-no-trials] | accepted | 2026-10-24 |
-| ADR-20261024-003 | [AI のレビューは必須チェックがすべて通ってから行い、必須チェックが落ちた変更はレビューせずに AI が先に直す][adr-20261024-003-review-after-required-checks-pass] | proposed | 2026-10-24 |
+| ADR-20261024-003 | [AI のレビューは必須チェックがすべて通ってから行い、必須チェックが落ちた変更はレビューせずに AI が先に直す][adr-20261024-003-review-after-required-checks-pass] | accepted | 2026-10-24 |
 
 <!--
 行の例（表の最後に足す）:
