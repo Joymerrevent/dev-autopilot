@@ -18,7 +18,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       review/scripts/per-commit-gates.ts  コミットごとのゲートの検査（TypeScript。単体導入でも Skill と一緒に写る）
       intake/SKILL.md          Issue の受け入れの手順（検疫、作業指示の下書き、依存とマイルストーンの候補）。人が `/verify-issue` などから呼ぶ入口。下書きは、記録の置き場に受け入れの依頼のファイルを置いて定期の実行と同じジョブを起こし、進行 Bot が起こした受付 AI の結果を表示する（lock を取らず、claude を起こさない）。進行 Bot は agents/brief/triager.md を起動する。人の操作は、マスターを読んで直す・差し戻す・agent-ready を付けること
     agents/                    エージェント定義。フォルダはループ（成果物）、ファイルは役（STRUCT-9）
-      brief/triager.md         受付 AI（道具なし。作業指示の下書きと、計画の難しさと方針に係る要望かの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
+      brief/triager.md         受付 AI（道具なし。作業指示の下書きと、方針に係る要望かの判定を出力契約で返す。検疫で見つかった Issue では起動しない。00-overview.md の「登場するもの」、TEXT-12）
       plan/planner.md          計画 AI（読むだけ。計画を出力契約で返す）
       plan/reviewer.md         レビュー AI の計画のレビュー（読むだけ。IMPL-10。change/reviewer.md は Bash を持つので分ける）
       change/worker.md         作業 AI（実装・修正・衝突の解消。モデルは設定で）
