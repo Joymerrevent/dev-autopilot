@@ -50,6 +50,7 @@
 | ADR-20261024-001 | [作業の単位の状態を主な流れと重ねる 3 本の軸で表し、人の操作はラベルと見出しのコメントで受け、Project の欄は表示だけにする][adr-20261024-001-work-unit-main-flow-and-overlay-axes] | accepted | 2026-10-24 |
 | ADR-20261024-002 | [段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う][adr-20261024-002-no-stages-4-to-8-and-no-trials] | accepted | 2026-10-24 |
 | ADR-20261024-003 | [AI のレビューは必須チェックがすべて通ってから行い、必須チェックが落ちた変更はレビューせずに AI が先に直す][adr-20261024-003-review-after-required-checks-pass] | accepted | 2026-10-24 |
+| ADR-20261024-004 | [依頼の今の文をマスターの下書き 1 つにまとめ、検疫は AI に渡す前と GitHub に書く前に毎回行い、変えてはいけないパスは効く時期で分けて人の承認で変えられるようにする][adr-20261024-004-master-draft-quarantine-and-protected-paths] | proposed | 2026-10-24 |
 
 <!--
 行の例（表の最後に足す）:
@@ -106,3 +107,4 @@
 [adr-20261024-001-work-unit-main-flow-and-overlay-axes]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-20261024-002-no-stages-4-to-8-and-no-trials]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-20261024-003-review-after-required-checks-pass]: ./adr-20261024-003-review-after-required-checks-pass.md
+[adr-20261024-004-master-draft-quarantine-and-protected-paths]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
