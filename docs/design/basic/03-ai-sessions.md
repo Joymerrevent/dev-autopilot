@@ -8,7 +8,7 @@
 
 | 役 | エージェント定義（`--agent`） | 道具 | 作業場所 | 起動する工程 |
 | --- | --- | --- | --- | --- |
-| 受付 AI | `dev-autopilot:brief:triager` | なし | セッションのフォルダの一時フォルダだけ。clone しない | 受け入れ |
+| 受付 AI | `dev-autopilot:brief:triager` | なし | セッションのフォルダの一時フォルダだけ。clone しない | 下書き、書き直し |
 | 計画 AI | `dev-autopilot:plan:planner` | Read・Grep・Glob | base ブランチの先端で切った worktree | 計画 |
 | レビュー AI（計画のレビュー） | `dev-autopilot:plan:reviewer` | Read・Grep・Glob | base ブランチの先端で切った worktree（計画とは別に作る） | 計画のレビュー |
 | 作業 AI | `dev-autopilot:change:worker` | Bash・Read・Write・Edit | 実装は base ブランチの先端、修正と衝突の解消は PR の head で切った worktree（作業ブランチを切る） | 実装、修正、衝突の解消 |
@@ -26,14 +26,13 @@
 
 | 工程 | セッションの名前 | フォルダの中 |
 | --- | --- | --- |
-| 受け入れ | `intake-issue-<Issue の番号>` | `tmp/` |
+| 下書き、書き直し | `intake-issue-<Issue の番号>` | `tmp/` |
 | 計画 | `plan-issue-<Issue の番号>-round-<ラウンド>`。自己申告で `fable` で計画し直すときは、後ろに `-fable` を付ける | `clone/`、`worktree/`、`tmp/` |
 | 計画のレビュー | `plan-review-issue-<Issue の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
 | 実装 | `work-issue-<Issue の番号>` | `clone/`、`worktree/`、`tmp/` |
 | 修正 | `fix-pr-<PR の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
 | 衝突の解消 | `rebase-pr-<PR の番号>` | `clone/`、`worktree/`、`tmp/` |
 | レビュー | `review-pr-<PR の番号>-round-<ラウンド>-<軸>`（軸は `behavior`・`spec`・`conventions`・`gaps`。`gaps` は見落としの軸） | `clone/`、`worktree/`、`tmp/` |
-| 比べるためのレビュー | `review-pr-<PR の番号>-round-<ラウンド>-<軸>-compare`（レビュー工程（段階 6）だけ。[IMPL-19][impl]） | `clone/`、`worktree/`、`tmp/` |
 | 批評 | `critic-pr-<PR の番号>-round-<ラウンド>` | `clone/`、`worktree/`、`tmp/` |
 | 点検の試し | `check-<日時>` | `clone/`、`worktree/`、`tmp/` |
 | 人が頼んだ受け入れ（`/verify-issue` から呼ぶ intake の Skill が置いた受け入れの依頼で、進行 Bot が起こす。下の「人の Skill から受け入れを呼ぶ形」） | `verify-intake-issue-<Issue の番号>` | `tmp/` |
@@ -41,14 +40,10 @@
 - どのセッションのフォルダにも、直下に短い一時フォルダの ID のファイル（`short-tmp-id.txt`）を置く（下の「短い一時フォルダ」）
 - `tmp/` は、セッションの一時フォルダ。XDG の 4 つ（`config/`・`cache/`・`data/`・`state/`）を置き、pnpm の store も `data/` の下にできる（[SAFE-10][safety]、[ADR-20261015-002][adr-store]）
 - 修正のセッションの名前には、直す対象の `review` の印のラウンドを入れる。ラウンドごとに別のフォルダになり、記録と照らしやすい
-- 計画と計画のレビューのセッションの名前には、計画の工程の中のラウンドを入れる。最初の計画が 1 で、計画のレビューの指摘で計画し直すたびに 1 足す（[状態遷移と判定][design-flow]の「計画の工程の中の順番」）。自己申告で `fable` で計画し直すときは、名前に `-fable` を付けた別のフォルダにする。`opus` の計画は使わないが、記録（`outputs/` と `streams/`）が同じ名前で重なると、計画・実装工程（段階 5）の出口で数える「自己申告で捨てた計画」を失うため
-- 計画のレビューの指摘で計画し直すセッションには、渡す文（作業指示）、直す前の計画、指摘の一覧を、標準入力の指示文で渡す。指摘は GitHub に書かない（[ADR-20261019-003][adr-replan]）
+- 計画と計画のレビューのセッションの名前には、計画の工程の中のラウンドを入れる。最初の計画が 1 で、計画のレビューの指摘で計画し直すたびに 1 足す（[状態遷移と判定][design-flow]の「計画の工程の中の順番」）。自己申告で `fable` で計画し直すときは、名前に `-fable` を付けた別のフォルダにする。`opus` の計画は使わないが、記録（`outputs/` と `streams/`）が同じ名前で重なると、自己申告で捨てた計画を、手元の記録から読めなくなるため（[ADR-20261024-002][adr-no-stages] の決定 3）
+- 計画のレビューの指摘で計画し直すセッションには、渡す文（人が決めたマスター）、直す前の計画、指摘の一覧を、標準入力の指示文で渡す。指摘は GitHub に書かない（[ADR-20261019-003][adr-replan]）
 - 同じ名前のフォルダがあれば、作り直す直前にフォルダごと消す（[ADR-20261013-001][adr-workspace]）
-- 受け入れのセッションのフォルダ（`intake-issue-<Issue の番号>`。人が頼んだ受け入れの `verify-intake-issue-<Issue の番号>` も同じ）は、セッションが終わったら（途中で止めたときも、残ったコマンドが止まったと確かめた後に）消す。clone と worktree を持たず、人が調べる材料にならないため。残すと、着手の前に人が閉じた Issue が、作業場所の残骸として `needs-human` になる（[状態遷移と判定][design-flow]の「作業場所の残骸」）
-- 比べるためのレビュー（[IMPL-19][impl]。`models.reviewComparison`）は、レビュー工程（段階 6）で、本番のラウンドの `review` の印を書いた実行より後の実行に、別の重い工程として、3 つの軸を同じ形で起こす（[状態遷移と判定][design-flow]の作業中の次の工程の順 22）。印を書かず、結果は記録（`outputs/`）にだけ残す。批評 AI と見落としの軸は起こさない（[ADR-20261021-007][adr-compare] の決定 1）
-  - 費用は、1 日と 1 回の実行の累計に数え、その Issue の累計には数えない。1 日と 1 回の実行の上限との比べは、比べの工程を始める前に、3 つ分をまとめて行う（下の「起動の前の確かめ」）。費用の数え方（下の「費用の数え方」）は、ほかのセッションと同じ
-  - 比べのセッションの失敗（時間・ターン・費用の上限、利用枠切れ（HTTP 429）、`claude` の異常終了、出力契約が解析できない、IMPL-18 の条件を満たさない）は、実行の失敗に数えず、やり直さない。失敗したことと終わり方を記録に残し、済んだとする（[状態遷移と判定][design-flow]の「比べるためのレビューが済んだかの見分け方」）。レビュー工程（段階 6）の出口では、`fable` の失敗も比べの結果として読む（[ADR-20261021-007][adr-compare] の決定 3）
-  - 安全のための止め方は、ほかのセッションと同じに掛ける。止めた後に残ったコマンドが止まったと確かめられない（`session-not-stopped`）、安全設定のファイルが書き換わった（`settings-tampered`）、起動の前の確かめで検疫・渡す文のハッシュ・worktree の local の設定に当たった（`quarantine`・`brief-changed`・`local-settings`）ときは、比べのセッションでも `needs-human` にする。比べの成否ではなく、作業場所と入力の安全にかかわる見つかり方なので、見落としの軸（下の「レビューの軸の起こし方」）と違い、比べのセッションだからと見逃さない
+- 受付 AI のセッションのフォルダ（`intake-issue-<Issue の番号>`。人が頼んだ受け入れの `verify-intake-issue-<Issue の番号>` も同じ）は、セッションが終わったら（途中で止めたときも、残ったコマンドが止まったと確かめた後に）消す。clone と worktree を持たず、人が調べる材料にならないため。片付けの済んだ作業の単位（完了・中止）の Issue で人が受け入れを頼み、フォルダが残ると、点検が fail になる（[状態遷移と判定][design-flow]の「作業場所の残骸」）
 
 ## 起動の形
 
@@ -64,7 +59,7 @@
 | `--strict-mcp-config` | — | MCP のサーバーを読み込まない。`--mcp-config` は渡さない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `--plugin-dir` | 進行 Bot のプログラムの写し（`devAutopilotPath`） | AI が書けない写しから、エージェント定義と Skill を読む（[STRUCT-3][struct]）。AI の 5 役に `Skill` の道具は持たせず、`review` Skill の本文は、進行 Bot が写しから読み、引数を置き換えて標準入力で渡す（下の「レビューの軸の起こし方」、[ADR-20261021-001][adr-review-skill]） |
 | `--agent` | 役の表の `dev-autopilot:<ループ>:<役>` | 役ごとのエージェント定義で動かす（[STRUCT-3、STRUCT-9][struct]、FACT-2、FACT-40） |
-| `--model` | 設定の `models.*` の `model`。レビュー AI は、PR のラウンド 2 以降は、最初のラウンドの `review` の印の `model=`（下の「レビューの軸の起こし方」） | エージェント定義の `model` より優先される（FACT-8、[モデルの流れ][impl]） |
+| `--model` | 設定の `models.*` の `model`。レビュー AI は、PR のラウンド 2 以降は、最初のラウンドの `review` の印の `model`（下の「レビューの軸の起こし方」） | エージェント定義の `model` より優先される（FACT-8、[モデルの流れ][impl]） |
 | `--effort` | 設定の `models.*` の `effort` | 役ごとの effort を明示する（[モデルの流れ][impl]） |
 | `--max-turns` | `limits.session.turns` | ターンの上限（[IMPL-13][impl]） |
 | `--max-budget-usd` | `limits.session.costUsd` | 費用の上限（[IMPL-14][impl]） |
@@ -107,7 +102,7 @@
 | 2 | 根（`sessionTmp.root`）が無ければ、権限 700 で作る（[SAFE-10][safety]、[ADR-20261017-006][adr-tmp] の決定 1）。続けて、起動の前の確かめの順 5 と 6（根の持ち主・リンク・権限、フォルダがまだ無いこと、長さ）を行う。根を作ったときも確かめる |
 | 3 | セッションの名前と ID の組を、実行の記録（`sessions.jsonl` の一時フォルダの行。[状態遷移と判定][design-flow]の「手元の記録」）と、セッションのフォルダの直下の ID のファイル（`short-tmp-id.txt`。中身は ID の 1 行）に書いてから、`<sessionTmp.root>/<ID>` を権限 700 で作る |
 | 4 | 作ったフォルダを実体のパスに解決して、環境変数（`TMPDIR`、`CLAUDE_CODE_TMPDIR`）と、セッションの安全設定（`allowRead`）に入れる。安全設定は、一時フォルダを作った後に組み立てる（下の「セッションごとの安全設定」の「作り方」） |
-| 5 | セッションのフォルダを消すとき（作り直す直前、片付け、受け入れのフォルダはセッションの後）に、セッションのフォルダの ID のファイルから ID を引いて、先に `<sessionTmp.root>/<ID>` をフォルダごと消し、続けてセッションのフォルダを消す。git を使わず、シンボリックリンクの先をたどらない（[SAFE-12][safety]） |
+| 5 | セッションのフォルダを消すとき（作り直す直前、片付け、受付 AI のフォルダはセッションの後）に、セッションのフォルダの ID のファイルから ID を引いて、先に `<sessionTmp.root>/<ID>` をフォルダごと消し、続けてセッションのフォルダを消す。git を使わず、シンボリックリンクの先をたどらない（[SAFE-12][safety]） |
 
 - 根の下のフォルダの ID が、どのセッションのフォルダの ID のファイルにも無ければ、名前から Issue か PR を引けない残骸として扱い、点検を fail にする（[状態遷移と判定][design-flow]の「作業場所の残骸」）
 - ID のファイルをセッションのフォルダに置くのは、記録のフォルダを失って `setup` をやり直した後も、作業中のセッションの短い一時フォルダを組の無い残骸と読まず、消すときにも ID を引けるようにするため。セッションのフォルダの直下は、AI が sandbox の中から書けない（書けるのは worktree と `tmp/` と親 clone の `.git` の一部。下の「セッションごとの安全設定」の「中身」）。短い一時フォルダを先に消すのは、途中で止まったときに、ID のファイルが消えて短い一時フォルダだけが残る形にしないため
@@ -126,9 +121,9 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | --- | --- | --- |
 | 1 | 進行 Bot のプログラムに持つ雛形に、マシンの設定のパスと、リポの設定の足す分を当てはめて、セッションの安全設定を組み立てる。パスは実体に解決する（シンボリックリンクをたどる。まだ無いパスは書いたまま入れる。[SAFE-5][safety]） | リポの設定の足す分に、決まった記号（下の「リポの設定に書く足す分」）で始まらないパスがあれば、起動しない（`check` も fail にする） |
 | 2 | `<paths.sandboxSettings>/<セッションの名前>.json` に書き（フォルダの権限は 700、ファイルは 600）、中身の SHA-256 を手元に持つ | 同じ名前のファイルがあれば、消してから書く |
-| 3 | 起動の直前に、ファイルを読み直してハッシュを比べる | 違えば起動せず、`needs-human` を付ける（stop の理由は `settings-tampered`。[状態遷移と判定][design-flow]） |
+| 3 | 起動の直前に、ファイルを読み直してハッシュを比べる | 違えば起動せず、停止中にする（`settings-tampered`。[状態遷移と判定][design-flow]の「止めた理由の記号」） |
 | 4 | `claude -p --settings <ファイル>` で起動する（「起動の形」） | — |
-| 5 | セッションが終わったら（途中で止めたときも）、もう一度ハッシュを比べ、実行の記録にハッシュを残してから、ファイルを消す | 違えば、そのセッションの結果を使わず、`needs-human` を付ける（`settings-tampered`） |
+| 5 | セッションが終わったら（途中で止めたときも）、もう一度ハッシュを比べ、実行の記録にハッシュを残してから、ファイルを消す | 違えば、そのセッションの結果を使わず、停止中にする（`settings-tampered`） |
 
 - 雛形はファイルにせず、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ。ファイルにすると、雛形の置き場とハッシュの確かめがもう 1 つ要る。プログラムの写しは AI が書けない（[STRUCT-3][struct]、[SAFE-16][safety]）
 - 安全設定のファイルは、セッションの途中で書き換えると、動いているセッションにすぐ効く（[公式文書][doc-sandboxing]）。AI が書けない場所に置き、セッションの後にもハッシュを比べるのは、このため
@@ -152,7 +147,7 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `disableClaudeAiConnectors` | `true` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `autoMemoryEnabled` | `false` | Claude Code の自動のメモリ（`~/.claude/projects/<作業フォルダのパスから作った名前>/memory/`）を読み込ませない。`-p` と `--setting-sources local` の起動でも読まれ、作業フォルダのパスが同じセッション（同じ名前で作り直したセッション）の間で、検疫を通らない文を引き継ぐ経路になるため（[ADR-20261013-001][adr-workspace] の、セッションの間で引き継ぐもの）。`autoMemoryEnabled` を `false` にすると読まれなくなることを確かめた（FACT-62）。Claude Code の版が変わったときなどに、点検の試しのセッションで確かめ直す（「[導入と点検][design-setup]」の「試しのセッション」） |
 | `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。`Skill` の道具は、どの役にも持たせない（`allow` に入れなくても、エージェント定義の `tools` に `Skill` を書いた役は使えるので、下の `deny` で取り除く。FACT-42、FACT-55、[ADR-20261021-001][adr-review-skill]） |
-| `permissions.deny` | `Agent`、`Skill`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]）。`Skill` は道具の名前だけで書き、`tools` に `Skill` を書いたエージェントからも道具を取り除く（FACT-59、[ADR-20261021-001][adr-review-skill]）。`Write` と `Edit` の `//<worktree>/.claude/**` は、大文字と小文字を変えた `.Claude/` と `.CLAUDE/` への書き込みも止める（FACT-70） |
+| `permissions.deny` | `Agent`、`Skill`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]）。`Skill` は道具の名前だけで書き、`tools` に `Skill` を書いたエージェントからも道具を取り除く（FACT-59、[ADR-20261021-001][adr-review-skill]）。`Write` と `Edit` の `//<worktree>/.claude/**` は、大文字と小文字を変えた `.Claude/` と `.CLAUDE/` への書き込みも止める（FACT-70）。人が `## 仕組みの変更の承認` で認めたパスでも止める（認めたパスを作業 AI のセッションで書けるようにするかは、UNDECIDED-84） |
 
 - sandbox のパスは、`/` 始まりが絶対パス、`~/` 始まりがホームの中。`permissions` のパスは、`//` 始まりが絶対パス（`/` 始まりはプロジェクトの中。[公式文書][doc-sandboxing]、FACT-13）
 - 受付 AI は worktree を作らない（「役とエージェント定義」）ので、worktree と親 clone のパスを含む項目（`permissions.allow` の `Write` と `Edit`、`denyWrite` の `gitdir`、`deny` の `Write` と `Edit`）を入れない
@@ -648,3 +643,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-draft]: ../../adr/adr-20261016-002-intake-ai-drafts-every-issue.md
 [adr-intake-req]: ../../adr/adr-20261022-004-intake-skill-via-request-file.md
 [adr-unlink]: ../../adr/adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
+[adr-no-stages]: ../../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
