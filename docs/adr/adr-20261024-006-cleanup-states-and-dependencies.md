@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-26
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # マージと中止の後は片付けの前の状態を挟んで進行 Bot が片付け、先の依頼は先の作業がマージ済みで続け閉鎖済みなら AI が計画を見直し、載せ直しはレビュー合格の PR だけにする
+
+> **Amended by [ADR-20261025-001][adr-tampered]（2026-10-26）**: 決定 1 のうち、作業場所を消す前の確かめに外れたときの止め方と、片付けをやり直さない例外を改めた。片付けの中で外れたら `workspace-tampered`（実装の都合の記号）で止め、片付けをやり直さないかは、止めた理由の記号（`cleanup-failed`）でなく、マージ済みか閉鎖済みに入った後に書いた `stop` の印かで決める。片付けを軸の値と全体の停止を問わず行うこと、片付けが失敗し続けたら `cleanup-failed` で止めることと、決定 2〜4 は据え置く。
 
 要件の UNDECIDED-81（マージと中止の後の片付けと、先の依頼（blocked by）の待ち方。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 本 ADR は、[ADR-20261024-001][adr-model-states]（作業の単位の状態を主な流れと重ねる 3 本の軸で表す）を前提にする。
@@ -200,6 +202,7 @@ decision-makers: メンテナ
 [adr-check-first]: ./adr-20261024-003-review-after-required-checks-pass.md
 [adr-flow]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-rounds]: ./adr-20261022-003-count-round-trips-by-ai-pushes.md
+[adr-tampered]: ./adr-20261025-001-cleanup-stops-on-tampered-workspace.md
 [adr-workspace]: ./adr-20261013-001-fresh-clone-per-ai-session.md
 [flow]: ../requirements/01-issue-flow.md
 [merge]: ../requirements/03-merge.md
