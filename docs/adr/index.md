@@ -53,6 +53,7 @@
 | ADR-20261024-004 | [依頼の今の文をマスターの下書き 1 つにまとめ、検疫は AI に渡す前と GitHub に書く前に毎回行い、変えてはいけないパスは効く時期で分けて人の承認で変えられるようにする][adr-20261024-004-master-draft-quarantine-and-protected-paths] | accepted | 2026-10-24 |
 | ADR-20261024-005 | [検疫で見つかったら止め方でなく安全の軸に値を入れて maintain 以上の人の安全の確認だけで外し、AI が書いた文で見つかったら全体の停止の Issue で全体を止める][adr-20261024-005-security-axis-and-halt-issue] | accepted | 2026-10-24 |
 | ADR-20261024-006 | [マージと中止の後は片付けの前の状態を挟んで進行 Bot が片付け、先の依頼は先の作業がマージ済みで続け閉鎖済みなら AI が計画を見直し、載せ直しはレビュー合格の PR だけにする][adr-20261024-006-cleanup-states-and-dependencies] | accepted | 2026-10-24 |
+| ADR-20261025-001 | [片付けの中で作業場所の確かめに外れたら workspace-tampered で止め、片付けをやり直さない条件をマージ済みか閉鎖済みに入った後の stop の印で決める][adr-20261025-001-cleanup-stops-on-tampered-workspace] | accepted | 2026-10-25 |
 
 <!--
 行の例（表の最後に足す）:
@@ -112,3 +113,4 @@
 [adr-20261024-004-master-draft-quarantine-and-protected-paths]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-20261024-005-security-axis-and-halt-issue]: ./adr-20261024-005-security-axis-and-halt-issue.md
 [adr-20261024-006-cleanup-states-and-dependencies]: ./adr-20261024-006-cleanup-states-and-dependencies.md
+[adr-20261025-001-cleanup-stops-on-tampered-workspace]: ./adr-20261025-001-cleanup-stops-on-tampered-workspace.md
