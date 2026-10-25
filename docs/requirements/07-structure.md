@@ -48,7 +48,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   マシンの設定は、OS ごとの決まった場所に、当てる先のリポ（owner/repo）ごとに置く（例：macOS は `~/Library/Application Support/dev-autopilot/<owner>/<repo>/`、Linux は `$XDG_CONFIG_HOME/dev-autopilot/<owner>/<repo>/`。場所の値は構造仕様の表で決める）。
   人が呼ぶ Skill は、開いているプロジェクトの origin から owner/repo を引いて場所を決め、定期の実行の定義は同じ場所のパスを進行 Bot に渡す（`check` が一致を確かめる。SETUP-2。[ADR-20261017-004][adr-human] の決定 3）。
   項目の一覧は次のとおり（`check` はすべての項目の存在と型を確かめる。SETUP-2）。項目ごとの置き場・初期値・根拠の表は、構造仕様（`docs/design/`）に置く。
-  要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 が名指しする push しないパスを外す（要件と進行 Bot のプログラムの変更。[ADR-20261021-005][adr-blocked]）、push しないパスの足す分からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
+  要件が初期値を決めていない項目は、構造仕様の表が初期値と根拠の正本で、今の値の正本は設定ファイル。値は設定ファイルの PR で変える。安全の境界を緩める変更（AI の道具・読み書きの範囲・通信先を広げる、MERGE-4 の許可一覧にパスを足す、IMPL-15 が名指しする変えてはいけないパスを外す（要件と進行 Bot のプログラムの変更。[ADR-20261021-005][adr-blocked]）、変えてはいけないパスの足す分からパスを外す、上限を外す）は、値の変更であっても ADR で決める（[ADR-20261015-005][adr-settings]）
   - リポと Project：owner / repo、base ブランチ、GitHub App の ID とインストールの ID（この 4 つはマシン。リポの設定を読む前に要るため。owner / repo は進行 Bot の clone を作る先と全体の止める合図を読む先、App の 2 つの ID は合図を読む前の認証に使う。[ADR-20261021-006][adr-repo]、[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]）、Project の番号、Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）の ID と選択肢の ID（SETUP-5、FLOW-39）
   - ラベル名：`agent-ready` `agent-paused` `agent-manual` `security-suspected` `from-review`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 差し戻し` `## 再開` `## 安全の確認` `## 仕組みの変更の承認` `## 却下 R<n>` `## 判定と違う判断`（`## 異議` は持たない。[ADR-20261024-002][adr-no-stages] の決定 6。「[印と固定の見出しの一覧][f04]」）
