@@ -307,7 +307,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 | 計画 AI（計画） | 規約の正典のパス（[IMPL-4][impl]）、計画の形 | 渡す文（人が決めたマスター） |
 | 計画 AI（計画し直し） | 上に加えて、レビューの指摘で計画し直すこと | 上に加えて、直す前の計画と、計画のレビューの指摘（[ADR-20261019-003][adr-replan]） |
 | レビュー AI（計画のレビュー） | 規約の正典のパス、計画のレビューの観点（[IMPL-10][impl]） | 渡す文、計画 |
-| 作業 AI（実装） | 規約の正典のパス（[IMPL-4][impl]）、品質ゲートのコマンド（`checks.qualityGate`）、変えてはいけないパス（名指しのパスと `protectedPaths.onPush`・`protectedPaths.onMerge` を合わせた一覧。[ADR-20261021-005][adr-blocked]）と、人が `## 仕組みの変更の承認` で認めたパス（認めていないパスを変えないこと。[IMPL-15][impl]）、止まる理由（`adr-required`・`canon-change`）、commit の形（設定の `conventions.*` の言語・Conventional Commits・changeset の要否。Issue の番号だけを写す。[TEXT-6][text]、[IMPL-4][impl]）、テストを消す・期待値を緩める変更をしないこと（[IMPL-12][impl]） | 渡す文、計画コメント（`plan` の印を確かめたもの。[IMPL-10][impl]） |
+| 作業 AI（実装） | 規約の正典のパス（[IMPL-4][impl]）、品質ゲートのコマンド（`checks.qualityGate`）、変えてはいけないパス（名指しのパスと `protectedPaths.onPush`・`protectedPaths.onMerge` を合わせた一覧。[ADR-20261021-005][adr-blocked]）と、人が `## 仕組みの変更の承認` で認めたパス（認めていないパスを変えないこと。[IMPL-15][impl]）、止まる理由（`adr-required`・`canon-change`。人が認めた正典のパスの変更は、止まる理由にしない。[IMPL-8][impl]）、commit の形（設定の `conventions.*` の言語・Conventional Commits・changeset の要否。Issue の番号だけを写す。[TEXT-6][text]、[IMPL-4][impl]）、テストを消す・期待値を緩める変更をしないこと（[IMPL-12][impl]） | 渡す文、計画コメント（`plan` の印を確かめたもの。[IMPL-10][impl]） |
 | 作業 AI（修正） | 上に加えて、渡した指摘だけに対応し、🟢 は直さないこと（[IMPL-23][impl]）、規約の正典は `canon/` から読むこと（上の「渡し方の決まり」） | 渡す文、最新のラウンドの 🔴 🟡（`review` のコメントから読んだ見出し・パス・失敗シナリオ・推奨・軸。通し番号を付ける。下の「作業 AI」の出力契約）。CI が赤なら、失敗した必須チェックの名前と結果（進行 Bot が機械で付けた事実。[IMPL-27][impl]） |
 | 作業 AI（衝突の解消） | 上に加えて、渡した base の SHA を取り込んで衝突を解くことだけを行うこと（[MERGE-6][merge]）、規約の正典は `canon/` から読むこと | 渡す文、取り込む base の SHA（進行 Bot の clone で控えたもの。AI の clone の `origin/<base>` は使わせない。[SAFE-13][safety]）、衝突したファイルの一覧（進行 Bot が機械で付けた事実） |
 | レビュー AI（PR のレビュー。3 つの軸） | `review` Skill の本文（引数に、基点（PR の base）、仕様の在りか（渡す文の欄）、🟢 の起票先（Issue。起票は進行 Bot が行う）、予算（ターンと時間）、見る軸、品質ゲートを回さないこと（CI の結果を進行 Bot が渡すため）を入れたもの。[REVIEW-5、REVIEW-8][review-skill]、上の「レビューの軸の起こし方」）、規約の正典は `canon/` から読むこと | 渡す文、差分、CI の結果、変更ファイルの一覧（進行 Bot が機械で付けた事実）。再レビューでは、前回の印から読んだ値（ラウンド・件数・判定）と、前回の `review` のコメントから読んだ指摘（「レビューのコメントの形」）、修正コミットの範囲（SHA）（[IMPL-21][impl]、[REVIEW-4][review-skill]） |
@@ -439,7 +439,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | キー | 型 | 中身 |
 | --- | --- | --- |
 | `outcome` | `"done"` か `"stopped"` | 作業を終えたか、止まったか |
-| `stopReason` | `"adr-required"` か `"canon-change"` | `stopped` のときだけ。ADR の起票が要る、規約の正典を変える必要がある（[IMPL-8][impl]） |
+| `stopReason` | `"adr-required"` か `"canon-change"` | `stopped` のときだけ。ADR の起票が要る、人が認めていない規約の正典を変える必要がある（[IMPL-8][impl]） |
 | `stopDetail` | 文 | `stopped` のときだけ。止まった理由の説明 |
 | `pr.title`・`pr.body` | 文 | 実装で `done` のときだけ。PR の題名と本文の案（[IMPL-5][impl]）。題名の案が規約から外れていれば、進行 Bot は案を使わず、Issue の文を使わない固定の形で作る（[状態遷移と判定][design-flow]の「push の手順」の順 4。[TEXT-6][text]） |
 | `responses` | 一覧。1 件は `id`（進行 Bot が渡した指摘の通し番号。整数）、`action`（`"fixed"` か `"unable"`）、`check`（文） | 修正で `done` のときだけ。渡した 🔴 🟡 の指摘ごとの対応と確認。渡した通し番号をすべて含む（[IMPL-23][impl]） |
@@ -447,7 +447,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 
 - 工程（実装・修正・衝突の解消）は進行 Bot が指示文で渡し、工程ごとに要る欄をスキーマで分ける。衝突の解消は `outcome` と、`stopped` のとき `stopReason` と `stopDetail`、`done` のとき `checks` を返す（衝突を解くのに正典を変える必要があるときも、止まった理由を返せるようにする）。衝突の解消で `done` のときも、進行 Bot は修正と同じく対応コメントと `fix` の印を書く（形は下の「コメントの形」。[ADR-20261022-003][adr-rounds] の決定 2）
 - 作業の結果は、worktree の中の commit で返す。出力契約に diff を入れない（[IMPL-5][impl]）
-- `stopped` なら、進行 Bot は理由を Issue にコメントし、停止中にする。止めた理由の記号は、`stopReason` が `adr-required` でも `canon-change` でも `adr-required` にする。規約の正典を変えるのも ADR で決めるため（[IMPL-8][impl]、[状態遷移と判定][design-flow]）
+- `stopped` なら、進行 Bot は理由を Issue にコメントし、停止中にする。止めた理由の記号は、`stopReason` が `adr-required` でも `canon-change` でも `adr-required` にする。人が認めていない規約の正典を変えるのも ADR で決めるため（[IMPL-8][impl]、[状態遷移と判定][design-flow]）
 - `action` が `"unable"` の指摘は、次のラウンドのレビューで再び出れば、同じ指摘の再発として人に渡る（[IMPL-24][impl]）
 
 ### レビュー AI の PR のレビュー（`change/reviewer`。軸ごと）
