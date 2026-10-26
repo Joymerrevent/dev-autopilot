@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-26
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 作業の単位の状態を主な流れと重ねる 3 本の軸で表し、人の操作はラベルと見出しのコメントで受け、Project の欄は表示だけにする
+
+> **Amended by [ADR-20261026-001][adr-status]（2026-10-26）**: 決定 5 のうち、主な流れの枠にもともとある Status 欄を使い、名前を変える形を改めた。Status 欄の名前は API で変えられない（FACT-74）ので、Status 欄は名前を変えずに状態の欄として使い、主な流れの枠は単一選択の欄として新しく作り、Status 欄に書き込む組み込みのワークフローは止める。表示の欄 5 つと中身、どれも判定に読まないこと、軸ごとのビューと、ほかの決定は据え置く。
 
 要件の UNDECIDED-76（作業の単位の状態を、どの模型で表し、人の操作と表示をどう分けるか。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 
@@ -491,6 +493,7 @@ decision-makers: メンテナ
   - 冒頭の一覧の ADR：決定をすべて置き換えた [ADR-20261022-005][adr-unlink] は status を `superseded by ADR-20261024-001` にして「決定」節の先頭に置き換えの追記を足す。一部だけ改めたほかの 5 本は、タイトルの下に改めた旨の注記を足す
   - 決定 11 の読み替えが当たるほかの承認済みの ADR（[ADR-20261013-001][adr-workspace]、[ADR-20261015-003][adr-intake]、[ADR-20261016-002][adr-draft]、[ADR-20261017-002][adr-review]、[ADR-20261017-007][adr-stop]、[ADR-20261018-001][adr-usage]、[ADR-20261018-002][adr-redo]、[ADR-20261018-004][adr-planrev]、[ADR-20261018-005][adr-table]、[ADR-20261019-001][adr-repeat]、[ADR-20261019-003][adr-replan]、[ADR-20261019-004][adr-policy]、[ADR-20261020-002][adr-app]、[ADR-20261021-002][adr-dry]、[ADR-20261021-005][adr-blocked]、[ADR-20261021-006][adr-repo]、[ADR-20261021-007][adr-compare]、[ADR-20261022-001][adr-url]、[ADR-20261022-003][adr-rounds]、[ADR-20261022-004][adr-intake-req]）には、タイトルの下に、本 ADR の決定 11 で読むことの追記を足す。UNDECIDED-77〜81 の ADR で置き換えるか改める ADR には、UNDECIDED-77〜81 の ADR の反映で注記を足す
 
+[adr-status]: ./adr-20261026-001-use-status-field-for-state.md
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
