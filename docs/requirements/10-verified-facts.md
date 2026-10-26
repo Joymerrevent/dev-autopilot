@@ -292,12 +292,13 @@ ADR-20261024-004 と ADR-20261024-006 の前提を確かめた。
 
 ## 基本設計への反映の後に確かめた事実（2026-10-26）
 
-要件の UNDECIDED-85 と UNDECIDED-86 を、試し専用の組織に作った Project とリポで確かめた。
+要件の UNDECIDED-85 と UNDECIDED-86 を、試し専用の組織に作った Project とリポで確かめた。FACT-76 は、[ADR-20261026-001][adr-status] の決定 3 を基本設計に書く前に確かめた。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
 | FACT-74 | GitHub の API（GraphQL）で、Organization 所有の Project の、もともとある Status 欄の名前と選択肢を変えられるか。軸ごとのビューを作れるか（SETUP-1、FLOW-39） | **Status 欄の名前は変えられない。選択肢は変えられる。ビューは作れる。** `updateProjectV2Field` で Status 欄に `name` を送ると、エラーにならずに名前が変わらない（選択肢と一緒に送っても、名前だけを送っても同じ。読み直しても `Status` のまま）。自分で作った単一選択の欄は、同じ mutation で名前が変わる。Status 欄の選択肢は、`singleSelectOptions` で依頼・計画・変更・終了に置き換えられる（選択肢の `id` を付けないと振り直される。FACT-15）。ビューは `createProjectV2View` で、名前・形（表・ボード・ロードマップ）・見せる欄（`visibleFieldIds`）を指定して作れ、`updateProjectV2View` で絞り込み（`has:止め方`、`状態:下書き済み,レビュー合格`）を付けられる。ボードの列とグループ分けにする欄は、入力に無く、指定できない。絞り込みを並べると「かつ」になり、別々の欄の「または」は 1 つのビューで書けない（[公式文書][doc-project-filter]） | 2026-10-26、メンテナの `gh` のログイン（`project` の権限）で、試し専用の組織に作った Project に対して実行し、読み直して確かめた |
 | FACT-75 | 同じリポのブランチから出した PR で、CI が PR の中の CI の定義を、リポの秘密を持って動かすか（CI の定義を push で効く組に入れる前提。[ADR-20261024-004][adr-master] の決定 9） | **動かす。** main に置いた CI の定義をブランチで書き換えると、PR の CI（`pull_request`）は書き換えた後の定義で動いた。ブランチで足しただけの定義も動いた。どちらもリポの秘密を読めた（意味の無い値を秘密に置き、ログに出したハッシュの先頭と長さが、置いた値と一致した）。`GITHUB_REF` は `refs/pull/<番号>/merge` | 2026-10-26、試し専用の組織の非公開のリポで、PR の 2 つの実行のログを読んで確かめた |
+| FACT-76 | Project の組み込みのワークフローのうち、Status 欄に値を書くものと、Status 欄の値で Issue を閉じるものは、新しい Project で有効か。Status 欄の選択肢を置き換えるとどうなるか。API で読めるか、止めたり消したりできるか。消したものを戻せるか（[ADR-20261026-001][adr-status] の決定 3） | **API で作った新しい Project では、6 つ（Auto-add sub-issues to project・Auto-close issue・Item added to project・Item closed・Pull request linked to issue・Pull request merged）がすべて有効。Status 欄の選択肢を置き換えると、Status に関わる 5 つ（Auto-add sub-issues to project のほか）が無効になる。** 有効か無効かは GraphQL（`ProjectV2` の `workflows` の `enabled`）で読める。読むには Projects の書き込みの権限が要り、読み取りだけのアプリのトークンでは断られた（`FORBIDDEN`）。有効と無効を切り替える mutation は無い。消す mutation（`deleteProjectV2Workflow`）で消せる。消したものは API では戻せないが、画面の「Default workflows」のひな形から作り直せる（新しい ID と番号になり、入れる値は選び直す）。公式文書は、最初から有効なのを 2 つ（閉じたら Done、マージしたら Done）としている（[公式文書][doc-workflows]） | 2026-10-26、試し専用の組織に API で作った Project で、メンテナの `gh` のログイン（`project` の権限）と、試し用の GitHub App のトークン（Projects の読み取りだけと、書き込みを持つもの）で読み、消し、画面で作り直してから API で読み直して確かめた |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
@@ -321,3 +322,5 @@ ADR-20261024-004 と ADR-20261024-006 の前提を確かめた。
 [adr-cleanup]: ../adr/adr-20261024-006-cleanup-states-and-dependencies.md
 [doc-repo-roles]: https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/repository-roles-for-an-organization
 [doc-project-filter]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/customizing-views-in-your-project/filtering-projects
+[doc-workflows]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations
+[adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
