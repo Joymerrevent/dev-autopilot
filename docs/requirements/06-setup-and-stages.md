@@ -12,7 +12,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
   `setup` は GitHub の準備とマシンの準備に分ける（[ADR-20261017-004][adr-human] の決定 2）。GitHub の準備（ラベル、Project の欄、ruleset、リポの設定、全体の止める合図の変数）は人の `gh` のログイン（人の権限）で行う。マシンの準備（下の一覧のそれ以外）は GitHub の認証を使わず、秘密のファイルを読まない。
   人の `gh` のログインを持たない専用マシンでは、GitHub の準備は人の手元のマシンで行い、専用マシンではマシンの準備だけを行う。進行 Bot の PAT と GitHub App には、ruleset を作る管理の権限を持たせない。
   Plugin を更新した後に `setup` を実行し直すと、進行 Bot のプログラムの写しを新しい版で作り直す（進行 Bot が動いていない間に限る。実行の lock を取る）
-  - Plugin が作れるもの：ラベル（人が付ける `agent-ready` `agent-paused` `agent-manual`、進行 Bot が付ける表示の `security-suspected` と `from-review`。SETUP-8）、Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全の単一選択欄と選択肢。主な流れの枠は、もともとある Status 欄の名前を変えて使い、変えられなければ同じ働きの欄を新しく作る。FLOW-39）と、軸ごとのビュー（FLOW-39）。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える（FACT-15）、
+  - Plugin が作れるもの：ラベル（人が付ける `agent-ready` `agent-paused` `agent-manual`、進行 Bot が付ける表示の `security-suspected` と `from-review`。SETUP-8）、Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全の単一選択欄と選択肢。状態は、もともとある Status 欄を名前を変えずに使い、選択肢を 17 の状態に置き換える。置き換えると今の選択肢と項目の Status の値が失われるので、作るものの一覧に出して人の承認を受ける。ほかの 4 つは単一選択の欄として新しく作る。FLOW-39、[ADR-20261026-001][adr-status]）と、軸ごとのビュー（FLOW-39）。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える（FACT-15）、
     base ブランチの ruleset（PR 必須、force push 禁止、必須チェック（設定の一覧）を strict で登録して「base と最新であること」を要求、`require_extra_approval_for_unattributed_changes` は無効。FACT-7）、
     deploy key の push 先を `<型>/issue-*` のブランチに限りタグの作成を禁じる ruleset（IMPL-15。2 つの ruleset とも、bypass は組織の管理者と、リポの設定の一覧で人が許したアプリで作る。bypass に入れてよいのは組織の管理者とチームと一覧のアプリだけで、リポの役を入れると、書き込みのある deploy key も規則を素通りする。FACT-65、FACT-67）、全体の止める合図のリポの変数（値は `stop`。人が `check` の後に `run` にする。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]）、設定ファイル（リポの設定 `.claude/dev-autopilot.json`。Project の ID や選択肢の ID は API で引いて書く。マシンの設定はマシンごとに、OS ごとの決まった場所に当てる先のリポ（owner/repo）ごとに作り（base ブランチの名前もここに書く。STRUCT-2）、OS ごとの起動の定義（macOS は launchd の plist）がマシンの設定のパスを進行 Bot に渡す。[ADR-20261015-005][adr-settings]）、
     進行 Bot のプログラムの写し（インストールされた Plugin の版を、置き場の中の版ごとのフォルダに写す。STRUCT-3）、
@@ -49,7 +49,7 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 
 | 番号 | 足りないもの | 対応 |
 |---|---|---|
-| SETUP-5 | Project の Status が Todo / In Progress / Done の 3 つ | ~~In Review・Ready to Merge・Blocked を足す。~~ Status 欄の名前を「主な流れの枠」に変え、選択肢を依頼・計画・変更・終了にする（変えられなければ、同じ働きの欄を新しく作る）。あわせて、状態・止め方・先の依頼・安全の単一選択欄を足す。どれも進行 Bot が書く表示で、判定には読まない（FLOW-39、[ADR-20261024-001][adr-model-states]）。更新は GraphQL の `updateProjectV2ItemFieldValue` で行える（公式文書で確認） |
+| SETUP-5 | Project の Status が Todo / In Progress / Done の 3 つ | ~~In Review・Ready to Merge・Blocked を足す。~~ Status 欄は名前を変えずに状態の欄として使い、選択肢を主な流れの 17 の状態に置き換える（Status 欄の名前は API で変えられない。FACT-74）。あわせて、主な流れの枠・止め方・先の依頼・安全の単一選択欄を足す。Status 欄に値を書く組み込みのワークフロー（閉じたら Done、マージしたら Done など）と、Status 欄の値で Issue を閉じるワークフローは止める（[ADR-20261026-001][adr-status]）。どれも進行 Bot が書く表示で、判定には読まない（FLOW-39、[ADR-20261024-001][adr-model-states]）。更新は GraphQL の `updateProjectV2ItemFieldValue` で行える（公式文書で確認） |
 | SETUP-6 | AI を担当者にできない（コラボレータは 1 人） | ~~Project に単一選択欄「Agent」を足す。~~ Agent 欄は足さない。次に動く担い手は表示の欄に出さず、人は軸ごとのビューで自分の番を探す。一時止める・引き取るは、人が付けるラベル（`agent-paused`・`agent-manual`）で受ける（FLOW-38、FLOW-39、[ADR-20261024-001][adr-model-states]）。Assignee は人のまま |
 | SETUP-7 | Issue 依存（blocked by）が 1 件も入っていない | 受付 AI がマスターの下書きに候補（本文の `#n` の参照）を書き、人が `## 作業指示` で直し、人が決めたとき（`decision` の印を書くとき）に進行 Bot が入れる（TEXT-12、FLOW-36）。読み書きは REST の `/issues/{n}/dependencies/blocked_by` で行える（公式文書で確認） |
 | SETUP-8 | 処理対象を示すラベルが無い | ~~`agent-ready` `needs-human` `from-review` `plan:fable` `plan:opus` を `setup` が足す。~~ 人が付ける `agent-ready`（決める）・`agent-paused`（一時止める）・`agent-manual`（引き取る）と、進行 Bot が付ける表示の `security-suspected`（攻撃の疑い）・`from-review`（🟢 を起票した Issue）を `setup` が足す。`needs-human` は使わない（止めるのは `stop` の印。FLOW-40）。`plan:fable`・`plan:opus` は、作業ごとに使うモデルの決め方を決めるまで作らない（[ADR-20261024-004][adr-master] の決定 8）。名前は設定ファイルに持ち、ここに書いた名前は初期値 |
@@ -116,3 +116,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-model-states]: ../adr/adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
