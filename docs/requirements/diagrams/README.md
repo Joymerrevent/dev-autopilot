@@ -6,7 +6,7 @@ dev-autopilot の要件のうち、関係を図にした方が読みやすいも
 | 図 | 何を表すか | 元にした要件 |
 | --- | --- | --- |
 | [全体の構成][overview] | 進行 Bot・AI の 5 役・作業場所・GitHub・人（メンテナと外の人）の関係。誰が何に書けるか | [00-overview.md][f00]、[01-issue-flow.md][f01]、[04-external-text-and-markers.md][f04] の TEXT-12 と印の一覧、[05-safety.md][f05] |
-| [Issue の流れ][issue-flow] | 作業の単位（Issue と結びつく PR）の主な流れを、担い手（起票する人・人・進行 Bot・AI のセッション）ごとのレーンで表す。左に主な流れの枠、右に Project の「状態」の欄。止める・待つ・戻す（主な流れに重ねる 3 本の軸）は右の枠 | [01-issue-flow.md][f01] の FLOW-35〜45、[03-merge.md][f03] の MERGE-1・5 |
+| [Issue の流れ][issue-flow] | 作業の単位（Issue と結びつく PR）の主な流れを、担い手（起票する人・人・進行 Bot・AI のセッション）ごとのレーンで表す。左に主な流れの枠、右に Project の「状態」の欄（Status 欄）。止める・待つ・戻す（主な流れに重ねる 3 本の軸）は右の枠 | [01-issue-flow.md][f01] の FLOW-35〜45、[03-merge.md][f03] の MERGE-1・5 |
 | [作業の単位の状態遷移][work-unit-states] | 主な流れの 17 の状態と線（依頼・計画・変更・終了の枠）と、主な流れに重ねる 3 本の軸（止め方・先の依頼・安全）。主な流れの箱の色は次に動く担い手、軸の箱の色は値の意味 | [01-issue-flow.md][f01] の FLOW-35〜45 |
 | [隔離と鍵][isolation] | sandbox の境界、秘密の置き場、進行 Bot の clone（business-os の clone）とプログラムの写し、GitHub への書き込みの経路 | [05-safety.md][f05] の SAFE-1〜18 |
 | [フォルダ構成と起動][structure] | dev-autopilot のリポの構成（予定）と、Plugin の入れ方・写し・定期の実行・進行 Bot・設定の呼び出しの関係 | [07-structure.md][f07] の STRUCT-1〜9 |

@@ -151,12 +151,12 @@
   | Q4 | 安全 | 攻撃の疑い（AI の文）→（なし） | maintain 以上の人が確かめ、`## 安全の確認` を書いた（見つかった文が残っていれば、次の検疫で Q2 がまた起きる） |
 
   1 本の軸に当てはまる値が 2 つ以上あるときは、人が外すのに手間がかかるほうを出す（停止中 → 引き取り中 → 一時停止中、未完了 → 中止あり、攻撃の疑い（AI の文）→ 攻撃の疑い（入口））。安全の軸と全体の停止の Issue は「[安全側に倒す設計][f05]」の SAFE-19
-- FLOW-39 **Project の表示**（[ADR-20261024-001][adr-model-states] の決定 5）。進行 Bot は、毎回の実行で、主な流れと軸ごとに 1 つの欄を Project に書く。どれも表示だけで、判定には読まない。次に動く担い手（「次の番」）の欄は持たない
+- FLOW-39 **Project の表示**（[ADR-20261024-001][adr-model-states] の決定 5、[ADR-20261026-001][adr-status]）。進行 Bot は、毎回の実行で、主な流れと軸ごとに 1 つの欄を Project に書く。どれも表示だけで、判定には読まない。次に動く担い手（「次の番」）の欄は持たない
 
   | 欄 | 中身 |
   | --- | --- |
-  | 主な流れの枠 | 依頼・計画・変更・終了（もともとある Status 欄の名前を変えて使う。変えられなければ、同じ働きの欄を新しく作る） |
-  | 状態 | 主な流れの 17 の状態の名前 |
+  | 主な流れの枠 | 依頼・計画・変更・終了（単一選択の欄として新しく作る） |
+  | 状態 | 主な流れの 17 の状態の名前（もともとある Status 欄を、名前を変えずに使う。Status 欄の名前は API で変えられない。FACT-74） |
   | 止め方 | （なし）・一時停止中・引き取り中・停止中 |
   | 先の依頼 | （なし）・未完了・中止あり |
   | 安全 | （なし）・攻撃の疑い（入口）・攻撃の疑い（AI の文） |
@@ -333,5 +333,6 @@
 [adr-security]: ../adr/adr-20261024-005-security-axis-and-halt-issue.md
 [adr-cleanup]: ../adr/adr-20261024-006-cleanup-states-and-dependencies.md
 [adr-tampered]: ../adr/adr-20261025-001-cleanup-stops-on-tampered-workspace.md
+[adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
 [fig-states]: ./diagrams/work-unit-states.drawio.svg
 [fig-flow]: ./diagrams/issue-flow.drawio.svg
