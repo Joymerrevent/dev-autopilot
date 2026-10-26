@@ -98,7 +98,7 @@
 | キー | 中身 | 形 | 初期値 | 根拠 |
 | --- | --- | --- | --- | --- |
 | `project.number` | Issue を並べる GitHub の Project の番号 | 数（1 以上の整数） | `setup` が使う Project の番号を書く | 進行 Bot は、設定した Project の Issue を読んで作業の単位にする（[FLOW-1][flow]）。表示の欄は `setup` が足す（[SETUP-5][setup]） |
-| `project.fields.frame`、`project.fields.state`、`project.fields.stop`、`project.fields.dependency`、`project.fields.safety` | Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）ごとの、欄の ID と選択肢の ID | 対応表。欄ごとに `id`（欄の ID の文字列）と `options`（キーは選択肢の名前、値は選択肢の ID の文字列）。選択肢の名前は [FLOW-39][flow] の表の値で、（なし）の選択肢は持たない | `setup` が足した欄と選択肢の ID を書く | 進行 Bot は、主な流れと軸ごとに 1 つの欄を Project に書く。表示だけで、判定には読まない（[FLOW-39][flow]、[SETUP-5][setup]）。主な流れの枠の欄は、もともとある Status 欄の名前を変えて使う（変えられなければ、同じ働きの欄を新しく作る）。軸の値が（なし）のときは、選択肢を選ばずに欄を空にする。人は、ビューで欄が空でない作業の単位に絞って、自分の番を探せる |
+| `project.fields.frame`、`project.fields.state`、`project.fields.stop`、`project.fields.dependency`、`project.fields.safety` | Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）ごとの、欄の ID と選択肢の ID | 対応表。欄ごとに `id`（欄の ID の文字列）と `options`（キーは選択肢の名前、値は選択肢の ID の文字列）。選択肢の名前は [FLOW-39][flow] の表の値で、（なし）の選択肢は持たない | `setup` が足した欄と選択肢の ID を書く | 進行 Bot は、主な流れと軸ごとに 1 つの欄を Project に書く。表示だけで、判定には読まない（[FLOW-39][flow]、[SETUP-5][setup]）。状態の欄（`project.fields.state`）は、もともとある Status 欄を名前を変えずに使う。主な流れの枠の欄（`project.fields.frame`）は、`setup` が単一選択の欄として新しく作る（Status 欄の名前は API で変えられない。FACT-74、[ADR-20261026-001][adr-status]）。軸の値が（なし）のときは、選択肢を選ばずに欄を空にする。人は、ビューで欄が空でない作業の単位に絞って、自分の番を探せる |
 
 #### ラベル名と固定の見出し
 
@@ -334,3 +334,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-no-stages]: ../../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-cleanup]: ../../adr/adr-20261024-006-cleanup-states-and-dependencies.md
+[adr-status]: ../../adr/adr-20261026-001-use-status-field-for-state.md
