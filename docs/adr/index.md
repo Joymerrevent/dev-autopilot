@@ -57,6 +57,7 @@
 | ADR-20261026-001 | [Project にもともとある Status 欄は名前を変えずに状態の欄として使い、主な流れの枠は新しい欄で作る][adr-20261026-001-use-status-field-for-state] | accepted | 2026-10-26 |
 | ADR-20261027-001 | [片付けと戻した後に作業場所を消す前は残りのプロセスを探し、見つかれば消さずに止める][adr-20261027-001-find-leftover-processes-before-deleting-workspaces] | accepted | 2026-10-27 |
 | ADR-20261027-002 | [漏えいの検査で見つかったら止め方でなく安全の軸に値を入れ、全体は止めない][adr-20261027-002-leak-findings-go-to-security-axis] | accepted | 2026-10-27 |
+| ADR-20261027-003 | [人が認めた CLAUDE.md は作業 AI が変えてよく、.claude と .mcp.json は認めても人が変える][adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans] | proposed | 2026-10-27 |
 
 <!--
 行の例（表の最後に足す）:
@@ -120,3 +121,4 @@
 [adr-20261026-001-use-status-field-for-state]: ./adr-20261026-001-use-status-field-for-state.md
 [adr-20261027-001-find-leftover-processes-before-deleting-workspaces]: ./adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
 [adr-20261027-002-leak-findings-go-to-security-axis]: ./adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans]: ./adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
