@@ -4,7 +4,7 @@
 - MERGE-2 進行 Bot が「マージしてよい」と判定する PR の条件（すべて満たす）
   - dev-autopilot が作った PR（進行 Bot の署名付きの印が PR に付いていることで判定する。作者のアカウントでは判定しない。IMPL-20）で、向き先が `develop`
   - IMPL-27 のレビュー合格の条件を満たしている（最新のラウンドの `review` の印の `result` が `pass` で、印の `head` が PR の head と一致し、CI 緑）
-  - IMPL-15 の漏えいの検査を、判定の時点で最終の head の diff 全体に掛け直して通っている（過去の記録に頼らない）
+  - IMPL-15 の漏えいの検査を、判定の時点で最終の head の diff 全体に掛け直して通っている（過去の記録に頼らない）。見つかれば `human` の判定にし、作業の単位の安全の軸にも攻撃の疑い（AI の文）を入れる（[ADR-20261027-002][adr-leak]）
   - 批評 AI が 🔴 を「再現できない」として落としたラウンドが無い（あれば `human` の判定。IMPL-22）
   - 変更したファイルがすべて MERGE-4 の許可一覧にあり、diff の状態がすべて追加（A）か変更（M）で、mode が `100644`（新規でもシンボリックリンクと実行属性付きは `human` の判定）。
     変更ファイルの一覧は API でなく、進行 Bot が自分の clone で `git diff --raw <base>...<head>` を取って作る（API のページ送りの漏れを「一覧に無い」と読まないため）
@@ -40,3 +40,4 @@
 [adr-cleanup]: ../adr/adr-20261024-006-cleanup-states-and-dependencies.md
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [f04]: ./04-external-text-and-markers.md
+[adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
