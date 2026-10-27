@@ -141,7 +141,7 @@
 | GitHub を読む処理（`gh api` の読み取り、進行 Bot の clone の `git fetch`） | 作業を増やさずに記録して、実行を終える | 読めない状態で判断して書き込まないため |
 | GitHub への書き込み（`gh api` のコメントと印、ラベル、Project の欄、PR の作成） | 書き込みが止まった作業の単位を今の実行で進めず、次の実行で GitHub から読み直して続ける。実行の失敗に数える | 止めた時点で GitHub に届いたかが分からないので、読み戻して確かめる前に次の書き込みをしない |
 | push と取り込み（`git push`、push の手順の `git fetch` と `git merge`） | 実行の失敗として、次の実行に持ち越す | lock を持ったまま待ち続けず、push の手順を次の実行でやり直すため |
-| 止める手順と、前の実行が残したセッションの探し方（`lsof`、`lsof +D`） | 残りを確かめられなかったとして、作業場所を消さずに停止中（`session-not-stopped`） | 残りが無いと読んで作業場所を消すと、残ったコマンドがあるまま消すことになる（[AI のセッション][design-ai]の「止める手順」） |
+| 止める手順と、残りのプロセスの探し方（前の実行が残したセッションと、作業場所を消す前。`lsof`、`lsof +D`） | 残りを確かめられなかったとして、作業場所を消さずに停止中（`session-not-stopped`。[ADR-20261027-001][adr-leftover]） | 残りが無いと読んで作業場所を消すと、残ったコマンドがあるまま消すことになる（[AI のセッション][design-ai]の「止める手順」） |
 
 #### 上限
 
@@ -335,3 +335,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-master]: ../../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-cleanup]: ../../adr/adr-20261024-006-cleanup-states-and-dependencies.md
 [adr-status]: ../../adr/adr-20261026-001-use-status-field-for-state.md
+[adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
