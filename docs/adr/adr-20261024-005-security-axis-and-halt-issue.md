@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-27
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 検疫で見つかったら止め方でなく安全の軸に値を入れて maintain 以上の人の安全の確認だけで外し、AI が書いた文で見つかったら全体の停止の Issue で全体を止める
+
+> **Amended by [ADR-20261027-002][adr-leak]（2026-10-27）**: 決定 1 の表に、漏えいの検査で見つかったときの行（`security` の印の `where` が `leak`、攻撃の疑い（AI の文）、全体は止めない）を足した。決定 3 の全体の停止は、AI が書いた文の検疫で見つかったとき（`where` が `text`）に限ると読む。ほかの決定は据え置く。
 
 要件の UNDECIDED-80（検疫で攻撃の疑いが見つかったときの止め方と、全体の止め方。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 本 ADR は、[ADR-20261024-001][adr-model-states]（作業の単位の状態を主な流れと重ねる 3 本の軸で表す）と [ADR-20261024-004][adr-master]（検疫は AI に渡す前と GitHub に書く前に毎回行う）を前提にする。
@@ -188,3 +190,4 @@ AI が書いたコードの差分は、コードの中の文字列やテスト�
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-leak]: ./adr-20261027-002-leak-findings-go-to-security-axis.md

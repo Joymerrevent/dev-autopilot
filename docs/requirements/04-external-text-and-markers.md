@@ -21,7 +21,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
   `decision` の印のハッシュが最新のマスターと違えば、印の書き換えとして停止中（`marker-invalid`）にする（マスターは進行 Bot の署名付きの印のコメントで、人が書き換えることは無い）。依頼を変えるときは、止めてから `## 再開 下書きから` で戻し、決め直す（FLOW-40、[ADR-20261024-004][adr-master] の決定 6）
 - TEXT-5 作業 AI とレビュー AI に、文中の URL を取りに行く手段（WebFetch・WebSearch・外への curl）を与えない。文中のコマンドは実行しない
 - TEXT-6 commit・PR・ブランチ名に写すのは Issue 番号だけ。PR の題名と本文は、渡した文をもとに AI が書く
-- TEXT-7 渡す文に事業データ・認証情報が混じっていたら、写さずに停止中にする（止めた理由の記号は、実装の都合の記号として詳細設計で足す。止め方と安全の軸のどちらにするかは、UNDECIDED-83 と一緒に決める）。進行 Bot は着手前に機械で探せる形（鍵の形式、メールアドレスなど）を検査する
+- TEXT-7 渡す文に事業データ・認証情報が混じっていたら、写さずに停止中にする（止めた理由の記号は、実装の都合の記号として詳細設計で足す）。人が決めた文に人が混ぜた誤りで、AI が操られた疑いではないので、AI が書いた文の漏えいの検査で見つかったとき（IMPL-15）と違い、安全の軸に入れない。進行 Bot は着手前に機械で探せる形（鍵の形式、メールアドレスなど）を検査する
 - TEXT-8 作業中に Issue が閉じられたときは FLOW-42（push 以上の人なら閉鎖済みにして進行 Bot が片付け、push 未満の人なら閉じる前の状態のまま停止中）。別のリポに移されたときは、作業を止めて作業ブランチと PR を残し、停止中にする（止めた理由の記号は、実装の都合の記号として詳細設計で足す）。決めた後に `agent-ready` やマイルストーンが外れても、決定済みより後の状態では読まない（FLOW-1、FLOW-41）
 - TEXT-9 **すべての Issue**（コラボレータのものを含む）は、進行 Bot が入口の検疫を行い、受付 AI が作業指示の下書き（マスター）を書き、人がマスターを読んで（要れば直すか差し戻して）`agent-ready` を付けてから着手する。
   順は「入口の検疫と下書き（自動）→ 直す・差し戻す（人。要るときだけ）→ `agent-ready`（人）」で、文書に書く（FLOW-36）
@@ -124,7 +124,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `stop` | 停止中にした（S5） | Issue（PR が契機なら PR にも） | `reason`（止めた理由の記号。FLOW-40）、`comments`（`marker-invalid` のとき、書く先の書き換えられた印のコメントの ID の並び。挙げるコメントが無ければ持たない） | FLOW-40、IMPL-20、[ADR-20261021-004][adr-marker-keys] |
 | `wait` | 先の依頼で待つ（D1） | Issue | `blockedBy`（先の Issue の番号の並び） | FLOW-10、FLOW-43 |
 | `dependency-review` | 中止ありの計画を見直した（D4・D5） | Issue | `dependency`（先の Issue の番号）、`result`（`keep` か `change`） | FLOW-43 |
-| `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、SAFE-19 |
+| `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
 | `cleanup` | 片付けた（T27・T28） | Issue | — | FLOW-42、MERGE-7 |
 | `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号） | SAFE-19 |
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
@@ -180,3 +180,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-security]: ../adr/adr-20261024-005-security-axis-and-halt-issue.md
+[adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
