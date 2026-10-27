@@ -370,7 +370,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 - `--json-schema` は使わない。`--agent` と一緒に使うと結果が空になる（FACT-14）。形は、エージェント定義の指示と、進行 Bot が標準入力で渡す指示文で伝える
 - JSON スキーマは、進行 Bot のプログラム（`plugin/src/`）の中の 1 か所に持つ（印の形の正本と同じ）。エージェント定義と進行 Bot は同じ写しから使うので、版はずれない（[STRUCT-3][struct]、[STRUCT-7][struct]）
 - 決まった値から選ぶ欄（下の表で `"…"` の並びを書いた欄）は、ほかの値を許さない。進行 Bot が Issue や PR に書き添えるときは、AI の文でなく、値ごとに決めた固定の文で書く（[ADR-20261018-002][adr-redo] の決定 2）
-- 文の欄は AI が書いた文で、GitHub に書く前に検疫と漏えいの検査を掛ける（[TEXT-11][text]、[IMPL-15][impl]）。AI が書いた文を載せるもの（マスターの下書き、計画、レビュー、🟢 から起票する Issue の本文、PR の本文）の先頭に、「AI が生成した」の 1 行を付ける（[REVIEW-3][review-skill]。文面は下の「コメントの形」）。どれも、見つかった文を投稿しない（[TEXT-11][text]）。検疫で見つかったら、攻撃の疑い（AI の文）にして全体の停止の Issue を開く（`security` の印の `where` が `text`。[ADR-20261024-005][adr-security] の決定 3）。漏えいの検査で見つかったら、停止中にする（`leak`。止め方と安全の軸のどちらにするかは UNDECIDED-83）。投稿する文ごとに、投稿しないものを次の表で決める
+- 文の欄は AI が書いた文で、GitHub に書く前に検疫と漏えいの検査を掛ける（[TEXT-11][text]、[IMPL-15][impl]）。AI が書いた文を載せるもの（マスターの下書き、計画、レビュー、🟢 から起票する Issue の本文、PR の本文）の先頭に、「AI が生成した」の 1 行を付ける（[REVIEW-3][review-skill]。文面は下の「コメントの形」）。どれも、見つかった文を投稿しない（[TEXT-11][text]）。検疫で見つかったら、攻撃の疑い（AI の文）にして全体の停止の Issue を開く（`security` の印の `where` が `text`。[ADR-20261024-005][adr-security] の決定 3）。漏えいの検査で見つかったら、攻撃の疑い（AI の文）にする（`security` の印の `where` が `leak`。全体の停止の Issue は開かない。[ADR-20261027-002][adr-leak]）。投稿する文ごとに、投稿しないものを次の表で決める
 
   | 投稿する AI の文 | 掛ける時 | 見つかったとき |
   | --- | --- | --- |
@@ -643,3 +643,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-check-first]: ../../adr/adr-20261024-003-review-after-required-checks-pass.md
 [adr-master]: ../../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
+[adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
