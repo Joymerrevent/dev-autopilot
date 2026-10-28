@@ -2,7 +2,7 @@
 
 dev-autopilot は、独立したリポ（Joymerrevent/dev-autopilot）で、ほかのリポにも当てられる Plugin として作る（[ADR-20261016-003][adr-move]）。
 Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 Bot を含めてすべて動く形にする（[ADR-20261017-003][adr-plugin]）。
-ほかのリポに当てることと、ほかの人に配ることの時期は、「分離の時期の目安」のとおり、決める時期を決め直す（UNDECIDED-82）。
+ほかのリポに当てることと、ほかの人に配ることは、「分離の時期の目安」の条件を満たしてから決める（[ADR-20261028-003][adr-expand]）。
 
 ## 構成
 
@@ -122,10 +122,10 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 ## 分離の時期の目安
 
 置き場所は、基本設計の前に別のリポへ移した（2026-10-17。[ADR-20261016-003][adr-move]、[ADR-20261017-001][adr-history]）。
-ほかのリポに当てることと、ほかの人に配ること（marketplace への登録、skills CLI での `review` の単体導入。STRUCT-7）は、決める時期を UNDECIDED-82 で決め直す（今までは、マージ判定工程（段階 8）の出口を越えてから決めるとしていたが、段階 4〜8 は [ADR-20261024-002][adr-no-stages] で持たなくなった）。決めるときは、設定ファイルの項目だけで別のリポに当てられると確かめてから決める。
+ほかのリポに当てることと、ほかの人に配ること（marketplace への登録、skills CLI での `review` の単体導入。STRUCT-7）は、進行 Bot のマージの判定と人の判断の一致（基本設計の「運用の記録の数え方」で数える）が直近 10 件で全件一致し、10 件のうちマージした PR が、どれもマージから 14 日を過ぎて revert が無くなってから決める（[ADR-20261028-003][adr-expand]。不一致か revert があれば、その後の 10 件で数え直す）。条件を満たしても自動では広げず、メンテナが ADR で決める。決めるときは、設定ファイルの項目だけで別のリポに当てられると確かめてから決める。
 2 つ目の適用先ができる前は、固有の値がコードに残っていても気づけないため。
 
-- それまで、進行 Bot が当てる先は business-os だけにする。1 台のマシンで複数のリポに当てる形も、同じ時期に決める（UNDECIDED-82）
+- それまで、進行 Bot が当てる先は business-os だけにする。1 台のマシンで複数のリポに当てる形と、専用マシンへの移行も、同じ条件を満たしてから決める。クラウドの仕組み（UNDECIDED-21）と Docker のコンテナ（UNDECIDED-58）も、同じ条件を満たした後に一緒に決める（[ADR-20261028-003][adr-expand]）
 - 形は、今から Plugin を入れたプロジェクトで動く形（STRUCT-3）で作る。後で決めるのは、当てる先を広げることと、ほかの人への公開（marketplace への登録）の時期だけ（[ADR-20261017-003][adr-plugin]）
 - dev-autopilot を、dev-autopilot 自身のリポに当てない。当てると、作業 AI が進行 Bot のコードを書き換える経路が戻る。`setup` は dev-autopilot 自身のリポでは止まる。当てるなら、別の ADR で決める
 
@@ -157,3 +157,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-model-states]: ../adr/adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md

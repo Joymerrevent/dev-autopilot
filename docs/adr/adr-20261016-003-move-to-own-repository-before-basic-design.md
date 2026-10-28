@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-16
-updated: 2026-10-25
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -15,6 +15,8 @@ decision-makers: メンテナ
 > 進行ボットとエージェント定義・Skill を同じ版から使うこと、ほかのリポへの適用とほかの人への公開を段階 8 の後に決める時期、dev-autopilot 自身のリポに当てないこと、business-os の clone を分けることは据え置く。
 >
 > **［2026-10-24 追記］** 「段階 8 の後に決める」とした、ほかのリポへの適用の時期は、[ADR-20261024-002][adr-20261024-002] で段階 4〜8 を持たなくなったので決め直す。決め直すまでは、当てる先は business-os だけのまま。
+>
+> **Amended by [ADR-20261028-003][adr-20261028-003]（2026-10-28）**: 決定 2 の、ほかのリポへの適用と配布を決める時期（段階 8 の出口を越えてから）を、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める、に改めた。設定ファイルの項目だけで別のリポに当てられると確かめてから決めること、決めるまで当てる先を business-os だけにすること、dev-autopilot 自身のリポに当てないこと、ほかの決定は据え置く。
 
 dev-autopilot を、business-os の中のフォルダ（`dev-autopilot/`）から別のリポジトリへ移す時期を決める。要件の「[分離の時期の目安][structure]」（段階 8 の後に分離する）を改める。
 business-os の ADR 20261008-01（[`dev-autopilot/` を business-os に置く橋渡しの ADR][bos-adr]）は、決定 7 で分離の時期と方法を dev-autopilot 側に任せているので、dev-autopilot 側の ADR で決める。
@@ -226,3 +228,4 @@ business-os の中に置いたままにすると、3 つの問題がある。
 [adr-history]: ./adr-20261017-001-carry-history-into-own-repository.md
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261028-003]: ./adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
