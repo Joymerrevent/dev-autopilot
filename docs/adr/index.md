@@ -60,6 +60,7 @@
 | ADR-20261027-003 | [人が認めた CLAUDE.md は作業 AI が変えてよく、.claude と .mcp.json は認めても人が変える][adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans] | accepted | 2026-10-27 |
 | ADR-20261028-001 | [当てる先のリポの CI の秘密は base ブランチだけが使える Environment に置き、CI の定義は今のまま人が push する][adr-20261028-001-ci-secrets-only-in-base-branch-environments] | accepted | 2026-10-28 |
 | ADR-20261028-002 | [進行 Bot の GitHub App に秘密の名前を読む権限を足し、毎回の点検で当てる先のリポの秘密の置き方を確かめる][adr-20261028-002-app-reads-secret-names-for-checks] | accepted | 2026-10-28 |
+| ADR-20261028-003 | [ほかのリポへの適用と専用マシンへの移行は、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める][adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments] | accepted | 2026-10-28 |
 
 <!--
 行の例（表の最後に足す）:
@@ -126,3 +127,4 @@
 [adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans]: ./adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-20261028-001-ci-secrets-only-in-base-branch-environments]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-20261028-002-app-reads-secret-names-for-checks]: ./adr-20261028-002-app-reads-secret-names-for-checks.md
+[adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments]: ./adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
