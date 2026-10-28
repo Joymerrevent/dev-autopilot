@@ -139,7 +139,7 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `sandbox.failIfUnavailable` | `true` | sandbox が起動できない（依存が無い、OS が対応していない）とき、Claude Code は既定では sandbox なしでコマンドを動かす。`true` にすると、起動の時点で止まり、実行の失敗になる（[公式文書][doc-sandboxing]。安全側に倒す。[SAFE-4][safety]） |
 | `sandbox.allowUnsandboxedCommands` | `false` | sandbox の中で失敗したコマンドを、sandbox の外で動かし直させない（[SAFE-10][safety]） |
 | `sandbox.filesystem.denyRead` | `~/`、置き場（`paths.workspace`）、秘密の置き場（`paths.secrets`）、マシンの設定のフォルダ、短い一時フォルダの根（`sessionTmp.root`）、記録の置き場（`paths.records`）、安全設定の置き場（`paths.sandboxSettings`）、`/tmp/claude-<uid>/`、macOS の人の一時フォルダとキャッシュのフォルダ（`getconf DARWIN_USER_TEMP_DIR` と `getconf DARWIN_USER_CACHE_DIR` が返す `/var/folders/<…>/T` と `…/C`。進行 Bot が組み立てるときに読み、実体のパスに解決する）、`/Users/Shared`、`/Volumes`、リポの設定の `safety.sandbox.denyRead`。記録と安全設定の置き場は、既定ではほかの場所の下にあるが、人が別の場所を指定したときも読ませないために名指しする | ホーム・置き場・秘密・人の一時フォルダと共有のフォルダを読ませない（[SAFE-10][safety]、[ADR-20261015-001][adr-read]、[ADR-20261017-006][adr-tmp]）。sandbox の読み取りは既定で開いていて、`denyRead` に並べた場所だけが閉じるので、ホームの外の道具（`/opt/homebrew`、`/usr`）は読める。`~/` の拒否だけでは、macOS の人の一時フォルダとキャッシュと `/Users/Shared` のファイルを読め、`/Volumes` の一覧を出せた。4 つを足しても `node`・`pnpm`・`git` は動く（FACT-63）。`~/` の拒否で、ログインのキーチェーンの項目も `security` から読めなくなる。拒否が無いと、`security` で作った項目の値を確認の画面なしで読めた（FACT-81） |
-| `sandbox.filesystem.allowRead` | 自分のセッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）、自分の短い一時フォルダ、写しの `skills/`、マシンの設定の `safety.sandbox.toolDirs` | 狭い方の規則が勝つので、`denyRead` の中を開け直す（[SAFE-10][safety]、FACT-22、FACT-32） |
+| `sandbox.filesystem.allowRead` | 自分のセッションのフォルダ（`<置き場>/sessions/<セッションの名前>/`）、自分の短い一時フォルダ、写しの `skills/`、マシンの設定の `safety.sandbox.toolDirs` | 狭い方の規則が勝つので、`denyRead` の中を開け直す（[SAFE-10][safety]、FACT-22、FACT-32）。Linux では、書ける場所の祖先を入れると、書ける場所が読むだけになり、Bash が毎回止まる（FACT-82。要件の UNDECIDED-93） |
 | `sandbox.filesystem.allowWrite` | 自分のセッションのフォルダの `tmp/`（XDG の 4 つと pnpm の store） | sandbox が既定で書けるのは、作業フォルダ（worktree）と、ユーザーごとの一時フォルダ（短い一時フォルダの下の `claude-<uid>/`）と、worktree の親 clone の `.git` だけで（FACT-9、FACT-34）、`tmp/` は入らない。`allowWrite` に入れると、sandbox の中から書ける（FACT-41。[SAFE-10][safety]） |
 | `sandbox.filesystem.denyWrite` | 親 clone の `.git/worktrees/<名前>/gitdir`、リポの設定の `safety.sandbox.denyWrite` | 既定で書ける親 clone の `.git` のうち、`gitdir` は書けてしまうので止める（FACT-9、[SAFE-12][safety]） |
 | `sandbox.network.allowedDomains` | リポの設定の `safety.network.allowedDomains` | 外への通信は、許可した先だけにする（[SAFE-10][safety]） |
@@ -219,7 +219,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 - 止めずに終わったときも探すのは、`&` で裏に回したコマンドが、`claude` が終わった後も残りうるため
 - 全体の止める合図で止めた回は、実行の失敗に数えない。合図が `run` に戻った後の実行で続ける。費用は、途中で止めた回として数える（[IMPL-14][impl] の表、[ADR-20261017-007][adr-stop]）
 - 環境変数に付けた目印と、セッションの ID では探さない。macOS の `ps` で取れなかった（FACT-44）
-- 残ったコマンドは sandbox の中のままで、書けるのは自分のセッションの作業場所と一時フォルダだけ（FACT-38）。Linux で同じに振る舞うかは確かめていない（UNDECIDED-49）
+- 残ったコマンドは sandbox の中のままで、書けるのは自分のセッションの作業場所と一時フォルダだけ（FACT-38）。Linux（コンテナの中）では、bubblewrap がプロセスの名前空間を分けて親と一緒に終わるので、止めたときにコマンドは残らなかった（FACT-87）
 
 ### 前の実行が残したセッション
 
