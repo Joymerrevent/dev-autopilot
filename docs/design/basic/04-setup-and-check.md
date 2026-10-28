@@ -234,7 +234,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 - 依頼と結果のファイルは記録の置き場にあり、AI は sandbox の中から書けない
 - 人の Claude Code が sandbox を有効にしていると、Bash の道具から記録の置き場（作業フォルダの外）に書けない（FACT-71）。人が呼ぶ Skill のうち、記録の置き場に依頼のファイルを置くもの（`check`、`/dev-autopilot` の手動の 1 回実行、`/verify-issue` などから呼ぶ intake の Skill の下書き）は、依頼のファイル（`check-request.json`・`run-request.json`・`intake-request.json`）を置くコマンドと、示した後に結果のファイル（`check-result-<依頼の ID>.json`・`intake-result-<依頼の ID>.json`）を消すコマンドを、sandbox の外で動かす許可を人に求めてから動かす（[ADR-20261022-004][adr-intake-req] の決定 6）。人の設定が sandbox の外でコマンドを動かすことを許していない（`sandbox.allowUnsandboxedCommands` が `false`）か、人が許可しなければ、依頼を置かず、ジョブも起こさずに、sandbox の中からは記録の置き場に書けないので依頼を出せないことを理由として示して止まる
 - sandbox の外で動かすのは、記録の置き場に書くコマンドだけにする。結果を待つことと表示することは、sandbox の中で行う。許可を求めるコマンドは、書く先のパスと書く中身が、人の読むコマンドの文に見える形にする。人が、記録の置き場に書くだけのコマンドかを読んで許せるようにするため（[ADR-20261022-004][adr-intake-req] の決定 6）
-- ジョブを起こす `launchctl kickstart`（`-k` なし）と、lock と結果のファイルを読むことを、sandbox の中の Bash の道具から使えるかは、確かめていない（ジョブを起こすほうは要件の UNDECIDED-75。人が試す）。使えないと分かったコマンドにも、同じ扱い（sandbox の外で動かす許可を人に求め、許されなければ理由を示して止まる）を掛ける。導入と点検の実装（段階 3）で、sandbox を有効にした人の Claude Code から試す（[ADR-20261022-004][adr-intake-req] の確認方法）
+- ジョブを起こす `launchctl kickstart`（`-k` なし）は、sandbox の中の Bash の道具から使える（FACT-80）。lock と結果のファイルを読むことは、sandbox の中から使えるかを確かめていない。使えないと分かったコマンドには、同じ扱い（sandbox の外で動かす許可を人に求め、許されなければ理由を示して止まる）を掛ける。導入と点検の実装（段階 3）で、sandbox を有効にした人の Claude Code から試す（[ADR-20261022-004][adr-intake-req] の確認方法）
 
 ### モデルを使わない試し
 
