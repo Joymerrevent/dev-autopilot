@@ -21,6 +21,7 @@ decision-makers: メンテナ
 - Administration の権限の無い GitHub App のインストールのトークンでは、ruleset の `enforcement`・対象・規則・`current_user_can_bypass`・`updated_at` と、base ブランチに効く規則は読めるが、`bypass_actors` は返らない。ruleset の変更の履歴は `administration=write` を求める（FACT-88）。進行 Bot の App には Administration を付けない（[ADR-20261020-002][adr-app] の決定 2）
 - bypass だけを変えても、App から見える `updated_at` は変わる（FACT-89）
 - 2026-10-28 に、試し用の App を ruleset の bypass に入れると、App から見える `current_user_can_bypass` が `never` から `always` に変わり、外すと `never` に戻った（補足情報。承認の後の反映で FACT に載せる）
+- 2026-10-29 に、試し用の App に Administration の読み取りを足して試すと、トークンの権限に `administration: read` が入っても `bypass_actors` は返らず、変更の履歴も `administration=write` を求めた（補足情報。承認の後の反映で FACT に載せる）。`bypass_actors` を読むには、Administration の書き込みが要る
 - 基本設計の「[導入と点検][design-setup]」は、読めない欄があれば fail にする。このままでは、GitHub App に切り替えた後の毎回の点検が fail になり、進行 Bot が当てる先のリポに書き始められない。PAT の間は、組織の管理者の fine-grained PAT で `bypass_actors` を読める（FACT-65）ので、困るのは GitHub App に切り替えた後だけ
 - UNDECIDED-94 の候補 (A) は「人の `setup` と `check`（人の `gh` のログイン）」が控えると書いていたが、[ADR-20261017-004][adr-human] の決定 2 では `check` は進行 Bot のジョブで動く。人の `gh` のログインで bypass を読めるのは `setup` だけ
 
@@ -36,7 +37,8 @@ decision-makers: メンテナ
 ## 検討した選択肢（Considered Options）
 
 - 案 A：`setup` が `bypass_actors` を確かめたときに、3 つの ruleset の ID と `updated_at` を控える。進行 Bot の毎回の点検は、App で読める欄に加えて、`updated_at` が控えと同じことと、`current_user_can_bypass` が `never` であることを確かめ、違えば fail にする
-- 案 B：進行 Bot の GitHub App に Administration の権限を足し、`bypass_actors` を毎回読む
+- 案 B1：進行 Bot の GitHub App に Administration の読み取りを足し、`bypass_actors` を毎回読む
+- 案 B2：進行 Bot の GitHub App に Administration の書き込みを足し、`bypass_actors` を毎回読む
 - 案 C：毎回の点検では bypass を確かめず、人の `setup` に任せる
 - 案 D：今のまま、読めない欄を fail にする
 
@@ -85,10 +87,15 @@ decision-makers: メンテナ
 - 良い点: 変わったときに止まる。進行 Bot に強い権限を渡さない
 - 悪い点: bypass と関係の無い変更でも止まる
 
-### 案 B：進行 Bot の App に Administration を足す
+### 案 B1：進行 Bot の App に Administration の読み取りを足す
 
-- 良い点: 毎回 `bypass_actors` を読める
-- 悪い点: `bypass_actors` は ruleset に書き込める認証にだけ返り（[公式文書][doc-rules]）、変更の履歴も `administration=write` を求めた（FACT-88）。進行 Bot に ruleset を書き換えられる権限を渡すことになりうる。[ADR-20261020-002][adr-app] の決定 2 を改めることになる
+- 良い点: 進行 Bot に ruleset を書き換えられる権限を渡さない
+- 悪い点: 試したところ、読み取りでは `bypass_actors` は返らなかった（補足情報）ので、成り立たない。リポの設定・協力者・deploy key の一覧なども読めるようになる
+
+### 案 B2：進行 Bot の App に Administration の書き込みを足す
+
+- 良い点: 毎回 `bypass_actors` を読める見込み（`bypass_actors` は ruleset に書き込める認証にだけ返る。[公式文書][doc-rules]。書き込みのある PAT では返った。FACT-88。App では試していない）
+- 悪い点: 進行 Bot に、ruleset を消したり bypass に自分を足したりできる権限を渡す。進行 Bot の認証が漏れたときに、守りそのものを外せる。[ADR-20261020-002][adr-app] の決定 2 を改めることになる
 
 ### 案 C：毎回の点検では bypass を確かめない
 
@@ -103,6 +110,7 @@ decision-makers: メンテナ
 ## 補足情報（More Information）
 
 - 2026-10-28 に、試し専用の組織の公開の試し用リポ `probe-ruleset-read-20261028` で、試し用の App（Administration なし）を、deploy key の push 先を限るブランチの ruleset の bypass に `Integration` として入れた。App のトークンで読む `current_user_can_bypass` は、入れる前が `never`、入れた後が `always`、外した後が `never` だった。どの読み取りでも `bypass_actors` は返らず、`updated_at` は入れたときと外したときに変わった
+- 2026-10-29 に、メンテナが試し用の App の権限に Administration の読み取りを足し、組織で承認した。インストールのトークンの権限に `administration: read` が入ったが、3 つの ruleset のどれでも `bypass_actors` は返らず、`current_user_can_bypass` は `never`、変更の履歴は 403（`administration=write`）だった
 - 本 ADR で決めないこと
   - 控えの置き場と形、`setup` が控えを書く手順、fail のときの人への案内の文（基本設計）
   - 組織の ruleset（当てる先のリポの ruleset でなく、組織に置く ruleset）の確かめ方。今の設計は当てる先のリポの 3 つの ruleset だけを確かめる
