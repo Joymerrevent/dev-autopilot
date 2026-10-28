@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-20
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261024-002][adr-20261024-002]（2026-10-24）**: 決定 1 の「受け入れ工程（段階 4）で `run.dryRun` を `false` にする（GitHub に書き始める）前に、GitHub App に切り替える」を、「進行 Bot が当てる先のリポに初めて書く前に切り替える」に改めた。書かずに試す間に PAT で読む文は、書かずに試すことを持たないので要らなくなった（決定 2）。決定 1 のほかの項目と、決定 2〜5 は据え置く。
 >
 > **［2026-10-24 追記］** 権限の表の「Project の Status と Agent 欄」は、[ADR-20261024-001][adr-20261024-001] の決定 5 の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）と読む。
+>
+> **Amended by [ADR-20261028-002][adr-app-secrets]（2026-10-28）**: 決定 2 の権限の表に、Secrets（リポ）の読み取りを足した。当てる先のリポの秘密の名前を読み、毎回の点検で CI の秘密の置き方を確かめる（値は読めない。[ADR-20261028-001][adr-ci-secrets] の決定 2）。ほかの決定は据え置く。
 
 ADR「自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ」（[ADR-20261020-001][adr-bots]）の決定 1 が「分ける要望が出たら、別の ADR で決める」とした論点を決める。あわせて、非公開のリポで CI のチェックの実行を読む手段（要件の UNDECIDED-57）を決める。
 
@@ -173,3 +175,5 @@ ADR「自動化用の GitHub アカウントはいまは分けず、印を書い
 [doc-app-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps
 [adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-ci-secrets]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
+[adr-app-secrets]: ./adr-20261028-002-app-reads-secret-names-for-checks.md

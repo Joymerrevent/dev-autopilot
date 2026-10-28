@@ -154,6 +154,8 @@ decision-makers: メンテナ
 - push で効くものを人が push した後に、PR をどう作って結びつけるか（PR がまだ無いときを含む）は、基本設計で決める
 - AI の作業ブランチの CI を秘密を持たない形で動かすかは、別の ADR で決める。決めた後に、push で効く組の扱いを緩めるかを決め直す
 
+  > **［2026-10-28 追記］** [ADR-20261028-001][adr-ci-secrets] で決めた。当てる先のリポの CI の秘密は base ブランチだけが使える Environment に置き、点検で確かめる。push で効く組は緩めない。秘密が無くても、CI の定義を変えれば書き込みのトークンを求められるため（FACT-78）
+
 ### 影響（Consequences）
 
 - 良い点: 依頼の今の文がいつも 1 か所にあり、人が決めた文がどれかがはっきりする。前の版は畳まれて残る
@@ -280,3 +282,4 @@ decision-makers: メンテナ
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-claude-dir]: ./adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
+[adr-ci-secrets]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
