@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-22
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -45,6 +45,8 @@ decision-makers: メンテナ
 - 2026-10-22 に、sandbox を有効にした Claude Code の Bash の道具から、作業フォルダの外（ホームの下と、`/private/tmp/` の下の作業フォルダの外）にファイルを書けるかを試した。どちらも `Operation not permitted` で書けなかった（[FACT-71][facts]）。
   今の intake の Skill が書く lock・`sessions.jsonl`・セッションのフォルダ・短い一時フォルダの根・安全設定は、どれも作業フォルダ（当てる先のリポの作業コピー）の外にある。`check` と `/dev-autopilot` が記録の置き場に置く依頼のファイルも同じ
 - sandbox の中の Bash の道具から `launchctl kickstart` でユーザーのジョブを起こせるかは、まだ確かめていない（UNDECIDED-75。試験用のジョブの登録が要るので、人が試す）
+
+  > **［2026-10-28 追記］** 確かめた。sandbox の中の Bash の道具から、`launchctl kickstart`（`-k` なし）でユーザーのジョブを起こせる（[FACT-80][facts]）。lock と結果のファイルを sandbox の中から読めるかは、導入と点検の実装（段階 3）で試す
 
 課題：人が呼ぶ intake の Skill の「下書き」で、受付 AI のセッションをどのプロセスが起こすか。起動の前の確かめ・止める合図・止める手順・返す下書きの検査・記録・費用の累計・lock を、どう扱うか。人が呼ぶ Skill が記録の置き場に依頼のファイルを書けないとき、どうするか。
 
