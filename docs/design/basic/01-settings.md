@@ -28,7 +28,7 @@
 - 当てる先のリポの `.claude/dev-autopilot.json`（commit する）。形は JSON
 - 進行 Bot は、毎回の実行の最初に、進行 Bot の clone で fetch した base ブランチの先端から読む。読めないか形が違えば、作業に入らず止まる（[ADR-20261017-007][adr-stop] の決定 4、SAFE-4）
 - マシンに依らない値だけを持ち、絶対パスを書かない（`check` が確かめる）
-- AI のセッションは、人が `## 仕組みの変更の承認` で認めなければ書き換えられない。`.claude/**` は IMPL-15 の変えてはいけないパスのうち、マージまで効かない組で、書き換えても人がマージするまで効かない（進行 Bot は base ブランチの先端から読む）。認めたパスを作業 AI のセッションで書けるようにするかは UNDECIDED-84
+- AI のセッションは、人が `## 仕組みの変更の承認` で認めなければ書き換えられない。`.claude/**` は IMPL-15 の変えてはいけないパスのうち、マージまで効かない組で、書き換えても人がマージするまで効かない（進行 Bot は base ブランチの先端から読む）。認めても、`.claude/**` は作業 AI に書かせず、人が変える（Claude Code 自身も作業 AI に書かせない。FACT-77、[ADR-20261027-003][adr-claude-dir]）
 
 ## マシンの設定
 
@@ -336,3 +336,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-cleanup]: ../../adr/adr-20261024-006-cleanup-states-and-dependencies.md
 [adr-status]: ../../adr/adr-20261026-001-use-status-field-for-state.md
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
+[adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md

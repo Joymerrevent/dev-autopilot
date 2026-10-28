@@ -147,10 +147,11 @@ AI のセッションに `--settings` で渡す安全設定は、読み書きを
 | `disableClaudeAiConnectors` | `true` | claude.ai のコネクタを読み込ませない（[SAFE-1][safety]、[ADR-20261017-005][adr-mcp]） |
 | `autoMemoryEnabled` | `false` | Claude Code の自動のメモリ（`~/.claude/projects/<作業フォルダのパスから作った名前>/memory/`）を読み込ませない。`-p` と `--setting-sources local` の起動でも読まれ、作業フォルダのパスが同じセッション（同じ名前で作り直したセッション）の間で、検疫を通らない文を引き継ぐ経路になるため（[ADR-20261013-001][adr-workspace] の、セッションの間で引き継ぐもの）。`autoMemoryEnabled` を `false` にすると読まれなくなることを確かめた（FACT-62）。Claude Code の版が変わったときなどに、点検の試しのセッションで確かめ直す（「[導入と点検][design-setup]」の「試しのセッション」） |
 | `permissions.allow` | `Bash`、`Write(//<worktree>/**)`、`Edit(//<worktree>/**)`、`Read(//<写し>/skills/**)` | ほかの `Read` を入れると worktree の外をすべて読めるので入れない（[SAFE-2][safety] の (e)、FACT-13）。`Skill` の道具は、どの役にも持たせない（`allow` に入れなくても、エージェント定義の `tools` に `Skill` を書いた役は使えるので、下の `deny` で取り除く。FACT-42、FACT-55、[ADR-20261021-001][adr-review-skill]） |
-| `permissions.deny` | `Agent`、`Skill`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]）。`Skill` は道具の名前だけで書き、`tools` に `Skill` を書いたエージェントからも道具を取り除く（FACT-59、[ADR-20261021-001][adr-review-skill]）。`Write` と `Edit` の `//<worktree>/.claude/**` は、大文字と小文字を変えた `.Claude/` と `.CLAUDE/` への書き込みも止める（FACT-70）。人が `## 仕組みの変更の承認` で認めたパスでも止める（認めたパスを作業 AI のセッションで書けるようにするかは、UNDECIDED-84） |
+| `permissions.deny` | `Agent`、`Skill`、`mcp__*`、`Read(//<秘密の置き場>/**)`、`Read(//<置き場>/controller/**)`、`Read(//<写し>/src/**)`、`Write` と `Edit` の `//<親 clone>/.git/**`・`//<worktree>/.claude/**`・`//<worktree>/CLAUDE.md`（`## 仕組みの変更の承認` で認めたときは、作業 AI のセッションで入れない。表の下）・`//<worktree>/.mcp.json` | 重ねる守り（[SAFE-2][safety] の (e)、[ADR-20261017-002][adr-review]、[ADR-20261017-005][adr-mcp]）。`Skill` は道具の名前だけで書き、`tools` に `Skill` を書いたエージェントからも道具を取り除く（FACT-59、[ADR-20261021-001][adr-review-skill]）。`Write` と `Edit` の `//<worktree>/.claude/**` は、大文字と小文字を変えた `.Claude/` と `.CLAUDE/` への書き込みも止める（FACT-70）。人が `## 仕組みの変更の承認` で認めたパスでも止める（`.claude/**` と `.mcp.json` は認めても人が変え、認めた `CLAUDE.md` だけ禁止を外す。表の下、[ADR-20261027-003][adr-claude-dir]） |
 
 - sandbox のパスは、`/` 始まりが絶対パス、`~/` 始まりがホームの中。`permissions` のパスは、`//` 始まりが絶対パス（`/` 始まりはプロジェクトの中。[公式文書][doc-sandboxing]、FACT-13）
 - 受付 AI は worktree を作らない（「役とエージェント定義」）ので、worktree と親 clone のパスを含む項目（`permissions.allow` の `Write` と `Edit`、`denyWrite` の `gitdir`、`deny` の `Write` と `Edit`）を入れない
+- 作業 AI のセッション（変更の作成と直し）では、`## 仕組みの変更の承認` で `CLAUDE.md` を認めたときだけ、`permissions.deny` の `//<worktree>/CLAUDE.md` を入れない（[ADR-20261027-003][adr-claude-dir]）。`.claude/**` と `.mcp.json` の禁止は、認めても外さない。Claude Code 自身も、Write の道具では `.claude/**` と `.mcp.json` を、sandbox の中の Bash では `.claude/settings.json`・`.claude/settings.local.json`・`.claude/skills/`・`.claude/agents/`・`.claude/commands/` の下と `.mcp.json` を書かせない（許す規則で名指ししても書けない。FACT-77）。sandbox の中の Bash は `CLAUDE.md` と `.claude/dev-autopilot.json` に書けるので、push の前の照らしで止める（「[状態遷移と判定][design-flow]」の「push の手順」）
 - 役ごとの道具の違いは、エージェント定義の `tools` で決める。安全設定は役を問わず同じ形にする
 
 ### リポの設定に書く足す分
@@ -644,3 +645,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-master]: ../../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
