@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-18
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -90,6 +90,8 @@ decision-makers: メンテナ
 - 悪い点: 書いている途中で止めたメッセージ 1 つ分は、少なく数えうる
 - 悪い点: 費用は Claude Code の計算に頼る。契約の形（従量か定額か）によっては、実際の請求と合わない（物差しとしてだけ使う）
 - 悪い点: Linux で同じに振る舞うかは確かめていない（UNDECIDED-49 で確かめ直す）
+
+  > **［2026-10-28 追記］** Linux（手元の Mac の Docker の特権のコンテナの中）で確かめた。bubblewrap がプロセスの名前空間を分け、親が終わると一緒に終わる設定で起こされるので、`SIGTERM` を無視するコマンドに `SIGTERM` か `SIGKILL` を送っても、コマンドは残らなかった（[FACT-87][facts]）。macOS では残る（FACT-38）
 
 ### 確認方法（Confirmation）
 

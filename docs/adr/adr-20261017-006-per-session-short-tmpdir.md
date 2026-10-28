@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -88,6 +88,8 @@ decision-makers: メンテナ
 - 悪い点: 公式文書に値の無い長さの上限に頼る。上限を設定に持ち、`check` で確かめる手間が要る
 - 悪い点: パスの長さの制約で、セッションの ID を短くする（`claude-<uid>` の長さも上限に入る）
 - 悪い点: Linux で同じに振る舞うかは確かめていない（UNDECIDED-49 で確かめ直す）
+
+  > **［2026-10-28 追記］** Linux（手元の Mac の Docker の特権のコンテナの中）で確かめた。上限は同じ 44 バイトで、超えたときは `/tmp/claude-<uid>` でなく、渡した `TMPDIR` の下の `claude-<uid>` に戻る（[FACT-86][facts]）。自分の短い一時フォルダを `allowRead` に入れると、`$TMPDIR` が読むだけになり、Bash が止まる（FACT-82。要件の UNDECIDED-93）
 
 ### 確認方法（Confirmation）
 

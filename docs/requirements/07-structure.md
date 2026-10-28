@@ -74,7 +74,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 - STRUCT-8 **定期の実行は、OS ごとの仕組みで登録し、進行 Bot の本体は登録の仕組みに依らない。** 今は macOS と Linux に対応する。macOS は launchd、Linux は systemd のユーザーのタイマーで、`setup` が登録する（cron は、マシンが眠っていた間の実行を逃すので使わない。構造仕様の「導入と点検」。[ADR-20261017-003][adr-plugin] の決定 3）。
   進行 Bot の本体（`plugin/src/`）は、どの仕組みから起こされても同じに動く。OS に依る処理（登録、手動実行の起こし方、秘密のファイルの権限の確かめ、登録の中身の確かめ、動かしてよい OS かの確かめ）は、`setup`・`check`・`/dev-autopilot` の中の OS ごとの部分に閉じる。進行 Bot が毎回の実行の最初に回す点検も、`check` と同じ OS ごとの部分を使う。
   Windows と、GitHub Actions などのクラウドで動かすことは、今は対応しない。広げるときは、進行 Bot の本体を変えずに、登録の仕組みと秘密の置き場を足す形にし、別の ADR で決める（クラウドの論点は UNDECIDED-21）。
-  Linux の sandbox の振る舞いは確かめ直すまで（UNDECIDED-49）、Linux で進行 Bot を動かさない
+  Linux の安全設定の組み方を決めるまで（UNDECIDED-93。書ける場所の祖先を `allowRead` に入れると、sandbox の中の Bash が動かない。FACT-82）、Linux で進行 Bot を動かさない
 - STRUCT-4 **検査は dev-autopilot のリポが持つ。** dev-autopilot のリポが、自分の `package.json`（検査のスクリプト）・依存とロックファイル・`.markdownlint-cli2.jsonc` と、コードを足すときの `tsconfig.json`・`vitest.config.ts` を持ち、business-os と共有しない（[ADR-20261016-003][adr-move] の決定 4）。
   衛生の検査（書式、lint、秘密の検査、Markdown）と CI と commit の規約の検査は、project-recipes のレシピで入れる
   - 単体テストは、Plugin に同封しないように `plugin/` の外の `test/unit/` に、`plugin/src/` と同じ形の路で置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。[ADR-20261017-003][adr-plugin] の決定 1）。
