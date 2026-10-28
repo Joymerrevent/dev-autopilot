@@ -347,6 +347,15 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 | FACT-86 | Linux で、`CLAUDE_CODE_TMPDIR` の長さの上限（FACT-37 の Linux 版。UNDECIDED-49） | **上限は同じ 44 バイトで、超えたときの戻り先が違う。** `<渡した場所>/claude-1000` が 44 バイトでは、`$TMPDIR` と `os.tmpdir()` が渡した場所の下の `claude-1000` になった。45 バイトでは、macOS の `/tmp/claude-<uid>` でなく、Claude Code に渡した `TMPDIR`（自分のセッションの `tmp/`）の下の `claude-1000` になった。どちらも書けた | 実行（コンテナの中） |
 | FACT-87 | Linux で、作業中の `claude` を途中で止めたときに、AI のコマンドが残るか（FACT-38 の Linux 版。UNDECIDED-49） | **残らなかった。** モデルが Bash で、1 秒ごとに印のファイルに書く長いコマンドを実行している間に、`claude` のプロセスに、(1) `SIGTERM` を無視するコマンドで `SIGTERM`、(2) 同じコマンドで `SIGKILL`、(3) 無視しないコマンドで `SIGTERM` を送った。`claude` は (1)(3) で終了コード 143、(2) で 137 で終わり、どれもコマンドはすぐに止まって残らなかった。bubblewrap は、プロセスの名前空間を分け（`--unshare-pid`）、親が終わると一緒に終わる設定（`--die-with-parent`）で起こされていた。macOS では (1)(2) で残った（FACT-38） | 実行（コンテナの中） |
 
+## GitHub App のトークンで ruleset を読めるかを確かめた事実（2026-10-28）
+
+要件の UNDECIDED-69 を、試し専用の組織に公開の試し用リポを作り、基本設計の「導入と点検」の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ（base ブランチの `main`、deploy key の push 先を `feat/issue-*`・`fix/issue-*` に限るブランチの ruleset、タグの ruleset。bypass は組織の管理者だけ）作って確かめた。GitHub App は、試し用の App（基本設計の「GitHub App の権限」の表と同じ権限。Administration なし。Secrets の読み取りは足していない）のインストールのトークンを、試しのリポに絞って作った。比べるために、組織の管理者の fine-grained PAT（試し専用の組織だけに届き、リポの Administration の書き込みあり）でも読んだ。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-88 | Administration の権限の無い GitHub App のインストールのトークンで、ruleset の `bypass_actors` と、base ブランチに効く規則を読めるか（UNDECIDED-69） | **`bypass_actors` は読めない。ほかの欄と base ブランチに効く規則は読める。** ruleset の一覧（`GET /repos/{owner}/{repo}/rulesets`）と 1 つずつの読み取り（`…/rulesets/{id}`）は `metadata=read` で通り、`enforcement`・`target`・`conditions`・`rules`・`current_user_can_bypass`（App では `never`）・`created_at`・`updated_at` が返ったが、`bypass_actors` の欄は返らなかった。base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/main`）は、PR 必須の項目・force push の禁止・必須チェック（strict）・作成・更新・削除が返った。ruleset の変更の履歴（`…/rulesets/{id}/history`）は 403 で、`administration=write` を求めた。比べた PAT では、1 つずつの読み取りで `bypass_actors` が返った（組織の管理者は、作るときに渡した `actor_id` によらず `null` で返った）。一覧の読み取りは、どちらの認証でも `bypass_actors` を返さなかった | 実行（試し専用の組織。結果は gitignore 済みの `.tmp/probe-app/result-rulesets-app.json`） |
+| FACT-89 | ruleset の bypass だけを変えたときに、App のトークンで読める `updated_at` が変わるか | **変わる。** base ブランチの ruleset の `bypass_actors` に、PAT でリポの役（admin）を足すと、App のトークンで読んだ `updated_at` が 14:43:19 から 14:44:43 に変わった。足した役は、すぐに外した | 実行（試し専用の組織） |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
