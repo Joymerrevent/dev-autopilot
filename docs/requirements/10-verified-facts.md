@@ -317,6 +317,14 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 | FACT-78 | 同じリポのブランチで足したワークフローが `permissions: contents: write` を求めると、リポのトークンの既定が読むだけでも、PR の CI（`pull_request`）は書き込みのトークンを得るか | **得る。** リポの設定でトークンの既定を読むだけにしたリポで、作業ブランチに足したワークフローのジョブが `contents: write` を求め、`GITHUB_TOKEN` で REST の `git/refs` に新しいブランチを作れた（HTTP 201）。CI の定義を変えられれば、秘密が無くても、作業ブランチの CI からリポに書き込める | 2026-10-28、試し専用の組織の非公開のリポで、PR の実行のログと、できたブランチを読んで確かめた |
 | FACT-79 | Environment の秘密は、どのジョブから読めるか。使えるブランチの規則で、PR の CI から読めなくできるか | **その Environment を使うジョブだけが読め、使えるブランチの規則は、実行の `GITHUB_REF` と照らす。** PR の CI の `GITHUB_REF` は `refs/pull/<番号>/merge`（FACT-75）なので、使えるブランチを「選んだブランチ」で base ブランチだけにすれば、PR の CI はその Environment を使えない見込み。「Protected branches only」は、ブランチ保護の規則を見て、どのブランチにも規則が無ければ、すべてのブランチが使える。無料のプランでは、非公開のリポで Environment と Environment の秘密を使えない（[公式文書][doc-environments]） | GitHub の公式文書を 2026-10-28 に読んだ。実機では確かめていない（無料の組織の非公開のリポでは Environment を使えないため） |
 
+## 人の Skill が sandbox の中からジョブを起こせるかを確かめた事実（2026-10-28）
+
+要件の UNDECIDED-75 を、手元の Mac に試験用のジョブを登録して確かめた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-80 | sandbox を有効にした Claude Code の Bash の道具から、`launchctl kickstart gui/<uid>/<Label>`（`-k` なし）でユーザーのジョブを起こせるか（UNDECIDED-75） | **起こせる。** sandbox を有効にし（`failIfUnavailable`、`allowUnsandboxedCommands: false`）、`permissions.allow` を `Bash` にした安全設定の `claude -p` の Bash の道具で、`launchctl kickstart gui/$(id -u)/<Label>` の終了コードが 0 になり、ジョブ（`/bin/sh -c` で目印のファイルに 1 行足すだけの LaunchAgent）が動いた。同じコマンドの中で、作業フォルダの外への書き込みは `operation not permitted` で止まり、sandbox が効いていた（FACT-71 と同じ）。ジョブは launchd が sandbox の外で動かすので、ジョブが書く場所は sandbox の規則に縛られない。作業フォルダの外の `/private/tmp` の下のファイルは、sandbox の中から読めた（lock と結果のファイルを読めるかは、置き場が人の設定の読ませない場所に当たるかで変わるので、確かめていない） | 2026-10-28、Claude Code 2.1.285、macOS 15.7.9、haiku で、sandbox の外からの対照を 1 回、sandbox の中から 2 回起こし（費用は合わせて約 0.06 USD）、目印のファイルの行が増えたことと、道具の結果を読んで確かめた。試験用のジョブは、試しの後に登録を外し、plist を消した |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
