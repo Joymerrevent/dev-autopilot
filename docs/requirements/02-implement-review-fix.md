@@ -75,7 +75,7 @@
   検査の実装は dev-autopilot 自身の `plugin/src/` に持ち、worktree の中の `check:leak`（AI が書き換えられる）は使わない。マージの判定（MERGE-2）のときは最終の head の diff 全体に掛け直す（過去の記録に頼らない）。
   push の前に、diff が変えてはいけないパス（`.claude/**` `CLAUDE.md` `**/CLAUDE.local.md` `.mcp.json` `.github/**` `dev-autopilot/**` と、規約の正典のパス（business-os なら `docs/adr/**` `docs/design/**`））のうち、maintain 以上の人が `## 仕組みの変更の承認` で認めていないパスに触れていれば、push せずに停止中（`protected-path`）にする（MERGE-4 の判定より前）。変えてはいけないパスは、効く時期で 2 つの組に分ける（[ADR-20261024-004][adr-master] の決定 9）
   - push で効くもの：CI の定義（`.github/**`）、CI が信じて動かすスクリプト（リポの設定で足す）、AI のセッションが作業場所から読み込む設定（`**/CLAUDE.local.md`、`.claude/settings.local.json`）。CI が AI の書いたワークフローを secrets 付きで実行しないため、認めていても AI の変更を push せず、進行 Bot が差分を Issue に載せて（`manual-push` の印）停止中（`manual-push`）にし、人が中身を確かめて自分で push する
-  - マージまで効かないもの：ほかの `.claude/**`（進行 Bot のリポの設定 `.claude/dev-autopilot.json` を含む。進行 Bot は base ブランチの先端から読む）、`CLAUDE.md`、`.mcp.json`、`dev-autopilot/**`、規約の正典。認めたパスは AI が変えて push してよく、マージの判定はいつも「人が判断する」（`merge` の印の `result` が `human`）にする。レビュー AI と直しの AI は、規約の正典を base ブランチから読む（IMPL-16）ので、AI が書き換えた正典を、人がマージする前に規則として使わない
+  - マージまで効かないもの：ほかの `.claude/**`（進行 Bot のリポの設定 `.claude/dev-autopilot.json` を含む。進行 Bot は base ブランチの先端から読む）、`CLAUDE.md`、`.mcp.json`、`dev-autopilot/**`、規約の正典。認めたパスのうち、`CLAUDE.md`・`dev-autopilot/**`・規約の正典は、AI が変えて push してよい（`CLAUDE.md` は、認めたときだけ作業 AI の安全設定の Write と Edit の禁止を外す）。`.claude/**` と `.mcp.json` は、Claude Code 自身が作業 AI に書かせない（FACT-77）ので、認めても人が変える。計画が認めた `.claude/**` か `.mcp.json` を変える見込みなら、作業 AI を起こす前に停止中にして人に渡し、作業 AI の差分に入っていれば、認めていても push しない（[ADR-20261027-003][adr-claude-dir]）。マージの判定はいつも「人が判断する」（`merge` の印の `result` が `human`）にする。レビュー AI と直しの AI は、規約の正典を base ブランチから読む（IMPL-16）ので、AI が書き換えた正典を、人がマージする前に規則として使わない
 
   `**/CLAUDE.local.md` は、どのフォルダに置いても次のセッションが指示として読む（下のフォルダのものは、そのフォルダのファイルを読んだときに読まれる。FACT-60）ので、すべてのフォルダで止める。`dev-autopilot/**` は、dev-autopilot を別のリポに移して business-os から消した後も残す（外すのは安全の境界を緩める変更で、残せば同じ名前のフォルダが business-os に戻ったときにも止まる。[ADR-20261016-003][adr-move] の決定 5）。
   名指しした 6 つのパス（`.claude/**` から `dev-autopilot/**` まで。以下「名指しのパス」）は、進行 Bot のプログラムに固定し、リポの設定の値に関わらず push しないパスに必ず入れる。リポの設定には、当てる先のリポごとに違う足す分（規約の正典のパスなど）だけを持つ（STRUCT-2 の `denyRead` と同じ形）。push の前の検査と、計画が変える見込みのパスとの照らし（IMPL-10）で使う変えてはいけないパスの一覧は、名指しのパスと足す分を合わせたもの。足す分も 2 つの組に分けて持つ（項目の名前は基本設計で決める）。
@@ -222,3 +222,4 @@
 [adr-check-first]: ../adr/adr-20261024-003-review-after-required-checks-pass.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-claude-dir]: ../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
