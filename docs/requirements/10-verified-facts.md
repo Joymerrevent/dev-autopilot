@@ -355,6 +355,8 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 |---|---|---|---|
 | FACT-88 | Administration の権限の無い GitHub App のインストールのトークンで、ruleset の `bypass_actors` と、base ブランチに効く規則を読めるか（UNDECIDED-69） | **`bypass_actors` は読めない。ほかの欄と base ブランチに効く規則は読める。** ruleset の一覧（`GET /repos/{owner}/{repo}/rulesets`）と 1 つずつの読み取り（`…/rulesets/{id}`）は `metadata=read` で通り、`enforcement`・`target`・`conditions`・`rules`・`current_user_can_bypass`（App では `never`）・`created_at`・`updated_at` が返ったが、`bypass_actors` の欄は返らなかった。base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/main`）は、PR 必須の項目・force push の禁止・必須チェック（strict）・作成・更新・削除が返った。ruleset の変更の履歴（`…/rulesets/{id}/history`）は 403 で、`administration=write` を求めた。比べた PAT では、1 つずつの読み取りで `bypass_actors` が返った（組織の管理者は、作るときに渡した `actor_id` によらず `null` で返った）。一覧の読み取りは、どちらの認証でも `bypass_actors` を返さなかった | 実行（試し専用の組織。結果は gitignore 済みの `.tmp/probe-app/result-rulesets-app.json`） |
 | FACT-89 | ruleset の bypass だけを変えたときに、App のトークンで読める `updated_at` が変わるか | **変わる。** base ブランチの ruleset の `bypass_actors` に、PAT でリポの役（admin）を足すと、App のトークンで読んだ `updated_at` が 14:43:19 から 14:44:43 に変わった。足した役は、すぐに外した | 実行（試し専用の組織） |
+| FACT-90 | 進行 Bot のアプリ自身が ruleset の bypass に入ったことを、Administration の権限の無い App のトークンで見分けられるか | **見分けられる。** deploy key の push 先を限るブランチの ruleset の bypass に、試し用の App を `Integration` として PAT で入れると、App のトークンで読む `current_user_can_bypass` が `never` から `always` に変わり、外すと `never` に戻った。どの読み取りでも `bypass_actors` は返らず、`updated_at` は入れたときと外したときに変わった | 2026-10-28、実行（試し専用の組織） |
+| FACT-91 | GitHub App に Administration の読み取りを足せば、`bypass_actors` を読めるか | **読めない。** メンテナが試し用の App の権限に Administration の読み取りを足して組織で承認し、インストールのトークンの権限に `administration: read` が入ったが、3 つの ruleset のどれでも `bypass_actors` は返らず、`current_user_can_bypass` は `never`、変更の履歴は 403（`administration=write`）だった。`bypass_actors` を読むには、Administration の書き込みが要る（[公式文書][doc-rules]の「ruleset に書き込める認証にだけ返る」と合う）。試しの後に、試し用の App の権限から Administration を外した | 2026-10-29、実行（試し専用の組織。結果は gitignore 済みの `.tmp/probe-app/result-rulesets-app-adminread.json`） |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
@@ -381,3 +383,4 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 [doc-workflows]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations
 [adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
 [doc-environments]: https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
+[doc-rules]: https://docs.github.com/en/rest/repos/rules

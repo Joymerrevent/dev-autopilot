@@ -9,7 +9,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
 - SETUP-1 **導入（`/dev-autopilot setup`）**：足りないものを作る。何度実行しても同じ結果になる（冪等）。まず「何を作るか」の一覧を出し、人が承認してから作る。
   外部に影響が出る操作（ラベル・Project の欄・ruleset の作成）は 1 回の承認でまとめて行い、作った後に実物を読み戻して確かめる。
   利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ、当てる先のリポで開いた Claude Code で `setup` を実行する（STRUCT-3、[ADR-20261017-003][adr-plugin] の決定 4）。`setup` は dev-autopilot 自身のリポでは何も作らずに止まる。
-  `setup` は GitHub の準備とマシンの準備に分ける（[ADR-20261017-004][adr-human] の決定 2）。GitHub の準備（ラベル、Project の欄、ruleset、リポの設定、全体の止める合図の変数）は人の `gh` のログイン（人の権限）で行う。マシンの準備（下の一覧のそれ以外）は GitHub の認証を使わず、秘密のファイルを読まない。
+  `setup` は GitHub の準備とマシンの準備に分ける（[ADR-20261017-004][adr-human] の決定 2）。GitHub の準備（ラベル、Project の欄、ruleset、リポの設定、全体の止める合図の変数、ruleset の控えの変数（[ADR-20261028-004][adr-bypass-baseline]））は人の `gh` のログイン（人の権限）で行う。マシンの準備（下の一覧のそれ以外）は GitHub の認証を使わず、秘密のファイルを読まない。
   人の `gh` のログインを持たない専用マシンでは、GitHub の準備は人の手元のマシンで行い、専用マシンではマシンの準備だけを行う。進行 Bot の PAT と GitHub App には、ruleset を作る管理の権限を持たせない。
   Plugin を更新した後に `setup` を実行し直すと、進行 Bot のプログラムの写しを新しい版で作り直す（進行 Bot が動いていない間に限る。実行の lock を取る）
   - Plugin が作れるもの：ラベル（人が付ける `agent-ready` `agent-paused` `agent-manual`、進行 Bot が付ける表示の `security-suspected` と `from-review`。SETUP-8）、Project の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全の単一選択欄と選択肢。状態は、もともとある Status 欄を名前を変えずに使い、選択肢を 17 の状態に置き換える。置き換えると今の選択肢と項目の Status の値が失われるので、作るものの一覧に出して人の承認を受ける。ほかの 4 つは単一選択の欄として新しく作る。FLOW-39、[ADR-20261026-001][adr-status]）と、軸ごとのビュー（FLOW-39）。`updateProjectV2Field` は選択肢を丸ごと置き換えるので、既存の選択肢を `id` 付きで含めて送る。`id` を落とすと既存の ID と項目の値が消える（FACT-15）、
@@ -22,7 +22,7 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
     処理対象にする Issue を決めること（マスターの下書きを読み、要れば直すか差し戻してから、`agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行 Bot は毎回の実行の最初に同じ点検を回し、
   fail が 1 つでもあれば作業に入らず止まる（fail-closed）。人が呼ぶ `check` は進行 Bot を直接起動せず、定期の実行と同じジョブを起こす。GitHub の点検（ラベル、Project の欄、ruleset、PAT の権限）は進行 Bot が自分の PAT で行い、人のセッションは実行の記録を読んで表示する（点検だけで動かす仕組みは、基本設計の「[導入と点検][design-setup]」の「点検だけで動かす仕組み」で決めた。[ADR-20261017-004][adr-human] の決定 2）。
-  見るもの：ラベルと Project の欄の存在、ruleset（bypass にリポの役・deploy key・一覧の外の GitHub App・進行 Bot のアプリが入っていれば fail。入れてよいのは組織の管理者とチームと、deploy key の push 先を限る ruleset ではリポの設定の一覧で人が許したアプリだけ。FACT-65、FACT-67。確かめ方は、基本設計の「[導入と点検][design-setup]」）、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、進行 Bot の PAT か GitHub App の権限（全体の止める合図の変数は読めて、変えられないこと）、GitHub App に切り替えてあり、秘密の置き場に PAT が残っていないこと（書かずに試すことは持たないので、最初の実行から。[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages]）、
+  見るもの：ラベルと Project の欄の存在、ruleset（bypass にリポの役・deploy key・一覧の外の GitHub App・進行 Bot のアプリが入っていれば fail。入れてよいのは組織の管理者とチームと、deploy key の push 先を限る ruleset ではリポの設定の一覧で人が許したアプリだけ。FACT-65、FACT-67。GitHub App に切り替えた後は、App のトークンでは `bypass_actors` がいつも返らない（FACT-88・91）ので、`setup` が bypass を確かめたときに控えた ruleset の `updated_at` と比べ、App 自身が bypass に入っていないこと（`current_user_can_bypass`。FACT-90）を確かめる（[ADR-20261028-004][adr-bypass-baseline]）。確かめ方は、基本設計の「[導入と点検][design-setup]」）、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、進行 Bot の PAT か GitHub App の権限（全体の止める合図の変数は読めて、変えられないこと）、GitHub App に切り替えてあり、秘密の置き場に PAT が残っていないこと（書かずに試すことは持たないので、最初の実行から。[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages]）、
   印の署名の鍵の一覧に 2 つ以上の鍵があるときは、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR の番号と、残りが無くなったら前の鍵を一覧から外してよいこと（warn。[ADR-20261021-004][adr-marker-keys]）、
   全体の止める合図の変数があって読めること、origin に base ブランチがあり、base ブランチの先端にリポの設定があり、ruleset が base ブランチを守っていること（[ADR-20261017-007][adr-stop]）、当てる先のリポの CI の秘密の置き方（リポの秘密が無く、組織の秘密が届いておらず、Environment の使えるブランチが作業ブランチと PR に当たらないこと。SAFE-20、[ADR-20261028-001][adr-ci-secrets]。外れていれば fail）、
   `claude` と Node の版（Node 24 が要る）、インストールされた Plugin の版と進行 Bot のプログラムの写しの版の一致（違えば warn。STRUCT-3）、Skill の有無、前回の実行の記録と記録の目印のファイル（無ければ fail。「[運用の規則][f01]」）、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに PAT と印の署名の鍵の一覧が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
@@ -118,3 +118,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
+[adr-bypass-baseline]: ../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
