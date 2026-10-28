@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 依頼の今の文をマスターの下書き 1 つにまとめ、検疫は AI に渡す前と GitHub に書く前に毎回行い、変えてはいけないパスは効く時期で分けて人の承認で変えられるようにする
+
+> **Amended by [ADR-20261027-003][adr-claude-dir]（2026-10-28）**: 決定 9 の、マージまで効かない組の「認めたパスは、AI が変えて push してよい」を、`CLAUDE.md`・`dev-autopilot/**`・規約の正典に限った。`.claude/**` と `.mcp.json` は、Claude Code 自身が作業 AI に書かせない（FACT-77）ので、認めても人が変える。ほかの決定は据え置く。
 
 要件の UNDECIDED-79（依頼を決めるまでの流れ、検疫する時点と範囲、仕組みのファイルの変更。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 本 ADR は、[ADR-20261024-001][adr-model-states]（作業の単位の状態を主な流れと重ねる 3 本の軸で表す）、[ADR-20261024-002][adr-no-stages]（段階 4〜8 と試しを持たない）、[ADR-20261024-003][adr-check-first]（検査の後にレビュー）を前提にする。
@@ -277,3 +279,4 @@ decision-makers: メンテナ
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-claude-dir]: ./adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
