@@ -62,7 +62,7 @@ sandbox の中の AI が親 clone の `.git/commondir` を新しく作れるか�
 
 macOS、Claude Code 2.1.285、haiku、git 2.50.1、pnpm 10.29.3 で確かめた。[ADR-20261013-001][adr-workspace] の形（`sessions/<名前>/clone` と `worktree`）を使い捨ての場所に作り、偽の秘密を置いた。
 `claude -p --setting-sources local --settings <安全設定>` を、許可した名前の環境変数だけで起動した。3 つの事実は、[ADR-20261015-001][adr-read]（AI の読み取り範囲と秘密の置き場）の材料にした。
-sandbox の中からキーチェーンの項目を読めるか、launchd の plist の環境変数が `launchctl print` で見えるかは、試験の操作を作業の環境の自動の許可判定が止めたため、確かめていない。
+sandbox の中からキーチェーンの項目を読めるか、launchd の plist の環境変数が `launchctl print` で見えるかは、試験の操作を作業の環境の自動の許可判定が止めたため、確かめていない。キーチェーンは 2026-10-28 に確かめた（FACT-81）。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
@@ -324,6 +324,14 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
 | FACT-80 | sandbox を有効にした Claude Code の Bash の道具から、`launchctl kickstart gui/<uid>/<Label>`（`-k` なし）でユーザーのジョブを起こせるか（UNDECIDED-75） | **起こせる。** sandbox を有効にし（`failIfUnavailable`、`allowUnsandboxedCommands: false`）、`permissions.allow` を `Bash` にした安全設定の `claude -p` の Bash の道具で、`launchctl kickstart gui/$(id -u)/<Label>` の終了コードが 0 になり、ジョブ（`/bin/sh -c` で目印のファイルに 1 行足すだけの LaunchAgent）が動いた。同じコマンドの中で、作業フォルダの外への書き込みは `operation not permitted` で止まり、sandbox が効いていた（FACT-71 と同じ）。ジョブは launchd が sandbox の外で動かすので、ジョブが書く場所は sandbox の規則に縛られない。作業フォルダの外の `/private/tmp` の下のファイルは、sandbox の中から読めた（lock と結果のファイルを読めるかは、置き場が人の設定の読ませない場所に当たるかで変わるので、確かめていない） | 2026-10-28、Claude Code 2.1.285、macOS 15.7.9、haiku で、sandbox の外からの対照を 1 回、sandbox の中から 2 回起こし（費用は合わせて約 0.06 USD）、目印のファイルの行が増えたことと、道具の結果を読んで確かめた。試験用のジョブは、試しの後に登録を外し、plist を消した |
+
+## sandbox の中から macOS のキーチェーンを読めるかを確かめた事実（2026-10-28）
+
+要件の UNDECIDED-62 を、手元の Mac のログインのキーチェーンに試験用の項目（値はダミー）を作って確かめた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-81 | sandbox を有効にした Claude Code の Bash の道具から、`security find-generic-password` で macOS のログインのキーチェーン（`~/Library/Keychains/login.keychain-db`）の項目を読めるか（UNDECIDED-62） | **AI のセッションの安全設定（`sandbox.filesystem.denyRead` に `~/`）では読めない。** `denyRead` に `~/`、`allowRead` に作業フォルダを入れた `claude -p` の Bash の道具では、`security list-keychains` の検索先からログインのキーチェーンが消え（`/Library/Keychains/System.keychain` だけになる）、試験用の項目は見つからなかった（終了コード 44）。キーチェーンのファイルのパスを名指ししても、検索先にログインのキーチェーンを足すコマンド（終了コード 0）の後でも見つからず、ファイルの先頭も読めなかった。`denyRead` を入れない sandbox（`filesystem` の設定なし）では、`-w` で項目の値を読めた（終了コード 0。確認の画面は出なかった）。試験用の項目は `security add-generic-password` で作った（作ったアプリの `/usr/bin/security` を信頼する既定の形）。どちらの設定でも、作業フォルダの外への書き込みは `operation not permitted` で止まり、sandbox が効いていた。ホームの下のファイルに入らないキーチェーン（iCloud キーチェーンなどのデータ保護キーチェーン）の項目は試していない | 2026-10-28、Claude Code 2.1.285、macOS 15.7.9、haiku で、`claude -p --setting-sources local --settings <安全設定>` を 3 回動かし（費用は合わせて約 0.07 USD）、道具の結果を読んで確かめた。試験用の項目はメンテナが示したコマンドで作り、試しの後に消して、消えたことを確かめた |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md

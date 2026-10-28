@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-21
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -207,6 +207,9 @@ decision-makers: メンテナ
   - Read ツール：`allow` に `Read` が無いと、worktree の外のファイル（偽の秘密、`~/.zshrc`）は「Claude requested permissions to read from this path, but you haven't granted it yet」で拒否され、`permission_denials` に記録された。worktree の中は読めた
   - Grep と Glob の道具は、2.1.285 の `-p` のセッションの道具の一覧に無かった
 - 確かめていないこと：sandbox の中からキーチェーンの項目を読めるか、plist の環境変数が `launchctl print` で見えるか。どちらも、試験の操作（試験用のキーチェーンの項目を作る、`launchctl print` で環境変数の欄を探す）を作業の環境の自動の許可判定が止めたため、試していない。どちらの案も採らないので、決定には影響しない
+
+  > **［2026-10-28 追記］** キーチェーンは確かめた。決定 1 の読み取りの拒否（`~/`）を入れた sandbox の中の `security` からは、ログインのキーチェーンの項目を読めない。拒否が無い sandbox では、`security` で作った項目の値を読めた（[FACT-81][facts]）
+
 - 範囲外：Grep と Glob が 2.1.285 の道具の一覧に無い。計画役は「Read・Grep・Glob」（「[登場するもの][overview]」）で動く前提なので、エージェント定義の `tools` に書いたときに使えるかを確かめる。要件に反映するときに、[決めていないこと][undecided]の「確かめること」に足す
 - 範囲外：共有の pnpm の store を開けるか（UNDECIDED-25）
 - 要件への反映（承認の後に、別の PR で行う）
