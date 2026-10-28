@@ -2,7 +2,7 @@
 
 dev-autopilot は、人が処理対象にした Issue を AI が実装し、別の AI がレビューし、指摘が無くなるまで直し、マージしてよいかを判定して人に渡す自律開発ループ（Claude Code の Plugin。開発中）。
 目的と前提は [00-overview.md][overview] にある。今は要件・ADR・図と検査の設定だけで、コードはまだ無い。
-当てる先は、ほかのリポに広げる時期を決めるまで business-os（Joymerrevent/business-os）だけ（[07-structure.md][structure] の「分離の時期の目安」。広げる時期は [09-undecided.md][undecided] の UNDECIDED-82）。
+当てる先は、ほかのリポに広げる時期を決めるまで business-os（Joymerrevent/business-os）だけ（[07-structure.md][structure] の「分離の時期の目安」。広げる時期は、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める。[ADR-20261028-003][adr-expand]）。
 
 **業務の固有名詞・人名・秘密を書かない。** メールアドレス・電話番号・法人格・円の金額は gitleaks が止める（`.gitleaks.toml`）。取引先の名前のような、決まった形の無い固有名詞は見つけられないので、書く前に確かめる。
 
@@ -38,3 +38,4 @@ dev-autopilot は、人が処理対象にした Issue を AI が実装し、別�
 [adr-index]: docs/adr/index.md
 [diagrams]: docs/requirements/diagrams/README.md
 [design]: docs/design/README.md
+[adr-expand]: docs/adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
