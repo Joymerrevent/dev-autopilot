@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-21
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 名指しのパスとリポの設定の足す分を、効く時期で 2 つの組（push で効くもの、マージまで効かないもの）に分け、maintain 以上の人の `## 仕組みの変更の承認` で変えられるようにした（決定 9）。マージまで効かない組は、認めたパスなら AI が変えてよい。push で効く組は、認めていても人が差分を確かめて push する。名指しのパスをプログラムに固定し、リポの設定は足す分だけを持つこと、名指しのパスを外すのは新しい ADR で決めることは据え置く。
 >
 > **［2026-10-24 追記］** 「段階 8 の後に決める」とした、ほかのリポへの適用の時期は、[ADR-20261024-002][adr-20261024-002] で段階 4〜8 を持たなくなったので決め直す。決め直すまでは、当てる先は business-os だけのまま。`needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
+>
+> **［2026-10-28 追記］** ほかのリポへの適用の時期は、[ADR-20261028-003][adr-20261028-003] で、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決めるとした。影響の「マージ判定工程（段階 8）の後に決める」は、ADR-20261028-003 の条件を満たした後に決める、と読む。決定は変わらない。
 
 要件の UNDECIDED-64（IMPL-15 が名指しする push しないパスを、設定の PR で外せない形にするか）を決める。
 
@@ -167,3 +169,4 @@ decision-makers: メンテナ
 [adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-20261028-003]: ./adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md

@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-24
+updated: 2026-10-28
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # 進行ボットを Plugin に同封し、Plugin を入れたプロジェクトで setup が利用者のマシンに版を写して定期の実行を登録する
 
 > **［2026-10-24 追記］** 「段階 8 の後に決める」とした、ほかのリポへの適用の時期は、[ADR-20261024-002][adr-20261024-002] で段階 4〜8 を持たなくなったので決め直す。決め直すまでは、当てる先は business-os だけのまま。
+>
+> **Amended by [ADR-20261028-003][adr-20261028-003]（2026-10-28）**: 決定 4 の、1 台のマシンで複数のリポに当てる形を決める時期と、背景の、当てる先を広げる時期とほかの人への公開の時期（段階 8 の後）を、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める、に改めた。ほかの決定は据え置く。
 
 メンテナの要件「誰でも、Plugin をインストールしたプロジェクトで、dev-autopilot がすべて動く。Plugin を入れたら setup で GitHub の設定をして使えるようにする」（2026-10-17）を、配り方と動かし方の決定にする。
 
@@ -258,3 +260,4 @@ decision-makers: メンテナ
 [doc-plugins-ref]: https://code.claude.com/docs/en/plugins-reference
 [doc-discover]: https://code.claude.com/docs/en/discover-plugins
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
+[adr-20261028-003]: ./adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
