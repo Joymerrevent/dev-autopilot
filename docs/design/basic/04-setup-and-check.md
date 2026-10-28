@@ -64,7 +64,7 @@
 - 確かめ方
   - `setup`（人の `gh` のログイン。組織の管理者）は、作った後と、すでにあったときに、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み戻して上の表と比べ、違いを示す。bypass の読み方の正本は、`setup` の読み戻し（[GitHub の公式文書][doc-rules]は、`bypass_actors` は ruleset に書き込める認証にだけ返るとする。Administration の権限の無い、組織の管理者の fine-grained PAT には返った。FACT-65）
   - 毎回の点検は、進行 Bot の GitHub の認証で、base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`。FACT-65）を読み、PR 必須・force push の禁止・必須チェック（strict）が効いていることを確かめる。続けて、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み、上の表より守りが弱い向きの違いを fail にする（上の「GitHub の準備」の表の確かめ方の欄）
-  - 進行 Bot の認証のうち、組織の管理者の fine-grained PAT（Administration の権限なし）では、上の欄をすべて読めた（FACT-65）。組織の管理者でない人の PAT で `bypass_actors` を読めるかは確かめていない。アプリのインストールのトークン（Administration の権限なし）で、3 つの ruleset の `bypass_actors` と base ブランチに効く規則を読めるかは、GitHub App に切り替えるときの試し（下の「GitHub App の権限」の切り替えの順 2）で確かめる（要件の UNDECIDED-69）。読めなかったときの扱いは、確かめたときに ADR で決める。ADR で決めるまでは、読めない欄があれば fail にし、読めない欄を確かめたものとして扱わない
+  - 進行 Bot の認証のうち、組織の管理者の fine-grained PAT（Administration の権限なし）では、上の欄をすべて読めた（FACT-65）。組織の管理者でない人の PAT で `bypass_actors` を読めるかは確かめていない。アプリのインストールのトークン（Administration の権限なし）では、3 つの ruleset の `enforcement`・対象・規則・`updated_at` と base ブランチに効く規則は読めるが、`bypass_actors` は返らない（FACT-88）。読めない欄の扱いは、要件の UNDECIDED-94 で決める。ADR で決めるまでは、読めない欄があれば fail にし、読めない欄を確かめたものとして扱わない
 
 ### マシンの準備
 
@@ -336,7 +336,7 @@ GitHub App に切り替えるまで（導入の間）、進行 Bot は fine-grai
   | 順 | すること |
   | --- | --- |
   | 1 | 人がアプリを登録して当てる先のリポに導入し、秘密鍵を秘密の置き場の `github-app-key.pem` に置く。試しのためだけのリポ（公開と非公開の 2 つ）にも、同じアプリを一時的に導入する |
-  | 2 | 一度だけ、試しのためだけのリポと Project で、登録したアプリを使い、[ADR-20261020-002][adr-app] の確認方法の 5 つと、ruleset を読めるか（要件の UNDECIDED-69）を確かめて、結果を FACT に残す：Issue と PR のコメント・ラベル・Project の表示の欄を書けること、止める合図の変数を読めて作成・更新・削除が断られること、公開と非公開のリポでチェックの実行を読めること、コメントの投稿者の名前の形と進行 Bot が名前を取る方法、インストールのトークンが 1 時間で切れて作り直せること、インストールのトークンで、3 つの ruleset の `bypass_actors` と base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`）を読めること（試しのリポには、前もって上の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ作っておく）。ruleset の欄を読めなかったときの扱いは、試しの結果を見て ADR で決める。ADR で決めるまでは、点検が読めない欄を fail にするので、順 5 を通せない（上の「ruleset の形と確かめ方」）。試しの後に、試しのリポからアプリを外す（当てる先のリポだけに入れる。[ADR-20261020-002][adr-app] の決定 2） |
+  | 2 | 一度だけ、試しのためだけのリポと Project で、登録したアプリを使い、[ADR-20261020-002][adr-app] の確認方法の 5 つと、ruleset を読めるか（FACT-88 で、`bypass_actors` は読めないと分かった。扱いは要件の UNDECIDED-94）を確かめて、結果を FACT に残す：Issue と PR のコメント・ラベル・Project の表示の欄を書けること、止める合図の変数を読めて作成・更新・削除が断られること、公開と非公開のリポでチェックの実行を読めること、コメントの投稿者の名前の形と進行 Bot が名前を取る方法、インストールのトークンが 1 時間で切れて作り直せること、インストールのトークンで、3 つの ruleset の `bypass_actors` と base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`）を読めること（試しのリポには、前もって上の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ作っておく）。ruleset の欄を読めなかったときの扱いは、試しの結果を見て ADR で決める。ADR で決めるまでは、点検が読めない欄を fail にするので、順 5 を通せない（上の「ruleset の形と確かめ方」）。試しの後に、試しのリポからアプリを外す（当てる先のリポだけに入れる。[ADR-20261020-002][adr-app] の決定 2） |
   | 3 | 順 2 で決めた投稿者の名前の取り方と比べ方を入れた版の Plugin を入れ、`setup` を実行し直して、写しを名前の取り方を入れた版にする。点検と印を読む処理が、確かめた形で名前を比べるため |
   | 4 | 人が、進行 Bot を動かすマシンの設定に `githubApp.*` を書く。`safety.botAccounts` をアプリの投稿者の名前にする PR を、リポの設定に出してマージする |
   | 5 | 人が GitHub で PAT を削除し、秘密の置き場の `github-pat` を消す。PAT のファイルが残っている間は、点検が fail にする |
