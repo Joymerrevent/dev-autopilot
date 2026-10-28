@@ -308,6 +308,15 @@ ADR-20261024-004 と ADR-20261024-006 の前提を確かめた。
 |---|---|---|---|
 | FACT-77 | AI のセッション（`claude -p --setting-sources local --settings`、sandbox あり）で、作業 AI が `.claude/**`・`.mcp.json`・`CLAUDE.md` に書けるか。`permissions.allow` と sandbox の `allowWrite` で名指しして許せば書けるか（UNDECIDED-84） | **`CLAUDE.md`（根と下のフォルダ）だけは、Write の道具でも sandbox の中の Bash でも書ける。`.claude/settings.json`・`.claude/settings.local.json`・`.claude/skills/`・`.claude/agents/`・`.claude/commands/` の下と `.mcp.json` は、どちらでも書けない。** Write の道具は、`permissions.allow` に `Write(//<リポ>/**)` と、名指しの `Write(//<リポ>/.claude/**)`・`Write(//<リポ>/.mcp.json)` を入れても、`--permission-mode acceptEdits` でも、`.claude/` の下のすべて（`.claude/dev-autopilot.json` を含む）と `.mcp.json` を、「まだ許可されていない」か「sensitive file」として断った。sandbox の中の Bash は、`sandbox.filesystem.allowWrite` に `<リポ>/.claude` と `<リポ>/.mcp.json` を名指ししても、`.claude/settings.json`・`.claude/settings.local.json`・`.mcp.json` と、`.claude/skills/`・`.claude/agents/`・`.claude/commands/` の下のファイル（すでにあるファイルへの追記も、フォルダを作るのも）を `operation not permitted` で止めた。sandbox の中の Bash は、`.claude/dev-autopilot.json` と `CLAUDE.md` には書けた（FACT-70 の `.claude/other2.txt` と同じく、sandbox が止めるのは `.claude/` の下の決まったファイルとフォルダで、`.claude/` のすべてではない） | 2026-10-27、Claude Code 2.1.285、macOS 15.7.9、haiku で、`/private/tmp` の下に作った試し用のリポに対して 6 回実行し（費用は合わせて約 0.16 USD）、ディスクに残ったファイルと、道具の結果と `permission_denials` を読んで確かめた |
 
+## 作業ブランチの CI の秘密とトークンを確かめた事実（2026-10-28）
+
+AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR-20261024-004][adr-master] の決定 9 の最後の箇条）の前提を確かめた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-78 | 同じリポのブランチで足したワークフローが `permissions: contents: write` を求めると、リポのトークンの既定が読むだけでも、PR の CI（`pull_request`）は書き込みのトークンを得るか | **得る。** リポの設定でトークンの既定を読むだけにしたリポで、作業ブランチに足したワークフローのジョブが `contents: write` を求め、`GITHUB_TOKEN` で REST の `git/refs` に新しいブランチを作れた（HTTP 201）。CI の定義を変えられれば、秘密が無くても、作業ブランチの CI からリポに書き込める | 2026-10-28、試し専用の組織の非公開のリポで、PR の実行のログと、できたブランチを読んで確かめた |
+| FACT-79 | Environment の秘密は、どのジョブから読めるか。使えるブランチの規則で、PR の CI から読めなくできるか | **その Environment を使うジョブだけが読め、使えるブランチの規則は、実行の `GITHUB_REF` と照らす。** PR の CI の `GITHUB_REF` は `refs/pull/<番号>/merge`（FACT-75）なので、使えるブランチを「選んだブランチ」で base ブランチだけにすれば、PR の CI はその Environment を使えない見込み。「Protected branches only」は、ブランチ保護の規則を見て、どのブランチにも規則が無ければ、すべてのブランチが使える。無料のプランでは、非公開のリポで Environment と Environment の秘密を使えない（[公式文書][doc-environments]） | GitHub の公式文書を 2026-10-28 に読んだ。実機では確かめていない（無料の組織の非公開のリポでは Environment を使えないため） |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -332,3 +341,4 @@ ADR-20261024-004 と ADR-20261024-006 の前提を確かめた。
 [doc-project-filter]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/customizing-views-in-your-project/filtering-projects
 [doc-workflows]: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations
 [adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
+[doc-environments]: https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
