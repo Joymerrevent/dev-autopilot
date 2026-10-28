@@ -68,7 +68,7 @@
   プログラムの写しは、AI のセッションから書けず、読めるのは `skills/`（Skill の参照ファイルとスクリプト）だけで、`src/`（進行 Bot のコード）は読めない（SAFE-2 の (e)、SAFE-10。FACT-32。[ADR-20261017-004][adr-human]）。
   AI の作業場所の clone は AI のセッションごとに origin の URL から作り、手元の clone のパスからは作らない（パスから作ると objects のファイルをハードリンクで共有する。FACT-19。[ADR-20261013-001][adr-workspace]）。進行 Bot が git を動かすときは `core.hooksPath` を空のフォルダに固定し、git の設定は環境変数（`GIT_CONFIG_COUNT` 等）で渡す
 - SAFE-17 `develop` にも ruleset（PR 必須、force push 禁止、base と最新であること）を掛け、deploy key で直接 push できるのは作業ブランチだけにする
-- SAFE-18 手元の Mac で試す間（専用マシンの前）も同じ設定で動かす。sandbox が人の鍵と gh の設定を AI から隠すので、試験の段階で普段の鍵が読まれることも防げる
+- SAFE-18 手元の Mac で試す間（専用マシンの前）も同じ設定で動かす。sandbox が人の鍵と gh の設定（キーチェーンの項目を含む。FACT-81）を AI から隠すので、試験の段階で普段の鍵が読まれることも防げる
 
 [f00]: ./00-overview.md
 [f03]: ./03-merge.md
