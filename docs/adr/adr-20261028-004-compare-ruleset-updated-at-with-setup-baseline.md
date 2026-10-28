@@ -8,7 +8,7 @@ decision-makers: メンテナ
 
 # 進行 Bot の毎回の点検は、setup が bypass を確かめたときの ruleset の updated_at を控えと比べ、変わっていれば止める
 
-要件の UNDECIDED-94（GitHub App のトークンで `bypass_actors` を読めないとき、毎回の点検で ruleset の bypass をどう確かめるか。[決めていないこと][undecided]の「ADR で決めること」の「安全と設定」）を決める。
+要件の UNDECIDED-94（GitHub App のトークンでは `bypass_actors` がいつも返らないので、毎回の点検で ruleset の bypass をどう確かめるか。[決めていないこと][undecided]の「ADR で決めること」の「安全と設定」）を決める。
 
 | ADR | 扱い | 改める決定 | 据え置く決定 |
 | --- | --- | --- | --- |
