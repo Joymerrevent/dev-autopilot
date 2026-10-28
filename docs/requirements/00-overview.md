@@ -10,7 +10,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 
 | 項目 | 決定 |
 |---|---|
-| 置き場所 | 独立したリポ（Joymerrevent/dev-autopilot）で作る（[ADR-20261016-003][adr-move]）。進行 Bot が当てる先は、ほかのリポに広げる時期を決めるまで business-os だけ（「[分離を見越した構成][f07]」、UNDECIDED-82）。文書とコードには業務の固有名詞と秘密を置かない（秘密と、固有名詞の混入の形（メールアドレス・電話番号・法人格・円の金額）は gitleaks で検査する（`.gitleaks.toml`）。決まった形の無い固有名詞は見つけられない） |
+| 置き場所 | 独立したリポ（Joymerrevent/dev-autopilot）で作る（[ADR-20261016-003][adr-move]）。進行 Bot が当てる先は、ほかのリポに広げる時期を決めるまで business-os だけ（「[分離を見越した構成][f07]」。広げる時期は、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める。[ADR-20261028-003][adr-expand]）。文書とコードには業務の固有名詞と秘密を置かない（秘密と、固有名詞の混入の形（メールアドレス・電話番号・法人格・円の金額）は gitleaks で検査する（`.gitleaks.toml`）。決まった形の無い固有名詞は見つけられない） |
 | 配り方と実行環境 | 誰でも、Plugin を当てる先のリポに入れて `setup` を実行すれば、進行 Bot を含めてすべて動く。進行 Bot は Plugin に同封し、`setup` が Plugin の版を利用者のマシンに写し、OS ごとの定期の実行が写しから動かす（[ADR-20261017-003][adr-plugin]、「[分離を見越した構成][f07]」の STRUCT-3・8）。今は macOS（launchd）と Linux（systemd のユーザーのタイマー）。手元の Mac で始め、将来は専用マシンでも同じものを回す。GitHub Actions などのクラウドと Windows でも動かしたいが、今は対応せず、広げるときに別の ADR で決める（クラウドの論点は「[決めていないこと][f09]」の UNDECIDED-21） |
 | 人の関所 | Issue が起票されたら、入口の検疫と作業指示の下書き（マスターの下書き。依存とマイルストーンの候補を含む）は進行 Bot と受付 AI が自動で用意し、人はマスターを読み、要れば直すか差し戻してから、`agent-ready` を付けて決める（TEXT-12、FLOW-36）。AI が作業するのは人が決めた依頼だけで、計画と変更の確かめは AI が行う（FLOW-37）。PR のマージの実行は人だけが行う。開発の PR は進行 Bot がマージの可否を判定して人に渡す。方針に係る PR（「[マージ][f03]」の一覧）は判定の対象外。実行を進行 Bot に移すかは、判定の信頼度を測ってから別に決める |
 | マイルストーン | リリースごとにマイルストーンを組む。着手する Issue はマイルストーンの中から選ぶ（FLOW-1）。受け入れはマイルストーンの有無を問わない（TEXT-12） |
@@ -59,3 +59,4 @@ AI は「依頼の下書きを書く（差し戻されたら書き直す）」�
 [adr-critic-skip]: ../adr/adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
