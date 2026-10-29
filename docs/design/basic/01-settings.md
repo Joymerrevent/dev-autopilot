@@ -84,6 +84,7 @@
 ## 設定ファイルの外の合図
 
 - 全体の止める合図は、当てる先のリポの Actions の変数 `DEV_AUTOPILOT_RUN`。値が `run` のときだけ動き、ほかの値・変数が無い・読めないときは止まる（「[運用の規則][flow-rules]」、[ADR-20261017-007][adr-stop]）
+- ruleset の控えは、当てる先のリポの Actions の変数 `DEV_AUTOPILOT_RULESETS`。`setup` が bypass を確かめたときに、3 つの ruleset の ID と `updated_at` を JSON で書き、進行 Bot は毎回の点検で読むだけ（「[導入と点検][design-setup]」の「ruleset の形と確かめ方」、[ADR-20261028-004][adr-bypass-baseline]）
 - 変数の名前は設定に持たない。進行 Bot は、リポの設定を読む前の実行の最初に合図を読むため。合図を読む先（当てる先のリポの owner と名前）と、読むときの認証（GitHub App の 2 つの ID）も、同じ理由でマシンの設定に置く（[STRUCT-2][struct]、[ADR-20261021-006][adr-repo]）
 
 ## 項目
@@ -337,3 +338,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-status]: ../../adr/adr-20261026-001-use-status-field-for-state.md
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
+[adr-bypass-baseline]: ../../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
