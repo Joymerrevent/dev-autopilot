@@ -13,7 +13,7 @@
 マシンの設定をリポの中に置かない理由は 3 つある。
 
 - マシンのパス（ユーザー名を含む）を公開のリポに入れない（[ADR-20261015-005][adr-settings] の決定 2）
-- gitignore して人の作業コピーに置くと、人がふだん使う Claude Code が書き換えられる。`devAutopilotPath` を書き換えられると、PAT（GitHub App に切り替えた後はアプリの秘密鍵）と deploy key を持つ定期の実行が別のプログラムを起こす。進行 Bot は人の作業コピーを読まない（[ADR-20261017-007][adr-stop] の決定 4、SAFE-2）
+- gitignore して人の作業コピーに置くと、人がふだん使う Claude Code が書き換えられる。`devAutopilotPath` を書き換えられると、アプリの秘密鍵と deploy key を持つ定期の実行が別のプログラムを起こす。進行 Bot は人の作業コピーを読まない（[ADR-20261017-007][adr-stop] の決定 4、SAFE-2）
 - 人の作業コピーに置くと、定期の実行が作業コピーの場所に縛られ、人が作業コピーを動かすか消すと止まる
 
 ## 値の決まり方
@@ -67,12 +67,12 @@
 
 ### 秘密の置き場のファイル
 
-`setup` は、次のファイルを、`githubApp.*` の値に合わせて空で作る（権限 600）。値は人が書く（[SAFE-15][safety]）。進行 Bot と点検は、空のファイルを「無い」と読む。
+`setup` は、次のファイルを空で作る（権限 600）。進行 Bot の App の秘密鍵は、App を作ったときに `setup` が書き、ほかの値は人が書く（[SAFE-15][safety]）。進行 Bot と点検は、空のファイルを「無い」と読む。
 
 | ファイル | 中身 | `setup` が空で作るとき | 動かすマシンを替えるとき |
 | --- | --- | --- | --- |
-| `github-pat` | 進行 Bot の fine-grained PAT（GitHub App に切り替えるまで。読むだけ。「[導入と点検][design-setup]」の「PAT の権限」） | `githubApp.appId` と `githubApp.installationId` が空のときだけ。切り替えた後は作らない（作ると、点検の「PAT のファイルが無いこと」が fail になるため） | 新しく作る（人が新しい PAT を発行して書く）。前のマシンの PAT は、新しいマシンの最初の実行が通った後に GitHub で消す |
-| `github-app-key.pem` | GitHub App の秘密鍵（切り替えた後。[ADR-20261020-002][adr-app]） | `githubApp.appId` と `githubApp.installationId` があるときだけ | 新しく作る（人がアプリの新しい秘密鍵を作って書く）。前のマシンの秘密鍵は、新しいマシンの最初の実行が通った後に GitHub で取り消す |
+| `github-pat` | 使わない（進行 Bot は fine-grained PAT を使わない。[ADR-20261030-002][adr-no-pat]） | 作らない。あれば点検が fail にする（「`check` が設定について確かめること」） | — |
+| `github-app-key.pem` | 進行 Bot の GitHub App の秘密鍵（[ADR-20261020-002][adr-app]） | `setup` が進行 Bot の App を作ったときに、受け取った秘密鍵を書く（「[導入と点検][design-setup]」の「GitHub App を作る」） | 新しく作る（人がアプリの新しい秘密鍵を作って書く）。前のマシンの秘密鍵は、新しいマシンの最初の実行が通った後に GitHub で取り消す |
 | `deploy-key` | 作業ブランチに push する deploy key の秘密鍵（[IMPL-15][impl]） | いつも | 新しく作る（人が新しい鍵を作り、deploy key として GitHub に登録する）。前のマシンの deploy key は、新しいマシンの最初の実行が通った後に GitHub から消す |
 | `marker-signing-keys` | 印の署名の鍵の一覧（[IMPL-20][impl]。1 行に 1 つ。印は先頭の行の鍵で署名し、どの行の鍵でも確かめる。形と読み方と替え方は「[状態遷移と判定][design-flow]」の「印の署名」） | いつも | 前のマシンから一覧を写す（行の順も変えない）。新しいマシンで鍵を作るときは、鍵を替える手順（「印の署名」）のとおり、新しい鍵を先頭の行に足し、前の鍵を残す。前の鍵を外すと、前の鍵で書いた印が署名の条件を満たさなくなり、開いている Issue と PR が `marker-invalid` で止まるため（[ADR-20261021-004][adr-marker-keys] の決定 2） |
 
@@ -240,7 +240,7 @@
 
 | キー | 中身 | 形 | 初期値 | 根拠 |
 | --- | --- | --- | --- | --- |
-| `safety.botAccounts` | 印を書いたと認める GitHub のアカウント名の一覧。投稿に使うアカウントは、GitHub App に切り替える前は PAT の持ち主、切り替えた後はアプリの投稿者の名前（`<アプリの名前>[bot]`）で決まり、一覧では決めない | 一覧（GitHub のアカウント名の文字列。1 つ以上） | `setup` が人の `gh` のログイン名を 1 つ書く（最初はメンテナのアカウント。[SETUP-13][setup]）。GitHub App に切り替えるときに、アプリの投稿者の名前に替える（[ADR-20261020-002][adr-app]） | 進行 Bot は、一覧のどれかが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。当てる先のリポに初めて書く前に GitHub App に切り替え（[SETUP-13][setup]、[ADR-20261024-002][adr-no-stages] の決定 2）、切り替えのときにメンテナのアカウントを一覧から外す。PAT では印を書いていないので、読み続ける印は無い（[ADR-20261020-002][adr-app] の決定 4）。その後にアカウントを替えるときは、新しいアカウントを足し、前のアカウントの印が残る Issue と PR が閉じたら前のアカウントを外す。足すのは認める投稿者を増やす向きなので、替えると決めた ADR を添えて PR に残す（[ADR-20261020-001][adr-bots] の決定 4） |
+| `safety.botAccounts` | 印を書いたと認める GitHub のアカウント名の一覧。投稿に使うアカウントは、アプリの投稿者の名前（`<アプリの名前>[bot]`）で決まり、一覧では決めない | 一覧（GitHub のアカウント名の文字列。1 つ以上） | `setup` が、進行 Bot の App の投稿者の名前を 1 つ書く（「[導入と点検][design-setup]」の「GitHub App を作る」。[SETUP-13][setup]、[ADR-20261020-002][adr-app]） | 進行 Bot は、一覧のどれかが投稿し、未編集で、署名が通るコメントの印だけを読む（[IMPL-20][impl]）。進行 Bot は最初から App で印を書くので、ほかのアカウントの印を読み続ける手当ては要らない（[ADR-20261020-002][adr-app] の決定 4、[ADR-20261030-002][adr-no-pat]）。その後にアカウントを替えるときは、新しいアカウントを足し、前のアカウントの印が残る Issue と PR が閉じたら前のアカウントを外す。足すのは認める投稿者を増やす向きなので、替えると決めた ADR を添えて PR に残す（[ADR-20261020-001][adr-bots] の決定 4） |
 | `safety.network.allowedDomains` | AI のセッションの sandbox から通信してよい先 | 一覧（ドメイン名の文字列） | `registry.npmjs.org`（暫定） | AI のセッションの外への通信は、npm のレジストリなどの許可した先だけにする（[SAFE-10][safety]）。先を足すのは、安全の境界を緩める変更なので ADR で決める（[ADR-20261015-005][adr-settings]） |
 | `safety.env.names` | 進行 Bot が AI のセッションに渡す環境変数の名前のうち、足す名前（ほかの名前は渡さない） | 一覧（環境変数の名前の文字列） | 空（暫定。決めた名前は進行 Bot のプログラムに固定する。名前と値と理由は「[AI のセッション][design-ai]」の「環境変数」。決めた名前のうち、`TMPDIR`・`CLAUDE_CODE_TMPDIR`・`XDG_*` の 4 つ・`GIT_CONFIG_GLOBAL`・`NPM_CONFIG_USERCONFIG`・commit の作者・`ENABLE_CLAUDEAI_MCP_SERVERS` は [SAFE-10][safety] と [SAFE-1][safety] が決めた名前） | 子プロセスの環境変数は許可した名前だけで組み立て、`gh` の認証と `GH_TOKEN` を渡さない（[SAFE-1][safety]）。決めた名前は、リポの設定の PR で消せないようにプログラムに固定し、設定には足す名前だけを持つ（`safety.sandbox.denyRead` と同じ形）。足す名前の値は、マシンの設定の `safety.env.values` に書き、`setup` が定期の実行の定義の環境変数に写す。進行 Bot は、自分の環境変数の値をそのまま渡す。`safety.env.names` の名前が進行 Bot の環境変数に無ければ、AI のセッションを起動せず、`check` も fail にする（黙って渡さずに進まないため）。名前を足すのは ADR で決める（迷ったら ADR。[ADR-20261015-005][adr-settings] の決定 1） |
 | `safety.sandbox.denyRead` | AI のセッションの sandbox で読ませないパスのうち、足す分。`${home}` か `${worktree}` で始めて書き、絶対パスは書かない | 一覧（`${home}` か `${worktree}` で始まるパスの文字列） | 空（暫定） | 読み取りは、ホーム・置き場・秘密の置き場・macOS の人の一時フォルダとキャッシュ（`/var/folders/<…>/T` と `…/C`）・`/Users/Shared`・`/Volumes` などを読ませない形にし（ホームの外の道具は読める）、`denyRead` に入れるパスは要件が決めている（[SAFE-10][safety]、FACT-63。進行 Bot が入れるパスの一覧は「[AI のセッション][design-ai]」の「セッションごとの安全設定」の「中身」）。進行 Bot は要件が決めたパスをマシンの中のフォルダ（[マシンの中のフォルダ][places]）から組み立てて必ず入れ、設定には足す分だけを持つ（設定で消せないようにするため） |
@@ -251,14 +251,15 @@
 | キー | 中身 | 形 | 初期値 | 根拠 |
 | --- | --- | --- | --- | --- |
 | `repository.owner`、`repository.name` | 当てる先のリポの owner と名前 | 文字列 | `setup` が、開いているプロジェクトの origin から書く | 当てる先のリポを設定に持つ（[STRUCT-2][struct]）。進行 Bot の clone を作る先と、全体の止める合図を読む先なので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261021-006][adr-repo] の決定 1。base ブランチと同じ理由） |
-| `githubApp.appId`、`githubApp.installationId` | 進行 Bot が使う GitHub App の ID と、当てる先のリポへのインストールの ID | 数か `null` | `null`（数か `null`。切り替えのときに人が書く。`null` の間は PAT で読む） | 当てる先のリポに初めて書く前に、進行 Bot を GitHub App に切り替える（[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages] の決定 2）。全体の止める合図を読む前の認証に使うので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261021-006][adr-repo] の決定 1。[ADR-20261020-002][adr-app] の決定 3 は、置き場を基本設計に任せた）。どちらも秘密でない。秘密鍵は秘密の置き場に置く。進行 Bot を動かすマシンを替えたら、新しいマシンにも書く |
+| `githubApp.appId`、`githubApp.installationId` | 進行 Bot が使う GitHub App の ID と、当てる先のリポへのインストールの ID | 数か `null` | `null`（`setup` が進行 Bot の App を作り、人が入れたときに書く。「[導入と点検][design-setup]」の「GitHub App を作る」） | 進行 Bot は、最初から GitHub App だけを使う（[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）。`null` の間は点検が fail にし、進行 Bot は GitHub を読まない。全体の止める合図を読む前の認証に使うので、リポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261021-006][adr-repo] の決定 1。[ADR-20261020-002][adr-app] の決定 3 は、置き場を基本設計に任せた）。どちらも秘密でない。秘密鍵は秘密の置き場に置く。進行 Bot を動かすマシンを替えたら、新しいマシンにも書く |
+| `githubApp.setupClientId` | `setup` 用の GitHub App の `client_id` | 文字列か `null` | `null`（人が `setup` 用の App を作ったときに `setup` に渡し、`setup` が書く。「[導入と点検][design-setup]」の「GitHub App を作る」） | `setup` が承認のコードを求めるのに使う。進行 Bot は使わない。秘密でない。リポの設定に置かないのは、PR で別の App に替えられ、人が承認の画面で App の名前を見落とすと、その App に人の権限が渡るため（[ADR-20261030-001][adr-setup-app]）。`setup` 用の App の秘密鍵は作らない |
 | `baseBranch` | PR を向ける base ブランチの名前（進行 Bot はこのブランチの先端からリポの設定を読む） | 文字列 | 無し。`setup` のマシンの準備で人が指定する（business-os は `develop`。[IMPL-6][impl]、[MERGE-2][merge]） | 進行 Bot は base ブランチの先端からリポの設定を読むので、base ブランチの名前はリポの設定を読む前に要る。そのためマシンの設定に置く（[ADR-20261017-007][adr-stop] の決定 4） |
 | `devAutopilotPath` | 進行 Bot のプログラムの写しのフォルダ | 文字列（絶対パス） | `setup` が `<paths.workspace>/program/<版>/` を書く（暫定） | `setup` は、入れた Plugin の版を置き場の中の版ごとのフォルダに写し、定期の実行は写しから進行 Bot を起こす（[STRUCT-3][struct]） |
 | `program.previousVersion` | 直前まで使っていた進行 Bot のプログラムの版（`setup` の `rollback` の戻す先で、写しの片付けで残す版） | 文字列か `null` | `null`（`setup` が版を上げるときに、上げる前の版を書く） | 直前の版を持たないと、同じ版で `setup` を実行し直したときに戻す先の写しを消し、`rollback` が戻す先を決められない（「[導入と点検][design-setup]」の「プログラムの写し」） |
 | `program.pinned` | `rollback` で版を固定しているか。`true` の間の `setup` は版を上げない | 真偽 | `false` | `rollback` の後に、登録し直しなどで `setup` を実行し直すと、入れた Plugin の新しい版に黙って戻るため。版を上げるのは、人が `setup` を引数 `upgrade` で実行したときだけにする（[STRUCT-3][struct] の「版を上げるのは、人が `setup` を実行したときだけ」） |
 | `paths.workspace` | 置き場（進行 Bot の clone、セッションごとのフォルダ、プログラムの写し、GitHub の SSH のホストの鍵、安全設定の置き場の既定の場所） | 文字列（絶対パス） | 「[マシンの中のフォルダ][places]」 | AI のセッションごとに origin から clone し直す。進行 Bot の clone は `controller/`、セッションのフォルダは `sessions/<セッションの名前>/` に置く（[ADR-20261013-001][adr-workspace]） |
 | `paths.records` | 実行の記録と lock の置き場 | 文字列（絶対パス） | 「[マシンの中のフォルダ][places]」 | 実行の記録を追跡しないフォルダに残す（[FLOW-5][flow]）。記録と lock の置き場はマシンの設定に置く（[ADR-20261015-005][adr-settings]） |
-| `paths.secrets` | 秘密の置き場（PAT かアプリの秘密鍵、deploy key、印の署名の鍵） | 文字列（絶対パス） | 「[マシンの中のフォルダ][places]」 | PAT・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2）。GitHub App に切り替えた後は、PAT の代わりにアプリの秘密鍵を置き、PAT のファイルは消す（[ADR-20261020-002][adr-app] の決定 1・3） |
+| `paths.secrets` | 秘密の置き場（進行 Bot の App の秘密鍵、deploy key、印の署名の鍵） | 文字列（絶対パス） | 「[マシンの中のフォルダ][places]」 | アプリの秘密鍵・印の署名の鍵・deploy key を、秘密の置き場のファイルに置く（[ADR-20261015-001][adr-read] の決定 2、[ADR-20261020-002][adr-app] の決定 3）。PAT のファイルは置かない（[ADR-20261030-002][adr-no-pat]） |
 | `paths.sandboxSettings` | AI のセッションに `--settings` で渡す安全設定のファイルの置き場 | 文字列（絶対パス） | `<paths.workspace>/sandbox-settings/`（暫定） | 安全設定のファイルは AI が書けない場所に置き、起動の前にハッシュを確かめる（[SAFE-2][safety] の (e)）。進行 Bot がセッションごとに作り、終わった後にもハッシュを比べて消す（[AI のセッション][design-ai]の「セッションごとの安全設定」） |
 | `safety.sandbox.toolDirs` | sandbox の `allowRead` に足す、ホームの中にある道具のフォルダ | 一覧（絶対パスの文字列） | `setup` が、`node` `pnpm` `git` の実体のうちホームの中にあるものの、実体のファイルがあるいちばん狭いフォルダを書く。人の pnpm の store（人の環境の `pnpm store path`）を含むフォルダは書かない。`gh` は AI のセッションで使わないので書かない（暫定） | sandbox はホーム（`~/`）を読ませないので、ホームの中にある道具のフォルダを `allowRead` に足す（[SAFE-10][safety]）。人の store を含むフォルダを足すと、共有の store を読めてしまう（[SAFE-10][safety]、[ADR-20261015-002][adr-store]）。マシンの設定は PR を通らないので、`check` が、各フォルダがホーム（`~/`）自体でなく、`node`・`pnpm`・`git` の実体のどれかを含み、人の pnpm の store・`~/.ssh`・`~/.config/gh`・`~/.claude/`・マシンの設定のフォルダ・マシンの中のフォルダを含まないことを確かめ、外れれば fail にする（`allowRead` は狭い方の規則が勝つので、広いフォルダを書くとホームの中の秘密を読めるため。FACT-22） |
 | `safety.env.values` | リポの設定の `safety.env.names` に足した名前の、環境変数の値 | 対応表（キーは環境変数の名前、値は文字列） | 空（暫定） | 定期の実行は人のシェルの環境を持たないので、足した名前の値を、マシンの設定から定期の実行の定義に写して進行 Bot に届ける（「[導入と点検][design-setup]」の「定期の実行の登録」）。プロキシや証明書の場所のように、マシンごとに違いうる値なので、マシンの設定に置く。値に秘密を書かない（`check` が、秘密の形が無いことを確かめる。[SAFE-1][safety]） |
@@ -279,8 +280,8 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 - base ブランチの先端に `.claude/settings.local.json` が無く、どのフォルダにも `CLAUDE.local.md` が無いこと。base ブランチの先端は AI のセッションの worktree に入り、`.claude/settings.local.json` は `--setting-sources local` でも読まれて hook が sandbox の外で動き、`CLAUDE.local.md` は指示として AI の文脈に入るため（FACT-56、FACT-60、[SAFE-2][safety] の (a)）。点検で止めないと、起動の前の確かめ（[AI のセッション][design-ai]の「起動の前の確かめ」の順 9）が、作業の単位ごとに停止中（`local-settings`）にしていく。名前は、base ブランチの先端の git の木（進行 Bot の clone で読む）のすべてのフォルダをたどり、英字の大文字と小文字を区別せずに比べる（`.Claude/settings.local.json` と `sub/claude.local.md` も当てる。FACT-68）。綴りどおりに比べるか、ファイルシステムに名前で問うだけにすると、大文字と小文字を変えた名前か、下のフォルダの `CLAUDE.local.md` を見落とすため。fail のときは、試しのセッションも起こさない（試しのセッションの worktree も base ブランチの先端で切るため。「[導入と点検][design-setup]」の「試しのセッション」）
 - `checks.required` が空でないこと
 - `run.intervalHours` が 24 の約数であること
-- `safety.botAccounts` が空でなく、投稿に使うアカウントが入っていること。GitHub App に切り替える前は PAT の持ち主（`GET /user` の `login`）、切り替えた後はアプリの投稿者の名前（取り方は「[導入と点検][design-setup]」の「GitHub App の権限」）（[ADR-20261020-001][adr-bots]、[ADR-20261020-002][adr-app]）。切り替えた後に、一覧にほかの名前が残っていれば warn にする（外し忘れを人に知らせる。前のアカウントの印が残る間は残してよい。[ADR-20261020-001][adr-bots] の決定 4）
-- `githubApp.appId` と `githubApp.installationId` があり、秘密の置き場にアプリの秘密鍵があって、PAT のファイルが無いこと。GitHub App に切り替える前（PAT のまま）は fail にする。進行 Bot は当てる先のリポに初めて書く前に GitHub App に切り替える（[SETUP-13][setup]、[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages] の決定 2）ので、PAT のまま作業に入らないため
+- `safety.botAccounts` が空でなく、投稿に使うアカウント（アプリの投稿者の名前。取り方は「[導入と点検][design-setup]」の「GitHub App の権限」）が入っていること（[ADR-20261020-001][adr-bots]、[ADR-20261020-002][adr-app]）。一覧にほかの名前が残っていれば warn にする（外し忘れを人に知らせる。前のアカウントの印が残る間は残してよい。[ADR-20261020-001][adr-bots] の決定 4）
+- `githubApp.appId` と `githubApp.installationId` があり、秘密の置き場にアプリの秘密鍵があって、PAT のファイルが無いこと。外れていれば fail にする。進行 Bot は最初から GitHub App だけを使う（[SETUP-13][setup]、[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）ため
 - `models.planHard` のほかの `models.*` の `model` に `fable` が無いこと（[モデルの流れ][impl]、[IMPL-32][impl]）
 - `safety.env.names` に、AI のセッションに渡さない名前（`GH_TOKEN`、`PNPM_HOME` など。「[AI のセッション][design-ai]」の「環境変数」）と、プログラムに固定した名前が無いこと。`safety.env.names` の名前がすべて進行 Bot の環境変数にあること（値はマシンの設定の `safety.env.values` から定期の実行の定義に写す）。`safety.env.values` の値に秘密の形（漏えいの検査の鍵の形式など。[IMPL-15][impl]）が無いこと
 - `safety.sandbox.toolDirs` の各フォルダが、ホーム（`~/`）自体でなく、`node`・`pnpm`・`git` の実体のどれかを含み、人の pnpm の store・`~/.ssh`・`~/.config/gh`・`~/.claude/`・マシンの設定のフォルダ・マシンの中のフォルダを含まないこと（[ADR-20261015-002][adr-store]、[SAFE-10][safety]）
@@ -339,3 +340,5 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-bypass-baseline]: ../../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
+[adr-no-pat]: ../../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
+[adr-setup-app]: ../../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
