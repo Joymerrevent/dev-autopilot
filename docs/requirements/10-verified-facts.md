@@ -358,6 +358,16 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 | FACT-90 | 進行 Bot のアプリ自身が ruleset の bypass に入ったことを、Administration の権限の無い App のトークンで見分けられるか | **見分けられる。** deploy key の push 先を限るブランチの ruleset の bypass に、試し用の App を `Integration` として PAT で入れると、App のトークンで読む `current_user_can_bypass` が `never` から `always` に変わり、外すと `never` に戻った。どの読み取りでも `bypass_actors` は返らず、`updated_at` は入れたときと外したときに変わった | 2026-10-28、実行（試し専用の組織） |
 | FACT-91 | GitHub App に Administration の読み取りを足せば、`bypass_actors` を読めるか | **読めない。** メンテナが試し用の App の権限に Administration の読み取りを足して組織で承認し、インストールのトークンの権限に `administration: read` が入ったが、3 つの ruleset のどれでも `bypass_actors` は返らず、`current_user_can_bypass` は `never`、変更の履歴は 403（`administration=write`）だった。`bypass_actors` を読むには、Administration の書き込みが要る（[公式文書][doc-rules]の「ruleset に書き込める認証にだけ返る」と合う）。試しの後に、試し用の App の権限から Administration を外した | 2026-10-29、実行（試し専用の組織。結果は gitignore 済みの `.tmp/probe-app/result-rulesets-app-adminread.json`） |
 
+## setup 用の GitHub App を確かめた事実（2026-10-30）
+
+メンテナの案（進行 Bot は最初から GitHub App だけを使い、人の `setup` も人の `gh` のログインでなく、`setup` 用の別の App の人の代わりのトークンで GitHub の準備を行う）の材料として、試し専用の組織で確かめた。試し用の `setup` の App（`jm-sandbox-setup-probe-20261030`。非公開、Webhook なし。権限は Administration・Variables・Issues・Projects（組織）の書き込みと Metadata の読み取り）を作り、試し用リポ `probe-ruleset-read-20261028` だけに入れた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-92 | GitHub App をマニフェストから作るときに、作成の後の戻り先を手元（`http://127.0.0.1:<ポート>/…`）にして、App の ID と秘密鍵を受け取れるか | **受け取れる。** 手元のサーバーが、マニフェストを組織の App の作成画面（`https://github.com/organizations/<組織>/settings/apps/new?state=<乱数>`）へ POST で送り、人が「Create GitHub App」を押すと、戻り先にコードと `state` が返った。コードを `POST /app-manifests/{code}/conversions`（認証なし）で引き換えると 201 で、App の ID・`slug`・`client_id`・秘密鍵（`pem`）・`client_secret`・Webhook の秘密が返った。マニフェストの権限の名前を `variables` と書くと、作成画面が「Default permission records resource is not included in the list」で断った。リポの変数の権限の名前は `actions_variables` | 2026-10-30、実行（試し専用の組織） |
+| FACT-93 | マニフェストから作った App で、ブラウザで承認して人の代わりのトークンを受け取る方式（device flow）を使えるか | **作ったままでは使えず、人が App の設定で有効にすると使える。** 作った直後は `POST https://github.com/login/device/code` が `device_flow_disabled`（「Device Flow must be explicitly enabled for this App」）を返した。マニフェストには有効にする項目が無い。人が App の設定の「Enable Device Flow」を入れると、承認のコードが返り、人が `https://github.com/login/device` でコードを入れて承認すると、`ghu_` で始まるトークン（期限 28800 秒）と更新のトークン（期限 15724800 秒）が返った。`client_secret` は使わなかった | 2026-10-30、実行（試し専用の組織） |
+| FACT-94 | `setup` 用の App の人の代わりのトークン（組織の管理者が承認）で、GitHub の準備に要る操作ができるか。App を入れていないリポと、ほかの組織に届くか | **できる。届かない。** App を入れた試し用リポで、ruleset の作成と削除（`administration=write`）、ruleset の `bypass_actors` の読み取り（3 つとも。`current_user_can_bypass` は `always`）、リポの変数の作成・更新・削除（`actions_variables=write`）、ラベルの作成と削除、組織の Project の作成と削除ができた。App を入れていない試し用リポは 404、本番の組織の非公開のリポは 404、本番の組織の変数は 403 だった。試しで作ったものは消し、トークンのファイルを消し、メンテナが GitHub の設定（Authorized GitHub Apps）で承認を取り消した | 2026-10-30、実行（試し専用の組織。記録は gitignore 済みの `.tmp/probe-setup-app-20261030/`） |
+
 ## GitHub App の作り方による違いを確かめた事実（2026-10-30）
 
 FACT-92・93（マニフェストから作る試し）で確かめていなかった 3 点を、試し専用の組織で確かめた。3 点は、マニフェストの戻り先を `localhost` にしたとき、マニフェストに `hook_attributes` を書かないとき、URL パラメータで値を埋めた登録フォームで作るときの振る舞い。試し用の App を 2 つ作った（どちらも非公開。権限は Metadata の読み取りだけ。インストールはしていない）。試しの後に、メンテナが 2 つの App を GitHub の設定で消し、手元の秘密鍵も消した。
