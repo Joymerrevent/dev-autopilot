@@ -63,7 +63,7 @@
 | ADR-20261028-003 | [ほかのリポへの適用と専用マシンへの移行は、マージの判定が直近 10 件で人の判断と一致し、revert が無くなってから決める][adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments] | accepted | 2026-10-28 |
 | ADR-20261028-004 | [進行 Bot の毎回の点検は、setup が bypass を確かめたときの ruleset の updated_at を控えと比べ、変わっていれば止める][adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline] | accepted | 2026-10-28 |
 | ADR-20261030-001 | [setup の GitHub の準備は、秘密鍵を作らない setup 用の App で行い、人の gh を使わない][adr-20261030-001-setup-uses-setup-app-instead-of-human-gh] | accepted | 2026-10-30 |
-| ADR-20261030-002 | [進行 Bot は最初から GitHub App だけを使い、PAT を使わない][adr-20261030-002-bot-uses-github-app-only-from-start] | proposed | 2026-10-30 |
+| ADR-20261030-002 | [進行 Bot は最初から GitHub App だけを使い、PAT を使わない][adr-20261030-002-bot-uses-github-app-only-from-start] | accepted | 2026-10-30 |
 
 <!--
 行の例（表の最後に足す）:
