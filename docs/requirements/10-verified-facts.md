@@ -368,6 +368,16 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 | FACT-93 | マニフェストから作った App で、ブラウザで承認して人の代わりのトークンを受け取る方式（device flow）を使えるか | **作ったままでは使えず、人が App の設定で有効にすると使える。** 作った直後は `POST https://github.com/login/device/code` が `device_flow_disabled`（「Device Flow must be explicitly enabled for this App」）を返した。マニフェストには有効にする項目が無い。人が App の設定の「Enable Device Flow」を入れると、承認のコードが返り、人が `https://github.com/login/device` でコードを入れて承認すると、`ghu_` で始まるトークン（期限 28800 秒）と更新のトークン（期限 15724800 秒）が返った。`client_secret` は使わなかった | 2026-10-30、実行（試し専用の組織） |
 | FACT-94 | `setup` 用の App の人の代わりのトークン（組織の管理者が承認）で、GitHub の準備に要る操作ができるか。App を入れていないリポと、ほかの組織に届くか | **できる。届かない。** App を入れた試し用リポで、ruleset の作成と削除（`administration=write`）、ruleset の `bypass_actors` の読み取り（3 つとも。`current_user_can_bypass` は `always`）、リポの変数の作成・更新・削除（`actions_variables=write`）、ラベルの作成と削除、組織の Project の作成と削除ができた。App を入れていない試し用リポは 404、本番の組織の非公開のリポは 404、本番の組織の変数は 403 だった。試しで作ったものは消し、トークンのファイルを消し、メンテナが GitHub の設定（Authorized GitHub Apps）で承認を取り消した | 2026-10-30、実行（試し専用の組織。記録は gitignore 済みの `.tmp/probe-setup-app-20261030/`） |
 
+## GitHub App の作り方による違いを確かめた事実（2026-10-30）
+
+FACT-92・93（マニフェストから作る試し）で確かめていなかった 3 点を、試し専用の組織で確かめた。3 点は、マニフェストの戻り先を `localhost` にしたとき、マニフェストに `hook_attributes` を書かないとき、URL パラメータで値を埋めた登録フォームで作るときの振る舞い。試し用の App を 2 つ作った（どちらも非公開。権限は Metadata の読み取りだけ。インストールはしていない）。試しの後に、メンテナが 2 つの App を GitHub の設定で消し、手元の秘密鍵も消した。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-95 | GitHub App をマニフェストから作るときに、作成の後の戻り先を `http://localhost:<ポート>/…` にできるか（FACT-92 は `127.0.0.1`） | **できる。macOS の人のブラウザは、`localhost` を `::1` で開いた。** 手元のサーバーを `127.0.0.1` と `::1` の両方で待たせ、ブラウザで `http://localhost:3998/` を開くと、ページの読み込みも、戻り先へのコードの戻りも、`::1` から届いた。コードを `POST /app-manifests/{code}/conversions` で引き換えると 201 だった。1 回目の送信では、GitHub の作成画面が「We didn't find an App Manifest for your request.」を出して空の登録フォームになり、同じページを開き直して同じマニフェストを送り直した 2 回目で作れた。1 回目が失敗した原因は確かめていない | 2026-10-30、実行（試し専用の組織） |
+| FACT-96 | GitHub App をマニフェストから作るときに、`hook_attributes` を書かなくても作れるか。Webhook はどうなるか（FACT-92 は、`hook_attributes` に使わない URL と `active: false` を書いた） | **作れる。Webhook の無い App になる。** `hook_attributes` と `default_events` を書かないマニフェストで作ると、引き換えの応答に Webhook の秘密が無く（FACT-92 では返った）、`events` は空で、App の JWT で読んだ Webhook の設定（`GET /app/hook/config`）は 404 だった | 2026-10-30、実行（試し専用の組織） |
+| FACT-97 | URL パラメータで値を埋めた App の登録フォームで、作る前に Device Flow を有効にできるか（FACT-93 では、マニフェストで作った後に人が設定で有効にした） | **できる。** URL パラメータにも Device Flow を有効にする項目は無い（[公式文書][doc-app-url-params]）が、`https://github.com/organizations/<組織>/settings/apps/new?name=…&url=…&public=false&webhook_active=false` を開くと、名前などが埋まった登録フォームが出て、人がフォームの「Enable Device Flow」にチェックを入れてから「Create GitHub App」を押せた。作った直後から、`POST https://github.com/login/device/code`（`client_id` だけを送る）が 200 で承認のコードを返した。マニフェストで作った App（FACT-95・96）は、同じ要求に `device_flow_disabled` を返した。登録フォームで作る方式には、コードを引き換えて秘密鍵を受け取る手順が無い。試しの App では、秘密鍵を作らずに承認のコードまで受け取れた（承認とトークンの受け取りはしていない） | 2026-10-30、実行（試し専用の組織。記録は gitignore 済みの `.tmp/probe-manifest-check-20261030/`） |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -394,3 +404,4 @@ AI の作業ブランチの CI を秘密を持たない形で動かすか（[ADR
 [adr-status]: ../adr/adr-20261026-001-use-status-field-for-state.md
 [doc-environments]: https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
 [doc-rules]: https://docs.github.com/en/rest/repos/rules
+[doc-app-url-params]: https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-using-url-parameters
