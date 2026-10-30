@@ -10,9 +10,9 @@
 | 順 | すること | うまくいかないとき |
 | --- | --- | --- |
 | 1 | 開いているプロジェクトの origin から owner/repo を引く。dev-autopilot 自身のリポなら、何も作らずに止まる（[STRUCT-3][struct]、[分離の時期の目安][struct]）。dev-autopilot 自身のリポかは、origin の owner/repo が dev-autopilot のリポ（owner/repo を進行 Bot のプログラムに持つ）か、開いているプロジェクトに名前（`name`）が `dev-autopilot` の `plugin/.claude-plugin/plugin.json` があるかで見分ける（名前を変えたリポと fork も止めるため）。毎回の点検も、`repository.*` と、base ブランチの先端の `plugin/.claude-plugin/plugin.json` で同じように確かめる（下の「組と回数」の GitHub の組） | origin が無いか、GitHub のリポでなければ止まる |
-| 2 | base ブランチの名前を決める。マシンの設定にあればその値、無ければ人に聞く（候補は origin の既定のブランチと `develop`）。次に、マシンの設定のフォルダ（[設定][design-settings]の「マシンの設定」）と、GitHub の今の状態を読み、足りないものと消すもの（Plugin の版で消した項目の設定のキーと、設定に無い型の ruleset の除外。下の「GitHub の準備」）の一覧を作る。base ブランチの先端のコミットで動いたチェックを、必須チェックの候補として一覧に入れる（下の「GitHub の準備」）。人の `gh` のログインが無ければ（専用マシン）、GitHub を読まず、マシンの準備だけを一覧にする | 人の `gh` のログインがあるのに GitHub を読めなければ止まる |
+| 2 | base ブランチの名前を決める。マシンの設定にあればその値、無ければ人に聞く（候補は origin の既定のブランチと `develop`）。次に、マシンの設定のフォルダ（[設定][design-settings]の「マシンの設定」）と、GitHub の今の状態を読み、足りないものと消すもの（Plugin の版で消した項目の設定のキーと、設定に無い型の ruleset の除外。下の「GitHub の準備」）の一覧を作る。base ブランチの先端のコミットで動いたチェックを、必須チェックの候補として一覧に入れる（下の「GitHub の準備」）。GitHub は、`setup` 用の App の人の代わりのトークンで読む（下の「setup 用の App」）。`setup` 用の App が無ければ、先に作る（下の「GitHub App を作る」の順 1・2）。人が承認のコードを入れなければ、GitHub を読まず、マシンの準備だけを一覧にする | 承認されたのに GitHub を読めなければ止まる |
 | 3 | 一覧を人に見せ、1 回だけ承認を受ける（[SETUP-1][setup]）。GitHub の準備と、このマシンで進行 Bot を動かすか（マシンの準備）を、分けて選べるようにする。人の手元のマシンで、専用マシンのために GitHub の準備だけを行うときは、マシンの準備を選ばない | 承認されなければ、何も作らない |
-| 4 | GitHub の準備を、人の `gh` のログインで行い、作ったものを API で読み戻して確かめる（下の「GitHub の準備」）。人の `gh` のログインが無いか、3 で GitHub の準備を選ばなければとばす | 読み戻した値が違えば止まり、違いを示す |
+| 4 | GitHub の準備を、`setup` 用の App の人の代わりのトークンで行い、作ったものを API で読み戻して確かめる（下の「GitHub の準備」）。進行 Bot の App が無ければ、マニフェストで作る（下の「GitHub App を作る」の順 3〜5）。順 2 で承認のコードが入らなかったか、3 で GitHub の準備を選ばなければとばす | 読み戻した値が違えば止まり、違いを示す |
 | 5 | マシンの準備を、GitHub の認証を使わずに行う（下の「マシンの準備」）。秘密のファイルは作るだけで、中身を読まない。作業フォルダの外に書くコマンドは、sandbox の外で動かす許可を人に求めてから動かす（表の下）。3 でマシンの準備を選ばなければとばす | sandbox の外で動かせなければ、作業フォルダの外に何も作らずに、理由を示して止まる（表の下）。作れなければ止まり、作れたものを示す |
 | 6 | 人がやることを、手順として示す（[SETUP-1][setup] の「人がやるもの」） | — |
 | 7 | 定期の実行と同じジョブで点検だけを起こし、結果を示す（下の「点検だけで動かす仕組み」）。全体の止める合図が `stop` の間は、試しのセッションと書き込みの権限の試しを行わず、未確認の warn として示す。5 をとばしたときは行わない | fail があれば示す |
@@ -20,7 +20,8 @@
 
 - 何度実行しても同じ結果にする（冪等）。今あるものは作り直さず、設定ファイルの今の値は上書きしない。設定ファイルには、足りない項目を足し、Plugin の版で消した項目のキーを消す（どちらも順 3 の承認の一覧に出す。リポの設定は PR で、マシンの設定はファイルを書き直して行う。下の「GitHub の準備」と「マシンの準備」）。消さずに残すと、表に無いキーとして点検が fail にし続けるため（[設定][design-settings]の「`check` が設定について確かめること」）。リポの設定の PR がマージされるまでは、新しい版の点検は fail になる（下の「GitHub の準備」の表のリポの設定の行）。`setup` を引数 `rollback` で実行して前の版に戻すときは、逆向きに、戻す先の版の表に合わせて足し引きする（下の「プログラムの写し」）
 - Plugin を更新した後に実行し直すと、プログラムの写しを新しい版で作る（下の「プログラムの写し」）。`rollback` で版を固定している間は、引数 `upgrade` のときだけ
-- 人の `gh` のログインが無いマシン（専用マシン）でも、順 1〜3（owner/repo を引く、足りないものの一覧、承認）は行う。dev-autopilot 自身のリポかを確かめ、マシンの準備の一覧に承認を受けるため（[SETUP-1][setup]）。順 2 で GitHub を読まず、順 4 の GitHub の準備をとばす。GitHub の準備は、人の手元のマシンで `setup` を実行し、マシンの準備を選ばずに行う（[ADR-20261017-004][adr-human] の決定 2）
+- `setup` は、人の `gh` のログインを使わない。GitHub を読み書きするのは、`setup` の実行ごとに人がブラウザで承認する `setup` 用の App の人の代わりのトークンだけ（[ADR-20261030-001][adr-setup-app] の決定 1。[ADR-20261017-004][adr-human] の決定 2 を改めた）。承認のコードはどの端末のブラウザでも入れられるので、専用マシンでも GitHub の準備を行える。進行 Bot の App をマニフェストで作る手順だけは、戻り先が手元なので、ブラウザを開けるマシンで行う（下の「GitHub App を作る」）
+- 人が承認のコードを入れないとき（専用マシンで人がその場にいないなど）も、順 1〜3（owner/repo を引く、足りないものの一覧、承認）は行う。dev-autopilot 自身のリポかを確かめ、マシンの準備の一覧に承認を受けるため（[SETUP-1][setup]）。順 2 で GitHub を読まず、順 4 の GitHub の準備をとばす
 - 専用マシンでも、`setup` を実行するために、当てる先のリポの作業コピー（Plugin を入れた `.claude/settings.json` を含む）を置き、そこで開いた Claude Code から呼ぶ（[STRUCT-3][struct]）。進行 Bot は作業コピーを読まない（[SAFE-2][safety]）
 - 1 つの当てる先のリポで、定期の実行を登録するマシンは 1 台にする。lock はマシンの中の記録の置き場にあり、2 台が同じリポで動くと、重い工程・投稿・費用が重なるため（[運用の規則][flow-rules]）。動かすマシンを替えるときは、下の「動かすマシンを替えるとき」の順に、前のマシンの登録を外してから、新しいマシンで `setup` を実行する
 - 人の Claude Code が sandbox を有効にしていると、Bash の道具から作業フォルダの外に書けない（FACT-71）。`setup`（引数の `rollback`・`upgrade`・`uninstall` を含む）は、作業フォルダの外に書くコマンド（下の「マシンの準備」の表のフォルダとファイル、プログラムの写し、定期の実行の登録、記録の置き場の lock と点検の依頼のファイル）を、sandbox の外で動かす許可を人に求めてから動かす。人の設定が sandbox の外でコマンドを動かすことを許していない（`sandbox.allowUnsandboxedCommands` が `false`）か、人が許可しなければ、作業フォルダの外に何も作らずに、sandbox の中からは作業フォルダの外に書けないことを理由として示して止まる
@@ -39,9 +40,9 @@
 
 - Project の自動追加（組み込みのワークフロー）は公開の API が無いので、人が有効にする（[SETUP-1][setup]）。点検は有効かを読むだけ
 - 当てる先のリポの CI が秘密を使うときは、Environment に置き、使えるブランチを「選んだブランチ」（Selected branches and tags）で、base ブランチと人が決めたブランチだけにする（[SAFE-20][safety]、[ADR-20261028-001][adr-ci-secrets]）。`setup` は、リポの秘密か、リポに届く組織の秘密があれば、Environment を作って秘密を移し、使えるブランチを選ぶ手順を人に示す（秘密を置くのも移すのも人が行う）。
-  点検は、リポの秘密の一覧（`GET /repos/{owner}/{repo}/actions/secrets`）と、リポに届く組織の秘密の一覧（`…/actions/organization-secrets`）が空であることを、GitHub App の Secrets の読み取りで確かめる（名前だけで、値は読めない。[ADR-20261028-002][adr-app-secrets]）。Environment があれば（`…/environments`）、どれも使えるブランチの規則が「選んだブランチ」（`deployment_branch_policy` の `custom_branch_policies` が `true`）で、規則（`…/deployment-branch-policies`）のどれも、作業ブランチの名前（`labels.branchTypes` の型ごとの `<型>/issue-1`）と `refs/pull/1/merge` に当たらないことを、Actions の読み取りで確かめる。「No restriction」と「Protected branches only」は fail にする（ruleset だけで守るリポでは、Protected branches only が絞らないため。FACT-79）。外れていれば fail。PAT の間は確かめない（PAT の間は作業に入らない）。人の `check` と `setup` は、人の `gh` のログインで同じことを確かめる
+  点検は、リポの秘密の一覧（`GET /repos/{owner}/{repo}/actions/secrets`）と、リポに届く組織の秘密の一覧（`…/actions/organization-secrets`）が空であることを、GitHub App の Secrets の読み取りで確かめる（名前だけで、値は読めない。[ADR-20261028-002][adr-app-secrets]）。Environment があれば（`…/environments`）、どれも使えるブランチの規則が「選んだブランチ」（`deployment_branch_policy` の `custom_branch_policies` が `true`）で、規則（`…/deployment-branch-policies`）のどれも、作業ブランチの名前（`labels.branchTypes` の型ごとの `<型>/issue-1`）と `refs/pull/1/merge` に当たらないことを、Actions の読み取りで確かめる。「No restriction」と「Protected branches only」は fail にする（ruleset だけで守るリポでは、Protected branches only が絞らないため。FACT-79）。外れていれば fail。人の `setup` は、`setup` 用の App の人の代わりのトークンで同じことを確かめる。`check` は進行 Bot のジョブで動くので、進行 Bot の App で確かめる（[ADR-20261030-001][adr-setup-app] の決定 1・3）
 - Status 欄に関わる組み込みのワークフロー 5 つ（Item closed・Pull request merged・Item added to project・Pull request linked to issue・Auto-close issue）は、`setup` で消さない。Status 欄の選択肢を 17 の状態に置き換えると、5 つは無効になる（FACT-76）。点検は、5 つのどれかが有効なら fail にし、人が Project の Workflows の画面で切る手順を示す。Status に値を書く 4 つは、進行 Bot が書いた状態を上書きし、Auto-close issue は Status の値で Issue を閉じて作業の単位を止めるため（[ADR-20261026-001][adr-status] の決定 3）。API で消しても、人は画面のひな形から作り直せる（FACT-76）ので、消す操作は足さず、有効かを読んで確かめる
-- 組み込みのワークフローが有効かを読むには、Projects の書き込みの権限が要る（FACT-76）。進行 Bot の点検は、GitHub App に切り替えた後に、アプリの Projects（組織）の書き込みで読む（下の「GitHub App の権限」）。切り替えの前の PAT は Projects の読み取りだけなので、PAT の間は確かめない（PAT の間は作業に入らない。下の「PAT の権限」）。人の `setup` と `check` は、人の `gh` のログイン（`project` の権限）で読む
+- 組み込みのワークフローが有効かを読むには、Projects の書き込みの権限が要る（FACT-76）。進行 Bot の点検は、アプリの Projects（組織）の書き込みで読む（下の「GitHub App の権限」）。人の `setup` は、`setup` 用の App の Projects（組織）の書き込みで読む（下の「setup 用の App」）
 - 必須チェックの候補は、base ブランチの先端のコミットで動いたチェック（名前、出した app、ワークフローのパス）から作る。候補が無ければ（CI がまだ無い）、必須チェックを登録せずに ruleset を作り、`checks.required` を空のままにする。点検が fail にするので、人が CI を足して `checks.required` に書き、`setup` を実行し直すと、ruleset に足す（[SETUP-1][setup]、[IMPL-27][impl]）。`setup` が足すので、人が ruleset を手で直さずに済む（[SETUP-4][setup]）
 
 #### ruleset の形と確かめ方
@@ -63,21 +64,20 @@
 - 人が `labels.branchTypes` に型を足したら、人の手元のマシンで `setup` を実行し直し（GitHub の準備）、ブランチの ruleset の exclude に足す。足すまでは、新しい型の作業ブランチへの push が断られる（止まる側に倒れる）
 - 人が `labels.branchTypes` から型を外すか、`labels.defaultBranchType` を替えたら、前の型の作業ブランチが origin から無くなってから、人の手元のマシンで `setup` を実行し直し（GitHub の準備）、ブランチの ruleset の exclude から前の型を外す。`setup` は、前の型の作業ブランチが origin に残っていれば exclude から外さず、残っている作業ブランチを示す。作業ブランチの型はブランチ名から読む（[設定][design-settings]の `labels.branchTypes`）ので、前の型の作業ブランチが残る Issue は、外すまでの間も push を続けられる。外すまでの間、点検は設定に無い型の除外を warn に出す。除外は `<型>/issue-*` の形なので、deploy key が作業ブランチの形のほかへ push できる道にはならない（点検の fail は、作業ブランチの形より広い除外に限る）
 - 確かめ方
-  - `setup`（人の `gh` のログイン。組織の管理者）は、作った後と、すでにあったときに、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み戻して上の表と比べ、違いを示す。bypass の読み方の正本は、`setup` の読み戻し（[GitHub の公式文書][doc-rules]は、`bypass_actors` は ruleset に書き込める認証にだけ返るとする。Administration の権限の無い、組織の管理者の fine-grained PAT には返った。FACT-65）。守りが弱い向きの違いが無ければ、ruleset の控え（リポの変数 `DEV_AUTOPILOT_RULESETS`）を書く（上の「GitHub の準備」の表。[ADR-20261028-004][adr-bypass-baseline] の決定 1）。控えを書くのは `setup` だけで、進行 Bot と AI は書かない（進行 Bot の変数の権限は読み取りだけ。下の「GitHub App の権限」）
+  - `setup`（`setup` 用の App の人の代わりのトークン。承認した人が組織の管理者）は、作った後と、すでにあったときに、3 つの ruleset の `enforcement`・`conditions`・`rules`・`bypass_actors` を読み戻して上の表と比べ、違いを示す。bypass の読み方の正本は、`setup` の読み戻し（[GitHub の公式文書][doc-rules]は、`bypass_actors` は ruleset に書き込める認証にだけ返るとする。`setup` 用の App の人の代わりのトークンには返った。FACT-94・98）。守りが弱い向きの違いが無ければ、ruleset の控え（リポの変数 `DEV_AUTOPILOT_RULESETS`）を書く（上の「GitHub の準備」の表。[ADR-20261028-004][adr-bypass-baseline] の決定 1）。控えを書くのは `setup` だけで、進行 Bot と AI は書かない（進行 Bot の変数の権限は読み取りだけ。下の「GitHub App の権限」）
   - 毎回の点検は、進行 Bot の GitHub の認証で、base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`。FACT-65）を読み、PR 必須・force push の禁止・必須チェック（strict）が効いていることを確かめる。続けて、3 つの ruleset の `enforcement`・`conditions`・`rules` を読み、上の表より守りが弱い向きの違いを fail にする（上の「GitHub の準備」の表の確かめ方の欄）。bypass は、認証で確かめ方が分かれる
-    - PAT の間は、`bypass_actors` を読んで確かめる（FACT-65）
-    - GitHub App に切り替えた後は、App のトークンでは `bypass_actors` がいつも返らない（FACT-88・91）ので、ruleset の控え（リポの変数 `DEV_AUTOPILOT_RULESETS`）を読み、控えが無い、控えた ID の ruleset が無い、`updated_at` が控えと違う、`current_user_can_bypass` が `never` でない（進行 Bot のアプリが bypass に入っている。FACT-90）のどれかなら fail にする。bypass だけを変えても `updated_at` は変わる（FACT-89）。fail のときは、人の手元のマシンで `setup` を実行し直す（GitHub の準備）ように示す。進行 Bot は控えを新しくしない（[ADR-20261028-004][adr-bypass-baseline] の決定 2）
-  - 進行 Bot の認証のうち、組織の管理者の fine-grained PAT（Administration の権限なし）では、上の欄をすべて読めた（FACT-65）。組織の管理者でない人の PAT で `bypass_actors` を読めるかは確かめていない。アプリのインストールのトークン（Administration の権限なし）では、3 つの ruleset の `enforcement`・対象・規則・`updated_at`・`current_user_can_bypass` と base ブランチに効く規則は読めるが、`bypass_actors` は返らない（FACT-88）。Administration の読み取りを足しても返らない（FACT-91）
+    - 進行 Bot の App のトークンでは `bypass_actors` がいつも返らない（FACT-88・91）ので、ruleset の控え（リポの変数 `DEV_AUTOPILOT_RULESETS`）を読み、控えが無い、控えた ID の ruleset が無い、`updated_at` が控えと違う、`current_user_can_bypass` が `never` でない（進行 Bot のアプリが bypass に入っている。FACT-90）のどれかなら fail にする。bypass だけを変えても `updated_at` は変わる（FACT-89）。fail のときは、人の手元のマシンで `setup` を実行し直す（GitHub の準備）ように示す。進行 Bot は控えを新しくしない（[ADR-20261028-004][adr-bypass-baseline] の決定 2）
+  - 進行 Bot の App のインストールのトークン（Administration の権限なし）では、3 つの ruleset の `enforcement`・対象・規則・`updated_at`・`current_user_can_bypass` と base ブランチに効く規則は読めるが、`bypass_actors` は返らない（FACT-88）。Administration の読み取りを足しても返らない（FACT-91）
 
 ### マシンの準備
 
 | 作るもの | 置き場 | 中身 |
 | --- | --- | --- |
-| マシンの設定 | マシンの設定のフォルダの `settings.json` | マシンの 17 項目（[設定][design-settings]）。`repository.*` は開いているプロジェクトの origin から、`baseBranch` は順 2 で決めた値を書く。`githubApp.*` は `null` で作る（切り替えのときに人が書く）。`program.previousVersion` は `null`、`program.pinned` は `false`、`safety.env.values` は空で作る。`safety.sandbox.toolDirs` は、`node`・`pnpm`・`git` の実体の場所から書く。すでにあれば、足りない項目を足し、Plugin の版で消した項目のキーを消す（今の値は書き換えない） |
+| マシンの設定 | マシンの設定のフォルダの `settings.json` | マシンの 17 項目（[設定][design-settings]）。`repository.*` は開いているプロジェクトの origin から、`baseBranch` は順 2 で決めた値を書く。`githubApp.*` は、App を作ったときと、人が `setup` 用の App の `client_id` を渡したときに `setup` が書く（下の「GitHub App を作る」）。`program.previousVersion` は `null`、`program.pinned` は `false`、`safety.env.values` は空で作る。`safety.sandbox.toolDirs` は、`node`・`pnpm`・`git` の実体の場所から書く。すでにあれば、足りない項目を足し、Plugin の版で消した項目のキーを消す（今の値は書き換えない） |
 | 置き場 | `paths.workspace` | `sessions/`、`program/`（下の「プログラムの写し」） |
 | 安全設定の置き場 | `paths.sandboxSettings` | 権限 700 で作る（既定は置き場の中の `sandbox-settings/`。[設定][design-settings]の「マシンの中のフォルダ」） |
 | 記録と lock の置き場 | `paths.records` | 作った日時を書いた記録の目印のファイル（`records-created.json`。[運用の規則][flow-rules]、[状態遷移と判定][design-flow]の「手元の記録」） |
-| 秘密の置き場 | `paths.secrets` | フォルダを権限 700 で作り、[設定][design-settings]の「秘密の置き場のファイル」の表のファイルを、`githubApp.*` の値に合わせて、空のまま権限 600 で作る。値は人が書く（[SAFE-15][safety]） |
+| 秘密の置き場 | `paths.secrets` | フォルダを権限 700 で作り、[設定][design-settings]の「秘密の置き場のファイル」の表のファイルを、空のまま権限 600 で作る（進行 Bot の App の秘密鍵は、App を作ったときに `setup` が書く）。値は人が書く（[SAFE-15][safety]） |
 | 短い一時フォルダの根 | `sessionTmp.root` | 権限 700 で作る（[ADR-20261017-006][adr-tmp]） |
 | 定期の実行の登録 | OS ごと | 下の「定期の実行の登録」 |
 
@@ -112,7 +112,7 @@
 ### 依存
 
 - 進行 Bot（`plugin/src/`）は、Node 24 の標準の機能（`node:` で始まるモジュール）と、`plugin/src/` の中のファイルだけを使い、実行時の npm の依存を持たない（[ADR-20261017-003][adr-plugin] の決定 1 が基本設計に残した選択）
-- GitHub の読み書きは、子プロセスの `gh`（`gh api`）で行う。認証は、呼ぶたびに `GH_TOKEN` に、切り替えの前は PAT、切り替えた後はアプリのインストールのトークンを入れて渡す（[SAFE-15][safety]）。`gh` は人の手元に入れたものを使い、点検のマシンの組で版を確かめる。push と fetch は `git` で行う
+- GitHub の読み書きは、子プロセスの `gh`（`gh api`）で行う。認証は、呼ぶたびに `GH_TOKEN` にアプリのインストールのトークンを入れて渡す（[SAFE-15][safety]）。`gh` は人の手元に入れたものを使い、点検のマシンの組で版を確かめる。push と fetch は `git` で行う
 - 写しに `node_modules` を作らず、`setup` は依存を入れない。npm の登録所への通信も、lifecycle script（パッケージを入れるときに走るスクリプト）も要らない
 - JSON スキーマで確かめる処理（出力契約、設定）も、外の部品を使わずに `plugin/src/` の中に書く
 - リポの CI で、`plugin/src/` の import が `node:` で始まるか相対パスだけであることを確かめる
@@ -170,8 +170,8 @@
 | --- | --- |
 | 1 | 前のマシンで、`setup` を引数 `uninstall` で実行する。実行の lock を取り、定期の実行の登録を外す。macOS は `launchctl bootout` の後に `~/Library/LaunchAgents/<Label>.plist` を消し、`launchctl print gui/<uid>/<Label>` で登録が無いことと、ファイルが無いことを読み戻す（ファイルが残ると、ログインし直したときに launchd が読み込み直しうるため。`man launchd`。実機では確かめていない）。Linux は `systemctl --user disable --now` でタイマーを止める。最後に lock を外して終わる。写し・置き場・記録・秘密は消さない |
 | 2 | 前のマシンの記録の置き場を、新しいマシンの同じキーの場所へ写す。記録は上限の数え上げに使うので、失ったものとして扱わない（[ADR-20261015-006][adr-flow] の決定 4 の「マシンを移すときは、記録のフォルダも移す」）。実行の lock（`run.lock`）と依頼のファイル（`run-request.json`・`check-request.json`・`check-result-*.json`・`intake-request.json`・`intake-result-*.json`）は写さない。前のマシンの lock と依頼を、新しいマシンの実行が読まないため（[状態遷移と判定][design-flow]の「手元の記録」） |
-| 3 | 新しいマシンで `setup` を実行する。秘密は、[設定][design-settings]の「秘密の置き場のファイル」の表の「動かすマシンを替えるとき」の欄のとおりに置く。印の署名の鍵の一覧（`marker-signing-keys`）は、前のマシンから一覧ごと写す（行の順も変えない）。新しいマシンで鍵を作るときは、[状態遷移と判定][design-flow]の「印の署名」の「鍵を替えるとき」のとおり、新しい鍵を先頭の行に足し、前の鍵を残す（[ADR-20261021-004][adr-marker-keys] の決定 2）。deploy key とアプリの秘密鍵（切り替えの前は PAT）は新しく作り、新しい deploy key は GitHub に登録する。`githubApp.*` もマシンの設定に書く |
-| 4 | 新しいマシンで点検の fail が無いことと、鍵の取り違えの warn が無いことを確かめる（点検は、最新の印の署名が、写した一覧のどれかの鍵で通るかを確かめ、通らなければ warn にする）。新しいマシンの最初の実行で印が通った（`marker-invalid` で止まらなかった）ことを確かめた後に、前のマシンの deploy key を GitHub から消し、前のマシンのアプリの秘密鍵（切り替えの前は PAT）を GitHub で取り消す。前のマシンが戻っても、GitHub を読めず push もできずに止まる側に倒れるため。前のマシンの置き場と秘密は、人が中身を確かめてから消す |
+| 3 | 新しいマシンで `setup` を実行する。秘密は、[設定][design-settings]の「秘密の置き場のファイル」の表の「動かすマシンを替えるとき」の欄のとおりに置く。印の署名の鍵の一覧（`marker-signing-keys`）は、前のマシンから一覧ごと写す（行の順も変えない）。新しいマシンで鍵を作るときは、[状態遷移と判定][design-flow]の「印の署名」の「鍵を替えるとき」のとおり、新しい鍵を先頭の行に足し、前の鍵を残す（[ADR-20261021-004][adr-marker-keys] の決定 2）。deploy key とアプリの秘密鍵は新しく作り（アプリの秘密鍵は、人が App の設定の画面で作り、新しいマシンの秘密の置き場に置く）、新しい deploy key は GitHub に登録する。`githubApp.*` もマシンの設定に書く |
+| 4 | 新しいマシンで点検の fail が無いことと、鍵の取り違えの warn が無いことを確かめる（点検は、最新の印の署名が、写した一覧のどれかの鍵で通るかを確かめ、通らなければ warn にする）。新しいマシンの最初の実行で印が通った（`marker-invalid` で止まらなかった）ことを確かめた後に、前のマシンの deploy key を GitHub から消し、前のマシンのアプリの秘密鍵を GitHub で取り消す。前のマシンが戻っても、GitHub を読めず push もできずに止まる側に倒れるため。前のマシンの置き場と秘密は、人が中身を確かめてから消す |
 
 - 前のマシンの作業場所の残骸は、新しいマシンの点検には出ない（置き場はマシンごと）。前のマシンを使い続けないなら、人が消す
 
@@ -186,10 +186,10 @@
 | 組 | 主な項目（[SETUP-2][setup]） | 確かめ方 | 毎回の実行の最初 | `setup`・人の `check` |
 | --- | --- | --- | --- | --- |
 | 設定 | 設定ファイルの項目と型と範囲、表に無いキーが無いこと、リポの設定に絶対パスが無いこと、項目が一方にだけあること、マシンの設定の場所の一致と、`repository.*` とマシンの設定のフォルダのパスの一致、`run.intervalHours` が 24 の約数であること、`safety.env.names` に渡さない名前と固定した名前が無く、名前がすべて進行 Bot の環境変数にあること、`safety.env.values` に秘密の形が無いこと、`models.planHard` のほかのモデルに `fable` が無いこと、`safety.sandbox.toolDirs` の中身、短い一時フォルダの長さと `sessionTmp.maxBytes`、印の署名の鍵の一覧の形と、鍵の行が 1 つ以上あること（一覧は[設定][design-settings]の「`check` が設定について確かめること」） | ファイルを読む | 確かめる | 確かめる |
-| GitHub | ラベル、Project の欄と自動追加、Status 欄に関わる組み込みのワークフロー 5 つが無効なこと（GitHub App に切り替えた後。上の「GitHub の準備」の表の下）、当てる先のリポの CI の秘密の置き方（GitHub App に切り替えた後。上の「GitHub の準備」の表の下）、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（上の「ruleset の形と確かめ方」。GitHub App に切り替えた後の bypass は、ruleset の控えの `updated_at` と `current_user_can_bypass` で確かめる）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、base ブランチの先端に `.claude/settings.local.json` が無く、どのフォルダにも `CLAUDE.local.md` が無いこと（git の木のフォルダをたどり、名前を英字の大小を区別せずに比べる。`.Claude/settings.local.json` と `claude.local.md` にも当てる。FACT-56、FACT-60、FACT-68）、dev-autopilot 自身のリポでないこと（上の「setup の流れ」の順 1 の見分け方を、`repository.*` と base ブランチの先端の `plugin/.claude-plugin/plugin.json` で確かめる）、投稿に使うアカウントが書いた最新の未編集の印の署名が、印の署名の鍵の一覧のどれかの鍵で通ること（通らなければ warn）、一覧に 2 つ以上の鍵があるときの、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR（warn。下の箇条）、基線の必須チェック（warn） | 進行 Bot の GitHub の認証（切り替えの前は PAT、後はアプリのトークン）で読む。base ブランチの中身は進行 Bot の clone で読む | 確かめる | 確かめる |
-| PAT かアプリの権限 | 下の「PAT の権限」か「GitHub App の権限」の読み取りが通ること。書き込みの権限が無いこと（リポの変数を作れないこと。切り替えの前は、ラベルも作れないこと）。切り替えた後は、アプリの権限が表のとおりで、当てる先のリポだけに入っていること（下の「GitHub App の権限」）。投稿に使うアカウントが `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]）。アプリに切り替えてあり、PAT のファイルが無いこと（切り替える前は fail。[ADR-20261020-002][adr-app]、[設定][design-settings]の「`check` が設定について確かめること」） | 読み取りと、書き込みの権限の試し（下の「PAT の権限」。403 で断られたときだけ pass） | 確かめる | 読み取りは確かめる。書き込みの権限の試しは、合図が `run` のときだけ |
+| GitHub | ラベル、Project の欄と自動追加、Status 欄に関わる組み込みのワークフロー 5 つが無効なこと（上の「GitHub の準備」の表の下）、当てる先のリポの CI の秘密の置き方（上の「GitHub の準備」の表の下）、リポの設定に書いた Project と選択肢の ID が実在すること、ruleset（上の「ruleset の形と確かめ方」。bypass は、ruleset の控えの `updated_at` と `current_user_can_bypass` で確かめる）、必須チェックの一覧、全体の止める合図の変数、origin の base ブランチと、その先端のリポの設定、base ブランチの先端に `.claude/settings.local.json` が無く、どのフォルダにも `CLAUDE.local.md` が無いこと（git の木のフォルダをたどり、名前を英字の大小を区別せずに比べる。`.Claude/settings.local.json` と `claude.local.md` にも当てる。FACT-56、FACT-60、FACT-68）、dev-autopilot 自身のリポでないこと（上の「setup の流れ」の順 1 の見分け方を、`repository.*` と base ブランチの先端の `plugin/.claude-plugin/plugin.json` で確かめる）、投稿に使うアカウントが書いた最新の未編集の印の署名が、印の署名の鍵の一覧のどれかの鍵で通ること（通らなければ warn）、一覧に 2 つ以上の鍵があるときの、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR（warn。下の箇条）、基線の必須チェック（warn） | 進行 Bot の GitHub App のトークンで読む。base ブランチの中身は進行 Bot の clone で読む | 確かめる | 確かめる |
+| アプリの権限 | 下の「GitHub App の権限」の読み取りが通ること。書き込みの権限が無いこと（リポの変数を作れないこと）。アプリの権限が表のとおりで、当てる先のリポだけに入っていること（下の「GitHub App の権限」）。投稿に使うアカウントが `safety.botAccounts` にあること（[ADR-20261020-001][adr-bots]）。マシンの設定に GitHub App があり、秘密鍵があり、秘密の置き場に PAT のファイルが無いこと（[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]、[設定][design-settings]の「`check` が設定について確かめること」） | 読み取りと、書き込みの権限の試し（下の「GitHub App の権限」。403 で断られたときだけ pass） | 確かめる | 読み取りは確かめる。書き込みの権限の試しは、合図が `run` のときだけ |
 | マシン | 動かしてよい OS か（今は macOS。要件の UNDECIDED-93）、`claude` と Node 24 と `gh` の版、写しの中身が写したときの一覧とハッシュのとおりか（人が呼ぶ Skill では、入れた Plugin と写しの版の違いも warn）、写しと `controller/` が別のフォルダか、マシンの設定のフォルダとマシンの中のフォルダの実体のパス（一覧は[設定][design-settings]の「`check` が設定について確かめること」）、置き場と秘密の置き場と安全設定の置き場の権限、短い一時フォルダの根の持ち主・リンクでないこと・権限 700（根が無ければ権限 700 で作ってから確かめる。[AI のセッション][design-ai]の「短い一時フォルダ」の順 2 と「起動の前の確かめ」の順 5）、置き場の `sessions/`・置き場・置き場の上の根（`/`）までのフォルダに `CLAUDE.local.md` が無いこと（名前は英字の大小を区別せずに比べる。[AI のセッション][design-ai]の「起動の前の確かめ」の順 9、FACT-60、FACT-68）、前の実行が残したセッションを探したときに止めなかったプロセスが無いこと（`session-not-stopped` で人に渡したセッションのフォルダと短い一時フォルダの中のものは warn。下の箇条。[AI のセッション][design-ai]の「前の実行が残したセッション」の順 3）、記録と記録の目印のファイル、lock、見送った実行と起動しなかった定期の実行（warn）、作業場所の残骸、定期の実行の登録の中身と秘密の値が無いこと、進行 Bot の clone と、置き場の `sessions/` に残っている作業中のセッションの clone の objects のファイルのリンク数が 1 であること（`find <clone>/.git/objects -type f -links +1` の出力が空。ハードリンクで共有していない。FACT-19、[ADR-20261013-001][adr-workspace] の確認方法）、組み立てた安全設定の `allowRead` と `allowWrite` に共有の store が無いこと（[ADR-20261015-002][adr-store]） | ファイルとプロセスを読む。OS の部分は、点検の OS ごとの部分（[STRUCT-8][struct]） | 確かめる | 確かめる |
-| 子プロセスと clone | 子プロセスに渡す環境変数に PAT・鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗し、書き換えていない clone からの fetch は通ること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
+| 子プロセスと clone | 子プロセスに渡す環境変数に鍵・`GH_TOKEN`・`PNPM_HOME` が無いこと、objects を書き換えた clone からの fetch が失敗し、書き換えていない clone からの fetch は通ること | 下の「モデルを使わない試し」 | 確かめる | 確かめる |
 | sandbox と AI のセッション | 下の「試しのセッション」の「確かめる項目」の表（読めない・書けないこと（`/tmp/claude-<uid>/` とほかのセッションのフォルダを含む）、macOS の人の一時フォルダとキャッシュと `/Users/Shared` を読めず `/Volumes` の一覧を出せないこと、自動のメモリが読み込まれないこと、`git commit` と `pnpm install` が通ること、pnpm の store、安全設定の `env` が効くこと、Read ツールの拒否（写しの `src/` を含む）と写しの `skills/` の読み取り、Write ツールで写しの `skills/` に書けないこと、Write ツールと Bash で worktree の `.claude/**` と `.mcp.json` に書けないこと、worktree の `gitdir` のファイルに書けないこと、道具の一覧に MCP の道具と `Agent`・`Task`・`Skill` が無いこと、短い一時フォルダ、試しのセッションの clone のリンク数） | 下の「試しのセッション」 | 下の契機に当たるときだけ | 合図が `run` のときだけ |
 
 - 試しのセッションは利用枠を使うので、毎回は回さない。前の試しのセッションの記録が、次のすべてに当たるときだけ省き、前の結果（pass）をそのラウンドの sandbox の組の結果にする。1 つでも外れれば、作業の前に回す（[ADR-20261017-005][adr-mcp] と [ADR-20261017-006][adr-tmp] が基本設計に残した、確かめる回数）
@@ -243,7 +243,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 
 毎回の実行の最初に、進行 Bot が、AI のセッションを起動せずに試す（[SETUP-2][setup] の「進行 Bot は毎回の実行の最初に同じ点検を回し」）。リポの設定の PR で環境変数の名前が変わっても、次の実行で確かめるため。
 
-- 子プロセスの環境変数：AI のセッションを起動するときと同じ処理で環境変数を組み立てる。名前が、決めた名前と `safety.env.names` の足す名前だけであること、`GH_TOKEN` と `PNPM_HOME` が無いこと、値に PAT かアプリの秘密鍵とほかの鍵の中身と、秘密の置き場のパスが無いことを確かめる（[SAFE-1][safety]、[SAFE-10][safety]、[AI のセッション][design-ai]の「環境変数」）
+- 子プロセスの環境変数：AI のセッションを起動するときと同じ処理で環境変数を組み立てる。名前が、決めた名前と `safety.env.names` の足す名前だけであること、`GH_TOKEN` と `PNPM_HOME` が無いこと、値にアプリの秘密鍵とほかの鍵の中身と、秘密の置き場のパスが無いことを確かめる（[SAFE-1][safety]、[SAFE-10][safety]、[AI のセッション][design-ai]の「環境変数」）
 - objects を書き換えた clone からの fetch：一時フォルダで、次の順に試す（[ADR-20261013-001][adr-workspace] の確認方法。ローカルのパスからの fetch でも失敗することは FACT-57、clone に commit を足さないと通ることは FACT-61）。一時フォルダは試しの後に消す
   - 試しのためだけの小さなリポ（commit 1 つ）を作り、`--no-hardlinks` で clone を 2 つ作る（書き換える clone と、対照の clone）。ハードリンクで objects を共有すると、書き換えが小さなリポにも及ぶため（FACT-19）
   - どちらの clone にも、中身の違う commit を 1 つずつ足す。書き換える clone では、足した commit の blob の loose object のファイルを書き換える。clone が小さなリポと同じ commit しか持たないと、fetch は objects を送らずに通るため（FACT-61）
@@ -289,31 +289,9 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 - 終わったら、「止め方と利用枠の数え方」の手順で残りを確かめ（[AI のセッション][design-ai]）、セッションのフォルダと試験用のフォルダとファイルを消す。費用は実行の記録に残し、1 回の実行と 1 日の累計に数える（[設定][design-settings]の「費用の上限の値」）。結果は、上の「組と回数」の省く条件に使う値と一緒に記録に残す（残す欄は、[状態遷移と判定][design-flow]の「手元の記録」の `sessions.jsonl` が正本）
 - 試しのセッションのフォルダが消せずに残ったら（途中で落ちた、残りが止まったと確かめられない）、名前から Issue か PR を引けない残骸として扱い、点検を fail にする。人が中身を確かめて消す（[状態遷移と判定][design-flow]の「作業場所の残骸」）
 
-### PAT の権限
-
-GitHub App に切り替えるまで（導入の間）、進行 Bot は fine-grained PAT で GitHub を読み、点検を回す。PAT のままでは点検が fail になる（上の「組と回数」）ので、作業には入らない。切り替えた後は、下の「GitHub App の権限」による（[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages] の決定 2）。
-
-進行 Bot の fine-grained PAT は、当てる先のリポだけに絞り、次の権限だけを付ける（[ADR-20261017-004][adr-human] が基本設計に残した、GitHub の点検に要る読み取りの権限を含む）。権限の名前は [GitHub の公式文書][doc-pat-permissions] による。
-
-| 権限 | 読み取りか書き込みか | 使うところ |
-| --- | --- | --- |
-| Metadata（リポ） | 読み取り | ruleset を読む（`GET /repos/{owner}/{repo}/rulesets` は Metadata の読み取りで通る） |
-| Issues（リポ） | 読み取り | Issue、ラベル、コメント、timeline を読む。書くのはアプリに切り替えた後 |
-| Pull requests（リポ） | 読み取り | PR と、PR のコメントを読む |
-| Commit statuses（リポ） | 読み取り | CI の結果（コミットの状態）。結合した状態（`/status`）は、状態が 0 件でも `pending` を返すので、CI が緑かの判定には使わず、必須チェックを名前で照らす（FACT-53） |
-| Actions（リポ） | 読み取り | ワークフローの実行（人の承認が要るものを見つける。[IMPL-27][impl]） |
-| Variables（リポ） | 読み取り | 全体の止める合図を読む。書き込みは付けない（[ADR-20261017-007][adr-stop]） |
-| Projects（Organization） | 読み取り | Project の項目と表示の欄を読む（FACT-6）。表示の欄は判定に読まず、点検で欄と選択肢が実在するかを確かめる |
-
-- PAT を使うのは、GitHub App に切り替える前の点検の読み取りだけなので、書き込みの権限を付けない（[ADR-20261020-002][adr-app] の決定 1）。進行 Bot に誤りがあっても、メンテナのアカウントで印を書けない。書き込みを付けるのは、アプリの権限（下の「GitHub App の権限」）だけ
-- Administration（ruleset を作る管理の権限）と Contents は付けない。ruleset は人の `setup` が作り（[SETUP-1][setup]）、push は deploy key で行う（[SAFE-15][safety]）
-- CI のチェックの実行（check runs）は、fine-grained PAT に Checks の権限が無くても、公開のリポなら読める（FACT-52）。非公開のリポでは読めない（403。FACT-54）。非公開のリポは、GitHub App に切り替えた後に、アプリの Checks の読み取りで読む（[ADR-20261020-002][adr-app]）
-- 書き込みの権限の試し：点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しと、切り替えの前は、点検用の名前のラベル（`dev-autopilot-probe`）を作る試しを行う。試しの前に、点検用の変数とラベルが無いことを読んで確かめ、あれば fail にする（前の試しで消し損ねた名前があると、書けても「すでにある」で断られ、書けないと読み誤るため）。403 で断られたときだけ pass。作れてしまったら fail にし、作った変数かラベルを消す。ほかの応答（404・409・422・5xx・時間切れなど）は、確かめられなかったとして fail にする（未確認を pass と読まない。合図が `stop` の間の未確認の warn とは別）。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
-- 書き込みの権限の試しは、書けないことを確かめる試し。アプリはラベルを作れるので、切り替えた後は変数の試しだけを行う
-
 ### GitHub App の権限
 
-進行 Bot が当てる先のリポに初めて書く前に、GitHub App に切り替える（[ADR-20261024-002][adr-no-stages] の決定 2）。印を書く前に替えるので、PAT のアカウントで書いた印は無く、読み続ける手当ては要らない（[ADR-20261020-002][adr-app]、[ADR-20261020-001][adr-bots]）。
+進行 Bot は、最初から GitHub App だけを使い、fine-grained PAT は使わない（[ADR-20261030-002][adr-no-pat]）。最初から App で印を書くので、ほかのアカウントで書いた印を読み続ける手当ては要らない（[ADR-20261020-002][adr-app]、[ADR-20261020-001][adr-bots]）。
 
 | 権限 | 読み取りか書き込みか | 使うところ |
 | --- | --- | --- |
@@ -327,26 +305,53 @@ GitHub App に切り替えるまで（導入の間）、進行 Bot は fine-grai
 | Projects（組織） | 書き込み | Project の表示の欄 |
 | Secrets（リポ） | 読み取り | 当てる先のリポの秘密と、リポに届く組織の秘密の名前を読み、点検で CI の秘密の置き方を確かめる（値は読めない。上の「GitHub の準備」の表の下、[ADR-20261028-002][adr-app-secrets]） |
 
-- Contents の書き込みと Administration は付けない。push は deploy key で行い（[IMPL-15][impl]）、ruleset は人の `setup` が作る（[SETUP-1][setup]）。Webhook は使わない
+- Contents の書き込みと Administration と Variables の書き込みは付けない。push は deploy key で行い（[IMPL-15][impl]）、ruleset と変数は `setup` が `setup` 用の App で作る（[SETUP-1][setup]、下の「setup 用の App」）。Webhook は使わない
 - 点検は、アプリのインストールの情報（`GET /app/installations/{installation_id}`。秘密鍵で作った JWT で読む）の `permissions` を上の表と比べ、表に無い権限か、表より強い権限（表で読み取りとした権限が書き込み）があれば fail にする。`repository_selection` が `selected` でないか、インストールが読めるリポ（`GET /installation/repositories`。Metadata の読み取りだけを要求し、リポを絞らずに作ったトークンで読む）に当てる先のリポのほかがあれば fail にする。[ADR-20261020-002][adr-app] の決定 2（当てる先のリポだけに入れ、権限は毎回の実行に要るものだけ）を、人の記憶でなく点検で守るため
 - 進行 Bot が毎回の実行で使うトークンは、表の権限と当てる先のリポだけを要求して作る（要求の `permissions` と `repositories` で絞る。アプリに無い権限は、要求しても付かない。[GitHub の公式文書][doc-app-token]）。アプリに広い権限が付いていても、毎回の実行のトークンは表より広くならない（重ねる守り）
-- アプリの登録、当てる先のリポへの導入、秘密鍵の作成は、人が行う。`setup` は手順を示し、点検が確かめる（[SETUP-1][setup] の「人がやるもの」）
+- 進行 Bot の App は、`setup` がマニフェストで作り、人が「Create」と導入を押す（下の「GitHub App を作る」。[ADR-20261030-001][adr-setup-app] の決定 2）
 - 秘密鍵のファイル（`github-app-key.pem`）は秘密の置き場に置く（権限 600）。アプリの ID とインストールの ID は、マシンの設定の `githubApp.appId` と `githubApp.installationId`（[設定][design-settings]。全体の止める合図を読む前に要るため）
 - 進行 Bot は、実行のたびに秘密鍵で JWT（アプリが自分を証明する、署名付きの短い文字列）を作り、1 時間で切れるインストールのトークンに引き換えて使う。`gh` を呼ぶ前に残りの時間を見て、10 分を切っていれば作り直す（AI のセッションの時間の上限 45 分の間に読む全体の止める合図の読み取りでも切れないように、余裕を持たせる）。10 分は GitHub のトークンの有効期間で決まる値なので、設定に持たず、プログラムに書く。Node の標準の機能（`node:crypto`）で作り、npm の依存を足さない（上の「依存」）
-- アプリの投稿者の名前は、REST の `login` では `<アプリの名前>[bot]` になり、GraphQL では形が違うことがある（確かめていない）。取り方と比べ方は、切り替えの前の試し（下の切り替えの順の 2）で決め、決めた形を入れた版の Plugin（順の 3）で、点検と印を読む処理を同じ形にそろえる（[ADR-20261020-002][adr-app] の決定 4 と確認方法）
-- 切り替えの順
+- アプリの投稿者の名前は、REST の `login` では `<アプリの名前>[bot]` になり、GraphQL では形が違うことがある（確かめていない）。取り方と比べ方は、下の一度だけの試しで決め、決めた形で点検と印を読む処理をそろえる（[ADR-20261020-002][adr-app] の決定 4 と確認方法）
+- 一度だけの試し：導入と点検の実装（段階 3）のときに、試し専用の組織のリポと Project で、`setup` が作った進行 Bot の App を使い、[ADR-20261020-002][adr-app] の確認方法の 5 つと、ruleset の確かめ方（[ADR-20261028-004][adr-bypass-baseline] の確認方法）を確かめて、結果を FACT に残す：Issue と PR のコメント・ラベル・Project の表示の欄を書けること、止める合図の変数を読めて作成・更新・削除が断られること、公開と非公開のリポでチェックの実行を読めること、コメントの投稿者の名前の形と進行 Bot が名前を取る方法、インストールのトークンが 1 時間で切れて作り直せること、試しのリポで `setup` が ruleset の控えを書き、インストールのトークンで base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`）と控えの変数を読めて、bypass を変えると次の点検が fail になること（試しのリポには、前もって上の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ作っておく。`bypass_actors` は読めない。FACT-88・91）。試しの後に、試しのリポからアプリを外す（当てる先のリポだけに入れる。[ADR-20261020-002][adr-app] の決定 2）
+- 書き込みの権限の試し：点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しを行う。試しの前に、点検用の変数が無いことを読んで確かめ、あれば fail にする（前の試しで消し損ねた名前があると、書けても「すでにある」で断られ、書けないと読み誤るため）。403 で断られたときだけ pass。作れてしまったら fail にし、作った変数を消す。ほかの応答（404・409・422・5xx・時間切れなど）は、確かめられなかったとして fail にする（未確認を pass と読まない。合図が `stop` の間の未確認の warn とは別）。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
+- 書き込みの権限の試しは、書けないことを確かめる試し。アプリはラベルを作れるので、変数の試しだけを行う
+- 点検は、マシンの設定に `githubApp.*` が無いか、秘密鍵が無いか、秘密の置き場に PAT のファイル（`github-pat`）があるとき fail にする。進行 Bot が App だけを使う決まりを、人の記憶でなく点検で守るため（[ADR-20261030-002][adr-no-pat]）
 
-  | 順 | すること |
-  | --- | --- |
-  | 1 | 人がアプリを登録して当てる先のリポに導入し、秘密鍵を秘密の置き場の `github-app-key.pem` に置く。試しのためだけのリポ（公開と非公開の 2 つ）にも、同じアプリを一時的に導入する |
-  | 2 | 一度だけ、試しのためだけのリポと Project で、登録したアプリを使い、[ADR-20261020-002][adr-app] の確認方法の 5 つと、ruleset の確かめ方（[ADR-20261028-004][adr-bypass-baseline] の確認方法）を確かめて、結果を FACT に残す：Issue と PR のコメント・ラベル・Project の表示の欄を書けること、止める合図の変数を読めて作成・更新・削除が断られること、公開と非公開のリポでチェックの実行を読めること、コメントの投稿者の名前の形と進行 Bot が名前を取る方法、インストールのトークンが 1 時間で切れて作り直せること、試しのリポで `setup` が ruleset の控えを書き、インストールのトークンで base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`）と控えの変数を読めて、bypass を変えると次の点検が fail になること（試しのリポには、前もって上の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ作っておく。`bypass_actors` は読めない。FACT-88・91）。試しの後に、試しのリポからアプリを外す（当てる先のリポだけに入れる。[ADR-20261020-002][adr-app] の決定 2） |
-  | 3 | 順 2 で決めた投稿者の名前の取り方と比べ方を入れた版の Plugin を入れ、`setup` を実行し直して、写しを名前の取り方を入れた版にする。点検と印を読む処理が、確かめた形で名前を比べるため |
-  | 4 | 人が、進行 Bot を動かすマシンの設定に `githubApp.*` を書く。`safety.botAccounts` をアプリの投稿者の名前にする PR を、リポの設定に出してマージする |
-  | 5 | 人が GitHub で PAT を削除し、秘密の置き場の `github-pat` を消す。PAT のファイルが残っている間は、点検が fail にする |
-  | 6 | 当てる先のリポでは、全体の止める合図を `stop` にしたまま、点検の読み取りと、アプリの権限とリポの範囲の確かめを通す。書き込みの権限の試しは、合図が `stop` の間は未確認の warn になる（上の「組と回数」）。書けることは、合図を `run` にした後の最初の実行の書き込みと読み戻し（「[状態遷移と判定][design-flow]」の「push の手順」の順 8 など）で確かめる |
-  | 7 | 人が、点検の fail が無くなってから、全体の止める合図を `run` にする |
+### setup 用の App
 
-- 点検は、アプリに切り替えていない（`githubApp.*` が `null` か、秘密鍵が無いか、PAT のファイルが残っている）とき fail にする。書き始める前に替える決まりを、人の記憶でなく点検で守るため
+`setup` は、人の `gh` のログインの代わりに、`setup` 用の App の人の代わりのトークン（device flow）で GitHub の準備と `setup` の確かめを行う（[ADR-20261030-001][adr-setup-app]）。進行 Bot の App とは別の App にし、進行 Bot には ruleset と変数を作る権限を渡さない。
+
+| 権限 | 読み取りか書き込みか | 使うところ |
+| --- | --- | --- |
+| Administration（リポ） | 書き込み | ruleset を作り、`bypass_actors` を含めて読み戻す（FACT-94・98） |
+| Variables（リポ） | 書き込み | 全体の止める合図と ruleset の控えの変数を作る |
+| Issues（リポ） | 書き込み | ラベルを作る |
+| Projects（組織） | 書き込み | Project の欄と選択肢とビューを作り、組み込みのワークフローが有効かを読む（FACT-76） |
+| Secrets（リポ） | 読み取り | CI の秘密の置き方を確かめる（名前だけで、値は読めない） |
+| Actions（リポ） | 読み取り | Environment と、使えるブランチの規則を読む |
+| Checks（リポ） | 読み取り | base ブランチの先端のコミットで動いたチェックを読み、必須チェックの候補にする |
+| Metadata（リポ） | 読み取り | リポの情報を読む |
+
+- 人の代わりのトークンは、`setup` の実行の間だけメモリに持ち、ファイルに書かない。更新のトークンは使わずに捨てる。`setup` を実行するたびに、人がブラウザで承認のコードを入れる（[ADR-20261030-001][adr-setup-app] の決定 1）
+- 人の代わりのトークンは、App の権限と、承認した人の権限の重なりだけを持つ。承認した人が組織の管理者でなく、ruleset を作れないときは、GitHub の準備を止めて示す
+- `setup` 用の App は、秘密鍵を作らない。`client_id`（秘密ではない）は、マシンの設定の `githubApp.setupClientId` に置く（[設定][design-settings]）。人の `setup` だけが書き、作業 AI の変更が届かないようにするため（リポの設定に置くと、PR で別の App に替えられ、人が承認の画面で App の名前を見落とすと、その App に人の権限が渡る）
+- `setup` 用の App は、当てる先のリポだけに入れる。`setup` は、人の代わりのトークンで導入先（`GET /user/installations` と、その導入のリポの一覧）を読み、当てる先のほかのリポがあれば示す
+
+### GitHub App を作る
+
+`setup` が 2 つの App を作る（[ADR-20261030-001][adr-setup-app] の決定 2）。どちらも、すでにあれば作らず、権限と導入先を読んで違いを示す。
+
+| 順 | すること |
+| --- | --- |
+| 1 | `setup` 用の App が無ければ（マシンの設定に `githubApp.setupClientId` が無い）、`setup` は、上の「setup 用の App」の表の権限を URL パラメータで埋めた登録フォーム（`https://github.com/organizations/<owner>/settings/apps/new?…`。FACT-98）をブラウザで開く。人は「Enable Device Flow」にチェックを入れて「Create GitHub App」を押し、「Generate a private key」は押さない。人は作った後の画面の Client ID を `setup` に渡し、`setup` はマシンの設定に書く。人は App を当てる先のリポだけに入れる |
+| 2 | `setup` は、`client_id` で承認のコードを求めて示し、人が `https://github.com/login/device` で入れると、人の代わりのトークンを受け取る（FACT-93） |
+| 3 | 進行 Bot の App が無ければ（マシンの設定に `githubApp.appId` が無い）、`setup` は手元で戻り先を待ち（ブラウザは `localhost` を `::1` で開くので、`127.0.0.1` と `::1` の両方で待つ。FACT-95）、上の「GitHub App の権限」の表の権限のマニフェスト（Webhook を書かない。FACT-96）を、組織の作成画面へ送る。人は「Create GitHub App」を押す。作成画面が送ったマニフェストを受け取れなかったときは、ページを開き直して送り直す（FACT-95） |
+| 4 | `setup` は、戻ってきたコードを `POST /app-manifests/{code}/conversions` で引き換え、App の ID と秘密鍵を受け取る（FACT-92）。秘密鍵は画面に出さずに秘密の置き場の `github-app-key.pem`（権限 600）に置き、App の ID をマシンの設定の `githubApp.appId` に書く。`client_secret` は置かない |
+| 5 | 人は進行 Bot の App を当てる先のリポだけに入れる。`setup` は、App の JWT でインストールの ID（`GET /repos/{owner}/{repo}/installation`）を読み、マシンの設定の `githubApp.installationId` に書く。リポの設定の `safety.botAccounts` に App の投稿者の名前を入れる（リポの設定の PR） |
+
+- App の名前は、`setup` が `dev-autopilot-<リポの名前>`（進行 Bot の App）と、その後ろに `-setup` を付けた名前（`setup` 用の App）で示す。34 文字を超えるか、GitHub で使われていれば、人が作成の画面で直す
+- 順 1 と順 3〜5 の、手元で戻り先を待つことと、作業フォルダの外（マシンの設定と秘密の置き場）に書くことは、sandbox の外で動かす許可を人に求めてから動かす（上の「setup の流れ」の順 5 と同じ）
+- 進行 Bot を動かすマシンでブラウザを開けないときは、進行 Bot の App を人の手元のマシンで作り、人が App の設定の画面で秘密鍵を作って、進行 Bot を動かすマシンの秘密の置き場に置く（上の「動かすマシンを替えるとき」と同じ）。手元のマシンで受け取った秘密鍵は、`setup` が置かずに捨てる
 
 ## 状態の表示
 
@@ -377,7 +382,6 @@ GitHub App に切り替えるまで（導入の間）、進行 Bot は fine-grai
 [adr-mcp]: ../../adr/adr-20261017-005-ai-sessions-load-no-mcp-servers.md
 [design-flow]: ./02-flow-and-judgment.md
 [design-ai]: ./03-ai-sessions.md
-[doc-pat-permissions]: https://docs.github.com/en/rest/authentication/permissions-required-for-fine-grained-personal-access-tokens
 [fig-check]: ./diagrams/04-check.drawio.svg
 [adr-flow]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
 [adr-workspace]: ../../adr/adr-20261013-001-fresh-clone-per-ai-session.md
@@ -396,3 +400,5 @@ GitHub App に切り替えるまで（導入の間）、進行 Bot は fine-grai
 [adr-ci-secrets]: ../../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-app-secrets]: ../../adr/adr-20261028-002-app-reads-secret-names-for-checks.md
 [adr-bypass-baseline]: ../../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
+[adr-setup-app]: ../../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-no-pat]: ../../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
