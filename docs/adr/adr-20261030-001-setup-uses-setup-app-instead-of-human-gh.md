@@ -24,6 +24,7 @@ decision-makers: メンテナ
 - 進行 Bot の App には、ruleset と変数を作る権限を持たせない。ruleset は作業 AI の push 先を限る柵で、止める合図の変数と ruleset の控えは進行 Bot を止めるためのものなので、進行 Bot が自分で外せてはいけない（[ADR-20261020-002][adr-app] の決定 2、[ADR-20261017-007][adr-stop]、[ADR-20261028-004][adr-bypass-baseline]）
 - App は、マニフェストから作れる。手元で待ち受けて戻り先のコードを引き換えると、人が「Create」を押すだけで App の ID と秘密鍵を受け取れる（FACT-92）
 - App の人の代わりのトークン（device flow）は、人が App の設定で Device Flow を有効にすると使える。トークンは 8 時間で切れ、更新のトークン（約 182 日）が付く（FACT-93）。`setup` 用の権限を持つ App の人の代わりのトークンで、ruleset・変数・ラベル・Project を作れ、`bypass_actors` も読め、App を入れていないリポとほかの組織には届かない（FACT-94）
+- App は、URL パラメータで値を埋めた登録フォームからも作れる。登録フォームでは、人が作る前に Device Flow を有効にでき、秘密鍵を作らないまま承認のコードを受け取れた。コードを引き換える手順が無いので、`setup` は `client_id` を受け取れない（FACT-97）
 - [ADR-20261028-002][adr-app-secrets] の決定 2 と、基本設計の「[導入と点検][design-setup]」の 2 か所（CI の秘密の置き方の点検、Status 欄に関わる組み込みのワークフローの点検）は、人の `check` が人の `gh` のログインで GitHub を読むと書いている。`check` は進行 Bot のジョブで動くので、食い違っている
 
 課題：人の `gh` のログインを使わずに、進行 Bot に柵を外せる権限を渡さないまま、`setup` の GitHub の準備をどの認証で行うか。
@@ -43,6 +44,11 @@ decision-makers: メンテナ
 - 案 D：`setup` 用の App を分け、`setup` 用の App の秘密鍵（インストールのトークン）で GitHub の準備をする
 - 案 E：案 A で、更新のトークンを秘密の置き場に置き、2 回目からは承認を省く
 
+決定 2 の `setup` 用の App の作り方は、次の 2 つを比べた。進行 Bot の App は秘密鍵が要るので、どちらでもマニフェストで作る。
+
+- 作り方 1：マニフェストで作り、作った後に人が App の設定で Device Flow を有効にする
+- 作り方 2：URL パラメータで値を埋めた登録フォームで作り、人が作る前にフォームで Device Flow を有効にする
+
 ## 決定（Decision Outcome）
 
 採用した選択肢:「案 A」。
@@ -61,6 +67,7 @@ decision-makers: メンテナ
 - `setup` は、進行 Bot の App（[ADR-20261020-002][adr-app] の決定 2 の権限）と `setup` 用の App を、マニフェストで作る。人は、それぞれの「Create」と、当てる先のリポへの導入（Install）をブラウザで押す。`setup` 用の App は、人が設定で Device Flow を 1 回だけ有効にする（FACT-93）
 - 進行 Bot の App の秘密鍵は、受け取ったら画面に出さずに秘密の置き場に置く（[ADR-20261020-002][adr-app] の決定 3）。`setup` 用の App の秘密鍵は、置かずに捨てる（人の代わりのトークンだけを使うため）。`client_secret` と Webhook の秘密は、どちらの App も置かない
 - すでに App があるときは作らず、App の権限と導入先を読んで、違いを示す（何度実行しても同じ結果。SETUP-1）
+- `setup` 用の App の作り方は「作り方 1」にする。理由: `setup` が引き換えの応答で `client_id` を受け取れ（FACT-92）、人が値を写さずに済む。2 つの App を同じ手順で作れる。「作り方 2」は、秘密鍵が初めから作られない点で安全に勝るが、秘密鍵の無い App を当てる先のリポに入れられるかと、人の代わりのトークンで GitHub の準備ができるかを確かめていない（FACT-97 は承認のコードを受け取るところまで）
 
 ### 決定 3：check は、進行 Bot の App で確かめる
 
@@ -78,6 +85,7 @@ decision-makers: メンテナ
 ### 確認方法（Confirmation）
 
 - FACT-92〜94 で、マニフェストでの作成、device flow、人の代わりのトークンで GitHub の準備ができることと、届く範囲を確かめた
+- FACT-95〜97 で、マニフェストの戻り先に `localhost` を使えること、Webhook を持たない App を作れること、登録フォームなら作る前に Device Flow を有効にできることを確かめた
 - `setup` の実装で、トークンと更新のトークンと `setup` 用の App の秘密鍵がファイルに書かれないことを、単体テストで確かめる
 - `setup` の実装の後に、試し専用の組織で、`setup` が 2 つの App を作り、`setup` 用の App で GitHub の準備を終えることを確かめる
 - 反映の後に、要件と基本設計に、人の `gh` のログインで GitHub の準備や点検をする書き方が残っていないことを grep で確かめる
@@ -109,14 +117,31 @@ decision-makers: メンテナ
 - 良い点: 2 回目から承認が要らない
 - 悪い点: ruleset と変数を作れる更新のトークン（約 182 日）が、手元に長く残る（FACT-93）
 
+### 作り方 1：マニフェストで作り、作った後に Device Flow を有効にする
+
+- 良い点: `setup` が引き換えの応答で `client_id` を受け取れ（FACT-92）、人は値を写さない
+- 良い点: 進行 Bot の App と同じ手順で作れ、`setup` の作る処理が 1 つで済む
+- 悪い点: 作った後に、人が App の設定を開いて Device Flow を有効にする（FACT-93）
+- 悪い点: 使わない秘密鍵が 1 度作られ、`setup` のメモリを通る。捨て損ねると、ruleset と変数を作れる鍵が手元に残り、案 D と同じになる（ファイルに書かないことは、確認方法の単体テストで確かめる）
+
+### 作り方 2：登録フォームで作り、作る前に Device Flow を有効にする
+
+- 良い点: `setup` 用の App の秘密鍵が作られない（FACT-97）。捨て損ねる鍵が初めから無い
+- 良い点: Device Flow の有効化を、作る画面の中で済ませられる
+- 悪い点: `setup` が `client_id` を受け取る手順が無い。人が、作った後の画面から写して `setup` に渡す
+- 悪い点: 進行 Bot の App と作り方が分かれ、`setup` に作る処理が 2 つ要る
+- 悪い点: 秘密鍵の無い App を当てる先のリポに入れられるかと、人の代わりのトークンで GitHub の準備ができるかを確かめていない
+
 ## 補足情報（More Information）
 
 - 2026-10-30 に、メンテナが「人の `setup` は App の作成だけを人の `gh` で行い、ほかは App で」と提案した。進行 Bot の App に `setup` の権限を持たせると柵を外せるので、`setup` 用の App を分ける形にし、メンテナが了承した。試し専用の組織で確かめた事実は FACT-92〜94
+- 2026-10-30 に、FACT-95〜97 を受けて、決定 2 に `setup` 用の App の作り方の比べを足した。「作り方 2」を採るなら、先に試し専用の組織で、秘密鍵の無い App を入れて GitHub の準備ができるかを確かめる
 - 本 ADR は、元は「人の `gh` のログインで GitHub を確かめるのは `setup` だけにする」として起票した（同じ番号）。メンテナの案に合わせて書き直した
 - 本 ADR で決めないこと
   - `setup` 用の App の権限の表、2 つの App の名前の付け方、Device Flow を有効にする手順の示し方（基本設計）
   - 承認する人が組織の管理者でないときの扱い（基本設計。ruleset を作れないので止まる）
-- 関連する要件：SETUP-1、SETUP-2（[06-setup-and-stages.md][setup]）、SAFE-15、SAFE-20（[05-safety.md][safety]）、FACT-92〜94（[10-verified-facts.md][facts]）
+  - マニフェストの戻り先の待ち方（ブラウザは `localhost` を `::1` で開く）と、送信が失敗したときの送り直し（FACT-95）、Webhook を持たない書き方（FACT-96）（基本設計）
+- 関連する要件：SETUP-1、SETUP-2（[06-setup-and-stages.md][setup]）、SAFE-15、SAFE-20（[05-safety.md][safety]）、FACT-92〜97（[10-verified-facts.md][facts]）
 - 関連する ADR：[ADR-20261017-004][adr-human]、[ADR-20261017-007][adr-stop]、[ADR-20261020-002][adr-app]、[ADR-20261028-002][adr-app-secrets]、[ADR-20261028-004][adr-bypass-baseline]、ADR-20261030-002
 - 要件と設計への反映（承認の後に、別の PR で行う）
   - 06-setup-and-stages.md：SETUP-1 の人がやるもの（App の登録と導入を `setup` が行い、人は押す）と、GitHub の準備の認証
