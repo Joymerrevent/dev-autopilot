@@ -8,7 +8,7 @@ decision-makers: メンテナ
 
 # 進行 Bot は最初から GitHub App だけを使い、PAT を使わない
 
-メンテナの案（2026-10-30。最初から GitHub App で始める）を決める。`setup` が App を作ることと、`setup` の GitHub の準備の認証は、ADR-20261030-001 で決める。
+メンテナの案（2026-10-30。最初から GitHub App で始める）を決める。`setup` が App を作ることと、`setup` の GitHub の準備の認証は、[ADR-20261030-001][adr-setup-app] で決めた。
 
 | ADR | 扱い | 改める決定 | 据え置く決定 |
 | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ decision-makers: メンテナ
 - [ADR-20261024-002][adr-no-stages] で、段階 4〜8 と書かずに試すことを持たなくなり、切り替えの時期は「当てる先のリポに初めて書く前」になった（決定 2）
 - 今の基本設計では、PAT の間、進行 Bot は作業に入らない。PAT は読むだけで、App に切り替えていなければ点検が fail になる（基本設計の「[導入と点検][design-setup]」の「PAT の権限」と「GitHub App の権限」）。PAT の間に進行 Bot がすることは、点検の一部だけ
 - PAT の間だけの決まりが、要件と基本設計に残っている。PAT の権限の表と秘密の置き場の PAT のファイル、切り替えの手順（マシンの設定の `githubApp.*` を書く、`safety.botAccounts` を替える PR、PAT の削除、PAT のファイルが残っていれば fail）、PAT の間は確かめない項目（CI の秘密の置き方、組み込みのワークフロー）、PAT の間は ruleset の `bypass_actors` を読み、App に切り替えた後は控えで確かめる分かれ道
-- ADR-20261030-001（`proposed`）は、`setup` がマニフェストで進行 Bot の App を作り、人は作成と導入を押すだけにする。決まれば、App の登録を後に回す理由も無くなる
+- [ADR-20261030-001][adr-setup-app] で、`setup` がマニフェストで進行 Bot の App を作り、人は作成と導入を押すだけにした。App の登録を後に回す理由も無くなった
 
 課題：進行 Bot の GitHub の認証を、最初から GitHub App にするか、今のとおり書き始める前まで PAT を使うか。
 
@@ -86,7 +86,7 @@ decision-makers: メンテナ
 - 2026-10-30 に、メンテナが「いっそのこと、最初から GitHub App で始めるのはどうか」と提案した。PAT で始めた理由が、段階 4〜8 を持たなくなって残っていないことを確かめて起票した
 - PAT の記述は、要件 5 本（17 か所）と基本設計 7 本（44 か所）にある（2026-10-30 に数えた。確かめた事実の表を除く）
 - 関連する要件：SAFE-15（[05-safety.md][safety]）、SETUP-1、SETUP-2、SETUP-13（[06-setup-and-stages.md][setup]）
-- 関連する ADR：[ADR-20261017-004][adr-human]、[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages]、[ADR-20261028-002][adr-app-secrets]、[ADR-20261028-004][adr-bypass-baseline]、ADR-20261030-001
+- 関連する ADR：[ADR-20261017-004][adr-human]、[ADR-20261020-002][adr-app]、[ADR-20261024-002][adr-no-stages]、[ADR-20261028-002][adr-app-secrets]、[ADR-20261028-004][adr-bypass-baseline]、[ADR-20261030-001][adr-setup-app]
 - 要件と設計への反映（承認の後に、別の PR で行う。量があるので、ファイルごとに分けることも考える）
   - 05-safety.md と 06-setup-and-stages.md：SAFE-15 の鍵、SETUP-1 の人がやるもの（PAT の発行と保管を外す）、SETUP-2 の点検
   - 基本設計：「[導入と点検][design-setup]」の PAT の権限の表、切り替えの手順、PAT の間の点検の分かれ道。設定の `github-pat`。状態遷移と判定、AI のセッション、テストの PAT の記述
@@ -97,6 +97,7 @@ decision-makers: メンテナ
 [adr-no-stages]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-app-secrets]: ./adr-20261028-002-app-reads-secret-names-for-checks.md
 [adr-bypass-baseline]: ./adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
+[adr-setup-app]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
 [safety]: ../requirements/05-safety.md
 [setup]: ../requirements/06-setup-and-stages.md
 [design-setup]: ../design/basic/04-setup-and-check.md
