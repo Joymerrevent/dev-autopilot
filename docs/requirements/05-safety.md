@@ -2,7 +2,7 @@
 
 ## 安全側に倒す設計
 
-- SAFE-1 AI のセッション（5 役。「[登場するもの][f00]」）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行 Bot の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから PAT と鍵が見えない」ことを試す）、道具はエージェント定義で絞る（SETUP-18、IMPL-5）。
+- SAFE-1 AI のセッション（5 役。「[登場するもの][f00]」）は GitHub に書けない。`gh` の認証と `GH_TOKEN` と進行 Bot の鍵を渡さず（子プロセスの環境変数は許可した名前だけで組み立て、`check` が「子プロセスから GitHub App の秘密鍵とトークンと鍵が見えない」ことを試す）、道具はエージェント定義で絞る（SETUP-18、IMPL-5）。
   push・PR・コメント・Project の更新は進行 Bot だけが行う。進行 Bot も `gh pr merge` を呼ばず、`develop` と `main` への直 push と force push はしない（ruleset でも止める。SETUP-9、MERGE-5）。
   AI のセッションは MCP のサーバー（ログインしている claude.ai のアカウントのコネクタを含む）を 1 つも読み込まない。進行 Bot は、安全設定の `disableClaudeAiConnectors: true`、子プロセスの環境変数の `ENABLE_CLAUDEAI_MCP_SERVERS=false`、`--strict-mcp-config`（`--mcp-config` は渡さない）の 3 つを重ね、
   重ねる守りとして安全設定の `permissions.deny` に `mcp__*` を入れる。`check` は、AI のセッションと同じ起動の形で、道具の一覧に MCP の道具が無いことを試す（SETUP-2。FACT-35。[ADR-20261017-005][adr-mcp]）。AI の役に MCP の道具を与えるのは、安全の境界を緩める変更として ADR で決める
@@ -60,9 +60,9 @@
 - SAFE-14 作業 AI の commit は署名なし（セッションの git 設定で `commit.gpgsign=false`）。`develop` への squash マージの commit は GitHub が作って署名するので Verified になる。
   作業ブランチの commit はマージ後に消えるため、再署名の仕組みは持たない。`develop` の ruleset に「署名必須」は入れない（入れると作業 AI の push が通らない）
 - SAFE-15 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行 Bot だけが使う）。
-  進行 Bot の `gh` は business-os に絞った fine-grained PAT を、進行 Bot のプロセスの中でだけ持つ（`gh auth login` でマシンに残さない）。
-  進行 Bot が当てる先のリポに初めて書く前に、PAT から GitHub App に切り替える（書かずに試すことは持たない。[ADR-20261024-002][adr-no-stages]）。切り替えの後は、アプリの秘密鍵から作る 1 時間で切れるトークンを使い、PAT を消す。要件の中の「進行 Bot の PAT」は、切り替えの後はアプリのトークンと読む（[ADR-20261020-002][adr-app]）。
-  PAT（切り替えの後はアプリの秘密鍵）、印の署名の鍵（IMPL-20 の (c)）、deploy key は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。launchd の plist には書かない（[ADR-20261015-001][adr-read]）
+  進行 Bot の `gh` は、business-os だけに入れた GitHub App の秘密鍵から作る 1 時間で切れるトークンを、進行 Bot のプロセスの中でだけ持つ（`gh auth login` でマシンに残さない）。進行 Bot は最初から GitHub App だけを使い、fine-grained PAT は使わない（[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）。
+  `setup` 用の GitHub App には秘密鍵を作らない。`setup` は、実行ごとに人がブラウザで承認する人の代わりのトークンを、`setup` の実行の間だけメモリに持ち、ファイルに書かない（[ADR-20261030-001][adr-setup-app]）。
+  GitHub App の秘密鍵、印の署名の鍵（IMPL-20 の (c)）、deploy key は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。launchd の plist には書かない（[ADR-20261015-001][adr-read]）
 - SAFE-16 進行 Bot は、専用の clone を 2 種類と、プログラムの写しを持つ：AI の worktree を切る「AI の作業場所」の clone、進行 Bot だけが書き、当てる先のリポ（business-os）の fetch・merge・push を行う「進行 Bot の clone」（`<置き場>/controller/`）、
   進行 Bot と `setup` だけが書き、`src/` を実行して Plugin として読み込ませる「進行 Bot のプログラムの写し」（`setup` が Plugin の版を置き場に写したもの。`devAutopilotPath`。[ADR-20261017-003][adr-plugin] の決定 2。STRUCT-3）。進行 Bot の clone は、AI のセッションから読めず書けない。
   プログラムの写しは、AI のセッションから書けず、読めるのは `skills/`（Skill の参照ファイルとスクリプト）だけで、`src/`（進行 Bot のコード）は読めない（SAFE-2 の (e)、SAFE-10。FACT-32。[ADR-20261017-004][adr-human]）。
@@ -87,10 +87,11 @@
 [adr-app]: ../adr/adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-review-skill]: ../adr/adr-20261021-001-review-skill-text-without-skill-tool.md
 [adr-blocked]: ../adr/adr-20261021-005-required-push-blocked-paths-in-program.md
-[adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-security]: ../adr/adr-20261024-005-security-axis-and-halt-issue.md
 [f01]: ./01-issue-flow.md
 [adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-app-secrets]: ../adr/adr-20261028-002-app-reads-secret-names-for-checks.md
+[adr-no-pat]: ../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
+[adr-setup-app]: ../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
