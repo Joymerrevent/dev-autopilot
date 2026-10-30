@@ -16,7 +16,7 @@ Project に登録された Issue のうち、人が「処理対象」と判断�
 | マイルストーン | リリースごとにマイルストーンを組む。着手する Issue はマイルストーンの中から選ぶ（FLOW-1）。受け入れはマイルストーンの有無を問わない（TEXT-12） |
 | 名前 | dev-autopilot。自動で動くのは「開発」。人が行き先（処理対象の Issue）を決め、AI が操縦し、異常時は人が操縦を取る。呼び方は `/dev-autopilot` |
 | 棚卸しの間隔 | 最初は 1 日 1 回。仕組みが安定したら徐々に狭める |
-| コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）、fine-grained PAT（進行 Bot 用。GitHub に書き始める前に GitHub App の秘密鍵に替える）、印の署名の鍵（IMPL-20）だけを置く（「[隔離と鍵の分け方][f05]」） |
+| コミットの署名と鍵 | 人の鍵と自動化の鍵を分ける。人は手元の SSH 鍵で署名する（1Password の agent は使わない）。dev-autopilot のマシンには人の鍵も gh のログインも置かず、business-os に絞った deploy key（push 用）、進行 Bot の GitHub App の秘密鍵、印の署名の鍵（IMPL-20）だけを置く。PAT は使わず（[ADR-20261030-002][adr-no-pat]）、`setup` 用の App の鍵も作らない（[ADR-20261030-001][adr-setup-app]）（「[隔離と鍵の分け方][f05]」） |
 | AI のセッションの隔離 | AI の 5 役（「登場するもの」）すべての `claude -p` に、dev-autopilot が `--settings` で渡す安全設定で Claude Code の sandbox を掛ける。進行 Bot・次のセッション・CI は、AI が書いた worktree の中身（設定・gitdir・CI 定義・スクリプト）を信頼して実行しない（「[安全側に倒す設計][f05]」、「[2026-10-11 のレビューで決めたことと、採らなかった案][f11]」）。詳細は「[隔離と鍵の分け方][f05]」 |
 | モデル | 役ごとに別名で書き、版番号を書かない（`fable` `opus` `sonnet`。CLI の `--model` が別名を受け、最新の版に解ける。`haiku` だけは完全な ID（「[モデルの流れ][f02]」））。effort も役ごとに設定に持つ（`--effort`）。工程ごとのモデルと effort と切り替えの条件は「[モデルの流れ][f02]」の表が正本。要点は、作業 AI に `fable` を使わない、どの役にも `fable` を既定にしない、モデルを上げるのは計画 AI の自己申告と作業 AI の 2 ラウンド目の 2 か所だけ |
 | エージェント | AI の 5 役のエージェント定義を、`plugin/agents/` のループごとのフォルダ（`brief` `plan` `change`）に、役の名前（`triager` `planner` `worker` `reviewer` `verifier`）で 6 つ置く（「[分離を見越した構成][f07]」の STRUCT-9）。business-os の配布物 `plugin/agents/` には入れない |
@@ -60,3 +60,5 @@ AI は「依頼の下書きを書く（差し戻されたら書き直す）」�
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
+[adr-no-pat]: ../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
+[adr-setup-app]: ../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
