@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-20
-updated: 2026-10-28
+updated: 2026-10-30
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -13,6 +13,10 @@ decision-makers: メンテナ
 > **［2026-10-24 追記］** 権限の表の「Project の Status と Agent 欄」は、[ADR-20261024-001][adr-20261024-001] の決定 5 の表示の欄（主な流れの枠・状態・止め方・先の依頼・安全）と読む。
 >
 > **Amended by [ADR-20261028-002][adr-app-secrets]（2026-10-28）**: 決定 2 の権限の表に、Secrets（リポ）の読み取りを足した。当てる先のリポの秘密の名前を読み、毎回の点検で CI の秘密の置き方を確かめる（値は読めない。[ADR-20261028-001][adr-ci-secrets] の決定 2）。ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261030-001][adr-20261030-001]（2026-10-30）**: 決定 2 の「アプリの登録、リポへの導入、秘密鍵の作成は、人が行う」を、`setup` がマニフェストで進行 Bot の App を作り、人が作成と導入を押す形に改めた。決定 2 の権限の表と、決定 3〜5 は据え置く。
+>
+> **Amended by [ADR-20261030-002][adr-20261030-002]（2026-10-30）**: 決定 1（PAT で始め、当てる先のリポに初めて書く前に GitHub App に切り替える）を、最初から GitHub App だけを使い、PAT を使わない形に改めた。決定 4 の、切り替えのときにメンテナのアカウントを一覧から外すことと、点検の「PAT の持ち主が一覧にある」の読み替えは、最初からアプリの投稿者の名前を一覧に入れると読む。決定 2・3・5 は据え置く。
 
 ADR「自動化用の GitHub アカウントはいまは分けず、印を書いたと認めるアカウントを設定の一覧に持つ」（[ADR-20261020-001][adr-bots]）の決定 1 が「分ける要望が出たら、別の ADR で決める」とした論点を決める。あわせて、非公開のリポで CI のチェックの実行を読む手段（要件の UNDECIDED-57）を決める。
 
@@ -177,3 +181,5 @@ ADR「自動化用の GitHub アカウントはいまは分けず、印を書い
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-ci-secrets]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-app-secrets]: ./adr-20261028-002-app-reads-secret-names-for-checks.md
+[adr-20261030-001]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md

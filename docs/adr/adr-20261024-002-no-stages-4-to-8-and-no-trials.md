@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-24
+updated: 2026-10-30
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 段階 4〜8 と試し（書かずに試す、記録だけの判定、比べるためのレビュー）を持たず、どの作業も最初から決まった担い手が行う
+
+> **Amended by [ADR-20261030-002][adr-20261030-002]（2026-10-30）**: 決定 2 の「進行 Bot の GitHub の認証は、当てる先のリポに初めて書く前に GitHub App に切り替える」を、最初から GitHub App だけを使う形に改めた。決定 2 のほかの項目と、ほかの決定は据え置く。
 
 要件の UNDECIDED-77（段階と試しを持ち続けるか。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 同じ決定で、UNDECIDED-66（マージ判定工程（段階 8）以降の計画の工程で、上限まで計画し直しても `fix` の計画を止めるか。計画コメントに計画のレビューの結果を書くか）も決める。
@@ -251,3 +253,4 @@ decision-makers: メンテナ
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md

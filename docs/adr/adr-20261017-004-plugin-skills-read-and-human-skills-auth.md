@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-20
+updated: 2026-10-30
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,10 @@ decision-makers: メンテナ
 # AI のセッションには写しの skills/ だけを読ませ、setup の GitHub の準備は人の gh で行い、check と /dev-autopilot は進行ボットのジョブを起こし、マシンの設定は OS ごとの決まった場所に当てる先のリポごとに置く
 
 > **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 2 の「進行ボットの PAT」は、GitHub App に切り替えた後はアプリのトークンと読む。人の `setup` が人の `gh` で GitHub の準備をすること、進行ボットに管理の権限を持たせないことは据え置く。
+>
+> **Amended by [ADR-20261030-001][adr-20261030-001]（2026-10-30）**: 決定 2 の「GitHub の準備は人の `gh` のログインで行う」と「人の `gh` のログインを持たない専用マシンでは、GitHub の準備は人の手元のマシンで行う」を、`setup` 用の GitHub App の人の代わりのトークン（`setup` の実行ごとに人がブラウザで承認する）で行う形に改めた。`check` と `/dev-autopilot` が進行 Bot のジョブを起こし、GitHub の点検を進行 Bot の認証で行うことは据え置く。
+>
+> **［2026-10-30 追記］** 決定 2 の「進行ボットが自分の PAT で行う」と「進行ボットの PAT に、ruleset を作る管理の権限を持たせない」は、[ADR-20261030-002][adr-20261030-002] で進行 Bot が最初から GitHub App だけを使うことになったので、進行 Bot の GitHub App と読む。
 
 要件の UNDECIDED-36 と UNDECIDED-37（[決めていないこと][undecided]の「安全と設定」）を決める。
 問いは 3 つある：AI のセッションが Plugin の Skill の参照ファイルとスクリプトをどう使うか、人が呼ぶ `setup` と `check` がどの認証で GitHub を扱うか、人が呼ぶ Skill がマシンの設定をどう見つけるか。
@@ -211,3 +215,5 @@ decision-makers: メンテナ
 [doc-sandboxing]: https://code.claude.com/docs/en/sandboxing
 [doc-env]: https://code.claude.com/docs/en/env-vars
 [adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
+[adr-20261030-001]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md
