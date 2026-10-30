@@ -1,12 +1,16 @@
 ---
 status: accepted
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-10-30
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 進行 Bot の GitHub App に秘密の名前を読む権限を足し、毎回の点検で当てる先のリポの秘密の置き方を確かめる
+
+> **Amended by [ADR-20261030-001][adr-20261030-001]（2026-10-30）**: 決定 2 の「人の `check` と `setup` は、人の `gh` のログインで同じことを確かめる」を、`setup` は `setup` 用の App の人の代わりのトークンで確かめ、`check` は進行 Bot の App で確かめる形に改めた。
+>
+> **Amended by [ADR-20261030-002][adr-20261030-002]（2026-10-30）**: 決定 2 の「切り替える前の PAT の間は、PAT に秘密を読む権限を足さず、確かめない」を外した（PAT を使わない）。決定 1 と、決定 2 のほかの項目は据え置く。
 
 [ADR-20261028-001][adr-ci-secrets] の決定 2（点検で当てる先のリポの秘密の置き方を確かめる。読む権限は基本設計で決める）を、毎回の実行の点検で行うために、[ADR-20261020-002][adr-app] の決定 2 の GitHub App の権限の表を改める。
 
@@ -102,3 +106,5 @@ decision-makers: メンテナ
 [adr-ci-secrets]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [setup]: ../requirements/06-setup-and-stages.md
 [design-setup]: ../design/basic/04-setup-and-check.md
+[adr-20261030-001]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md

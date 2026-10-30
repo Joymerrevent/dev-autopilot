@@ -1,12 +1,16 @@
 ---
 status: accepted
 created: 2026-10-28
-updated: 2026-10-29
+updated: 2026-10-30
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # 進行 Bot の毎回の点検は、setup が bypass を確かめたときの ruleset の updated_at を控えと比べ、変わっていれば止める
+
+> **Amended by [ADR-20261030-001][adr-20261030-001]（2026-10-30）**: 決定 1 の `setup`（人の `gh` のログイン。組織の管理者）の認証を、`setup` 用の App の人の代わりのトークン（承認した人が組織の管理者）に改めた。
+>
+> **Amended by [ADR-20261030-002][adr-20261030-002]（2026-10-30）**: 決定 2 の「PAT の間は、今のとおり `bypass_actors` を読んで確かめる」を外した（PAT を使わない）。ほかの決定は据え置く。
 
 要件の UNDECIDED-94（GitHub App のトークンでは `bypass_actors` がいつも返らないので、毎回の点検で ruleset の bypass をどう確かめるか。[決めていないこと][undecided]の「ADR で決めること」の「安全と設定」）を決める。
 
@@ -129,3 +133,5 @@ decision-makers: メンテナ
 [facts]: ../requirements/10-verified-facts.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [doc-rules]: https://docs.github.com/en/rest/repos/rules
+[adr-20261030-001]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md
