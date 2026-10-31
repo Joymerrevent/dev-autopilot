@@ -300,7 +300,7 @@ push 以上の人が書いた最新の `## 再開 <戻す先>` を R とする�
 
 | 順 | すること | 次に進む先 |
 | --- | --- | --- |
-| 1 | 計画 AI が計画を返す（`models.plan`。受付 AI の判定と人のラベル `plan:*` は使わない。[ADR-20261024-004][adr-master] の決定 8） | `opus` が自己申告したら 2。しなければ 3 |
+| 1 | 計画 AI が計画を返す（`models.plan`。作業ごとに変えず、受付 AI の判定と人のラベル `plan:*` は使わない。[ADR-20261024-004][adr-master] の決定 8、[ADR-20261031-002][adr-same-model]） | `opus` が自己申告したら 2。しなければ 3 |
 | 2 | 計画 AI が `fable` で計画し直す（1 回だけ。`models.planHard`。[ADR-20261018-002][adr-redo]） | 3 |
 | 3 | 計画を確かめる AI（レビュー AI）が計画を確かめ、`ok` か `fix` と指摘の一覧を返す（`models.planReview`） | `ok` なら 5。`fix` で、指摘で計画し直した回数が上限（`limits.planRevisions`）に達していなければ 4、達していれば 6 |
 | 4 | 計画 AI が、マスター・直す前の計画・指摘の一覧を受け取って計画し直す（直す前の計画と同じモデル。自己申告は無視して記録に残す） | 3 |
@@ -330,7 +330,7 @@ push 以上の人が書いた最新の `## 再開 <戻す先>` を R とする�
 | 4 | GitHub に書く文を組み立てる。初回は PR の題名と本文、直しと衝突の直しは対応コメント（直しは出力契約の `responses`、衝突の直しは固定の文と出力契約の `checks`。形は「[AI のセッション][design-ai]」の「コメントの形」）。題名は、作業 AI の案（出力契約の `pr.title`）を規約（`conventions.*`。Conventional Commits の形と言語）に照らしてから使い、外れていれば、Issue の文を使わない固定の形で作る（`conventions.language` が `ja` なら `<作業ブランチの型>: issue #<Issue の番号> の対応`。言語ごとの固定の文は進行 Bot のプログラムに持つ。[TEXT-6][text]、[IMPL-6][impl]）。本文は、「AI が生成した」の 1 行、`Closes #<Issue の番号>`、作業 AI が確かめた検査の結果（出力契約の `checks`）、本文の案（`pr.body`）の順に並べる。続けて、漏えいの検査を、範囲の commit ごとの差分（merge の commit は `git show --cc`）、commit ごとのメッセージと作者、組み立てた文（最後に使う題名を含む）に掛け、組み立てた文のうち AI の文の欄に検疫（[TEXT-11][text]）を掛ける。検査は `plugin/src/` の中のものを使い、worktree の中の検査は使わない（[IMPL-15][impl]） | 漏えいの検査に引っかかれば push せず、攻撃の疑い（AI の文。`security` の印の `where` が `leak`）にする（全体は止めない。[ADR-20261027-002][adr-leak]）。途中の commit で足して後の commit で消した秘密も、途中の commit が GitHub に届くので止める。検疫で見つかれば push せず、攻撃の疑い（AI の文）にして、全体の停止の Issue を開く（上の「全体の停止の Issue」、[SAFE-19][safety]）。push の後に見つけて、push だけ済んだ状態で止めないため |
 | 5 | 進行 Bot の clone から `git ls-remote` で、作業ブランチの今の先端を読み、控えた SHA の祖先であることを確かめる（fast-forward で届くこと）。作業ブランチがまだ無ければ、作業場所を作ったときに控えた base の SHA で確かめる（[IMPL-15][impl]、[SAFE-13][safety]） | 祖先でなければ push せず、停止中にする（`not-fast-forward`）。AI が履歴を書き換えたか、ほかの誰かが push したため |
 | 6 | 全体の止める合図と、全体の停止の Issue を読み直す（[運用の規則][flow]、[SAFE-19][safety]） | 合図が `run` でないか、全体の停止の Issue があれば、push せずに止まる。実行の失敗には数えない。AI が操られた疑いがある間は、AI の変更を GitHub に届けないため。止まった作業は、合図が `run` に戻り、全体の停止が解けた後に、同じ状態からやり直す |
-| 7 | 直しと衝突の直しでは、順 4 で組み立てて検査した対応コメントを、`fix` の印（`round` は最新の `review` の印の `round`、`head` は控えた SHA、`cause` は直したもの）付きで PR に書いてから送る。push の後に実行が切れても、直しを往復に数え、次のラウンドで同じ指摘の再発を判定し、対応コメントも PR に出るため（[ADR-20261022-003][adr-rounds] の決定 4）。進行 Bot の clone から、deploy key で `git push origin <控えた SHA>:refs/heads/<型>/issue-<番号>` を送る。ブランチ名でなく SHA を送り、force push はしない（[IMPL-15][impl]） | 対応コメントを書けなければ、push せずに、実行の失敗として次の実行に持ち越す。push が断られたら（ruleset など）、実行の失敗として次の実行に持ち越す。書いた `fix` の印は PR に届かないので、直しは次の実行で同じ状態（検査不合格かレビュー不合格）からやり直す。衝突の直しは、PR の head が変わらず `conflict` の印が残るので、次の実行で衝突ありからやり直す（往復の上限の確かめを含む）。届かなかった `fix` の印も往復に数える（止まる側） |
+| 7 | 直しと衝突の直しでは、順 4 で組み立てて検査した対応コメントを、`fix` の印（`round` は最新の `review` の印の `round`、`head` は控えた SHA、`cause` は直したもの、`model` は作業 AI を起こしたモデル）付きで PR に書いてから送る。push の後に実行が切れても、直しを往復に数え、次のラウンドで同じ指摘の再発を判定し、対応コメントも PR に出るため（[ADR-20261022-003][adr-rounds] の決定 4）。進行 Bot の clone から、deploy key で `git push origin <控えた SHA>:refs/heads/<型>/issue-<番号>` を送る。ブランチ名でなく SHA を送り、force push はしない（[IMPL-15][impl]） | 対応コメントを書けなければ、push せずに、実行の失敗として次の実行に持ち越す。push が断られたら（ruleset など）、実行の失敗として次の実行に持ち越す。書いた `fix` の印は PR に届かないので、直しは次の実行で同じ状態（検査不合格かレビュー不合格）からやり直す。衝突の直しは、PR の head が変わらず `conflict` の印が残るので、次の実行で衝突ありからやり直す（往復の上限の確かめを含む）。届かなかった `fix` の印も往復に数える（止まる側） |
 | 8 | `git ls-remote` で、作業ブランチの先端が送った SHA になったことを読み戻す。初回は、順 4 で組み立てて検査した題名と本文で PR を draft で作り、すぐに `link` の印（Issue には `pr`、PR には `issue`）を Issue と PR に書く（[IMPL-11][impl]、[IMPL-6][impl]）。表示の欄は、作業の単位の状態を書く（[IMPL-7][impl]、[FLOW-39][flow]） | 読み戻した SHA が違えば、停止中にする（`unrecoverable`）。PR を作れなければ、実行の失敗にする。作業ブランチだけが残るので、次の実行は計画済みの行で停止中にする（`branch-without-pr`） |
 
 - push で効くもの（順 3）に当たったときは、順 4 の漏えいの検査のうち、範囲の commit ごとの差分と、commit ごとのメッセージと作者に掛ける検査を同じく行い、PR の全体の差分（`git diff <base>...<控えた SHA>`）に検疫（[TEXT-11][text]）を掛けてから、差分を `manual-push` の印のコメントで Issue に載せる。漏えいの検査に当たれば攻撃の疑い（AI の文。`security` の印の `where` が `leak`）、検疫で見つかれば攻撃の疑い（AI の文。`security` の印の `where` が `code`）にし、差分を載せない。差分を載せたコメントがコメントの上限（60,000 文字。「[AI のセッション][design-ai]」の「共通の決まり」）を超えるときは、差分を載せず、当たったパスと、変わったファイルの一覧だけを載せる
@@ -353,7 +353,7 @@ push 以上の人が書いた最新の `## 再開 <戻す先>` を R とする�
 
 - ラウンドは、PR のレビューの 1 回。`review` の印の `round` は 1 から始め、レビューするたびに 1 増やす。欠けていたら停止中にする（`marker-invalid`。[IMPL-18][impl]）
 - 直しか衝突の直しの後の再レビュー、進行 Bot だけの載せ直しで差分（patch-id）が変わったときの再レビュー、人の push の後の再レビューは、新しいラウンドにする。載せ直しで差分が同じときは、ラウンドを増やさず、同じ内容の印を新しい head に付け直す（[MERGE-6][merge]）。どのレビューも、必須チェックが通ってから行う（[IMPL-27][impl]）
-- `fix` の印の `round` は、最新の `review` の印の `round`（直しでは、直した対象のラウンド）と同じにする。最初のレビューの前の検査の失敗の直しは、`round` を 0 にする。`cause` には、直したもの（`check`・`review`・`conflict`）を書く（[IMPL-27][impl]、[MERGE-6][merge]、[ADR-20261024-001][adr-model-states] の決定 9）
+- `fix` の印の `round` は、最新の `review` の印の `round`（直しでは、直した対象のラウンド）と同じにする。最初のレビューの前の検査の失敗の直しは、`round` を 0 にする。`cause` には、直したもの（`check`・`review`・`conflict`）を書く（[IMPL-27][impl]、[MERGE-6][merge]、[ADR-20261024-001][adr-model-states] の決定 9）。`model` には、その直しで作業 AI を起こしたモデル（`--model` に渡した値。`models.work` か `models.workRaised` の `model`）を書く。`models.workRaised` で起こしたとき（最初の実装が `sonnet`）は、`fix` の印のコメントに、最初の実装のモデルから上げたことを決まった文で書き、Issue には別のコメントを書かない（[IMPL-25][impl]、[ADR-20261101-001][adr-raise-in-fix]）
 - 往復の回数は、PR の有効な `fix` の印の数（作業 AI が変更を push した回数）。`fix` の印は、作業 AI の変更を push するたびに 1 つ書き、レビューの指摘を直したとき（[IMPL-23][impl]）、検査の失敗を直したとき（[IMPL-27][impl]）、載せ直しの衝突を解いたとき（[MERGE-6][merge]）のどれも 1 回に数える。1 つのラウンドに、指摘の直しと検査の失敗の直しの `fix` の印が 2 つ以上つくこともある（[ADR-20261024-003][adr-check-first] の決定 4）。`fix` の印は push の前に書くので、push が GitHub に届かなかった回の印も数える（上の「push の手順」の順 7）。届かなかった回の数えすぎは、止まる側に倒れる（[IMPL-24][impl]、[ADR-20261022-003][adr-rounds] の決定 1、決定 4）
 - 進行 Bot だけで行う載せ直し（AI のセッションを起こさない）で差分が変わった再レビューと、人の push の後の再レビュー（人が GitHub の画面で base ブランチを取り込んだ後を含む）は、新しいラウンドにするが、往復に数えない。base ブランチが進んで差分が変わるたびに起こすレビューは、往復の上限でなく、1 Issue の累計の費用の上限（`limits.issueCostUsd`）で止まる
 - 数える元は GitHub の `fix` の印だけで、commit の親の形も手元の記録も使わない。1 つのラウンドを、`fix` の印と載せ直しのラウンドの 2 回に数える形は無い。衝突の直しで作業 AI が merge の commit の後に commit を足しても、`fix` の印 1 つで 1 回に数える（上の「push の手順」）
@@ -518,7 +518,7 @@ AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後�
 
 - `stop` を 1 回だけにしないのは、人が再開した後に同じ理由で再び止まったとき、前の印を見て書かないと、今回止まったことが人に伝わらないため。止めている間は、進行 Bot は止める契機を確かめない（上の「先に見る」の順 3）ので、同じ理由で重ねて書くことは無い
 - `security` も同じく、値がある間は AI に文を渡さず、検疫を掛け直さないので、重ねて書くことは無い。人が `## 安全の確認` で外した後に、また見つかったら書く
-- 組み直す前の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（[IMPL-26][impl]、[ADR-20261031-001][adr-follow-up-dup]）。`note kind=raise`（作業 AI のモデルを上げた）の印の名前は、まだ決めていない（要件の UNDECIDED-90、[IMPL-25][impl]、[ADR-20261024-001][adr-model-states] の決定 9）。決めるときは、`stop` と `link` に寄せない。`stop` に寄せると止まったと読まれ、`link` に寄せると PR と Issue の結びつきを誤るため
+- 組み直す前の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（[IMPL-26][impl]、[ADR-20261031-001][adr-follow-up-dup]）。`note kind=raise`（作業 AI のモデルを上げた）は、`fix` の印の `model` の欄と、上げた修正の `fix` の印のコメントの決まった文にした（[IMPL-25][impl]、[ADR-20261101-001][adr-raise-in-fix]）。どちらも `stop` と `link` に寄せていない。`stop` に寄せると止まったと読まれ、`link` に寄せると PR と Issue の結びつきを誤るため
 
 ### 止めた理由の記号
 
@@ -710,3 +710,5 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-follow-up-dup]: ../../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
+[adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
+[adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md

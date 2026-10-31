@@ -401,7 +401,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | `policyReason` | 文（1 行） | 方針に係る要望かの判定の根拠 |
 
 - 下書きの形は「[作業指示（agent brief）の形][review-skill]」に従う。ファイルのパスと行番号を書かず、手順でなく振る舞いを書く
-- 計画の難しさの判定（組み直す前の `plan` と `planReason`）は返さない。作業ごとに使うモデルの決め方を決めるまで使わない（[IMPL-30][impl]、[ADR-20261024-004][adr-master] の決定 8）
+- 計画の難しさの判定（組み直す前の `plan` と `planReason`）は返さない。作業ごとにモデルを変えないので、使わない（[IMPL-30][impl]、[ADR-20261024-004][adr-master] の決定 8、[ADR-20261031-002][adr-same-model]）
 - 書き直しも同じ形で返す。受付 AI は、今のマスターと `## 差し戻し` の頼みと Issue の文を読み、新しい下書きを返す（[FLOW-36][flow]）
 - 進行 Bot は、4 つの欄と依存とマイルストーンの候補を決まった見出しの下に並べて、マスターの下書きのコメントにする（[TEXT-12][text]。形は下の「コメントの形」）
 - `policy` が真なら、進行 Bot は判定と `policyReason` を決まった見出しの下に書き添える。判定で作業の単位を止めない（[ADR-20261019-004][adr-policy]）
@@ -646,3 +646,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-leftover]: ../../adr/adr-20261027-001-find-leftover-processes-before-deleting-workspaces.md
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
+[adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
