@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-30
+updated: 2026-11-01
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -130,6 +130,8 @@ decision-makers: メンテナ
 - 計画・実装工程（段階 5）から修正工程（段階 7）の材料で、最初の実装に `sonnet` を使ってよいかを決める形（[ADR-20261018-003][adr-model]、IMPL-25 の段階の文）を持たない
 - 作業ごとに使うモデルの決め方と、モデルを上げたことの印（今の `note kind=raise`）は、別に決める。決めるまでは、基本設計の設定の初期値（`models.*`）のモデルを使い、変えるときは今のとおりリポの設定の PR で変える
 
+  > **［2026-11-01 追記］** 作業ごとに使うモデルの決め方は [ADR-20261031-002][adr-same-model] で、作業ごとに変えず、役ごとに設定の値を使うと決めた。モデルを上げたことの印は [ADR-20261101-001][adr-raise-in-fix] で、`fix` の印の `model` の欄と、上げた修正のコメントの決まった文で残すと決めた。決定は変わらない。
+
 ### 決定 8：段階 4〜8 に触れるほかの文の読み方
 
 - 承認済みの ADR で、段階 4〜8 のどれかを条件にした振る舞いは、決定 1〜7 で決めたものは決定のとおりにし、ほかはマージ判定工程（段階 8）の振る舞いで読む
@@ -254,3 +256,5 @@ decision-makers: メンテナ
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md
+[adr-same-model]: ./adr-20261031-002-same-model-per-role-for-all-tasks.md
+[adr-raise-in-fix]: ./adr-20261101-001-record-model-raise-in-fix-marker.md

@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-31
+updated: 2026-11-01
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261026-001][adr-status]（2026-10-26）**: 決定 5 のうち、主な流れの枠にもともとある Status 欄を使い、名前を変える形を改めた。Status 欄の名前は API で変えられない（FACT-74）ので、Status 欄は名前を変えずに状態の欄として使い、主な流れの枠は単一選択の欄として新しく作り、Status 欄に書き込む組み込みのワークフローは止める。表示の欄 5 つと中身、どれも判定に読まないこと、軸ごとのビューと、ほかの決定は据え置く。
 >
 > **Amended by [ADR-20261031-001][adr-follow-up-dup]（2026-10-31）**: 決定 9 の印の表の `follow-up` の行の「書くとき」（🟢 を新しい Issue にした）と「置き場」（新しい Issue）を、🟢 を Issue に記録した（新しい Issue にしたか、有効な `follow-up` の印を持つ同じ見出しの開いた Issue に足した）と、🟢 を記録した Issue に改めた。組み直す前の `note kind=duplicate` は `follow-up` にした。印の種類の数（21）、`follow-up` の欄、決定 9 のほかの行と、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261101-001][adr-raise-in-fix]（2026-11-01）**: 決定 9 の印の表の `fix` の行の欄（`round`、`head`、`cause`）に、`model`（その修正で作業 AI を起こしたモデル）を足した。組み直す前の `note kind=raise` は、`fix` の印の `model` の欄と、上げた修正の `fix` の印のコメントの決まった文にした。印の種類の数（21）、`fix` のほかの欄と書くとき、決定 9 のほかの行と、ほかの決定は据え置く。
 
 要件の UNDECIDED-76（作業の単位の状態を、どの模型で表し、人の操作と表示をどう分けるか。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 
@@ -535,3 +537,4 @@ decision-makers: メンテナ
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-follow-up-dup]: ./adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
+[adr-raise-in-fix]: ./adr-20261101-001-record-model-raise-in-fix-marker.md
