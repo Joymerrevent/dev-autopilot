@@ -132,8 +132,9 @@
   3 回で止める規則（IMPL-24）は変えず、再計画は人が指示する（自動では計画 AI に戻さない。fail-closed）。上げたことは記録と Issue のコメントに残す（印の名前は、作業ごとに使うモデルの決め方と一緒に決める。UNDECIDED-90、[ADR-20261024-001][adr-model-states] の決定 9）。
   最初の実装で使うモデルを種類ごとに変える決め方は、段階の材料で決める形を持たなくなったので、別に決める。決めるまでは、設定の初期値（`models.work`。`opus`）を使い、変えるときはリポの設定の PR で変える（[ADR-20261024-002][adr-no-stages] の決定 7。[ADR-20261018-003][adr-model] は置き換えた）
 - IMPL-26 🟢 は進行 Bot が Issue にする（`change-review` の「見送りは記録とセット」の規則）。1 件 1 Issue、題名は指摘の見出し、本文に PR 番号・ラウンド・失敗シナリオ・推奨を写し、ラベル `from-review` を付ける。本文は AI の出力として扱い、作業 AI には渡さない（Issue の本文は著者を問わず渡さない。TEXT-1、IMPL-20）。
-  マイルストーンは付けない。人がマイルストーンを付けるまで入口の検疫と下書き（TEXT-12）も走らせない（🟢 の Issue が毎日増えて人の読む量を超えないため）。同じ見出しの open な Issue があれば作らずにコメントで PR 番号を足す（重複を防ぐ。コメントに付ける印の名前は決めていない。今の `note kind=duplicate`。UNDECIDED-92、[ADR-20261024-001][adr-model-states] の決定 9）。
-  Issue を作って（`follow-up` の印）から、PR を ready にする（先にマージすると、Issue 化に失敗したとき指摘が消える）
+  マイルストーンは付けない。人がマイルストーンを付けるまで入口の検疫と下書き（TEXT-12）も走らせない（🟢 の Issue が毎日増えて人の読む量を超えないため）。有効な `follow-up` の印を持ち、題名が指摘の見出しと同じ open な Issue があれば、作らずにコメントで PR 番号を足し、そのコメントにも `follow-up` の印を書く（重複を防ぐ。[ADR-20261031-001][adr-follow-up-dup]）。
+  `follow-up` の印を持たない Issue（人が起票した Issue、全体の停止の Issue、進行 Bot が開いた後に印を書く前に実行が切れた Issue）は、題名が同じでも足す先にしない（進行 Bot が起票した Issue は、`follow-up` の印があるときだけ作業の単位にするため）。
+  Issue を作るか足して（`follow-up` の印）から、PR を ready にする（先にマージすると、Issue 化に失敗したとき指摘が消える）。ready の前に、PR のどのラウンドの 🟢 にも、`pr` がその PR で `finding` がその指摘の ID の、有効な `follow-up` の印があることを確かめる
 - IMPL-27 レビュー合格の条件：CI が緑、かつ最新のラウンドの `review` の印の `result` が `pass`（🔴 🟡 が 0 件。🟢 は残ってよい）。レビューは、CI が緑になってから起こす（[ADR-20261024-003][adr-check-first]）。
   「CI が緑」の定義：設定に列挙した必須チェック（例：`check (ubuntu-latest)` `check (windows-latest)` `commitlint`）のすべてが、PR の head SHA に対して `success`。必須チェックのうち 1 つでも、head に対するチェックがまだ作られていないか、結果が `success` 以外なら、緑ではない（検査が走らなかった変更を通さない）。
   緑でないときの扱いは、必須チェックごとに結果を読み、1 つでも当てはまれば次の表の上の行から順に決める。同じ head に同じ名前のチェックが複数あるとき（再実行）は、最新の 1 件を採る（[ADR-20261016-001][adr-pr]）
@@ -224,3 +225,4 @@
 [adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-claude-dir]: ../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
+[adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md

@@ -311,7 +311,7 @@
 - UNDECIDED-56 **欠番**（基本設計の「[AI のセッション][design-ai]」の「起動の形」で決めた。`--no-session-persistence` で会話の記録を人のホームに残さず、進行 Bot が受け取った `stream-json` を記録の置き場に残す。FACT-51）：~~AI のセッションの会話の記録の扱い。`claude -p` は、作業フォルダのパスから名前を付けたフォルダに、会話の記録を人のホームの `~/.claude/projects/` の下に残す（FACT-50）。進行 Bot が動かすと、セッションごとに記録がたまる。消すか、残すならどこにいつまで残すかを決める~~
 - UNDECIDED-71 **専用マシンで進行 Bot を動かすときに、人の手元のマシンから受け入れの Skill（`intake`。`/verify-issue` から呼ぶもの）を使う形。** `intake` の Skill は、マシンの設定がある、進行 Bot を動かすマシンでだけ動く（STRUCT-3。今は手元の Mac で進行 Bot を動かすので、`/verify-issue` も手元の Mac で呼べる。SAFE-18）。下書きは、記録の置き場に受け入れの依頼のファイルを置いて定期の実行と同じジョブを起こし、受付 AI のセッションは、依頼で起こされた進行 Bot の実行が、ほかのセッションと同じ置き場・安全設定・止める手順と記録で 1 つ起こす（基本設計の「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」、[ADR-20261022-004][adr-intake-req]）。
   専用マシンに移すと、人の手元のマシンにはマシンの設定も進行 Bot のプログラムの写しも無いので、手元から `/verify-issue` で `intake` の Skill を使えない。依頼のファイルを置けるのも、記録の置き場のある、進行 Bot を動かすマシンだけになる（[ADR-20261022-004][adr-intake-req] の影響）。手元のマシンで使う形（入れた Plugin のコードで動かし、セッションの置き場・安全設定・止める手順を手元に用意する、など）を、専用マシンに移すときに決める（[07-structure.md][f07]）
-- UNDECIDED-92 🟢 の重複の Issue に PR の番号を足すコメント（IMPL-26）に付ける印の名前（組み直す前の `note kind=duplicate`）。UNDECIDED-39 で `duplicate` を足したが、[ADR-20261024-001][adr-model-states] の決定 9 で印を組み直したときに、扱いを決めずに残した。決めるときは、`stop` と `link` に寄せない（基本設計の「[状態遷移と判定][design-flow]」の「印の種類」の下。[02-implement-review-fix.md][f02]）
+- UNDECIDED-92 **欠番**（[ADR-20261031-001][adr-follow-up-dup] で決めた。`follow-up` の印を書き、足す先は、有効な `follow-up` の印を持つ同じ見出しの開いた Issue に限る）：~~🟢 の重複の Issue に PR の番号を足すコメント（IMPL-26）に付ける印の名前（組み直す前の `note kind=duplicate`）。UNDECIDED-39 で `duplicate` を足したが、[ADR-20261024-001][adr-model-states] の決定 9 で印を組み直したときに、扱いを決めずに残した。決めるときは、`stop` と `link` に寄せない（基本設計の「[状態遷移と判定][design-flow]」の「印の種類」の下。[02-implement-review-fix.md][f02]）~~
 
 ## 確かめること
 
@@ -418,3 +418,4 @@
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
 [adr-bypass-baseline]: ../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
+[adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md

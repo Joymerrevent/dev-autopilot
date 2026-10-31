@@ -130,10 +130,10 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
 | `ignored-instruction` | 決めた後の作業指示を読まなかった | Issue | `comment`（作業指示のコメントの ID） | TEXT-4 |
 | `manual-push` | push で効くものの差分を人に渡した | Issue | `head`、`paths`（並び） | IMPL-15 |
-| `follow-up` | 🟢 を新しい Issue にした | 新しい Issue | `pr`、`finding`（指摘の ID） | IMPL-26 |
+| `follow-up` | 🟢 を Issue に記録した（新しい Issue にしたか、有効な `follow-up` の印を持つ同じ見出しの開いた Issue に足した。[ADR-20261031-001][adr-follow-up-dup]） | 🟢 を記録した Issue | `pr`、`finding`（指摘の ID） | IMPL-26 |
 | `overlap` | AI の変更が触ったファイルが、ほかの進行中の PR と重なった（1 回だけ警告し、待たせない） | Issue | `prs`（重なった PR の番号の並び）、`paths`（重なったパスの並び） | FLOW-8 |
 
-組み直す前の印（`intake`・`intake-final` と、`note` の中を `kind` で分ける `wait`・`overlap`・`remind`・`stop`・`link`・`raise`・`duplicate`・`conflict`）は、上の種類に置き換えた。今の `note kind=raise`（作業 AI のモデルを上げた）と `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）の扱いは決めていない（IMPL-25、IMPL-26）。
+組み直す前の印（`intake`・`intake-final` と、`note` の中を `kind` で分ける `wait`・`overlap`・`remind`・`stop`・`link`・`raise`・`duplicate`・`conflict`）は、上の種類に置き換えた。今の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（IMPL-26、[ADR-20261031-001][adr-follow-up-dup]）。今の `note kind=raise`（作業 AI のモデルを上げた）の扱いは決めていない（IMPL-25）。
 
 人が付けるラベルと、進行 Bot が付ける表示のラベル（名前は設定に持ち、ここの名前は初期値。SETUP-8）：
 
@@ -181,3 +181,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-security]: ../adr/adr-20261024-005-security-axis-and-halt-issue.md
 [adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
