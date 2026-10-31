@@ -40,7 +40,7 @@ MCP のサーバー（ログインしている claude.ai のアカウントの�
 
 進行 Bot を AI にしないのは、「どの Issue を選ぶか」「待つか」「止めるか」を再現できる判定にするため。
 AI は「依頼の下書きを書く（差し戻されたら書き直す）」「計画を書く」「実装する」「レビューする」「指摘を再検証する」「直す」の 6 つの作業だけを担う。
-モデルの振り分け（どの Issue の計画を `fable` にするか）は計画 AI の自己申告で決め、進行 Bot は出力契約の決まった値を読むだけにする（IMPL-10。受付 AI の提案と人のラベルは、作業ごとに使うモデルの決め方を決めるまで使わない。[ADR-20261024-004][adr-master] の決定 8）。
+モデルの振り分け（どの Issue の計画を `fable` にするか）は計画 AI の自己申告で決め、進行 Bot は出力契約の決まった値を読むだけにする（IMPL-10）。作業ごとにモデルを変えず、役ごとに設定の値を使う。受付 AI の提案と人のラベルは使わない（[ADR-20261031-002][adr-same-model]）。
 
 [f02]: ./02-implement-review-fix.md
 [f03]: ./03-merge.md
@@ -58,7 +58,7 @@ AI は「依頼の下書きを書く（差し戻されたら書き直す）」�
 [adr-replan]: ../adr/adr-20261019-003-replan-on-plan-review-from-stage-5.md
 [adr-critic-skip]: ../adr/adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
-[adr-master]: ../adr/adr-20261024-004-master-draft-quarantine-and-protected-paths.md
 [adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
 [adr-no-pat]: ../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
 [adr-setup-app]: ../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
