@@ -65,7 +65,7 @@
 | ADR-20261030-001 | [setup の GitHub の準備は、秘密鍵を作らない setup 用の App で行い、人の gh を使わない][adr-20261030-001-setup-uses-setup-app-instead-of-human-gh] | accepted | 2026-10-30 |
 | ADR-20261030-002 | [進行 Bot は最初から GitHub App だけを使い、PAT を使わない][adr-20261030-002-bot-uses-github-app-only-from-start] | accepted | 2026-10-30 |
 | ADR-20261031-001 | [🟢 の指摘と同じ見出しの Issue が開いていれば、PR の番号を足すコメントにも follow-up の印を書く][adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings] | accepted | 2026-10-31 |
-| ADR-20261031-002 | [作業ごとに使うモデルを変えず、役ごとに設定の値を使う][adr-20261031-002-same-model-per-role-for-all-tasks] | proposed | 2026-10-31 |
+| ADR-20261031-002 | [作業ごとに使うモデルを変えず、役ごとに設定の値を使う][adr-20261031-002-same-model-per-role-for-all-tasks] | accepted | 2026-10-31 |
 
 <!--
 行の例（表の最後に足す）:
