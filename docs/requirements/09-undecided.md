@@ -61,9 +61,9 @@
   ~~決めること：決める時期の条件。~~
   ~~候補：(A) 今のマージ判定工程（段階 8）の出口の条件（10 件で、人のマージの判断と進行 Bot の判定（`merge` の印）が全件一致し、revert が 0 件。MERGE-3 の数え方）を、運用の記録で満たしたら決める。(B) 運用を始めてからの期間で区切る。(C) 条件を置かず、メンテナが決めたいときに決める。~~
   ~~推奨は (A)。進行 Bot のマージの判定を信頼してよいかを測る、今まで合意していた数をそのまま使える。(B) は件数が少ないまま期間が過ぎうる。(C) は判断の根拠が残らない（[07-structure.md][f07]、[03-merge.md][f03]）~~
-- UNDECIDED-90 **作業ごとに使うモデルの決め方と、モデルを上げたことを残す印。** 計画 AI は、作業ごとに使うモデルの決め方を決めるまで、いつも既定の `opus`（xhigh）で始め、受付 AI の計画の難しさの判定（IMPL-30）と、人が上書きするラベル `plan:fable`・`plan:opus` は使わない（IMPL-10、[ADR-20261024-004][adr-master] の決定 8）。作業 AI の最初の実装は設定の初期値（`models.work`。`opus`）を使い、種類ごとにモデルを変える決め方は、段階の材料で決める形を持たなくなったので別に決める（IMPL-25、[ADR-20261024-002][adr-no-stages] の決定 7）。
+- UNDECIDED-90 **欠番**（[ADR-20261031-002][adr-same-model] と [ADR-20261101-001][adr-raise-in-fix] で決めた。作業ごとにモデルを変えず、役ごとに設定の値を使い、受付 AI の判定と `plan:*` のラベルは持たない。作業 AI のモデルを上げたことは、`fix` の印の `model` の欄と決まった文で残す）：~~**作業ごとに使うモデルの決め方と、モデルを上げたことを残す印。** 計画 AI は、作業ごとに使うモデルの決め方を決めるまで、いつも既定の `opus`（xhigh）で始め、受付 AI の計画の難しさの判定（IMPL-30）と、人が上書きするラベル `plan:fable`・`plan:opus` は使わない（IMPL-10、[ADR-20261024-004][adr-master] の決定 8）。作業 AI の最初の実装は設定の初期値（`models.work`。`opus`）を使い、種類ごとにモデルを変える決め方は、段階の材料で決める形を持たなくなったので別に決める（IMPL-25、[ADR-20261024-002][adr-no-stages] の決定 7）。
   作業 AI を `sonnet` から `opus` に上げたこと（IMPL-25）を Issue に残すコメントの印の名前（組み直す前の `note kind=raise`）も、モデルの決め方と一緒に決める（[ADR-20261024-001][adr-model-states] の決定 9）。
-  決めること：計画 AI・作業 AI・レビュー AI のそれぞれで、作業によってモデルを変えるか。変えるなら、何で決めるか（受付 AI の判定、人のラベル、Issue の種類など）。モデルを上げたことを残す印の名前と欄。決めるまでは、設定の初期値のモデルを使い、変えるときはリポの設定の PR で変える（[ADR-20261024-002][adr-no-stages] の決定 7。[02-implement-review-fix.md][f02]）
+  決めること：計画 AI・作業 AI・レビュー AI のそれぞれで、作業によってモデルを変えるか。変えるなら、何で決めるか（受付 AI の判定、人のラベル、Issue の種類など）。モデルを上げたことを残す印の名前と欄。決めるまでは、設定の初期値のモデルを使い、変えるときはリポの設定の PR で変える（[ADR-20261024-002][adr-no-stages] の決定 7。[02-implement-review-fix.md][f02]）~~
 
 ### レビューとマージ
 
@@ -419,3 +419,5 @@
 [adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
 [adr-bypass-baseline]: ../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
 [adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
+[adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
+[adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md

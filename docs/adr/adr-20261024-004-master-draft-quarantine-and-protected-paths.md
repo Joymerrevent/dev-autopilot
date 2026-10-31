@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-28
+updated: 2026-11-01
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -137,6 +137,8 @@ decision-makers: メンテナ
 - 受付 AI の計画の難しさの判定（今の `intake` の印の `plan=`）と、人が上書きするラベル `plan:fable`・`plan:opus` は、作業ごとに使うモデルの決め方（[ADR-20261024-002][adr-no-stages] の決定 7）と一緒に決める
 - 決めるまでは、受付 AI は難しさの判定を返さず、進行 Bot は `plan:*` のラベルを読まない。計画 AI は、いつも設定の `models.plan` で始め、計画 AI が自己申告したときだけ、同じ回の実行で `models.planHard` で計画し直す（[ADR-20261018-002][adr-redo] のまま）
 - 人が呼ぶ intake の Skill が返す下書きからも、難しさの判定（`planReason`）を外す（[ADR-20261022-004][adr-intake-req] の決定 3 の欄）
+
+  > **［2026-11-01 追記］** 作業ごとに使うモデルの決め方は、[ADR-20261031-002][adr-same-model] で、作業ごとに変えず、役ごとに設定の値を使うと決めた。受付 AI の計画の難しさの判定と `plan:*` のラベルは、決め方を決めた後も使わない。決定は変わらない。
 
 ### 決定 9：変えてはいけないパスを効く時期で 2 つの組に分け、人の承認で変えられるようにする
 
@@ -283,3 +285,4 @@ decision-makers: メンテナ
 [design-tests]: ../design/basic/05-tests.md
 [adr-claude-dir]: ./adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-ci-secrets]: ./adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
+[adr-same-model]: ./adr-20261031-002-same-model-per-role-for-all-tasks.md

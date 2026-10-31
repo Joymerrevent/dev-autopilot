@@ -67,7 +67,7 @@ Issue は公開リポに誰でも立てられる。dev-autopilot が作業 AI・
     コラボレータが本文を作業指示の形で書いていても、受付 AI が書き直す。本文のとおりに渡したいときは、人がマスターを写して直した全文を `## 作業指示` に書く。
     受付 AI は道具を持たず（Bash・Write・Edit・WebFetch・WebSearch なし）、読めるのはその Issue の文だけ（書き直しでは、マスターと `## 差し戻し` の頼みも読む）で、結果は出力契約（JSON）で返す。下書きも GitHub に書く前に検疫に通す。下書きの形は「[作業指示（agent brief）の形][f08]」。
     モデルは `haiku` / medium（完全な ID で渡す。IMPL-29）。拒否（`stop_reason: refusal`）で止まったら「実行の失敗」（IMPL-14）として扱い、次回の実行は `sonnet` で試す。文は小さいので、単価が上がる 10 万トークンの境には届かないが、`usage` を記録で確かめる
-  - 計画の難しさの判定：作業ごとに使うモデルの決め方を決めるまで、受付 AI は判定を返さない（IMPL-30、[ADR-20261024-004][adr-master] の決定 8）
+  - 計画の難しさの判定：受付 AI は判定を返さない（作業ごとにモデルを変えないため。IMPL-30、[ADR-20261024-004][adr-master] の決定 8、[ADR-20261031-002][adr-same-model]）
   - 方針に係る要望かの判定：受付 AI は、下書きと同じセッションで、Issue が当てる先のリポの方針の文書（規約の正典、CLAUDE.md、ADR など）を変えてほしいという要望かを判定し、根拠を 1 行添えて返す。
     進行 Bot は、方針の要望と判定したとき、マスターの下書きに判定と根拠を決まった見出しの下に書き添える。判定で Issue を止めず、`agent-ready` を付けるかは人が決める。判定は手元の記録に残す（[ADR-20261019-004][adr-policy]）
   - 依存の候補：本文の `#n` の参照だけを進行 Bot が機械で出す（「触る範囲の重なり」の予測は出さない。重なりは着手後に実際の変更ファイルで見る。FLOW-8）
@@ -117,7 +117,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `plan` | 計画を投稿した（T7） | Issue | `baseHead`、`planHash`、`model` | IMPL-10 |
 | `link` | PR を作った（T8） | Issue と PR | Issue には `pr`、PR には `issue`（相手の番号） | IMPL-6 |
 | `review` | 変更を確かめた（T11・T12） | PR | `round`、`head`、`result`（`pass` か `fix`）、`high`・`medium`・`low`（件数）、`droppedHigh`（批評 AI が落とした 🔴 の、PR ごとの累計）、`findings`（統合の後に残った 🔴 🟡 の指摘ごとの ID の並び。[ADR-20261019-001][adr-repeat]）、`model`（レビュー AI のモデル。ラウンド 2 以降も最初のラウンドの印と同じ値） | IMPL-18、IMPL-22、IMPL-24、IMPL-33 |
-| `fix` | AI が直した（T13・T14・T20。push の前に書く） | PR | `round`（最新の `review` の印の `round`。最初のレビューの前は 0）、`head`（送る SHA）、`cause`（`check`・`review`・`conflict`。何を直したか） | IMPL-23、IMPL-24、IMPL-27、MERGE-6、[ADR-20261022-003][adr-rounds] |
+| `fix` | AI が直した（T13・T14・T20。push の前に書く） | PR | `round`（最新の `review` の印の `round`。最初のレビューの前は 0）、`head`（送る SHA）、`cause`（`check`・`review`・`conflict`。何を直したか）、`model`（その修正で作業 AI を起こしたモデル。`--model` に渡した値。[ADR-20261101-001][adr-raise-in-fix]） | IMPL-23、IMPL-24、IMPL-25、IMPL-27、MERGE-6、[ADR-20261022-003][adr-rounds] |
 | `conflict` | 載せ直しが衝突した（T19） | PR | `head` | FLOW-44、MERGE-6 |
 | `merge` | マージの判定をした | PR | `head`、`result`（`ready` か `human`）、`reasons`（満たさない条件の記号の並び） | MERGE-3 |
 | `remind` | 催促した | PR | `head` | MERGE-3 |
@@ -133,7 +133,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `follow-up` | 🟢 を Issue に記録した（新しい Issue にしたか、有効な `follow-up` の印を持つ同じ見出しの開いた Issue に足した。[ADR-20261031-001][adr-follow-up-dup]） | 🟢 を記録した Issue | `pr`、`finding`（指摘の ID） | IMPL-26 |
 | `overlap` | AI の変更が触ったファイルが、ほかの進行中の PR と重なった（1 回だけ警告し、待たせない） | Issue | `prs`（重なった PR の番号の並び）、`paths`（重なったパスの並び） | FLOW-8 |
 
-組み直す前の印（`intake`・`intake-final` と、`note` の中を `kind` で分ける `wait`・`overlap`・`remind`・`stop`・`link`・`raise`・`duplicate`・`conflict`）は、上の種類に置き換えた。今の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（IMPL-26、[ADR-20261031-001][adr-follow-up-dup]）。今の `note kind=raise`（作業 AI のモデルを上げた）の扱いは決めていない（IMPL-25）。
+組み直す前の印（`intake`・`intake-final` と、`note` の中を `kind` で分ける `wait`・`overlap`・`remind`・`stop`・`link`・`raise`・`duplicate`・`conflict`）は、上の種類に置き換えた。今の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（IMPL-26、[ADR-20261031-001][adr-follow-up-dup]）。今の `note kind=raise`（作業 AI のモデルを上げた）は、`fix` の印の `model` の欄と、上げた修正の `fix` の印のコメントの決まった文にした（IMPL-25、[ADR-20261101-001][adr-raise-in-fix]）。
 
 人が付けるラベルと、進行 Bot が付ける表示のラベル（名前は設定に持ち、ここの名前は初期値。SETUP-8）：
 
@@ -182,3 +182,5 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-security]: ../adr/adr-20261024-005-security-axis-and-halt-issue.md
 [adr-leak]: ../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
+[adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
+[adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
