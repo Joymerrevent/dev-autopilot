@@ -278,7 +278,7 @@ push 以上の人が書いた最新の `## 再開 <戻す先>` を R とする�
 | 検査不合格 | 直し：往復の回数がすでに上限（`limits.roundTrips`）に達していれば、作業 AI を起こさずに停止中（`round-limit`）にする。達していなければ、作業 AI に、落ちたチェックの名前と結果だけを渡して直させ、`fix` の印（`cause` が `check`、`round` は最新の `review` の印の `round`。最初のレビューの前は 0）を書いて push する（[IMPL-27][impl]） | 重い | T13 |
 | レビュー不合格 | 直し：往復の回数がすでに上限に達していれば停止中（`round-limit`）、同じ指摘の再発なら停止中（`repeated-finding`）にする（判定は下の「判定」）。どちらでもなければ、作業 AI に最新のラウンドの 🔴 🟡 だけを直させ、対応コメントと `fix` の印（`cause` が `review`）を書いて push する（[IMPL-23][impl]、[IMPL-24][impl]） | 重い | T14 |
 | 衝突あり | 衝突の直し：往復の回数がすでに上限に達していれば停止中（`round-limit`）。達していなければ、作業 AI に衝突を解かせ、対応コメントと `fix` の印（`cause` が `conflict`）を書いて push する（[MERGE-6][merge]） | 重い | T20 |
-| レビュー合格 | 次の順に進める。(1) 🟢 の起票：PR のどのラウンドの 🟢 も、まだ Issue にしていなければ、新しい Issue にする（`follow-up` の印。[IMPL-26][impl]）。(2) PR がまだ draft なら ready にする（[IMPL-11][impl]）。(3) 載せ直し：base ブランチが PR の head より先に進んでいれば、基線が緑のときだけ、進行 Bot の clone で base ブランチを取り込む。差分（patch-id）が同じなら、`review` の印と `merge` の印を新しい head に付け直す（T17）。変わったら、そのまま push する（変更済み。T18）。衝突したら、取り込みをやめ、`conflict` の印（`head` に PR の head）を書く（衝突あり。T19）。(4) マージの判定：PR の head を `head` に持つ `merge` の印が無ければ、判定して `merge` の印を書く（下の「判定」。組 2 の後に回す）。(5) 催促：`result` が `ready` の `merge` の印のまま、マージも `## 判定と違う判断` も無く `limits.remindDays` 日を過ぎ、同じ `head` の `remind` の印が無ければ、催促する（`remind` の印。[MERGE-3][merge]） | 軽い | T17・T18・T19 |
+| レビュー合格 | 次の順に進める。(1) 🟢 の起票：PR のどのラウンドの 🟢 も、まだ Issue に記録していなければ（`pr` がその PR で `finding` がその指摘の ID の、有効な `follow-up` の印が無ければ）、記録する。有効な `follow-up` の印を持ち、題名が指摘の見出しと同じ開いた Issue があれば、その Issue に PR の番号を足すコメントを書き、無ければ新しい Issue にする。どちらも `follow-up` の印を書く（[IMPL-26][impl]、[ADR-20261031-001][adr-follow-up-dup]）。(2) PR がまだ draft なら ready にする（[IMPL-11][impl]）。(3) 載せ直し：base ブランチが PR の head より先に進んでいれば、基線が緑のときだけ、進行 Bot の clone で base ブランチを取り込む。差分（patch-id）が同じなら、`review` の印と `merge` の印を新しい head に付け直す（T17）。変わったら、そのまま push する（変更済み。T18）。衝突したら、取り込みをやめ、`conflict` の印（`head` に PR の head）を書く（衝突あり。T19）。(4) マージの判定：PR の head を `head` に持つ `merge` の印が無ければ、判定して `merge` の印を書く（下の「判定」。組 2 の後に回す）。(5) 催促：`result` が `ready` の `merge` の印のまま、マージも `## 判定と違う判断` も無く `limits.remindDays` 日を過ぎ、同じ `head` の `remind` の印が無ければ、催促する（`remind` の印。[MERGE-3][merge]） | 軽い | T17・T18・T19 |
 | マージ済み | 片付け：Issue を閉じ、作業ブランチ（残っていれば）と作業場所（セッションのフォルダ）を消し、`cleanup` の印を書く（[FLOW-42][flow]、[MERGE-7][merge]） | 軽い | T27 |
 | 閉鎖済み | 片付け：開いた結びつく PR を閉じ、作業ブランチと作業場所を消し、`cleanup` の印を書く（[FLOW-42][flow]） | 軽い | T28 |
 
@@ -492,7 +492,7 @@ AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後�
 | 7 | `fix`（`cause` が `check`） | PR | 検査の失敗の直しを push する前（検査不合格。T13。最初のレビューの前は `round` が 0） |
 | 8 | `review` | PR | ラウンドごとに、確かめの結果を投稿するとき（検査合格。T11・T12） |
 | 9 | `fix`（`cause` が `review`） | PR | 指摘の直しを push する前（レビュー不合格。T14） |
-| 10 | `follow-up` | 新しい Issue | レビュー合格に入るときに、🟢 を新しい Issue にするとき（T11。[IMPL-26][impl]） |
+| 10 | `follow-up` | 🟢 を記録した Issue（新しい Issue か、同じ見出しの開いた Issue） | レビュー合格に入るときに、🟢 を新しい Issue にするか、同じ見出しの開いた Issue に足すとき（T11。[IMPL-26][impl]） |
 | 11 | `conflict`、`fix`（`cause` が `conflict`） | PR | 載せ直しが衝突したとき（T19）と、衝突の直しを push する前（T20） |
 | 12 | `merge` | PR | レビュー合格の間に、マージの判定をするとき（上の「マージの判定」） |
 | 13 | `remind` | PR | `ready` の判定のまま、マージも `## 判定と違う判断` も無く `limits.remindDays` 日を過ぎたとき（[MERGE-3][merge]） |
@@ -518,7 +518,7 @@ AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後�
 
 - `stop` を 1 回だけにしないのは、人が再開した後に同じ理由で再び止まったとき、前の印を見て書かないと、今回止まったことが人に伝わらないため。止めている間は、進行 Bot は止める契機を確かめない（上の「先に見る」の順 3）ので、同じ理由で重ねて書くことは無い
 - `security` も同じく、値がある間は AI に文を渡さず、検疫を掛け直さないので、重ねて書くことは無い。人が `## 安全の確認` で外した後に、また見つかったら書く
-- 組み直す前の `note kind=raise`（作業 AI のモデルを上げた）と `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）の印の名前は、まだ決めていない（要件の UNDECIDED-90・92、[IMPL-25][impl]、[IMPL-26][impl]、[ADR-20261024-001][adr-model-states] の決定 9）。決めるときは、`stop` と `link` に寄せない。`stop` に寄せると止まったと読まれ、`link` に寄せると PR と Issue の結びつきを誤るため
+- 組み直す前の `note kind=duplicate`（🟢 の重複の Issue に PR の番号を足した）は、`follow-up` にした（[IMPL-26][impl]、[ADR-20261031-001][adr-follow-up-dup]）。`note kind=raise`（作業 AI のモデルを上げた）の印の名前は、まだ決めていない（要件の UNDECIDED-90、[IMPL-25][impl]、[ADR-20261024-001][adr-model-states] の決定 9）。決めるときは、`stop` と `link` に寄せない。`stop` に寄せると止まったと読まれ、`link` に寄せると PR と Issue の結びつきを誤るため
 
 ### 止めた理由の記号
 
@@ -709,3 +709,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [fig-states]: ../../requirements/diagrams/work-unit-states.drawio.svg
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
+[adr-follow-up-dup]: ../../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
