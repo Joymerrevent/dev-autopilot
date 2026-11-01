@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-11-01
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -103,6 +103,9 @@ decision-makers: メンテナ
 - 本 ADR で決めないこと
   - 漏えいの検査の例外（誤って反応する見本や文書の例を、どう通すか）。運用で誤った反応が目立ったら、決めていないことに足す
   - GitHub の外への通知の仕組みと鍵（[ADR-20261024-005][adr-security] の決定 4 のまま、後で決める）
+
+    > **［2026-11-01 追記］** [ADR-20261101-002][adr-notify] で決めた。漏えいの検査で見つかったとき（`security` の印の `where` が `leak`）も、ほかの攻撃の疑いと同じく、人が選んだ Slack 互換の Webhook に決まった文だけを送る。決定は変わらない。
+
 - 関連する要件：IMPL-15（[02-implement-review-fix.md][impl]）、MERGE-2（[03-merge.md][merge]）、SAFE-8、SAFE-18、SAFE-19（[05-safety.md][safety]）、UNDECIDED-83（[09-undecided.md][undecided]）
 - 関連する ADR：[ADR-20261024-001][adr-model-states]、[ADR-20261024-005][adr-security]
 - 要件と設計への反映（承認の後に、別の PR で 1 本にまとめて行う）
@@ -125,3 +128,4 @@ decision-makers: メンテナ
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
