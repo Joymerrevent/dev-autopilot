@@ -28,7 +28,9 @@
   AI が書いた文（下書き、計画、PR の題名と本文、指摘、直しの返事など。GitHub に書く前）で見つかったら、AI が操られた疑いがあり、同じ手口がほかの作業に届いているかもしれないので、進行 Bot が全体の停止の Issue を開いて `halt` の印を書き（開いている全体の停止の Issue があれば、そこに足す）、どの作業の単位でも AI のセッションを起こさない。開いた実行で動いている AI のセッションは、全体の止める合図と同じ手順で止める。AI を使わない進行 Bot の工程（検疫、表示の欄、片付けなど）は続ける。
   全体の停止は、maintain 以上の人が、全体の停止の Issue に最新の `halt` の印より後に `## 安全の確認` を書き、Issue を閉じたときに解ける。確かめずに閉じたときと、確かめても閉じていないときは、止めたままにする。全体の停止を解いても、見つけた作業の単位の値は残り、作業の単位の Issue の `## 安全の確認` で外す。PR の差分（コード）で見つかったときは、全体を止めず、見つかった作業の単位だけを止める（コードの中の文字列やテストのデータで誤って反応しやすいため）。漏えいの検査で見つかったときも、全体を止めない（機械上のパスやメールアドレスで誤って反応しやすいため）。
   人が全体を止めるリポの変数（「[運用の規則][f01]」の止める合図）は据え置く。進行 Bot は、リポの変数が `run` で、全体の停止の Issue が無いときだけ AI のセッションを起こし、リポの変数を書く権限を持たない。
-  攻撃の疑いは、進行 Bot が付ける表示のラベル `security-suspected`（値が外れたら外す。判定には読まない）、見つかった種類と場所を書いたコメント（`security` の印。見つかった文は写さない）、Project の安全の欄、GitHub の外への通知（仕組みと鍵は後で決める。UNDECIDED-91）で知らせる
+  攻撃の疑いは、進行 Bot が付ける表示のラベル `security-suspected`（値が外れたら外す。判定には読まない）、見つかった種類と場所を書いたコメント（`security` の印。見つかった文は写さない）、Project の安全の欄、GitHub の外への通知で知らせる。
+  GitHub の外への通知は、進行 Bot が `security` の印と `halt` の印を GitHub に書いた後に、人が選んだ Slack 互換の Webhook（JSON の `text` の欄に文を入れて POST すると、その文を投稿するもの）に、決まった文だけを送る。送る文は、リポ・攻撃の疑いか全体の停止か・Issue と PR の番号と URL・人がすることだけで、Issue の題名と本文、見つかった文、AI が書いた文、機械上のパスは書かない。
+  Webhook の URL は秘密の置き場に置き（SAFE-1）、URL が無ければ点検を fail にする（SETUP-2）。送れなくても、攻撃の疑いと全体の停止の扱いは変えない（正本は GitHub の印）。同じ実行の中で送り直し、それでも送れなければ、送れなかったことを記録に残して点検の warn に出す（[ADR-20261101-002][adr-notify]）
 - SAFE-20 **作業ブランチの CI と秘密**（[ADR-20261028-001][adr-ci-secrets]、[ADR-20261028-002][adr-app-secrets]）。当てる先のリポの CI が秘密を使うときは、Environment に置き、使えるブランチを「選んだブランチ」で base ブランチと人が決めたブランチだけにする。リポの秘密と組織の秘密は、当てる先のリポに届かないようにする。作業ブランチの PR の CI は、PR の中の定義で動く（FACT-75）ので、作業 AI が書いたコードが秘密に届かないようにするため（FACT-79）。非公開のリポで秘密が要るときは、Environment に有料のプランが要る。
   CI の定義（push で効く組）は、秘密を Environment に置いても、今のまま人が push する。秘密が無くても、CI の定義を変えれば書き込みのトークンを求められるため（FACT-78、IMPL-15）。秘密の置き方は、点検（SETUP-2）で確かめる。進行 Bot は、GitHub App に秘密の名前を読む権限（値は読めない）を持ち、毎回の実行の最初に確かめる
 
@@ -62,7 +64,7 @@
 - SAFE-15 鍵は 2 系統：人の署名鍵（手元の SSH 鍵。dev-autopilot は触らない）と、dev-autopilot のマシン専用の deploy key（business-os だけに書き込み可。進行 Bot だけが使う）。
   進行 Bot の `gh` は、business-os だけに入れた GitHub App の秘密鍵から作る 1 時間で切れるトークンを、進行 Bot のプロセスの中でだけ持つ（`gh auth login` でマシンに残さない）。進行 Bot は最初から GitHub App だけを使い、fine-grained PAT は使わない（[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）。
   `setup` 用の GitHub App には秘密鍵を作らない。`setup` は、実行ごとに人がブラウザで承認する人の代わりのトークンを、`setup` の実行の間だけメモリに持ち、ファイルに書かない（[ADR-20261030-001][adr-setup-app]）。
-  GitHub App の秘密鍵、印の署名の鍵（IMPL-20 の (c)）、deploy key は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。launchd の plist には書かない（[ADR-20261015-001][adr-read]）
+  GitHub App の秘密鍵、印の署名の鍵（IMPL-20 の (c)）、deploy key、GitHub の外への通知の Webhook の URL（SAFE-19）は、秘密の置き場（設定の `paths.secrets`。置き場の外の、同期されないフォルダ。権限はフォルダ 700・ファイル 600）のファイルに置く。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す。Webhook の URL は子プロセスに渡さず、進行 Bot が通知を送るときだけ使う。launchd の plist には書かない（[ADR-20261015-001][adr-read]、[ADR-20261101-002][adr-notify]）
 - SAFE-16 進行 Bot は、専用の clone を 2 種類と、プログラムの写しを持つ：AI の worktree を切る「AI の作業場所」の clone、進行 Bot だけが書き、当てる先のリポ（business-os）の fetch・merge・push を行う「進行 Bot の clone」（`<置き場>/controller/`）、
   進行 Bot と `setup` だけが書き、`src/` を実行して Plugin として読み込ませる「進行 Bot のプログラムの写し」（`setup` が Plugin の版を置き場に写したもの。`devAutopilotPath`。[ADR-20261017-003][adr-plugin] の決定 2。STRUCT-3）。進行 Bot の clone は、AI のセッションから読めず書けない。
   プログラムの写しは、AI のセッションから書けず、読めるのは `skills/`（Skill の参照ファイルとスクリプト）だけで、`src/`（進行 Bot のコード）は読めない（SAFE-2 の (e)、SAFE-10。FACT-32。[ADR-20261017-004][adr-human]）。
@@ -95,3 +97,4 @@
 [adr-app-secrets]: ../adr/adr-20261028-002-app-reads-secret-names-for-checks.md
 [adr-no-pat]: ../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
 [adr-setup-app]: ../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
+[adr-notify]: ../adr/adr-20261101-002-notify-outside-github-by-webhook.md

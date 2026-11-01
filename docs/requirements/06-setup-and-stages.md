@@ -19,12 +19,14 @@ dev-autopilot は、Project の欄・ラベル・ブランチ保護・設定フ�
     定期の実行の登録（macOS は launchd の plist、Linux は systemd のユーザーのタイマー。STRUCT-8）、worktree の置き場、記録と lock の置き場（記録のフォルダには、作った日時を書いた記録の目印のファイルを置く。「[運用の規則][f01]」）、秘密の置き場（フォルダとファイルを権限 700・600 で作る。値は人が書く。SAFE-15）
   - 人がやるもの（Plugin は手順を示し、済んだかを点検で確かめる）：SSH 鍵の作成と GitHub への登録、印の署名の鍵の一覧（IMPL-20）の作成と秘密の置き場への保管（SAFE-15）、2 つの GitHub App（進行 Bot 用と `setup` 用）の作成と導入の画面での操作（`setup` が作り、人は「Create」と導入を押す。`setup` 用の App は、作る前に Device Flow を有効にし、作った後に `client_id` を 1 回 `setup` に渡す。[ADR-20261020-002][adr-app]、[ADR-20261030-001][adr-setup-app]）、`setup` のたびの承認のコードの入力、専用マシンの用意、利用枠の確認、
     Project の自動追加（組み込みワークフロー「Auto-add to project」を有効にする。公開 API が無いので人が行い、`check` は有効かを読むだけ）、CI が秘密を使うなら、Environment に置き、使えるブランチを base ブランチと人が決めたブランチだけにすること（SAFE-20）、
+    GitHub の外への通知の送り先（Slack 互換の Webhook。Slack・Google Chat など）を用意し、Webhook の URL を秘密の置き場に書くこと（SAFE-19、[ADR-20261101-002][adr-notify]）、
     処理対象にする Issue を決めること（マスターの下書きを読み、要れば直すか差し戻してから、`agent-ready` を付ける。TEXT-12）
 - SETUP-2 **点検（`/dev-autopilot check`）**：前提がすべて揃っているかを機械で確かめ、fail / warn / pass で返す。進行 Bot は毎回の実行の最初に同じ点検を回し、
   fail が 1 つでもあれば作業に入らず止まる（fail-closed）。人が呼ぶ `check` は進行 Bot を直接起動せず、定期の実行と同じジョブを起こす。GitHub の点検（ラベル、Project の欄、ruleset、App の権限）は進行 Bot が自分の GitHub App で行い、人のセッションは実行の記録を読んで表示する（点検だけで動かす仕組みは、基本設計の「[導入と点検][design-setup]」の「点検だけで動かす仕組み」で決めた。[ADR-20261017-004][adr-human] の決定 2）。
   見るもの：ラベルと Project の欄の存在、ruleset（bypass にリポの役・deploy key・一覧の外の GitHub App・進行 Bot のアプリが入っていれば fail。入れてよいのは組織の管理者とチームと、deploy key の push 先を限る ruleset ではリポの設定の一覧で人が許したアプリだけ。FACT-65、FACT-67。進行 Bot の GitHub App のトークンでは `bypass_actors` がいつも返らない（FACT-88・91）ので、`setup` が bypass を確かめたときに控えた ruleset の `updated_at` と比べ、App 自身が bypass に入っていないこと（`current_user_can_bypass`。FACT-90）を確かめる（[ADR-20261028-004][adr-bypass-baseline]）。確かめ方は、基本設計の「[導入と点検][design-setup]」）、設定ファイルの項目と ID の実在と型（要件が「設定に持つ」と書いた項目がすべてあること。STRUCT-2）、必須チェックの一覧が空でないこと（IMPL-27）、進行 Bot の GitHub App の権限（全体の止める合図の変数は読めて、変えられないこと）、マシンの設定に GitHub App があり、秘密の置き場に PAT のファイルが無いこと（[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）、
   印の署名の鍵の一覧に 2 つ以上の鍵があるときは、先頭でない鍵でだけ確かめられた印が残る開いた Issue と PR の番号と、残りが無くなったら前の鍵を一覧から外してよいこと（warn。[ADR-20261021-004][adr-marker-keys]）、
   全体の止める合図の変数があって読めること、origin に base ブランチがあり、base ブランチの先端にリポの設定があり、ruleset が base ブランチを守っていること（[ADR-20261017-007][adr-stop]）、当てる先のリポの CI の秘密の置き方（リポの秘密が無く、組織の秘密が届いておらず、Environment の使えるブランチが作業ブランチと PR に当たらないこと。SAFE-20、[ADR-20261028-001][adr-ci-secrets]。外れていれば fail）、
+  GitHub の外への通知の Webhook の URL（秘密の置き場のファイルが `https://` で始まる 1 行であること。外れていれば fail。送り直しても送れなかった通知があれば warn。SAFE-19、[ADR-20261101-002][adr-notify]）、
   `claude` と Node の版（Node 24 が要る）、インストールされた Plugin の版と進行 Bot のプログラムの写しの版の一致（違えば warn。STRUCT-3）、Skill の有無、前回の実行の記録と記録の目印のファイル（無ければ fail。「[運用の規則][f01]」）、lock の状態（古い lock。「[運用の規則][f01]」）、子プロセスに GitHub App の秘密鍵とトークンと印の署名の鍵の一覧が見えないこと（実際に試す）、sandbox が実際に読めない・書けないこと（「[安全側に倒す設計][f05]」）。
   作業場所の残骸は warn にし、Issue に紐づく残骸はその Issue だけ停止中、どの Issue か分からない残骸だけ fail（何を残骸とみなすかは、基本設計の「[状態遷移と判定][design-flow]」の「作業場所の残骸」で決めた）。
   AI の作業場所も実際に試す（[ADR-20261013-001][adr-workspace] の確認方法）：進行 Bot の clone と AI の作業場所の clone に、リンク数が 2 以上の objects のファイルが無いこと、`.git/worktrees/<名前>/gitdir` が sandbox の中から書けないこと、objects を書き換えた clone から、進行 Bot の clone と同じ取り込みの設定（git に渡す環境変数と設定）で fetch すると失敗すること（取り込む先は、進行 Bot の clone を汚さないように、試しのためだけに作る小さなリポにする。基本設計の「[導入と点検][design-setup]」の「モデルを使わない試し」）。
@@ -122,3 +124,4 @@ SETUP-5・SETUP-6・SETUP-8・SETUP-9 は、「導入と点検」の `setup` が
 [adr-no-pat]: ../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
 [adr-setup-app]: ../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
 [adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
+[adr-notify]: ../adr/adr-20261101-002-notify-outside-github-by-webhook.md
