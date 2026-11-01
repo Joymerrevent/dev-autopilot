@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-27
+updated: 2026-11-01
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -98,6 +98,8 @@ AI が書いたコードの差分は、コードの中の文字列やテスト�
 - コメント：`security` の印を付けたコメントを、Issue に書く（PR が契機なら PR にも）。見つかった場所（題名・本文・何番目のコメントか、PR の差分ならファイルと行）と種類を書き、見つかった文そのものは写さない（見えない文字や指示の形の文を、進行 Bot の投稿として広めないため）。人がすること（文を確かめて直し、`## 安全の確認` を書く）も書く
 - 表示の欄：Project の「安全」の欄に値を出す（[ADR-20261024-001][adr-model-states] の決定 5）
 - GitHub の外への通知：攻撃の疑いと全体の停止を、GitHub の外にも知らせる。送る仕組みと鍵は、後で決める
+
+  > **［2026-11-01 追記］** 送る仕組みと鍵は、[ADR-20261101-002][adr-notify] で決めた。人が選んだ Slack 互換の Webhook に、`security` と `halt` の印を書いた後に決まった文だけを送り、Webhook の URL は秘密の置き場に置く。決定は変わらない。
 - 全体の停止の Issue には、見つけた作業の Issue の番号と、人がすること（ほかの作業も確かめ、`## 安全の確認` を書いて閉じる）を書く
 
 ### 影響（Consequences）
@@ -191,3 +193,4 @@ AI が書いたコードの差分は、コードの中の文字列やテスト�
 [design-setup]: ../design/basic/04-setup-and-check.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-leak]: ./adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
