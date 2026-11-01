@@ -67,7 +67,7 @@
 | ADR-20261031-001 | [🟢 の指摘と同じ見出しの Issue が開いていれば、PR の番号を足すコメントにも follow-up の印を書く][adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings] | accepted | 2026-10-31 |
 | ADR-20261031-002 | [作業ごとに使うモデルを変えず、役ごとに設定の値を使う][adr-20261031-002-same-model-per-role-for-all-tasks] | accepted | 2026-10-31 |
 | ADR-20261101-001 | [作業 AI のモデルを上げたことは、fix の印の model の欄と決まった文で残す][adr-20261101-001-record-model-raise-in-fix-marker] | accepted | 2026-11-01 |
-| ADR-20261101-002 | [攻撃の疑いと全体の停止は、人が選んだ Slack 互換の Webhook に決まった文を送って GitHub の外に知らせる][adr-20261101-002-notify-outside-github-by-webhook] | proposed | 2026-11-01 |
+| ADR-20261101-002 | [攻撃の疑いと全体の停止は、人が選んだ Slack 互換の Webhook に決まった文を送って GitHub の外に知らせる][adr-20261101-002-notify-outside-github-by-webhook] | accepted | 2026-11-01 |
 
 <!--
 行の例（表の最後に足す）:
