@@ -75,6 +75,7 @@
 | `github-app-key.pem` | 進行 Bot の GitHub App の秘密鍵（[ADR-20261020-002][adr-app]） | `setup` が進行 Bot の App を作ったときに、受け取った秘密鍵を書く（「[導入と点検][design-setup]」の「GitHub App を作る」） | 新しく作る（人がアプリの新しい秘密鍵を作って書く）。前のマシンの秘密鍵は、新しいマシンの最初の実行が通った後に GitHub で取り消す |
 | `deploy-key` | 作業ブランチに push する deploy key の秘密鍵（[IMPL-15][impl]） | いつも | 新しく作る（人が新しい鍵を作り、deploy key として GitHub に登録する）。前のマシンの deploy key は、新しいマシンの最初の実行が通った後に GitHub から消す |
 | `marker-signing-keys` | 印の署名の鍵の一覧（[IMPL-20][impl]。1 行に 1 つ。印は先頭の行の鍵で署名し、どの行の鍵でも確かめる。形と読み方と替え方は「[状態遷移と判定][design-flow]」の「印の署名」） | いつも | 前のマシンから一覧を写す（行の順も変えない）。新しいマシンで鍵を作るときは、鍵を替える手順（「印の署名」）のとおり、新しい鍵を先頭の行に足し、前の鍵を残す。前の鍵を外すと、前の鍵で書いた印が署名の条件を満たさなくなり、開いている Issue と PR が `marker-invalid` で止まるため（[ADR-20261021-004][adr-marker-keys] の決定 2） |
+| `notify-webhook-url` | GitHub の外への通知を送る Slack 互換の Webhook の URL（1 行。`https://` で始まる。送り先のサービスは人が選ぶ。[SAFE-19][safety]、[ADR-20261101-002][adr-notify]。送り方は「[状態遷移と判定][design-flow]」の「GitHub の外への通知」） | いつも | 前のマシンから写すか、送り先のサービスで新しい URL を作って書く。新しい URL にしたときは、前の URL を送り先のサービスで消す |
 
 - 秘密の値を、設定ファイル・定期の実行の定義・記録に書かない。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す（[SAFE-15][safety]）
 - `setup` が示す秘密の作り方（印の署名の鍵なら `openssl rand -base64 32` など）は、初めて導入するときのもの。`setup` は、印の署名の鍵の一覧を「初めて導入するときは鍵を 1 つ作って 1 行目に書き、動かすマシンを替えるときは前のマシンから一覧を写す」と分けて示す（上の表の右の欄。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
@@ -287,6 +288,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 - `safety.sandbox.toolDirs` の各フォルダが、ホーム（`~/`）自体でなく、`node`・`pnpm`・`git` の実体のどれかを含み、人の pnpm の store・`~/.ssh`・`~/.config/gh`・`~/.claude/`・マシンの設定のフォルダ・マシンの中のフォルダを含まないこと（[ADR-20261015-002][adr-store]、[SAFE-10][safety]）
 - `<sessionTmp.root の実体のパス>/<sessionTmp.idLength の文字数の ID>/claude-<uid>` の長さが `sessionTmp.maxBytes` 以内で、`sessionTmp.maxBytes` が 44 以下であること（[SAFE-10][safety]、FACT-37）。根を長くすると、起動の前の確かめで AI のセッションを黙って起こさなくなり、上限を 45 以上にすると、Claude Code がユーザーごとの一時フォルダに戻したまま起動するため
 - 秘密の置き場の `marker-signing-keys` に鍵の行が 1 つ以上あり、どの行も、末尾の空白と改行を除いて base64 として解け、解いた値が 32 バイトであること（読み方は「[状態遷移と判定][design-flow]」の「印の署名」）。鍵の行が 1 つも無ければ fail にする（空のファイルを「無い」と読む。[ADR-20261021-004][adr-marker-keys] の決定 1）
+- 秘密の置き場の `notify-webhook-url` が、末尾の空白と改行を除いて `https://` で始まる 1 行であること。空のとき（「無い」と読む）、`https://` で始まらないとき、2 行以上のときは fail にする。送り先が無いまま進行 Bot を動かさないため。URL の値は点検の結果に出さない（[SAFE-19][safety]、[ADR-20261101-002][adr-notify]）
 - 投稿に使うアカウントが当てる先のリポに書いた、最新の未編集の印の署名が、`marker-signing-keys` のどれかの鍵で通ること。通らなければ warn にする。動かすマシンを替えたときの鍵の取り違えを、人に知らせるため（印が 1 つも無いときは、比べる印が無いので確かめない）。fail にしないのは、鍵が漏れて一覧から外したときに、進行 Bot が次の実行で、漏れた鍵の印のある開いた Issue と PR を `marker-invalid` で止めるため（fail にすると、進行 Bot が作業に入らず、止められない。[ADR-20261021-004][adr-marker-keys] の決定 3）。取り違えても、前の鍵の印のある Issue と PR は `marker-invalid` で止まり、先へは進まない
 - 費用の上限 4 つが、上の「[費用の上限の値][cost-values]」の関係を保つこと
 - 定期の実行の定義が渡すマシンの設定のパスと、人が呼ぶ Skill が origin から見つけるパスが一致すること。定期の実行の間隔が `run.intervalHours` と一致すること
@@ -344,3 +346,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-setup-app]: ../../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
 [adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
+[adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
