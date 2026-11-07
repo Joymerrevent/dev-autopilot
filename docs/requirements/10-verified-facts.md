@@ -418,11 +418,23 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 | FACT-109 | `curl -H @-` で、見出しを標準入力から読ませて、JWT を引数にも環境変数にも置かずに呼べるか | **呼べる。** `GET /app` は 200。インストールのトークンへの引き換え（`POST /app/installations/{installation_id}/access_tokens`。要求の JSON は `--data-binary`）も通り、要求した権限（`metadata: read`）だけのトークンと期限（1 時間後）が返った | 実行 |
 | FACT-110 | 同じユーザーのほかのプロセスの引数を、`ps` で読めるか | **この会話の Bash からは読めた。** `ps -axww -o pid=,user=,args=` で、Claude Code の外で動く同じユーザーのアプリ（ブラウザとエディタの補助のプロセス）の引数を、途中で切らずに読めた。この会話の Bash が、AI のセッションと同じ sandbox の設定で動いているかは確かめていない。環境変数は `ps` で読めなかった（FACT-44） | 実行（モデルなし） |
 
+## Claude Code の Plugin の依存の導入を確かめた事実（2026-11-07）
+
+進行 Bot が実行時に npm の依存を持つかを決める前に（[ADR-20261107-002][adr-deps]）、Claude Code が Plugin を入れるときに依存を入れる振る舞いを確かめた。
+macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。人の `~/.claude` に触れないように、`CLAUDE_CONFIG_DIR` で Claude Code の設定のフォルダを一時の場所に切り替えた。手元の marketplace に試し用の Plugin（`plugin.json`・`package.json`・ロックファイル）を置き、`claude plugin install` と `claude plugin update` で入れた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-118 | Plugin の root に `package.json` と npm のロックファイル（`package-lock.json`）があるとき、Claude Code が依存を入れるか | **入れる。** `claude plugin install` で、Claude Code が Plugin を置いた版のフォルダ（`<設定のフォルダ>/plugins/cache/<marketplace>/<Plugin>/<版>/`）に `node_modules` が入った（`toad-cache`）。依存を `@octokit/core` と `@octokit/auth-app` に替えた版を `claude plugin update` で入れると、新しい版のフォルダの `node_modules/@octokit/` に 14 個が入った（更新は 1 秒）。`node_modules` の中にシンボリックリンクは無く、npm の控え（`node_modules/.package-lock.json`）が入った。版を上げた後の古い版のフォルダには、Claude Code が `.orphaned_at` を書いた | 実行 |
+| FACT-119 | ロックファイルが `pnpm-lock.yaml` だけのとき、Claude Code が依存を入れるか | **入れない。** `node_modules` は作られなかった | 実行 |
+| FACT-120 | Octokit の部品が、下の依存まで含めていくつのパッケージを入れるか | **全部入りの `octokit` 5.0.5 は 63 個、`@octokit/auth-app` 8.3.1 は 16 個、`@octokit/core` 7.0.6 は 12 個。** `npm install <名前> --package-lock-only --ignore-scripts` で作ったロックファイルで数えた。`octokit` の 63 個に、入れるときのスクリプト（`hasInstallScript`）を持つものは無く、ライセンスは MIT・Apache-2.0・ISC だけ | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [pnpm-store]: https://pnpm.io/settings/store
 [bos-issue-37]: https://github.com/Joymerrevent/business-os/issues/37
+[adr-deps]: ../adr/adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
 [bos-issue-44]: https://github.com/Joymerrevent/business-os/issues/44
 [bos-pr-45]: https://github.com/Joymerrevent/business-os/pull/45
 [bos-issue-80]: https://github.com/Joymerrevent/business-os/issues/80
