@@ -18,7 +18,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | --- | --- | --- |
 | README.md | 層と依存の向き、フォルダとモジュールの一覧、入口ごとの import の範囲、テストで外との境を差し替える方法、構成の検査に足すこと、TypeScript の書き方 | あり |
 | [01-io.md][d01] | 外との境（システム、子プロセスの時間の上限と止め方、`gh`・`git`・`claude` の呼び方、ファイル、秘密の置き場、HTTP、OS ごとの部分） | あり（JWT で呼ぶ 2 つの API は、UNDECIDED-95 を決めた後に足す） |
-| `02-settings-and-records.md` | 設定の読み込みと確かめ、手元の記録、lock、依頼と結果のファイル、`status.json` | まだ無い |
+| [02-settings-and-records.md][d02] | 設定の読み込みと確かめ、手元の記録、lock、依頼と結果のファイル、`status.json` | あり |
 | `03-markers.md` | 印の形、署名に使う JSON の並べ方、鍵の読み方 | まだ無い |
 | `04-check.md` | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | まだ無い |
 | `05-setup.md` | setup | まだ無い |
@@ -156,6 +156,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 [adr-plugin]: ../../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-intake-req]: ../../adr/adr-20261022-004-intake-skill-via-request-file.md
 [d01]: ./01-io.md
+[d02]: ./02-settings-and-records.md
 [fig-layers]: ./diagrams/00-layers.drawio.svg
 [fig-entries]: ./diagrams/00-entries.drawio.svg
 [fig-tests]: ./diagrams/00-tests.drawio.svg
