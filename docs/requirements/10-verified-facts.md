@@ -406,6 +406,18 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 | FACT-105 | 型だけを持つ名前を、`type` を付けずに import して動くか | **動かない。** `import { make, Pair } from './b.ts'`（`Pair` は型）は、起動の時に `SyntaxError`（`does not provide an export named 'Pair'`）で止まった。`import { make, type Pair }` は動いた。型の検査の `verbatimModuleSyntax` は、`type` を付けない型の import を TS1484 の誤りにした | 実行 |
 | FACT-106 | `package.json` の無いフォルダで、import と export を持つ `.ts` を動かせるか（Plugin の写しは `plugin/` の中だけを写し、リポの root の `package.json` を含まない） | **動く。** ES モジュールとして動き、標準エラーには何も出なかった（警告も無い）。`{"type":"module"}` の `package.json` を置いても同じ | 実行 |
 
+## GitHub App の JWT を GitHub に送る手段を確かめた事実（2026-11-07）
+
+詳細設計の外との境を書く途中で、基本設計の「[導入と点検][design-setup]」の「GitHub App の権限」（進行 Bot は秘密鍵で作った JWT をインストールのトークンに引き換え、点検はインストールの情報を JWT で読む）を、どの手段で送れるかを確かめた。
+試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）の秘密鍵で JWT を作った。macOS、gh 2.91.0、curl 8.7.1、Node 24.3.0。JWT とトークンの値は画面に出していない。GitHub 側に作ったのは、引き換えで作ったインストールのトークン（1 時間で切れる。権限は `metadata: read` だけ）だけ。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-107 | `GH_TOKEN` に JWT を入れて、`gh api` で GitHub App の API（`GET /app`、インストールのトークンへの引き換え）を呼べるか | **呼べない。** 401（「A JSON web token could not be decoded」）で断られた。同じ JWT を Node から送ると、`Authorization: Bearer` では 200、`Authorization: token` では同じ 401 だった。`gh` は `GH_TOKEN` を `token` の形で送り、GitHub は JWT を `Bearer` の形でだけ受ける | 実行 |
+| FACT-108 | `gh api -H 'Authorization: Bearer <JWT>'` で、見出しを上書きして呼べるか | **`GH_TOKEN` に何かの値があれば呼べる。** 意味の無い値の `GH_TOKEN` と一緒に渡すと、`-H` の見出しが使われて 200 だった。`GH_TOKEN` が無く、ログインも無いと、`gh` は送る前に `gh auth login` を求めて終了コード 4 で止まった。JWT は `gh` のプロセスの引数に載る | 実行 |
+| FACT-109 | `curl -H @-` で、見出しを標準入力から読ませて、JWT を引数にも環境変数にも置かずに呼べるか | **呼べる。** `GET /app` は 200。インストールのトークンへの引き換え（`POST /app/installations/{installation_id}/access_tokens`。要求の JSON は `--data-binary`）も通り、要求した権限（`metadata: read`）だけのトークンと期限（1 時間後）が返った | 実行 |
+| FACT-110 | 同じユーザーのほかのプロセスの引数を、`ps` で読めるか | **この会話の Bash からは読めた。** `ps -axww -o pid=,user=,args=` で、Claude Code の外で動く同じユーザーのアプリ（ブラウザとエディタの補助のプロセス）の引数を、途中で切らずに読めた。この会話の Bash が、AI のセッションと同じ sandbox の設定で動いているかは確かめていない。環境変数は `ps` で読めなかった（FACT-44） | 実行（モデルなし） |
+
 ## 外との境の詳細設計のために確かめた事実（2026-11-07）
 
 詳細設計の外との境（`docs/design/detailed/01-io.md`）の作り方を決めるために確かめた。macOS、Node 24.3.0、gh 2.91.0、lsof（macOS の付属）。`gh` の試しは、試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）の `metadata: read` だけのインストールのトークンで行い、トークンの値は画面に出していない。
@@ -448,3 +460,4 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 [doc-app-url-params]: https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-using-url-parameters
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[design-setup]: ../design/basic/04-setup-and-check.md
