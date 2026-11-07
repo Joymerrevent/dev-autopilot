@@ -406,6 +406,19 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 | FACT-105 | 型だけを持つ名前を、`type` を付けずに import して動くか | **動かない。** `import { make, Pair } from './b.ts'`（`Pair` は型）は、起動の時に `SyntaxError`（`does not provide an export named 'Pair'`）で止まった。`import { make, type Pair }` は動いた。型の検査の `verbatimModuleSyntax` は、`type` を付けない型の import を TS1484 の誤りにした | 実行 |
 | FACT-106 | `package.json` の無いフォルダで、import と export を持つ `.ts` を動かせるか（Plugin の写しは `plugin/` の中だけを写し、リポの root の `package.json` を含まない） | **動く。** ES モジュールとして動き、標準エラーには何も出なかった（警告も無い）。`{"type":"module"}` の `package.json` を置いても同じ | 実行 |
 
+## 外との境の詳細設計のために確かめた事実（2026-11-07）
+
+詳細設計の外との境（`docs/design/detailed/01-io.md`）の作り方を決めるために確かめた。macOS、Node 24.3.0、gh 2.91.0、lsof（macOS の付属）。`gh` の試しは、試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）の `metadata: read` だけのインストールのトークンで行い、トークンの値は画面に出していない。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-111 | `gh api -i` の出力から、HTTP の状態を読めるか | **読める。** 1 行目に `HTTP/2.0 200 OK` のような状態の行、続けて見出し、空行、本文の順に出た。404 のときも終了コード 1 で、状態の行と本文は標準出力に出て、標準エラーには `gh: Not Found (HTTP 404)` が出た | 実行 |
+| FACT-112 | 中身の無いフォルダを `GH_CONFIG_DIR` にして、`gh api` が動くか | **動く。** `GH_TOKEN` と一緒に渡すと、人の `gh` の設定を使わずに呼べた。フォルダの中には何も作られなかった（`GH_PROMPT_DISABLED=1`・`GH_NO_UPDATE_NOTIFIER=1` を一緒に渡した） | 実行 |
+| FACT-113 | 名前を付けた GraphQL の操作を、`gh api -i graphql --input -` で標準入力から送れるか | **送れる。** `query`・`operationName`・`variables` の JSON を標準入力で渡すと、200 で `data` が返った | 実行 |
+| FACT-114 | Node の `fetch` で、テスト用の証明書の HTTPS の偽の送り先（`https://127.0.0.1:<ポート>`）に送れるか | **`NODE_EXTRA_CA_CERTS` にテスト用の CA を渡して起こせば送れる。** 渡さないと、証明書の確かめ（`UNABLE_TO_VERIFY_LEAF_SIGNATURE`）で止まった。どちらも、送り手のプログラムに切り替えを持たせていない | 実行（手元だけ） |
+| FACT-115 | `lsof +D` の終了コードで、「何も見つからない」と「失敗した」を見分けられるか | **見分けられない。** 空のフォルダを探したときも、無いフォルダを探して失敗したときも、終了コードは 1 だった。標準エラーは、見つからないときは空、失敗したときは文があった。見つけたときは `-F pcn` で `p<PID>`・`c<コマンド>`・`f<種類>` の行が出た | 実行（手元だけ） |
+| FACT-116 | Node の `fs.rmSync(<フォルダ>, { recursive: true })` が、中のシンボリックリンクの先をたどって消すか | **たどらない。** フォルダの外を指すリンクを含むフォルダを消すと、リンクは消え、リンクの先のファイルは残った | 実行（手元だけ） |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
