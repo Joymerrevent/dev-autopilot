@@ -78,7 +78,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 - STRUCT-4 **検査は dev-autopilot のリポが持つ。** dev-autopilot のリポが、自分の `package.json`（検査のスクリプト）・依存とロックファイル・`.markdownlint-cli2.jsonc` と、コードを足すときの `tsconfig.json`・`vitest.config.ts` を持ち、business-os と共有しない（[ADR-20261016-003][adr-move] の決定 4）。
   衛生の検査（書式、lint、秘密の検査、Markdown）と CI と commit の規約の検査は、project-recipes のレシピで入れる
   - 単体テストは、Plugin に同封しないように `plugin/` の外の `test/unit/` に、`plugin/src/` と同じ形の路で置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。[ADR-20261017-003][adr-plugin] の決定 1）。
-    Claude Code の Plugin には、写すときにファイルを除く設定が無いため。`tsconfig.json` と `vitest.config.ts` は、`plugin/src/` と `test/` を対象にする
+    Claude Code の Plugin には、写すときにファイルを除く設定が無いため。`tsconfig.json` と `vitest.config.ts` は、`plugin/` の外の `test/` も対象にする（対象のフォルダの一覧は、基本設計の「[テスト][design-tests]」の「回し方」）
   - 単体テストが対象のコードの隣でなくなるので、CI で次の 2 つを確かめ、どちらかが外れたら CI を落とす（TypeScript の検査。検査そのものも vitest で検査する）
     - `plugin/src/` のコードのファイルごとに、`test/unit/` に同じ路の単体テストがあること。単体テストを持たないファイル（型の定義だけのファイルなど）は、理由を添えた例外の一覧に書いたものだけを認める
     - `plugin/` の中に、テストのファイル（`*.test.ts` など）が無いこと
