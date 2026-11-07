@@ -393,6 +393,19 @@ FACT-102 だけは、同じ組織に作った非公開の試し用リポで、�
 | FACT-101 | 「選んだブランチ」の規則の書き方ごとに、作業ブランチへの push の CI（`feat/issue-1` と照らす）と PR の CI（`refs/pull/1/merge` と照らす）に当たるか | **Ruby の `File.fnmatch` に `File::FNM_PATHNAME` を付けたときと同じに当たった。** `main`・`*`・`**` はどちらにも当たらず、`feat/issue-*` は作業ブランチにだけ、`refs/pull/*/merge` は PR の CI にだけ、`**/*` は両方に当たった（当たった Environment の秘密を読めた）。`*` と `**` は `/` を含む名前に当たらない。公式文書も、書き方の説明に Ruby の `File.fnmatch` を挙げ、ワイルドカードは `/` に当たらず、`refs/pull/*/merge` を足すと `pull_request` の実行も Environment を使えると書いている（[公式文書][doc-environments]） | 2026-10-30、実行（FACT-99 と同じ試し用リポ。6 つの規則と 2 つの実行の組のすべてで、手元の Ruby の `File.fnmatch` の結果と一致した） |
 | FACT-102 | 無料のプランの組織の非公開のリポで、Environment の秘密が CI に渡るか。「選んだブランチ」の規則が効くか | **渡る。規則も効く。公式文書と食い違う。** 試し専用の組織（無料のプラン。非公開のリポに ruleset を作ろうとすると「Upgrade to GitHub Pro or make this repository public to enable this feature.」の 403）に、非公開の試し用リポ `probe-env-private-20261030` を作った。Environment は API で作れ、「No restriction」の Environment の秘密は、`main` への push、作業ブランチへの push、PR の CI のすべてに渡った。`main` だけを許した Environment は、`main` への push の CI に秘密を渡し、作業ブランチへの push の CI と PR の CI のジョブは、手順を 1 つも動かさずに失敗した。公式文書は、GitHub Free では Environment の秘密は公開のリポだけ、使えるブランチの規則は非公開のリポでは GitHub Pro と GitHub Team だけ、と書いている（[公式文書][doc-environments]を 2026-10-30 に読んだ）。GitHub がいつ文書どおりに止めるか、止めたときに秘密と規則のどちらが先に使えなくなるかは分からない | 2026-10-30、実行（試し専用の組織の非公開の試し用リポ。失敗のジョブの注記は fine-grained PAT では読めず（`checks:read` を付けられない）、ジョブの手順が空でランナーが割り当てられていないことを読んだ。記録は gitignore 済みの `.tmp/probe-env-secrets-20261030/`） |
 
+## Node が TypeScript を直接動かすときの書き方を確かめた事実（2026-11-07）
+
+詳細設計の TypeScript の書き方を決めるために、進行 Bot と同じく、Node 24 が型を取り除いて直接動かす形（ビルドしない。[ADR-20261017-003][adr-plugin]）で確かめた。
+macOS、Node 24.3.0、TypeScript 5.9.3。型の検査は `tsc --noEmit --strict --target es2024 --module nodenext --moduleResolution nodenext --allowImportingTsExtensions --erasableSyntaxOnly --verbatimModuleSyntax` で回した。
+FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が効くフォルダで動かした。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-103 | 相対の import に、拡張子の `.ts` が要るか | **要る。** `import … from './b.ts'` は動き、`'./b'` は起動の時に `ERR_MODULE_NOT_FOUND` で止まった。型の検査（`nodenext`）も、拡張子の無い相対の import を TS2835 の誤りにした | 実行 |
+| FACT-104 | 型を取り除くだけでは消えない書き方が動くか | **動かない。** `enum` と、コンストラクタの引数に書くプロパティ（`constructor(private x: number)`）は、起動の時に `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`（strip-only mode）で止まった。型の検査の `erasableSyntaxOnly` は、どちらも TS1294 の誤りにした | 実行 |
+| FACT-105 | 型だけを持つ名前を、`type` を付けずに import して動くか | **動かない。** `import { make, Pair } from './b.ts'`（`Pair` は型）は、起動の時に `SyntaxError`（`does not provide an export named 'Pair'`）で止まった。`import { make, type Pair }` は動いた。型の検査の `verbatimModuleSyntax` は、`type` を付けない型の import を TS1484 の誤りにした | 実行 |
+| FACT-106 | `package.json` の無いフォルダで、import と export を持つ `.ts` を動かせるか（Plugin の写しは `plugin/` の中だけを写し、リポの root の `package.json` を含まない） | **動く。** ES モジュールとして動き、標準エラーには何も出なかった（警告も無い）。`{"type":"module"}` の `package.json` を置いても同じ | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -421,3 +434,4 @@ FACT-102 だけは、同じ組織に作った非公開の試し用リポで、�
 [doc-rules]: https://docs.github.com/en/rest/repos/rules
 [doc-app-url-params]: https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-using-url-parameters
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
+[adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
