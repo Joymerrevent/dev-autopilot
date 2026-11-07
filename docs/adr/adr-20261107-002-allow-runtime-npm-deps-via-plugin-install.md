@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 created: 2026-11-07
 updated: 2026-11-07
 author: Claude Code（メンテナの依頼で起票）
@@ -102,7 +102,7 @@ decision-makers: メンテナ
 
 ## 補足情報（More Information）
 
-- 2026-11-07 に、メンテナが「npm 依存があってもいいと思います」と言い、CC が理由を調べた。基本設計の選択の理由は PR #49 の本文にだけあり、ADR で比べていなかった。メンテナの依頼で、推奨案を案 B にして `proposed` で起票した
+- 2026-11-07 に、メンテナが「npm 依存があってもいいと思います」と言い、CC が理由を調べた。基本設計の選択の理由は PR #49 の本文にだけあり、ADR で比べていなかった。メンテナの依頼で、推奨案を案 B にして `proposed` で起票した。同じ日に、メンテナが推奨案で決定した
 - 2026-11-07 に、手元で確かめた（macOS、Claude Code 2.1.285。`CLAUDE_CONFIG_DIR` を一時の場所に切り替え、人の `~/.claude` に触れずに試した。記録は本体の `.tmp/probe-plugin-deps-20261107/`）。承認されたら、[実機で確かめた事実][facts]に載せる
   - 手元の marketplace に置いた試し用の Plugin（`package.json` と `package-lock.json`）を `claude plugin install` で入れると、写した版のフォルダ（`plugins/cache/<marketplace>/<plugin>/<版>/`）に `node_modules` が入った（`toad-cache`）。`@octokit/core` と `@octokit/auth-app` に替えて `claude plugin update` で版を上げると、新しい版のフォルダの `node_modules/@octokit/` に 14 個が入った
   - `pnpm-lock.yaml` だけの版では、`node_modules` は作られなかった

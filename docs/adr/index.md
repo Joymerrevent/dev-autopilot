@@ -68,7 +68,7 @@
 | ADR-20261031-002 | [作業ごとに使うモデルを変えず、役ごとに設定の値を使う][adr-20261031-002-same-model-per-role-for-all-tasks] | accepted | 2026-10-31 |
 | ADR-20261101-001 | [作業 AI のモデルを上げたことは、fix の印の model の欄と決まった文で残す][adr-20261101-001-record-model-raise-in-fix-marker] | accepted | 2026-11-01 |
 | ADR-20261101-002 | [攻撃の疑いと全体の停止は、人が選んだ Slack 互換の Webhook に決まった文を送って GitHub の外に知らせる][adr-20261101-002-notify-outside-github-by-webhook] | accepted | 2026-11-01 |
-| ADR-20261107-002 | [進行 Bot は実行時に npm の依存を持ってよく、Claude Code の Plugin の依存の導入で入れる][adr-20261107-002-allow-runtime-npm-deps-via-plugin-install] | proposed | 2026-11-07 |
+| ADR-20261107-002 | [進行 Bot は実行時に npm の依存を持ってよく、Claude Code の Plugin の依存の導入で入れる][adr-20261107-002-allow-runtime-npm-deps-via-plugin-install] | accepted | 2026-11-07 |
 
 <!--
 行の例（表の最後に足す）:
