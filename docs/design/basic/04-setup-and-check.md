@@ -73,7 +73,7 @@
 
 | 作るもの | 置き場 | 中身 |
 | --- | --- | --- |
-| マシンの設定 | マシンの設定のフォルダの `settings.json` | マシンの 17 項目（[設定][design-settings]）。`repository.*` は開いているプロジェクトの origin から、`baseBranch` は順 2 で決めた値を書く。`githubApp.*` は、App を作ったときと、人が `setup` 用の App の `client_id` を渡したときに `setup` が書く（下の「GitHub App を作る」）。`program.previousVersion` は `null`、`program.pinned` は `false`、`safety.env.values` は空で作る。`safety.sandbox.toolDirs` は、`node`・`pnpm`・`git` の実体の場所から書く。すでにあれば、足りない項目を足し、Plugin の版で消した項目のキーを消す（今の値は書き換えない） |
+| マシンの設定 | マシンの設定のフォルダの `settings.json` | マシンの 18 項目（[設定][design-settings]）。`repository.*` は開いているプロジェクトの origin から、`baseBranch` は順 2 で決めた値を書く。`githubApp.*` は、App を作ったときと、人が `setup` 用の App の `client_id` を渡したときに `setup` が書く（下の「GitHub App を作る」）。`program.previousVersion` は `null`、`program.pinned` は `false`、`safety.env.values` は空で作る。`safety.sandbox.toolDirs` は、`node`・`pnpm`・`git` の実体の場所から書く。すでにあれば、足りない項目を足し、Plugin の版で消した項目のキーを消す（今の値は書き換えない） |
 | 置き場 | `paths.workspace` | `sessions/`、`program/`（下の「プログラムの写し」） |
 | 安全設定の置き場 | `paths.sandboxSettings` | 権限 700 で作る（既定は置き場の中の `sandbox-settings/`。[設定][design-settings]の「マシンの中のフォルダ」） |
 | 記録と lock の置き場 | `paths.records` | 作った日時を書いた記録の目印のファイル（`records-created.json`。[運用の規則][flow-rules]、[状態遷移と判定][design-flow]の「手元の記録」） |
