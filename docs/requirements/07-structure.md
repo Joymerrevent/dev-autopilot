@@ -29,6 +29,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
       select.ts                例：Issue の選定
       marker.ts                印の形の正本（1 定数）
       check.ts                 点検の正本（進行 Bot が毎回の最初に回す）
+    package.json               進行 Bot の実行時の依存（版を固定する。Plugin を入れるときに Claude Code が入れる。STRUCT-4）
+    package-lock.json          実行時の依存の npm のロックファイル（Claude Code は npm か Bun のロックファイルがあるときに依存を入れる）
   test/                        テスト。Plugin に同封しないように `plugin/` の外に置く。分け方は基本設計の「テスト」（docs/design/basic/05-tests.md）
     unit/                      単体テスト。`plugin/src/` と同じ形のパスで置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
     integration/               結合テスト（偽の gh と claude を差し替えて、進行 Bot を端から端まで回す）と偽物（`fakes/`）
@@ -37,7 +39,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   evals/                       review Skill の評価の入口とケース（人が手で回す。CI では回さない。08-review-skill.md）
   docs/                        要件（requirements/。要件の写しの図は requirements/diagrams/）、設計判断（adr/）、構造仕様（design/）
   README.md                    使い方。業務の固有名詞を書かない
-  package.json                 検査のスクリプトと依存（STRUCT-4）
+  package.json                 検査のスクリプトと開発の道具の依存（pnpm。STRUCT-4）
   .markdownlint-cli2.jsonc     Markdown の検査の設定（参照スタイルのリンク。STRUCT-5）
 ```
 
@@ -60,7 +62,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 安全：印を書いたと認める進行 Bot のアカウント名の一覧（IMPL-20。[ADR-20261020-001][adr-bots]）、sandbox の `--settings` の置き場（マシン）と、`denyRead` `denyWrite` に足すパスの一覧（要件が決めたパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。`allowRead` に足すホームの中の道具のフォルダはマシン。「[隔離と鍵の分け方][f05]」、基本設計の「[AI のセッション][design-ai]」の「セッションごとの安全設定」）、外への通信の許可先、子プロセスに渡す環境変数のうち、足す名前の一覧（SAFE-10 の git と pnpm のための環境変数、`CLAUDE_CODE_TMPDIR`、claude.ai のコネクタを止める `ENABLE_CLAUDEAI_MCP_SERVERS`（SAFE-1。[ADR-20261017-005][adr-mcp]）など、要件と ADR が決めた名前は、設定の PR で消せないように進行 Bot のプログラムに固定する。「[安全側に倒す設計][f05]」、基本設計の「[AI のセッション][design-ai]」の「環境変数」）、
     セッションごとの短い一時フォルダの根（マシン）と、`<CLAUDE_CODE_TMPDIR>/claude-<uid>` の長さの上限（初期値 44。リポの設定かマシンの設定かは構造仕様の表で決める。SAFE-10。[ADR-20261017-006][adr-tmp]）、秘密の置き場（`paths.secrets`。SAFE-15。マシン）。GitHub App の秘密鍵と署名の鍵の値は設定ファイルに書かず、秘密の置き場のファイルに置く
 - STRUCT-3 **Plugin を入れたプロジェクトで、写しから動かす。** 利用者は、当てる先のリポに Plugin をプロジェクトの範囲で入れ（入れる設定は当てる先のリポの `.claude/settings.json` に commit される）、当てる先のリポで開いた Claude Code で `setup` を実行する（SETUP-1）。
-  `setup` は、インストールされた Plugin の版（`${CLAUDE_PLUGIN_ROOT}` の中身）を、マシンの置き場の中の版ごとのフォルダ（例：`<置き場>/program/<版>/`）に写す。写しを「進行 Bot のプログラムの写し」と呼び、マシンの設定の `devAutopilotPath` は写しを指す（[ADR-20261017-003][adr-plugin] の決定 2・4）。
+  `setup` は、インストールされた Plugin の版（`${CLAUDE_PLUGIN_ROOT}` の中身。Claude Code が入れた実行時の依存の `node_modules` を含む）を、マシンの置き場の中の版ごとのフォルダ（例：`<置き場>/program/<版>/`）に写す。写しを「進行 Bot のプログラムの写し」と呼び、マシンの設定の `devAutopilotPath` は写しを指す（[ADR-20261017-003][adr-plugin] の決定 2・4）。
   進行 Bot は、写しの `src/main.ts` を定期の実行から起こされ、`claude -p --plugin-dir <写しの絶対パス> --agent dev-autopilot:change:worker` のように、写しを Plugin として読み込み、自分の Skill と agent を名前空間で呼ぶ。
   `--plugin-dir` は AI の worktree の中ではなく、写し（AI が書けず、読めるのは `skills/` だけ。SAFE-16）の絶対パスを指す（AI が worktree の中の agent 定義や Skill を書き換えて次のセッションに読ませる経路を塞ぐ。「[安全側に倒す設計][f05]」）。
   進行 Bot（`plugin/src/`）と、AI のセッションに読ませるエージェント定義と Skill は、同じ写しから使う（版がずれないようにするため。STRUCT-7 で同封した理由と同じ）。
@@ -77,6 +79,8 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   Linux の安全設定の組み方を決めるまで（UNDECIDED-93。書ける場所の祖先を `allowRead` に入れると、sandbox の中の Bash が動かない。FACT-82）、Linux で進行 Bot を動かさない
 - STRUCT-4 **検査は dev-autopilot のリポが持つ。** dev-autopilot のリポが、自分の `package.json`（検査のスクリプト）・依存とロックファイル・`.markdownlint-cli2.jsonc` と、コードを足すときの `tsconfig.json`・`vitest.config.ts` を持ち、business-os と共有しない（[ADR-20261016-003][adr-move] の決定 4）。
   衛生の検査（書式、lint、秘密の検査、Markdown）と CI と commit の規約の検査は、project-recipes のレシピで入れる
+  - 進行 Bot の実行時の依存は、`plugin/package.json` に版を固定して書き（範囲の指定をしない）、npm のロックファイル（`plugin/package-lock.json`）を置く。Claude Code が、Plugin を入れるときと版を上げるときに、入れた Plugin のフォルダ（`${CLAUDE_PLUGIN_ROOT}`）に入れる（[ADR-20261107-002][adr-deps]）。開発の道具の依存は、リポの root の `package.json` と pnpm に置き、配らない。
+    `plugin/src/` が import してよいのは、`node:` で始まるもの・相対パス・`plugin/package.json` の依存だけで、構成の検査で確かめる（基本設計の「[テスト][design-tests]」）
   - 単体テストは、Plugin に同封しないように `plugin/` の外の `test/unit/` に、`plugin/src/` と同じ形の路で置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。[ADR-20261017-003][adr-plugin] の決定 1）。
     Claude Code の Plugin には、写すときにファイルを除く設定が無いため。`tsconfig.json` と `vitest.config.ts` は、`plugin/` の外の `test/` も対象にする（対象のフォルダの一覧は、基本設計の「[テスト][design-tests]」の「回し方」）
   - 単体テストが対象のコードの隣でなくなるので、CI で次の 2 つを確かめ、どちらかが外れたら CI を落とす（TypeScript の検査。検査そのものも vitest で検査する）
@@ -158,3 +162,4 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
 [adr-no-stages]: ../adr/adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-model-states]: ../adr/adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-expand]: ../adr/adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
+[adr-deps]: ../adr/adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
