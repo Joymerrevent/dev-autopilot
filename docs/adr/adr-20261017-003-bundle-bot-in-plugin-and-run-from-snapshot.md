@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-17
-updated: 2026-10-28
+updated: 2026-11-08
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -88,6 +88,7 @@ decision-makers: メンテナ
   - `plugin/` の中に、テストのファイル（`*.test.ts` など）が無いこと
 - 進行ボットの実行に要る npm の依存は持たないか、持つなら Claude Code の依存の導入で入る形（`plugin/` に `package.json` と npm のロックファイルを置き、登録所の版を固定し、lifecycle script に頼らない）にする。どちらにするかは基本設計で決める。
   開発の道具（検査・テスト）の依存は、今のとおりリポの root の `package.json` と pnpm に置く
+  > **［2026-11-08 追記］** どちらにするかは、基本設計でなく [ADR-20261107-002][adr-20261107-002] で決めた（持ってよく、Claude Code の依存の導入で入れる）。本 ADR の決定は変わらない。
 - 07-structure.md の「配布物は `plugin/` に閉じ、進行ボットの `src/`・テスト・前提データ・文書は配らない」を、「配布物は `plugin/` に閉じ、進行ボットも配る」に改める
 
 ### 決定 2：setup が Plugin の版をマシンに写し、進行ボットは写しから動かす
@@ -261,3 +262,4 @@ decision-makers: メンテナ
 [doc-discover]: https://code.claude.com/docs/en/discover-plugins
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-20261028-003]: ./adr-20261028-003-decide-expansion-after-ten-matched-merge-judgments.md
+[adr-20261107-002]: ./adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
