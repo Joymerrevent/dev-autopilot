@@ -19,7 +19,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | README.md | 層と依存の向き、フォルダとモジュールの一覧、入口ごとの import の範囲、テストで外との境を差し替える方法、構成の検査に足すこと、TypeScript の書き方 | あり |
 | [01-io.md][d01] | 外との境（システム、子プロセスの時間の上限と止め方、GitHub の API・`git`・`claude` の呼び方、ファイル、秘密の置き場、HTTP、OS ごとの部分） | あり |
 | [02-settings-and-records.md][d02] | 設定の読み込みと確かめ、手元の記録、lock、依頼と結果のファイル、`status.json` | あり |
-| `03-markers.md` | 印の形、署名に使う JSON の並べ方、鍵の読み方 | まだ無い |
+| [03-markers.md][d03] | 印の形、署名に使う JSON の並べ方、鍵の読み方 | あり |
 | `04-check.md` | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | まだ無い |
 | `05-setup.md` | setup | まだ無い |
 | `06-text-and-intake.md` | 検疫、漏えいの検査、ハッシュ、コメントの組み立て、出力契約、見出しの比べ方、intake | まだ無い |
@@ -71,7 +71,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `flow/safety/` | 流れ | 全体の止める合図と全体の停止の Issue を読む、全体の停止の Issue を開く、GitHub の外への通知 | 「[状態遷移と判定][b02]」の「全体の停止の Issue」「GitHub の外への通知」、「[設定][b01]」の「設定ファイルの外の合図」 | `08-flow.md` |
 | `io/` | 外との境 | システムの型、子プロセスの起動と時間の上限と止め方、GitHub の API（`@octokit/core` で REST と、名前を付けた GraphQL の操作）、`git`（個人とシステムの設定を読まない環境）、`claude`（起動と `stream-json` の読み取り）、ファイル（権限、実体のパス、排他の作成、追記と書き出し）、秘密の置き場を読む、HTTP（Webhook と、setup の手元の戻り先）、OS ごとの部分 | 「[設定][b01]」の「秘密の置き場のファイル」「子プロセスが時間の上限を過ぎたとき」、「[AI のセッション][b03]」の「起動の形」「止める手順」 | `01-io.md` |
 | `marker.ts` | 判断 | 印の形の正本（種類と欄、組み立て、読み取り、AI の出力から印の形を取り除く規則） | 「[状態遷移と判定][b02]」の「印の種類」、要件の「[印と固定の見出しの一覧][markers]」 | `03-markers.md` |
-| `logic/marker/` | 判断 | 印の署名（JSON の並べ方と HMAC-SHA256）、鍵のファイルの読み方 | 「[状態遷移と判定][b02]」の「印の署名」 | `03-markers.md` |
+| `logic/marker/` | 判断 | 印の署名（JSON の並べ方と HMAC-SHA256）、鍵のファイルの読み方、コメントの印の読み方（投稿者・未編集・印の数・形・署名） | 「[状態遷移と判定][b02]」の「印の署名」 | `03-markers.md` |
 | `logic/settings/` | 判断 | マシンの設定とリポの設定の形と確かめ、プログラムに固定する一覧（名指しのパス、環境変数の名前、`denyRead` の固定の分）、パスの照らし | 「[設定][b01]」 | `02-settings-and-records.md` |
 | `logic/state/` | 判断 | GitHub の事実から作業の単位の状態を組み立て、次の工程を選び、進める順に並べる | 「[状態遷移と判定][b02]」の「状態の組み立て」「次の工程」「作業の単位を進める順」 | `08-flow.md` |
 | `logic/judge/` | 判断 | レビュー合格とマージの判定、ラウンドと往復の数え方、同じ指摘の再発、必須チェックの読み方 | 「[状態遷移と判定][b02]」の「判定」 | `08-flow.md` |
@@ -159,6 +159,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 [adr-intake-req]: ../../adr/adr-20261022-004-intake-skill-via-request-file.md
 [d01]: ./01-io.md
 [d02]: ./02-settings-and-records.md
+[d03]: ./03-markers.md
 [fig-layers]: ./diagrams/00-layers.drawio.svg
 [fig-entries]: ./diagrams/00-entries.drawio.svg
 [fig-tests]: ./diagrams/00-tests.drawio.svg
