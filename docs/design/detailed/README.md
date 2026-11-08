@@ -120,7 +120,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 
 ## 構成の検査に足すこと
 
-基本設計の「[テスト][b05]」の構成の検査（`plugin/src/` のファイルごとの単体テスト、`plugin/` の中にテストが無いこと、import が `node:` で始まるか相対パスだけであること）に、次を足す。どれも外れたら構成の検査を落とす。使ってよいものと使ってはいけないものの一覧は、構成の検査の 1 か所に持つ。
+基本設計の「[テスト][b05]」の構成の検査（`plugin/src/` のファイルごとの単体テスト、`plugin/` の中にテストが無いこと、import が `node:` で始まるもの・相対パス・`plugin/package.json` の依存のどれかであること、`plugin/package.json` の依存の形）に、次を足す。どれも外れたら構成の検査を落とす。使ってよいものと使ってはいけないものの一覧は、構成の検査の 1 か所に持つ。
 
 | 確かめること | 理由 |
 | --- | --- |
@@ -129,6 +129,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | 流れの層が、外との境の層を `import type` だけで import していること | 外との境の実体を、流れの中で作れなくするため |
 | 入口からたどれる import に、上の「入口ごとの import の範囲」の import してはいけないものが無いこと | 秘密の置き場を読むコードと点検の処理が、人の Skill の入口から届かないようにするため |
 | `plugin/skills/` の TypeScript が `plugin/src/` を import していないこと | `review` Skill を単体で写したときにも動くようにするため |
+| `plugin/package.json` の依存が、構成の検査の一覧で依存ごとに決めた層のほかで import されていないこと。一覧に無い依存の import も落とす | どの層で使うかを、依存を足す PR のレビューで決めるため。外に触れる依存（例：GitHub を呼ぶ Octokit）は外との境の層だけで使い、入口が作るシステムの `fetch` を渡して呼ぶ（依存が自分で外に触れると、単体テストで偽物にできないため） |
 
 ## TypeScript の書き方
 
@@ -140,7 +141,8 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `enum` やコンストラクタの引数に書くプロパティなど、型を取り除くだけでは消えない書き方を使わない | 起動の時に止まる（[FACT-104][facts]） | `erasableSyntaxOnly` |
 | 型だけの名前は、`import type` か、名前に `type` を付けて import する | 付けないと、起動の時に止まる（[FACT-105][facts]） | `verbatimModuleSyntax` |
 
-- 写しには `package.json` が無いが、import と export を持つ `.ts` は ES モジュールとして動く（[FACT-106][facts]）。`plugin/` に `package.json` を置かなくてよい
+- `plugin/package.json` は、実行時の依存を足す PR で作り、`"type": "module"` を書く（「[導入と点検][b04]」の「依存」）。`plugin/package.json` が無いうちも、import と export を持つ `.ts` は ES モジュールとして動く（[FACT-106][facts]）
+- 依存は、`plugin/package.json` に書いた名前で import し、依存のパッケージが持つ型を使う。型の検査は `plugin/node_modules` の型を読むので、型の検査の前に `plugin/` で依存を入れる（「[テスト][b05]」の「回し方」）
 - 上の設定で止まることは、TypeScript 5.9.3 で確かめた（[FACT-103〜105][facts]）。`tsconfig.json` は、コードを入れる PR で足す（[STRUCT-4][struct]）
 
 [design]: ../README.md

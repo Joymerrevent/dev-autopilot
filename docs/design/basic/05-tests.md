@@ -11,7 +11,7 @@
 | --- | --- | --- | --- | --- |
 | 単体テスト | `test/unit/`（`plugin/src/a/b.ts` の単体テストは `test/unit/a/b.test.ts`。[STRUCT-4][struct]） | 1 つのモジュールが、渡された値から結果を決める処理（状態の決め方と次の工程の表、レビュー合格とマージの判定、印の署名と読み取り、指摘の ID、設定と出力契約の確かめ、安全設定と環境変数の組み立て、費用の数え方、検疫と漏えいの検査） | 無し。GitHub・git・`claude`・時刻・プロセスの操作（シグナルを送る、子孫・親・プロセスグループ・生まれた時刻を読む、`lsof`）・マシンの起動の時刻とホスト名・ファイルの情報（持ち主・権限・リンクか）は、引数で渡す偽物にする。ファイルは、テストごとの一時フォルダにだけ書く | CI、手元の `pnpm test` |
 | 結合テスト | `test/integration/` | 進行 Bot の入口（`plugin/src/main.ts`）と、人が呼ぶ Skill の処理（`setup`・`check`・`/dev-autopilot`・`intake`（引数「検疫」と「下書き」）。`plugin/src/` の中のモジュール）から通したときの、工程の順番、1 回の実行で進める数、lock、置き場と記録の置き場のファイル、GitHub に書く内容、起こすプロセスと引数 | Node と git。`gh`・`claude`・`ssh`・`launchctl`・`systemctl` は偽物（下の「偽物」） | CI の macOS のランナー、手元の `pnpm test` |
-| 構成の検査 | `test/repo/` | `plugin/src/` のファイルごとに単体テストがあること、`plugin/` の中にテストのファイルが無いこと（[STRUCT-4][struct]）、`plugin/src/` の import が `node:` で始まるか相対パスだけであること（「[導入と点検][design-setup]」の「依存」） | リポのファイルの一覧 | CI、手元の `pnpm test` |
+| 構成の検査 | `test/repo/` | `plugin/src/` のファイルごとに単体テストがあること、`plugin/` の中にテストのファイルが無いこと（[STRUCT-4][struct]）、`plugin/src/` の import が `node:` で始まるもの・相対パス・`plugin/package.json` の依存のどれかであること、`plugin/package.json` の依存の版が固定で `plugin/package-lock.json` と合っていて、`bin` を持つパッケージが無いこと（「[導入と点検][design-setup]」の「依存」） | リポのファイルの一覧 | CI、手元の `pnpm test` |
 | 評価 | `evals/` | `review` Skill（business-os の `change-review` を組み直した v2）が、レビュー済みの PR で、人が出した 🔴 🟡 を出すか（一致率と増加率。「[レビューの Skill][review-skill]」） | `claude`（利用枠を使う） | 人が手で回す。CI では回さない |
 
 - 単体テスト・結合テスト・構成の検査は、本物の GitHub・`claude`・npm のレジストリに触れない。利用枠を使わず、ネットワークが無くても通る
@@ -90,6 +90,7 @@
 ## 回し方
 
 - vitest の project を、単体テスト・結合テスト・構成の検査の 3 つに分ける。`pnpm test` で 3 つとも回す。CI は、Linux のランナーで単体テストと構成の検査を、macOS のランナーで結合テストを回す（上の「テストの種類」）。`tsconfig.json` は、`plugin/src/`・`plugin/skills/**/scripts/`・`test/`・`evals/` の TypeScript を型の検査の対象にする。`vitest.config.ts` は `test/` を対象にする（[STRUCT-4][struct]）
+- `plugin/package.json` があるときは、CI と手元で、テストと型の検査の前に、`plugin/` で `npm ci --ignore-scripts` を走らせて `plugin/node_modules` に実行時の依存を入れる。リポの root の `pnpm install` は、`plugin/` の依存を入れないため。`plugin/package-lock.json` は npm が書くファイルなので、Prettier の対象から外す（「[導入と点検][design-setup]」の「依存」）
 - 構成の検査の「ファイルごとに単体テストがあること」は、`plugin/src/` だけに掛ける。`plugin/skills/**/scripts/` の検査の単体テストは `test/unit/skills/` に置き、`evals/` は評価の入口なので単体テストを求めない
 - 構成の検査は、進行 Bot のコードを書き始める PR で入れる（[ADR-20261017-003][adr-plugin] の確認方法）。単体テストは、対象のコードと同じ PR で足す（構成の検査が、単体テストの無いファイルを止めるため）
 - 評価は、`evals/` の中の入口（TypeScript）から回す。評価する `review` Skill は、business-os の `change-review` の Skill を組み直した版（v2。「[レビューの Skill][review-skill]」）。入口は、`plugin/` と評価のケースを一時フォルダに集めて Plugin を組み立て、`claude plugin eval` を呼ぶ（business-os の `pnpm eval:cases` と同じ考え方で、business-os のコードは import しない。「[レビューの Skill][review-skill]」、[ADR-20261016-003][adr-move] の決定 4）
