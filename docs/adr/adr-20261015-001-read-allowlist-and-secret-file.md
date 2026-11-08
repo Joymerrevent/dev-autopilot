@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-28
+updated: 2026-11-08
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -20,6 +20,8 @@ decision-makers: メンテナ
 > AI が読める範囲から、Claude Code のユーザーごとの一時フォルダとほかのセッションの一時フォルダを外した。XDG の 4 つをセッションの一時フォルダに向けることと、ほかの決定は据え置く。
 >
 > **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 2 の秘密の置き場に置くもののうち、PAT を、GitHub App に切り替えた後はアプリの秘密鍵にした。置き場と権限（700・600）は据え置く。
+>
+> **Amended by [ADR-20261107-001][adr-github]（2026-11-08）**: 決定 2 の「`gh` を呼ぶときだけ `GH_TOKEN` を渡す」を改めた。進行 Bot は GitHub の API を Octokit で呼び、GitHub App のトークンを子プロセスに渡さない。秘密の置き場、起動したときに読んでプロセスの中だけで持つこと、deploy key を push と fetch のときだけ `GIT_SSH_COMMAND` で渡すことと、ほかの決定は据え置く。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -240,3 +242,4 @@ decision-makers: メンテナ
 [adr-tmp]: ./adr-20261017-006-per-session-short-tmpdir.md
 [adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
 [design-ai]: ../design/basic/03-ai-sessions.md
+[adr-github]: ./adr-20261107-001-call-github-with-octokit-instead-of-gh.md

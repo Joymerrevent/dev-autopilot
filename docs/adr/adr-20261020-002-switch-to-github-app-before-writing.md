@@ -90,6 +90,7 @@ ADR「自動化用の GitHub アカウントはいまは分けず、印を書い
 - アプリの秘密鍵のファイル（`.pem`）は、秘密の置き場に置く（[ADR-20261015-001][adr-read] の決定 2 の PAT の代わり。権限は 600）。人のセッションと AI のセッションは読まない
 - 進行 Bot は、実行のたびに秘密鍵で JWT を作り、インストールのトークン（1 時間で切れる）に引き換えて使う。切れる前に作り直す。npm の依存を足さず、Node の標準の機能で作る（基本設計の「導入と点検」の「依存」）
   > **［2026-11-08 追記］** 基本設計の「導入と点検」の「依存」は、[ADR-20261107-002][adr-20261107-002] で、進行 Bot が実行時に npm の依存を持ってよい形になった。JWT を Node の標準の機能で作る決定は変わらない（部品で作るかは、要件の UNDECIDED-96 で、GitHub を呼ぶ道具と合わせて決める）。
+  > **［2026-11-08 追記］** [ADR-20261107-001][adr-20261107-001] で、GitHub の API を Octokit（`@octokit/core`）で呼び、JWT は今のとおり Node の標準の機能で作って Octokit に渡すと決めた。JWT を部品で作らない。本 ADR の決定は変わらない。
 - アプリの ID とインストールの ID は秘密でないので、設定に持つ。どちらの設定に置くかは基本設計で決める
 
 ### 決定 4：投稿者と一覧
@@ -184,4 +185,5 @@ ADR「自動化用の GitHub アカウントはいまは分けず、印を書い
 [adr-app-secrets]: ./adr-20261028-002-app-reads-secret-names-for-checks.md
 [adr-20261030-001]: ./adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
 [adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md
+[adr-20261107-001]: ./adr-20261107-001-call-github-with-octokit-instead-of-gh.md
 [adr-20261107-002]: ./adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md

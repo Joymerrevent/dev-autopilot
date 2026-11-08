@@ -33,9 +33,9 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     package-lock.json          実行時の依存の npm のロックファイル（Claude Code は npm か Bun のロックファイルがあるときに依存を入れる）
   test/                        テスト。Plugin に同封しないように `plugin/` の外に置く。分け方は基本設計の「テスト」（docs/design/basic/05-tests.md）
     unit/                      単体テスト。`plugin/src/` と同じ形のパスで置く（`plugin/src/select.ts` → `test/unit/select.test.ts`。STRUCT-4）
-    integration/               結合テスト（偽の gh と claude を差し替えて、進行 Bot を端から端まで回す）と偽物（`fakes/`）
+    integration/               結合テスト（偽の GitHub と偽の claude に差し替えて、進行 Bot を端から端まで回す）と偽物（`fakes/`）
     repo/                      構成の検査（単体テストの有無、`plugin/` の中にテストが無いこと、import の形）
-  fixtures/                    テストの前提データ（偽の gh の状態、偽の claude の筋書き、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査とパスの照らし方の見本、構成の検査の木）
+  fixtures/                    テストの前提データ（偽の GitHub の状態、偽の claude の筋書き、使い捨てリポの雛形、Issue と PR の本文の例、検疫と漏えいの検査とパスの照らし方の見本、構成の検査の木）
   evals/                       review Skill の評価の入口とケース（人が手で回す。CI では回さない。08-review-skill.md）
   docs/                        要件（requirements/。要件の写しの図は requirements/diagrams/）、設計判断（adr/）、構造仕様（design/）
   README.md                    使い方。業務の固有名詞を書かない
@@ -55,7 +55,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - ラベル名：`agent-ready` `agent-paused` `agent-manual` `security-suspected` `from-review`（SETUP-8）。ブランチの型のラベル対応表（IMPL-2）
   - 固定の見出しの文字列：`## 作業指示` `## 差し戻し` `## 再開` `## 安全の確認` `## 仕組みの変更の承認` `## 却下 R<n>` `## 判定と違う判断`（`## 異議` は持たない。[ADR-20261024-002][adr-no-stages] の決定 6。「[印と固定の見出しの一覧][f04]」）
   - 進行 Bot の実行（全体の止める合図は設定の項目でなく、当てる先のリポの変数に置く。「[運用の規則][f01]」、[ADR-20261017-007][adr-stop]。`dryRun` と `stage` は持たない。[ADR-20261024-002][adr-no-stages]）：`devAutopilotPath`（進行 Bot のプログラムの写しの絶対パス。STRUCT-3。マシン）、worktree の置き場（マシン）、記録と lock の置き場（マシン）、定期の実行の間隔（OS ごとの登録（macOS は launchd の plist）と二重になるので `check` がずれを検出する）
-  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）1 つの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間と、人が呼ぶ `intake` が受け入れの依頼の結果を待つ時間（[ADR-20261022-004][adr-intake-req]）
+  - 上限：1 回の実行で着手する件数（FLOW-3）、WIP の上限（FLOW-3）、1 回の実行の所要時間（FLOW-4）、受け入れの件数（TEXT-12）、往復の回数（IMPL-24）、計画のレビューの指摘で計画し直す回数（IMPL-10）、セッションの時間・ターン・費用（IMPL-13）、1 Issue の累計の利用枠と 1 日の利用枠（費用で数える。IMPL-14、SETUP-12）、AI のセッションを途中で止めるときの `SIGTERM` から `SIGKILL` までの猶予（IMPL-14。[ADR-20261018-001][adr-usage]）、実行の失敗の再試行の回数と間隔（IMPL-14）、催促までの日数（MERGE-3）、CI の結果が取り消しなどのまま変わらないときに待つ時間（IMPL-27）、進行 Bot が起こす子プロセス（`git`・`lsof` など。AI のセッションを除く）と GitHub の API の呼び出しの 1 つずつの時間（ネットワークで止まったまま lock を持ち続けないため。SAFE-4）、人が呼ぶ `check` が点検の結果を待つ時間と、人が呼ぶ `intake` が受け入れの依頼の結果を待つ時間（[ADR-20261022-004][adr-intake-req]）
   - モデル：役ごとのモデルと effort（「[モデルの流れ][f02]」）、IMPL-25 で上げる先、受付 AI の拒否後のモデル、批評 AI の確信度のしきい値（IMPL-22）。Agent ツールはどの役にも与えないので、設定の項目に持たない（[ADR-20261017-002][adr-review]）
   - 検査と判定：品質ゲートのコマンド（`pnpm check`。AI のセッションの中で使う）、必須チェックの名前と app とワークフローのパス（IMPL-27）、マージ判定の許可一覧（MERGE-4）、方針に係るパスの一覧（MERGE-4）、変えてはいけないパスに足すパスの一覧（規約の正典のパスなど、当てる先のリポごとに違うパス。push で効くものとマージまで効かないものの 2 つの組に分けて持つ。IMPL-15 が名指しするパスは進行 Bot が必ず入れ、設定には足す分だけを持つ。[ADR-20261021-005][adr-blocked]）、deploy key の push 先を限る 2 つの ruleset の bypass に入れるアプリの一覧（IMPL-15。足すのはリポの設定の PR で、ADR は要らない）、~~漏えい検査の見本の置き場~~（設定に持たない。見本はテストの前提データで、`fixtures/leak/` に置く。基本設計の「[テスト][design-tests]」の「前提データ」）
   - 規約：コミットと PR の規約（言語、Conventional Commits、changeset の要否）
@@ -86,7 +86,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
   - 単体テストが対象のコードの隣でなくなるので、CI で次の 2 つを確かめ、どちらかが外れたら CI を落とす（TypeScript の検査。検査そのものも vitest で検査する）
     - `plugin/src/` のコードのファイルごとに、`test/unit/` に同じ路の単体テストがあること。単体テストを持たないファイル（型の定義だけのファイルなど）は、理由を添えた例外の一覧に書いたものだけを認める
     - `plugin/` の中に、テストのファイル（`*.test.ts` など）が無いこと
-  - 結合テスト（偽の `gh` と使い捨てのリポで進行 Bot を端から端まで回す）も `test/` に置く（単体テストとの分け方は、基本設計の「[テスト][design-tests]」で決めた）。前提データは `fixtures/`
+  - 結合テスト（偽の GitHub と使い捨てのリポで進行 Bot を端から端まで回す）も `test/` に置く（単体テストとの分け方は、基本設計の「[テスト][design-tests]」で決めた）。前提データは `fixtures/`
   - `review` Skill の評価も dev-autopilot のリポが持つ（「[レビューの Skill][f08]」。[ADR-20261016-003][adr-move] の決定 4）
 - STRUCT-5 **文書は dev-autopilot のリポに置く。** dev-autopilot の要件、設計判断（ADR）、構造仕様は `docs/` に、使い方は `README.md` に置き、business-os の `docs/` には書かない
   - **ADR の規則は、利用者の全体設定の新しい規則（`project-recipes` の `adr-docs` レシピ）に従う。** business-os の旧規則（`YYYYMMDD-nn-<slug>.md`、4 日付欄）ではなく、dev-autopilot のリポだけで成り立つ規則を持つ
