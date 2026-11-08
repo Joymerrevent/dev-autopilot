@@ -414,7 +414,7 @@ CI が緑なら、次の条件をすべて確かめ、満たさない条件の�
 | `diff-kind` | 状態が追加（A）か変更（M）でないもの（削除・改名・コピー・種類の変更など）がある。または、mode が `100644` でない | 同じ `git diff --raw` の状態と mode を見る。状態は、許す 2 つ（A と M）で照らし、並べていない状態も通さない（[MERGE-2、MERGE-4][merge]） |
 | `policy` | 方針に係るパス（`merge.policyPaths`）を触った | 同じ `git diff --raw` の一覧と比べる（[MERGE-2][merge]） |
 
-- 当てはまった記号をすべて `,` でつないで `reasons` に書く。1 つも無ければ `result` を `ready`、1 つでもあれば `human` にする（[MERGE-3][merge]）
+- 当てはまった記号をすべて、`reasons` の並び（JSON の配列。詳細設計の「[印][d-markers]」）に書く。1 つも無ければ `result` を `ready`、1 つでもあれば `human` にする（[MERGE-3][merge]）
 - `ready` の判定にするのは、1 回の実行で 1 件まで。2 件目以降の、`ready` の判定になるはずの PR は、判定を次の実行に回し、印を書かない。次の実行でも、1 件目が開いていてマージされていなければ、2 件目以降の `ready` の判定は書かない。`human` の判定は 1 件の上限に数えず、書く。1 件目が閉じられたら、待つのをやめる（[MERGE-5][merge]、[ADR-20261016-001][adr-pr] の決定 2）
 - 変えてはいけないパスのうち、マージまで効かないもので人が認めたパス（上の「push の手順」）は、許可一覧に無いので、`path` で `human` の判定になる（[ADR-20261024-004][adr-master] の決定 9）
 
@@ -723,3 +723,4 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
+[d-markers]: ../detailed/03-markers.md
