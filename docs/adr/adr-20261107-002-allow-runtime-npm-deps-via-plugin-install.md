@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-11-07
-updated: 2026-11-07
+updated: 2026-11-08
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -121,7 +121,7 @@ decision-makers: メンテナ
 
 [adr-plugin]: ./adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
-[adr-jwt]: ./adr-20261107-001-send-app-jwt-via-curl-stdin.md
+[adr-jwt]: ./adr-20261107-001-call-github-with-octokit-instead-of-gh.md
 [safety]: ../requirements/05-safety.md
 [struct]: ../requirements/07-structure.md
 [undecided]: ../requirements/09-undecided.md
