@@ -185,7 +185,9 @@
   ~~候補：(A) 人の `setup` と `check`（人の `gh` のログイン。組織の管理者）が `bypass_actors` を読んで確かめたときに、3 つの ruleset の ID と `updated_at` を控える。進行 Bot の毎回の点検は、App のトークンで読める欄（`enforcement`・対象・規則・base ブランチに効く規則・`current_user_can_bypass`）を確かめ、`updated_at` が控えと同じことを確かめる。違えば fail にし、人が `check` で確かめ直して控えを新しくする。(B) 進行 Bot の GitHub App に Administration の権限を足す（[ADR-20261020-002][adr-app] の決定 2 を改める。`bypass_actors` は ruleset に書き込める認証にだけ返り（[公式文書][doc-rules]）、変更の履歴も `administration=write` を求めた（FACT-88）ので、ruleset を書き換えられる権限を渡すことになりうる）。(C) 毎回の点検では bypass を確かめず、人の `check` に任せる。(D) 今のまま読めない欄を fail にする（GitHub App に切り替えた後、書き始められない）。~~
   ~~推奨は (A)。bypass が変われば `updated_at` が変わるので、変わったときに止まる側に倒れ、進行 Bot に ruleset を書き換えられる権限を渡さない。控えの置き場（手元の記録か GitHub か）と、人の `check` が控えを書く手順は、基本設計で決める。GitHub App に切り替える前に決める（[06-setup-and-stages.md][f06]）~~
 - UNDECIDED-95 **進行 Bot が、GitHub App の JWT（秘密鍵で作る、アプリを証明する短い文字列）で GitHub を呼ぶ手段。** 基本設計の「[導入と点検][design-setup]」の「GitHub App の権限」は、進行 Bot が実行のたびに JWT をインストールのトークンに引き換え、点検はインストールの情報（`GET /app/installations/{installation_id}`）を JWT で読むとする。基本設計の「[テスト][design-tests]」は、GitHub への呼び出しをすべて偽の `gh` が受けるとする。ところが GitHub は JWT を `Authorization: Bearer` の形でだけ受け、`gh` は `GH_TOKEN` を `token` の形で送るので、`GH_TOKEN` に JWT を入れた `gh api` は断られる（FACT-107）。`gh api -H` で見出しを上書きすれば呼べるが、JWT が `gh` のプロセスの引数に載る（FACT-108）。同じユーザーのほかのプロセスの引数は `ps` で読める（FACT-110。AI のセッションの sandbox の中から読めるかは確かめていない）。`curl -H @-` は、見出しを標準入力から読み、JWT を引数にも環境変数にも置かずに呼べる（FACT-109）。
-  決めること：JWT で呼ぶ 2 つ（インストールのトークンへの引き換えと、点検のインストールの情報の読み取り）を、どの手段で送るか。候補：(A) `gh api -H` で JWT を引数に載せる、(B) `curl -H @-` で JWT を標準入力から渡す（`curl` を道具の確かめと結合テストの偽物に足す）、(C) 進行 Bot が Node の HTTPS で直接送る（結合テストでの差し替え方を変える）。決める時期は、詳細設計の外との境（`docs/design/detailed/01-io.md`）を書く前（[05-safety.md][f05]、[06-setup-and-stages.md][f06]）
+  決めること：JWT で呼ぶ 2 つ（インストールのトークンへの引き換えと、点検のインストールの情報の読み取り）を、どの手段で送るか。候補：(A) `gh api -H` で JWT を引数に載せる、(B) `curl -H @-` で JWT を標準入力から渡す（`curl` を道具の確かめと結合テストの偽物に足す）、(C) 進行 Bot が Node の HTTPS で直接送る（結合テストでの差し替え方を変える）。決める時期は、詳細設計の外との境（`docs/design/detailed/01-io.md`）を書く前（[05-safety.md][f05]、[06-setup-and-stages.md][f06]）。UNDECIDED-96 で GitHub を Octokit で呼ぶと決めれば、JWT の送り方も Octokit に任せる形になるので、UNDECIDED-96 の後に決める
+- UNDECIDED-96 **進行 Bot が GitHub を呼ぶ道具を、`gh` のままにするか、Octokit（GitHub の公式の JavaScript の SDK）に替えるか。** 基本設計の「[導入と点検][design-setup]」の「依存」は、進行 Bot が実行時に npm の依存を持たない前提で、GitHub の読み書きを子プロセスの `gh` で行うとした。[ADR-20261107-002][adr-deps] で、進行 Bot は実行時に npm の依存を持ってよくなった（どの依存を持つかは決めていない）。Octokit なら、GitHub App の認証（JWT とインストールのトークン）・ページ送り・回数制限への対応を部品に任せられる。`gh` が前提の決まり（SAFE-15 の `GH_TOKEN` の渡し方、点検の道具の確かめ、結合テストの偽の `gh`）は、替えるなら直す。
+  決めること：GitHub の読み書きに使う道具（`gh` のまま、Octokit に替える、JWT の 2 つの呼び出しだけを Octokit にする、など）、Octokit なら入れる部品（全部入りの `octokit` か、要る部品だけか）と、結合テストで GitHub を差し替える形。決める時期は、詳細設計の外との境（`docs/design/detailed/01-io.md`）を確定する前（[07-structure.md][f07]）
 
 ### 作業の単位の状態遷移
 
@@ -424,3 +426,4 @@
 [adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../adr/adr-20261101-002-notify-outside-github-by-webhook.md
+[adr-deps]: ../adr/adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md

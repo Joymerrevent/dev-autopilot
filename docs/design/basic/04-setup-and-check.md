@@ -95,7 +95,7 @@
 | --- | --- | --- |
 | 1 | 実行の lock を取る（写しを作り直すのは、進行 Bot が動いていない間に限る。[STRUCT-3][struct]） | 取れなければ、何もせずに、後で実行し直すように示す |
 | 2 | インストールされた Plugin（`${CLAUDE_PLUGIN_ROOT}`）の版を、`plugin.json` の `version` から読む。マシンの設定の `program.pinned` が `true`（`rollback` で版を固定している）なら、引数 `upgrade` のときのほかは版を上げず、今の版のまま順 5 から行う。`program/<版>/` がすでにあれば、中身のハッシュ（すべてのファイルのパスと中身の SHA-256）を比べる | 固定しているときは、版を上げないことと上げ方（`setup upgrade`）を示す。中身が同じなら順 3（別の名前で写す）と順 4（名前を変える）をとばし、順 5 から行う。違えば止まる（同じ版で中身が違う Plugin を、黙って上書きしない） |
-| 3 | 前の `setup` が途中で止まって残した `program/.new-*` を消してから、`program/.new-<版>/` に写す。写した中身のハッシュを Plugin の中身のハッシュと比べ、ファイルの書き込みの権限を外し、写した中身の一覧（パスと SHA-256）を、写しの外の `program/<版>.manifest.json` に書く | ハッシュが違えば、写したフォルダを消して止まる |
+| 3 | 入れた Plugin の `node_modules` に `plugin/package-lock.json` の依存が揃っていることと、入れた Plugin の中にシンボリックリンクが無いことを確かめる（下の「依存」）。前の `setup` が途中で止まって残した `program/.new-*` を消してから、`program/.new-<版>/` に写す。写した中身のハッシュを Plugin の中身のハッシュと比べ、ファイルの書き込みの権限を外し、写した中身の一覧（パスと SHA-256。`node_modules` を含む）を、写しの外の `program/<版>.manifest.json` に書く | 依存が足りなければ、写さずに止まり、Plugin を入れ直すように示す。シンボリックリンクがあれば、写さずに止まる。ハッシュが違えば、写したフォルダを消して止まる |
 | 4 | `program/<版>/` に名前を変える。名前を変えるのを最後の 1 手にし、名前を変える前に止まっても、`setup` を実行し直せば順 3 から同じ結果になる（冪等） | — |
 | 5 | マシンの設定の `devAutopilotPath` を、使う版のフォルダに向ける。版が変わるときは、変わる前の版を `program.previousVersion` に書く。定期の実行を登録し直す（下の「登録し直すとき」） | — |
 | 6 | 今使う版と、`program.previousVersion` の版のほかの `program/<版>/` と manifest を消し、lock を外す | — |
@@ -111,12 +111,18 @@
 
 ### 依存
 
-- 進行 Bot（`plugin/src/`）は、Node 24 の標準の機能（`node:` で始まるモジュール）と、`plugin/src/` の中のファイルだけを使い、実行時の npm の依存を持たない（[ADR-20261017-003][adr-plugin] の決定 1 が基本設計に残した選択）
+- 進行 Bot（`plugin/src/`）は、Node 24 の標準の機能（`node:` で始まるモジュール）と、`plugin/src/` の中のファイルと、`plugin/package.json` に書いた実行時の npm の依存を使う（[ADR-20261107-002][adr-deps]）。どの依存を持つかは、依存を足す PR で決める（GitHub を呼ぶ道具は要件の UNDECIDED-96）。今は依存を持たない
+- 実行時の依存は、`plugin/package.json` に版を固定して書き（範囲の指定をしない）、npm のロックファイル（`plugin/package-lock.json`）を commit する。`plugin/package.json` は、最初の依存を足す PR で作り、`"type": "module"` も書いて、`plugin/src/` の `.ts` を ES モジュールとして動かす（FACT-106）
+- 依存は、Claude Code が Plugin を入れるときと版を上げるときに、入れた Plugin のフォルダ（`${CLAUDE_PLUGIN_ROOT}`）の `node_modules` に入れる（FACT-118）。Claude Code の依存の導入では、lifecycle script（パッケージを入れるときに走るスクリプト）は動かない（[ADR-20261017-003][adr-plugin] の補足情報）。`setup` は依存を入れず、npm の登録所に通信しない
+- `setup` は、写す前に（上の「プログラムの写し」の順 3）、入れた Plugin の `node_modules` に、`plugin/package-lock.json` に書いた依存が書いた版ですべて入っているかを確かめる。Claude Code の依存の導入は 60 秒で打ち切られ、npm のロックファイルが無い版では依存が入らない（FACT-119）ため。確かめる処理は、依存を import するモジュールより先に動かし、依存が無いときにも止まる理由を示す
+- 写しには `node_modules` も含め、写した中身の一覧（manifest）とハッシュの比べにも入れる（上の「プログラムの写し」の順 2・3）。毎回の点検は、`node_modules` の中も一覧と照らし、依存のファイルが書き換えられていれば fail にする
+- 写すのは、ふつうのファイルとフォルダだけ。入れた Plugin の中にシンボリックリンクがあれば、`setup` は写さずに止まる（上の「プログラムの写し」の順 3。リンクの先は写しの外にあり、写しのハッシュの一覧で確かめられないため）。npm は、`bin` を持つパッケージのために `node_modules/.bin/` にリンクを作るので、`bin` を持つパッケージを実行時の依存に入れない
+- 依存を足す PR には、足すパッケージと、下の依存まで含めた数と、lifecycle script の有無を書き、下の依存の少ない部品を選ぶ（例：全部入りの `octokit` でなく、要る部品だけ。FACT-120）
 - GitHub の読み書きは、子プロセスの `gh`（`gh api`）で行う。認証は、呼ぶたびに `GH_TOKEN` にアプリのインストールのトークンを入れて渡す（[SAFE-15][safety]）。`gh` は人の手元に入れたものを使い、点検のマシンの組で版を確かめる。push と fetch は `git` で行う
-- 写しに `node_modules` を作らず、`setup` は依存を入れない。npm の登録所への通信も、lifecycle script（パッケージを入れるときに走るスクリプト）も要らない
 - JSON スキーマで確かめる処理（出力契約、設定）も、外の部品を使わずに `plugin/src/` の中に書く
-- リポの CI で、`plugin/src/` の import が `node:` で始まるか相対パスだけであることを確かめる
+- リポの CI で、`plugin/src/` の import が、`node:` で始まるもの・相対パス・`plugin/package.json` の依存のどれかであることを確かめる。`plugin/package.json` の依存の版がすべて固定であること、`plugin/package-lock.json` があって `plugin/package.json` と合っていること、`plugin/package-lock.json` に `bin` を持つパッケージが無いことも確かめる（「[テスト][design-tests]」の構成の検査）
 - 開発の道具（検査・テスト）の依存は、リポの root の `package.json` と pnpm に置き、配らない（[STRUCT-4][struct]）
+- pnpm の `minimumReleaseAge`（公開から 7 日たたない版を入れない守り）は、`plugin/` の npm に効かない。`plugin/` の依存の熟成期間は Dependabot の熟成期間（cooldown）で守り、依存を手で足すときは公開から 7 日たった版を選ぶ。Dependabot の `plugin/` の npm の行は、`plugin/package.json` を作る PR で `.github/dependabot.yml` に足す（`directory` は `/plugin`。熟成期間・向け先のブランチ・PR のまとめ方・commit の接頭辞は、リポの root の npm の行と同じ）。`plugin/package.json` が無いうちは、Dependabot が上げるものが無いため
 
 ## 定期の実行の登録
 
@@ -311,7 +317,7 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 - 進行 Bot が毎回の実行で使うトークンは、表の権限と当てる先のリポだけを要求して作る（要求の `permissions` と `repositories` で絞る。アプリに無い権限は、要求しても付かない。[GitHub の公式文書][doc-app-token]）。アプリに広い権限が付いていても、毎回の実行のトークンは表より広くならない（重ねる守り）
 - 進行 Bot の App は、`setup` がマニフェストで作り、人が「Create」と導入を押す（下の「GitHub App を作る」。[ADR-20261030-001][adr-setup-app] の決定 2）
 - 秘密鍵のファイル（`github-app-key.pem`）は秘密の置き場に置く（権限 600）。アプリの ID とインストールの ID は、マシンの設定の `githubApp.appId` と `githubApp.installationId`（[設定][design-settings]。全体の止める合図を読む前に要るため）
-- 進行 Bot は、実行のたびに秘密鍵で JWT（アプリが自分を証明する、署名付きの短い文字列）を作り、1 時間で切れるインストールのトークンに引き換えて使う。`gh` を呼ぶ前に残りの時間を見て、10 分を切っていれば作り直す（AI のセッションの時間の上限 45 分の間に読む全体の止める合図の読み取りでも切れないように、余裕を持たせる）。10 分は GitHub のトークンの有効期間で決まる値なので、設定に持たず、プログラムに書く。Node の標準の機能（`node:crypto`）で作り、npm の依存を足さない（上の「依存」）
+- 進行 Bot は、実行のたびに秘密鍵で JWT（アプリが自分を証明する、署名付きの短い文字列）を作り、1 時間で切れるインストールのトークンに引き換えて使う。`gh` を呼ぶ前に残りの時間を見て、10 分を切っていれば作り直す（AI のセッションの時間の上限 45 分の間に読む全体の止める合図の読み取りでも切れないように、余裕を持たせる）。10 分は GitHub のトークンの有効期間で決まる値なので、設定に持たず、プログラムに書く。JWT は Node の標準の機能（`node:crypto`）で作る（[ADR-20261020-002][adr-app]。Octokit などの部品で作るかは、GitHub を呼ぶ道具と合わせて要件の UNDECIDED-96 で決める）
 - アプリの投稿者の名前は、REST の `login` では `<アプリの名前>[bot]` になり、GraphQL では形が違うことがある（確かめていない）。取り方と比べ方は、下の一度だけの試しで決め、決めた形で点検と印を読む処理をそろえる（[ADR-20261020-002][adr-app] の決定 4 と確認方法）
 - 一度だけの試し：導入と点検の実装（段階 3）のときに、試し専用の組織のリポと Project で、`setup` が作った進行 Bot の App を使い、[ADR-20261020-002][adr-app] の確認方法の 5 つと、ruleset の確かめ方（[ADR-20261028-004][adr-bypass-baseline] の確認方法）を確かめて、結果を FACT に残す：Issue と PR のコメント・ラベル・Project の表示の欄を書けること、止める合図の変数を読めて作成・更新・削除が断られること、公開と非公開のリポでチェックの実行を読めること、コメントの投稿者の名前の形と進行 Bot が名前を取る方法、インストールのトークンが 1 時間で切れて作り直せること、試しのリポで `setup` が ruleset の控えを書き、インストールのトークンで base ブランチに効く規則（`GET /repos/{owner}/{repo}/rules/branches/{baseBranch}`）と控えの変数を読めて、bypass を変えると次の点検が fail になること（試しのリポには、前もって上の「ruleset の形と確かめ方」と同じ形の ruleset を 3 つ作っておく。`bypass_actors` は読めない。FACT-88・91）。試しの後に、試しのリポからアプリを外す（当てる先のリポだけに入れる。[ADR-20261020-002][adr-app] の決定 2）
 - 書き込みの権限の試し：点検用の名前の変数（`DEV_AUTOPILOT_PROBE`）を作る試しを行う。試しの前に、点検用の変数が無いことを読んで確かめ、あれば fail にする（前の試しで消し損ねた名前があると、書けても「すでにある」で断られ、書けないと読み誤るため）。403 で断られたときだけ pass。作れてしまったら fail にし、作った変数を消す。ほかの応答（404・409・422・5xx・時間切れなど）は、確かめられなかったとして fail にする（未確認を pass と読まない。合図が `stop` の間の未確認の warn とは別）。全体の止める合図の変数には書き込まない（読んだ後に人が `stop` に変えると、書き戻しで `run` に戻してしまうため）
@@ -404,3 +410,5 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 [adr-setup-app]: ../../adr/adr-20261030-001-setup-uses-setup-app-instead-of-human-gh.md
 [adr-no-pat]: ../../adr/adr-20261030-002-bot-uses-github-app-only-from-start.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
+[adr-deps]: ../../adr/adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
+[design-tests]: ./05-tests.md
