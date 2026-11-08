@@ -443,6 +443,18 @@ macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。�
 | FACT-119 | ロックファイルが `pnpm-lock.yaml` だけのとき、Claude Code が依存を入れるか | **入れない。** `node_modules` は作られなかった | 実行 |
 | FACT-120 | Octokit の部品が、下の依存まで含めていくつのパッケージを入れるか | **全部入りの `octokit` 5.0.5 は 63 個、`@octokit/auth-app` 8.3.1 は 16 個、`@octokit/core` 7.0.6 は 12 個。** `npm install <名前> --package-lock-only --ignore-scripts` で作ったロックファイルで数えた。`octokit` の 63 個に、入れるときのスクリプト（`hasInstallScript`）を持つものは無く、ライセンスは MIT・Apache-2.0・ISC だけ | 実行 |
 
+## GitHub を Octokit で呼ぶ形と、結合テストで GitHub を差し替える形を確かめた事実（2026-11-08）
+
+進行 Bot が GitHub を呼ぶ手段（UNDECIDED-95・96）を決める前に確かめた。macOS、Node 24.3.0、`@octokit/core` 7.0.8、`@octokit/auth-app` 8.3.1（`npm install --ignore-scripts`）。下の依存まで含めた数は、`@octokit/core` だけで 12 個、`@octokit/auth-app` と合わせて 20 個で、入れるときのスクリプトと `bin` を持つものは無かった。
+本物の GitHub には、試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）で通した。JWT とトークンの値は画面に出していない。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-121 | Octokit（`@octokit/core`）に `request.fetch` で渡した fetch だけで、通信が済むか | **済む。** REST と GraphQL の呼び出しも、App の認証の部品（`@octokit/auth-app`）の引き換えも、渡した fetch を通った。グローバルの fetch を、呼ばれたら投げるものに替えて確かめ、1 回も呼ばれなかった | 実行 |
+| FACT-122 | Octokit から、インストールのトークンへの引き換えで権限とリポを絞れるか | **部品を Octokit に組み込む形では絞らない。引き換えを直接呼べば絞れる。** `authStrategy` で App の認証の部品を Octokit に組み込むと、引き換えの要求の本文が空だった（部品の中の処理が、空の選択肢で引き換える）。部品を `type: 'installation'` と `permissions`・`repositoryNames` で直接呼ぶか、`node:crypto` で作った JWT を `@octokit/core` の `auth` に渡して引き換えの API を呼ぶと、本文に `permissions` と `repositories` が入った。JWT を `auth` に渡すと `Authorization` を `bearer` の形で、引き換えたトークンを渡すと `token` の形で送った | 実行 |
+| FACT-123 | プログラムの宛先（`https://api.github.com`）を変えずに、子プロセスの環境変数だけで、Node の fetch を偽の送り先に向けられるか | **`NODE_USE_ENV_PROXY=1`・`HTTPS_PROXY`・`NODE_EXTRA_CA_CERTS` の 3 つで向けられる。** 偽の proxy（CONNECT を受け、テスト用の CA で作った `api.github.com` の証明書で自分が答える）に、素の fetch も、fetch を渡さない Octokit も届いた。`HTTPS_PROXY` だけでは proxy を使わずに本物の GitHub に届き、テスト用の CA を渡さないと `UNABLE_TO_VERIFY_LEAF_SIGNATURE` で止まった。`NODE_USE_ENV_PROXY` は、Node の文書（v24 の CLI）で v24.0.0 から入り、安定度は「1.1 - Active Development」。Node 24.3.0 の `node --help` には出ない | 実行、文書 |
+| FACT-124 | 試し用 App で、Octokit が本物の GitHub に通るか | **通る。** `node:crypto` で作った JWT を `@octokit/core` に渡す形でも、App の認証の部品の形でも、JWT で読むインストールの情報（`GET /app/installations/{installation_id}`）が 200 だった。引き換えで `metadata: read` と 1 つのリポに絞ると、`repository_selection` が `selected` で期限 60 分のトークンが返り、引き換えたトークンで `GET /installation/repositories` が 200 で 1 件だった。どちらの形も、通信 3 回はすべて渡した fetch を通った | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
