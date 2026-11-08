@@ -46,7 +46,7 @@ AI が受け持つ工程を、段取り（P）・作業（D）・検証（C）�
   - 2 つのプロセスが同時に古い lock と読んでも、排他の作成で片方だけが lock を取る。退けたファイルを読み直すのは、先に奪ったプロセスの新しい lock を、後のプロセスが古い lock と取り違えて退けたときに、持ち主に返すため
 - 全体の止める合図と全体の停止の Issue は、順 3 のほかに、AI のセッションを起動する前にも読む。全体の止める合図は、GitHub に書き込む前にも読み、AI のセッションが動いている間は `run.stopSignalPollSeconds` ごとに読む（[運用の規則][flow]、[SAFE-19][safety]）
 - 書かずに試す合図（`run.dryRun`）は持たない。最初の実行から GitHub に書く（[ADR-20261024-002][adr-no-stages] の決定 2）
-- 進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションを除く）は、1 つずつ `run.commandMinutes` を過ぎたら止める。止めた後の扱いは、子プロセスの種類（GitHub を読む処理、GitHub への書き込み、push と取り込み、止める手順の残りの探し方）ごとに、[設定][design-settings]の「子プロセスが時間の上限を過ぎたとき」の表で決める（[SAFE-4][safety]）。順 2〜4 の子プロセス（前の実行が残したセッションを探す `lsof`、合図を読む `gh api`、リポの設定を読むための `git fetch`）は、リポの設定を読む前に動くので、`run.commandMinutes` でなく、プログラムに固定した 10 分（`run.commandMinutes` の初期値と同じ）を過ぎたら止める。止めるときの `SIGTERM` から `SIGKILL` までの猶予も、`limits.stopGraceSeconds` でなく、プログラムに固定した 10 秒（`limits.stopGraceSeconds` の初期値と同じ）にする
+- 進行 Bot が起こす子プロセス（`git`・`lsof` など。AI のセッションを除く）と GitHub の API の呼び出しは、1 つずつ `run.commandMinutes` を過ぎたら止める（呼び出しは要求を取り消す）。止めた後の扱いは、子プロセスと呼び出しの種類（GitHub を読む処理、GitHub への書き込み、push と取り込み、止める手順の残りの探し方）ごとに、[設定][design-settings]の「子プロセスが時間の上限を過ぎたとき」の表で決める（[SAFE-4][safety]）。順 2〜4 の子プロセスと呼び出し（前の実行が残したセッションを探す `lsof`、合図を読む GitHub の API の呼び出し、リポの設定を読むための `git fetch`）は、リポの設定を読む前に動くので、`run.commandMinutes` でなく、プログラムに固定した 10 分（`run.commandMinutes` の初期値と同じ）を過ぎたら止める。止めるときの `SIGTERM` から `SIGKILL` までの猶予も、`limits.stopGraceSeconds` でなく、プログラムに固定した 10 秒（`limits.stopGraceSeconds` の初期値と同じ）にする
 
 ### 全体の停止の Issue
 

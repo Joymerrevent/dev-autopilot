@@ -52,7 +52,7 @@
 
 | フォルダ | キー | macOS | Linux | 中身 |
 | --- | --- | --- | --- | --- |
-| 置き場 | `paths.workspace` | `~/.local/share/dev-autopilot/<owner>/<repo>/` | `$XDG_DATA_HOME/dev-autopilot/<owner>/<repo>/`（`XDG_DATA_HOME` が無ければ `~/.local/share`） | 進行 Bot の clone（`controller/`）、セッションごとのフォルダ（`sessions/<セッションの名前>/`）、進行 Bot のプログラムの写し（`program/<版>/`）、GitHub の SSH のホストの鍵（`known_hosts`。下の「秘密の置き場のファイル」）、安全設定の置き場の既定の場所（`sandbox-settings/`）、進行 Bot が `gh` に渡す中身の無い設定のフォルダ（`gh-config/`。人の `gh` の設定を読ませないため。詳細設計の「[外との境][d-io]」） |
+| 置き場 | `paths.workspace` | `~/.local/share/dev-autopilot/<owner>/<repo>/` | `$XDG_DATA_HOME/dev-autopilot/<owner>/<repo>/`（`XDG_DATA_HOME` が無ければ `~/.local/share`） | 進行 Bot の clone（`controller/`）、セッションごとのフォルダ（`sessions/<セッションの名前>/`）、進行 Bot のプログラムの写し（`program/<版>/`）、GitHub の SSH のホストの鍵（`known_hosts`。下の「秘密の置き場のファイル」）、安全設定の置き場の既定の場所（`sandbox-settings/`） |
 | 記録の置き場 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く記録の目印のファイル（`records-created.json`）。ファイルの一覧は「[状態遷移と判定][design-flow]」の「手元の記録」（「[運用の規則][flow-rules]」） |
 | 秘密の置き場 | `paths.secrets` | `<マシンの設定のフォルダ>/secrets/` | `<マシンの設定のフォルダ>/secrets/` | 下の「秘密の置き場のファイル」。フォルダの権限は 700、ファイルは 600（[ADR-20261015-001][adr-read] の決定 2、[ADR-20261020-002][adr-app]） |
 | 短い一時フォルダの根 | `sessionTmp.root` | `/tmp/dap` | `/tmp/dap` | セッションごとの短い一時フォルダ（[ADR-20261017-006][adr-tmp]） |
@@ -77,10 +77,10 @@
 | `marker-signing-keys` | 印の署名の鍵の一覧（[IMPL-20][impl]。1 行に 1 つ。印は先頭の行の鍵で署名し、どの行の鍵でも確かめる。形と読み方と替え方は「[状態遷移と判定][design-flow]」の「印の署名」） | いつも | 前のマシンから一覧を写す（行の順も変えない）。新しいマシンで鍵を作るときは、鍵を替える手順（「印の署名」）のとおり、新しい鍵を先頭の行に足し、前の鍵を残す。前の鍵を外すと、前の鍵で書いた印が署名の条件を満たさなくなり、開いている Issue と PR が `marker-invalid` で止まるため（[ADR-20261021-004][adr-marker-keys] の決定 2） |
 | `notify-webhook-url` | GitHub の外への通知を送る Slack 互換の Webhook の URL（1 行。`https://` で始まる。送り先のサービスは人が選ぶ。[SAFE-19][safety]、[ADR-20261101-002][adr-notify]。送り方は「[状態遷移と判定][design-flow]」の「GitHub の外への通知」） | いつも | 前のマシンから写すか、送り先のサービスで新しい URL を作って書く。新しい URL にしたときは、前の URL を送り先のサービスで消す |
 
-- 秘密の値を、設定ファイル・定期の実行の定義・記録に書かない。進行 Bot は起動したときに読み、`gh` を呼ぶときだけ `GH_TOKEN`、push と fetch のときだけ `GIT_SSH_COMMAND` で渡す（[SAFE-15][safety]）
+- 秘密の値を、設定ファイル・定期の実行の定義・記録に書かない。進行 Bot は起動したときに読み、deploy key だけを push と fetch のときに `GIT_SSH_COMMAND` で渡す。GitHub App の秘密鍵と、秘密鍵から作る JWT とトークンは、進行 Bot のプロセスの中でだけ使い、子プロセスに渡さない（[SAFE-15][safety]、[ADR-20261107-001][adr-github]）
 - `setup` が示す秘密の作り方（印の署名の鍵なら `openssl rand -base64 32` など）は、初めて導入するときのもの。`setup` は、印の署名の鍵の一覧を「初めて導入するときは鍵を 1 つ作って 1 行目に書き、動かすマシンを替えるときは前のマシンから一覧を写す」と分けて示す（上の表の右の欄。「[導入と点検][design-setup]」の「動かすマシンを替えるとき」）
 - `GIT_SSH_COMMAND` は進行 Bot のプログラムに固定し、設定に持たない。`ssh` を名前で呼び（定期の実行の定義の `PATH` から見つける）、`-F /dev/null`（人の `~/.ssh/config` を読まない）、`-i <秘密の置き場>/deploy-key`、`-o IdentitiesOnly=yes`（渡した鍵のほかを出さない）、`-o IdentityAgent=none`（ssh-agent の鍵を使わない）、`-o UserKnownHostsFile=<置き場>/known_hosts`、`-o StrictHostKeyChecking=yes` を付ける。人の鍵で push して、deploy key の push 先を限る ruleset（[IMPL-15][impl]）を外れないため。`GIT_SSH_COMMAND` と同じ形の ssh で、deploy key の push 先が ruleset で限られることを確かめた（FACT-65）
-- `<置き場>/known_hosts` は、進行 Bot が、ファイルが無ければ最初の push か fetch の前に、GitHub の API の `meta` が返す SSH のホストの鍵から書く。`meta` は、ほかの GitHub の読み取りと同じく、子プロセスの `gh api meta` に進行 Bot の認証（`GH_TOKEN`）を渡して読む（「[導入と点検][design-setup]」の「依存」）。`setup` のマシンの準備は GitHub の認証を使わず、`gh` は認証が無いと公開の API も読まないので、進行 Bot の clone と同じく `setup` では書かない。結合テストでは、偽の `gh` が `meta` に答えるので、本物の GitHub に触れない。書いた後は、進行 Bot は書き直さない。ファイルが GitHub のホストの鍵と合わなければ、`ssh` が止まり、push と fetch は実行の失敗になる（止まる側に倒れる）。GitHub がホストの鍵を替えたときは、人がファイルを消し、進行 Bot が次の実行で書き直す
+- `<置き場>/known_hosts` は、進行 Bot が、ファイルが無ければ最初の push か fetch の前に、GitHub の API の `meta` が返す SSH のホストの鍵から書く。`meta` は、ほかの GitHub の読み取りと同じく、進行 Bot の認証（インストールのトークン）で読む（「[導入と点検][design-setup]」の「依存」）。進行 Bot の clone と同じく `setup` では書かず、書く担い手を進行 Bot の 1 か所にする。結合テストでは、偽の GitHub が `meta` に答えるので、本物の GitHub に触れない。書いた後は、進行 Bot は書き直さない。ファイルが GitHub のホストの鍵と合わなければ、`ssh` が止まり、push と fetch は実行の失敗になる（止まる側に倒れる）。GitHub がホストの鍵を替えたときは、人がファイルを消し、進行 Bot が次の実行で書き直す
 
 ## 設定ファイルの外の合図
 
@@ -128,20 +128,20 @@
 | `run.intervalHours` | 定期の実行の間隔。24 の約数（1・2・3・4・6・8・12・24）に限る（[導入と点検][design-setup]の「定期の実行の登録」） | 数（24 の約数） | 24 時間（1 日 1 回。[FLOW-12][flow]） | 間隔と件数の上限は、リポの設定 1 つで変える（[FLOW-11][flow]）。間隔は OS ごとの定期の実行の登録にも書くので、`check` がずれを確かめる（[STRUCT-2][struct]）。間隔を変える PR がマージされたら、動かすマシンで `setup` を実行し直して登録し直す。登録し直すまで、点検がずれを fail にして作業に入らない |
 | `run.maxMinutes` | 1 回の実行の所要時間の上限。超えたら残りの作業の単位は次の実行に回す | 数（1 以上の整数。分） | 180 分（暫定） | 1 回の実行の所要時間の上限を設定に持ち、超えたら残りの作業の単位は次の実行に回す。lock を長く持たないため（[FLOW-4][flow]）。上限は作業の単位の合間に見るので、動いている工程は止めない（計画の工程は、計画し直しを含めて最大 225 分かかりうる。`limits.planRevisions`）。180 分は、1 セッションで終わる重い工程（最大 45 分）なら、ほかの作業の単位の工程も進める余地を持たせる値で、[ADR-20261015-005][adr-settings] の補足情報が候補に挙げた値 |
 | `run.stopSignalPollSeconds` | AI のセッションが動いている間に、全体の止める合図を読む間隔 | 数（1 以上の整数。秒） | 60 秒（暫定） | AI のセッションが動いている間も、全体を止める合図を一定の間隔で読む。間隔は基本設計で決める（[運用の規則][flow]）。60 秒にすると、止めると決めてから AI のセッションが止まるまでが 1 分ほどになる。1 セッションの間に読む回数は数十回で、GitHub の API の上限（1 時間に 5,000 回）に比べて少ない |
-| `run.commandMinutes` | 進行 Bot が起こす子プロセス（`gh`・`git`・`lsof` など。AI のセッションと、リポの設定を読む前の子プロセスを除く）1 つの時間の上限 | 数（1 以上の整数。分） | 10 分（暫定） | ネットワークで止まった子プロセスを待ち続けると、lock を持ったまま実行が終わらず、後の定期の実行がすべて見送りになる（[STRUCT-2][struct]、[SAFE-4][safety]）。超えたら、AI のセッションと同じ手順で止める（`SIGTERM` から `SIGKILL` までの猶予は `limits.stopGraceSeconds`）。止めた後の扱いは、子プロセスの種類ごとに下の「[子プロセスが時間の上限を過ぎたとき][command-timeout]」で決める。10 分は、当てる先のリポの clone（business-os で 1 分ほど）に余裕を見た値 |
+| `run.commandMinutes` | 進行 Bot が起こす子プロセス（`git`・`lsof` など）と、GitHub の API の呼び出しの、1 つずつの時間の上限（AI のセッションと、リポの設定を読む前のものを除く） | 数（1 以上の整数。分） | 10 分（暫定） | ネットワークで止まった子プロセスを待ち続けると、lock を持ったまま実行が終わらず、後の定期の実行がすべて見送りになる（[STRUCT-2][struct]、[SAFE-4][safety]）。超えたら、子プロセスは AI のセッションと同じ手順で止め（`SIGTERM` から `SIGKILL` までの猶予は `limits.stopGraceSeconds`）、GitHub の API の呼び出しは要求を取り消す。止めた後の扱いは、子プロセスと呼び出しの種類ごとに下の「[子プロセスが時間の上限を過ぎたとき][command-timeout]」で決める。10 分は、当てる先のリポの clone（business-os で 1 分ほど）に余裕を見た値 |
 | `run.checkWaitMinutes` | 人が呼ぶ `check` が、点検の結果のファイルを待つ時間の上限 | 数（1 以上の整数。分） | 15 分（暫定） | 点検だけの実行は、試しのセッションを含めても 10 分ほどで終わる（試しのセッションの時間の上限が 10 分）。超えたら待つのをやめ、実行中か、ジョブが起きなかったかを示して終わる（「[導入と点検][design-setup]」の「点検だけで動かす仕組み」）。進行 Bot の実行の最中なら、その実行の終わりに点検の依頼を見る。人の `check` は、待つ時間を点検の依頼のファイルに書き、進行 Bot は、置いた時刻から書いた待つ時間を過ぎた点検の依頼で、点検の結果を書いた後に作業を続ける（「[導入と点検][design-setup]」の「見送った実行と、起動しなかった定期の実行」。[ADR-20261022-004][adr-intake-req] の決定 5） |
 | `run.intakeWaitMinutes` | 人が `/verify-issue` などから呼ぶ intake の Skill が、受け入れの依頼の結果のファイルを待つ時間の上限 | 数（1 以上の整数。分） | 60 分（暫定） | 受け入れの依頼の実行は、実行の最初の点検（点検だけの実行は、試しのセッションを含めて 10 分ほど。上の `run.checkWaitMinutes`）の後に、受付 AI のセッション（時間の上限は `limits.session.minutes` の 45 分）を 1 つ起こすので、2 つを足した長さより長くする（[ADR-20261022-004][adr-intake-req] の決定 1）。`limits.session.minutes` を上げる PR では、この値も見直す。超えたら待つのをやめ、実行中か、ジョブが起きなかったかを示して終わる。intake の Skill は、待つ時間を受け入れの依頼のファイルに書き、進行 Bot は、置いた時刻から書いた待つ時間を過ぎた依頼を、受付 AI を起こさずに消す（「[AI のセッション][design-ai]」の「人の Skill から受け入れを呼ぶ形」、[ADR-20261022-004][adr-intake-req] の決定 5） |
 
 ##### 子プロセスが時間の上限を過ぎたとき
 
-`run.commandMinutes` を過ぎて止めた子プロセスの扱い（[SAFE-4][safety]、[IMPL-14][impl]）。「[状態遷移と判定][design-flow]」の「1 回の実行の流れ」も、下の表に従う。
+`run.commandMinutes` を過ぎて止めた子プロセスと、取り消した GitHub の API の呼び出しの扱い（[SAFE-4][safety]、[IMPL-14][impl]）。「[状態遷移と判定][design-flow]」の「1 回の実行の流れ」も、下の表に従う。
 
-リポの設定を読む前の子プロセス（「1 回の実行の流れ」の順 2〜4 の、前の実行が残したセッションを探す `lsof`、全体の止める合図を読む `gh api`、進行 Bot の clone の `git fetch`）は、`run.commandMinutes` をまだ読んでいないので、進行 Bot のプログラムに固定した 10 分（`run.commandMinutes` の初期値と同じ）を時間の上限にする。止めるときの `SIGTERM` から `SIGKILL` までの猶予も、`limits.stopGraceSeconds` をまだ読んでいないので、進行 Bot のプログラムに固定した 10 秒（`limits.stopGraceSeconds` の初期値と同じ）にする。過ぎたときの扱いは、`run.commandMinutes` を過ぎたときと同じく下の表に従う。
+リポの設定を読む前の子プロセス（「1 回の実行の流れ」の順 2〜4 の、前の実行が残したセッションを探す `lsof`、全体の止める合図を読む GitHub の API の呼び出し、進行 Bot の clone の `git fetch`）は、`run.commandMinutes` をまだ読んでいないので、進行 Bot のプログラムに固定した 10 分（`run.commandMinutes` の初期値と同じ）を時間の上限にする。止めるときの `SIGTERM` から `SIGKILL` までの猶予も、`limits.stopGraceSeconds` をまだ読んでいないので、進行 Bot のプログラムに固定した 10 秒（`limits.stopGraceSeconds` の初期値と同じ）にする。過ぎたときの扱いは、`run.commandMinutes` を過ぎたときと同じく下の表に従う。
 
-| 子プロセス | 過ぎたとき | 理由 |
+| 子プロセスと呼び出し | 過ぎたとき | 理由 |
 | --- | --- | --- |
-| GitHub を読む処理（`gh api` の読み取り、進行 Bot の clone の `git fetch`） | 作業を増やさずに記録して、実行を終える | 読めない状態で判断して書き込まないため |
-| GitHub への書き込み（`gh api` のコメントと印、ラベル、Project の欄、PR の作成） | 書き込みが止まった作業の単位を今の実行で進めず、次の実行で GitHub から読み直して続ける。実行の失敗に数える | 止めた時点で GitHub に届いたかが分からないので、読み戻して確かめる前に次の書き込みをしない |
+| GitHub を読む処理（GitHub の API の読み取り、進行 Bot の clone の `git fetch`） | 作業を増やさずに記録して、実行を終える | 読めない状態で判断して書き込まないため |
+| GitHub への書き込み（GitHub の API のコメントと印、ラベル、Project の欄、PR の作成） | 書き込みが止まった作業の単位を今の実行で進めず、次の実行で GitHub から読み直して続ける。実行の失敗に数える | 止めた時点で GitHub に届いたかが分からないので、読み戻して確かめる前に次の書き込みをしない |
 | push と取り込み（`git push`、push の手順の `git fetch` と `git merge`） | 実行の失敗として、次の実行に持ち越す | lock を持ったまま待ち続けず、push の手順を次の実行でやり直すため |
 | 止める手順と、残りのプロセスの探し方（前の実行が残したセッションと、作業場所を消す前。`lsof`、`lsof +D`） | 残りを確かめられなかったとして、作業場所を消さずに停止中（`session-not-stopped`。[ADR-20261027-001][adr-leftover]） | 残りが無いと読んで作業場所を消すと、残ったコマンドがあるまま消すことになる（[AI のセッション][design-ai]の「止める手順」） |
 
@@ -347,4 +347,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
-[d-io]: ../detailed/01-io.md
+[adr-github]: ../../adr/adr-20261107-001-call-github-with-octokit-instead-of-gh.md
