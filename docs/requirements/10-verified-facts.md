@@ -406,11 +406,49 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 | FACT-105 | 型だけを持つ名前を、`type` を付けずに import して動くか | **動かない。** `import { make, Pair } from './b.ts'`（`Pair` は型）は、起動の時に `SyntaxError`（`does not provide an export named 'Pair'`）で止まった。`import { make, type Pair }` は動いた。型の検査の `verbatimModuleSyntax` は、`type` を付けない型の import を TS1484 の誤りにした | 実行 |
 | FACT-106 | `package.json` の無いフォルダで、import と export を持つ `.ts` を動かせるか（Plugin の写しは `plugin/` の中だけを写し、リポの root の `package.json` を含まない） | **動く。** ES モジュールとして動き、標準エラーには何も出なかった（警告も無い）。`{"type":"module"}` の `package.json` を置いても同じ | 実行 |
 
+## GitHub App の JWT を GitHub に送る手段を確かめた事実（2026-11-07）
+
+詳細設計の外との境を書く途中で、基本設計の「[導入と点検][design-setup]」の「GitHub App の権限」（進行 Bot は秘密鍵で作った JWT をインストールのトークンに引き換え、点検はインストールの情報を JWT で読む）を、どの手段で送れるかを確かめた。
+試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）の秘密鍵で JWT を作った。macOS、gh 2.91.0、curl 8.7.1、Node 24.3.0。JWT とトークンの値は画面に出していない。GitHub 側に作ったのは、引き換えで作ったインストールのトークン（1 時間で切れる。権限は `metadata: read` だけ）だけ。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-107 | `GH_TOKEN` に JWT を入れて、`gh api` で GitHub App の API（`GET /app`、インストールのトークンへの引き換え）を呼べるか | **呼べない。** 401（「A JSON web token could not be decoded」）で断られた。同じ JWT を Node から送ると、`Authorization: Bearer` では 200、`Authorization: token` では同じ 401 だった。`gh` は `GH_TOKEN` を `token` の形で送り、GitHub は JWT を `Bearer` の形でだけ受ける | 実行 |
+| FACT-108 | `gh api -H 'Authorization: Bearer <JWT>'` で、見出しを上書きして呼べるか | **`GH_TOKEN` に何かの値があれば呼べる。** 意味の無い値の `GH_TOKEN` と一緒に渡すと、`-H` の見出しが使われて 200 だった。`GH_TOKEN` が無く、ログインも無いと、`gh` は送る前に `gh auth login` を求めて終了コード 4 で止まった。JWT は `gh` のプロセスの引数に載る | 実行 |
+| FACT-109 | `curl -H @-` で、見出しを標準入力から読ませて、JWT を引数にも環境変数にも置かずに呼べるか | **呼べる。** `GET /app` は 200。インストールのトークンへの引き換え（`POST /app/installations/{installation_id}/access_tokens`。要求の JSON は `--data-binary`）も通り、要求した権限（`metadata: read`）だけのトークンと期限（1 時間後）が返った | 実行 |
+| FACT-110 | 同じユーザーのほかのプロセスの引数を、`ps` で読めるか | **この会話の Bash からは読めた。** `ps -axww -o pid=,user=,args=` で、Claude Code の外で動く同じユーザーのアプリ（ブラウザとエディタの補助のプロセス）の引数を、途中で切らずに読めた。この会話の Bash が、AI のセッションと同じ sandbox の設定で動いているかは確かめていない。環境変数は `ps` で読めなかった（FACT-44） | 実行（モデルなし） |
+
+## 外との境と、設定と記録の詳細設計のために確かめた事実（2026-11-07）
+
+詳細設計の外との境（`docs/design/detailed/01-io.md`）と、設定と記録（`docs/design/detailed/02-settings-and-records.md`）の作り方を決めるために確かめた。macOS、Node 24.3.0、gh 2.91.0、lsof（macOS の付属）。`gh` の試しは、試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`）の `metadata: read` だけのインストールのトークンで行い、トークンの値は画面に出していない。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-111 | `gh api -i` の出力から、HTTP の状態を読めるか | **読める。** 1 行目に `HTTP/2.0 200 OK` のような状態の行、続けて見出し、空行、本文の順に出た。404 のときも終了コード 1 で、状態の行と本文は標準出力に出て、標準エラーには `gh: Not Found (HTTP 404)` が出た | 実行 |
+| FACT-112 | 中身の無いフォルダを `GH_CONFIG_DIR` にして、`gh api` が動くか | **動く。** `GH_TOKEN` と一緒に渡すと、人の `gh` の設定を使わずに呼べた。フォルダの中には何も作られなかった（`GH_PROMPT_DISABLED=1`・`GH_NO_UPDATE_NOTIFIER=1` を一緒に渡した） | 実行 |
+| FACT-113 | 名前を付けた GraphQL の操作を、`gh api -i graphql --input -` で標準入力から送れるか | **送れる。** `query`・`operationName`・`variables` の JSON を標準入力で渡すと、200 で `data` が返った | 実行 |
+| FACT-114 | Node の `fetch` で、テスト用の証明書の HTTPS の偽の送り先（`https://127.0.0.1:<ポート>`）に送れるか | **`NODE_EXTRA_CA_CERTS` にテスト用の CA を渡して起こせば送れる。** 渡さないと、証明書の確かめ（`UNABLE_TO_VERIFY_LEAF_SIGNATURE`）で止まった。どちらも、送り手のプログラムに切り替えを持たせていない | 実行（手元だけ） |
+| FACT-115 | `lsof +D` の終了コードで、「何も見つからない」と「失敗した」を見分けられるか | **見分けられない。** 空のフォルダを探したときも、無いフォルダを探して失敗したときも、終了コードは 1 だった。標準エラーは、見つからないときは空、失敗したときは文があった。見つけたときは `-F pcn` で `p<PID>`・`c<コマンド>`・`f<種類>` の行が出た | 実行（手元だけ） |
+| FACT-116 | Node の `fs.rmSync(<フォルダ>, { recursive: true })` が、中のシンボリックリンクの先をたどって消すか | **たどらない。** フォルダの外を指すリンクを含むフォルダを消すと、リンクは消え、リンクの先のファイルは残った | 実行（手元だけ） |
+| FACT-117 | Node の `process.kill(<PID>, 0)` で、lock の持ち主のプロセスが生きているかを見分けられるか | **見分けられる。** 自分のプロセスは例外を投げず、ほかのユーザーのプロセス（PID 1）は `EPERM`、無いプロセスは `ESRCH` を投げた。`EPERM` はプロセスがあることを示すので、`ESRCH` のときだけ「いない」と読める（詳細設計の「設定と記録」の「lock」） | 実行（手元だけ） |
+
+## Claude Code の Plugin の依存の導入を確かめた事実（2026-11-07）
+
+進行 Bot が実行時に npm の依存を持つかを決める前に（[ADR-20261107-002][adr-deps]）、Claude Code が Plugin を入れるときに依存を入れる振る舞いを確かめた。
+macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。人の `~/.claude` に触れないように、`CLAUDE_CONFIG_DIR` で Claude Code の設定のフォルダを一時の場所に切り替えた。手元の marketplace に試し用の Plugin（`plugin.json`・`package.json`・ロックファイル）を置き、`claude plugin install` と `claude plugin update` で入れた。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-118 | Plugin の root に `package.json` と npm のロックファイル（`package-lock.json`）があるとき、Claude Code が依存を入れるか | **入れる。** `claude plugin install` で、Claude Code が Plugin を置いた版のフォルダ（`<設定のフォルダ>/plugins/cache/<marketplace>/<Plugin>/<版>/`）に `node_modules` が入った（`toad-cache`）。依存を `@octokit/core` と `@octokit/auth-app` に替えた版を `claude plugin update` で入れると、新しい版のフォルダの `node_modules/@octokit/` に 14 個が入った（更新は 1 秒）。`node_modules` の中にシンボリックリンクは無く、npm の控え（`node_modules/.package-lock.json`）が入った。版を上げた後の古い版のフォルダには、Claude Code が `.orphaned_at` を書いた | 実行 |
+| FACT-119 | ロックファイルが `pnpm-lock.yaml` だけのとき、Claude Code が依存を入れるか | **入れない。** `node_modules` は作られなかった | 実行 |
+| FACT-120 | Octokit の部品が、下の依存まで含めていくつのパッケージを入れるか | **全部入りの `octokit` 5.0.5 は 63 個、`@octokit/auth-app` 8.3.1 は 16 個、`@octokit/core` 7.0.6 は 12 個。** `npm install <名前> --package-lock-only --ignore-scripts` で作ったロックファイルで数えた。`octokit` の 63 個に、入れるときのスクリプト（`hasInstallScript`）を持つものは無く、ライセンスは MIT・Apache-2.0・ISC だけ | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
 [pnpm-store]: https://pnpm.io/settings/store
 [bos-issue-37]: https://github.com/Joymerrevent/business-os/issues/37
+[adr-deps]: ../adr/adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
 [bos-issue-44]: https://github.com/Joymerrevent/business-os/issues/44
 [bos-pr-45]: https://github.com/Joymerrevent/business-os/pull/45
 [bos-issue-80]: https://github.com/Joymerrevent/business-os/issues/80
@@ -435,3 +473,4 @@ FACT-103〜105 の Node の試しは、`"type": "module"` の `package.json` が
 [doc-app-url-params]: https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-using-url-parameters
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
+[design-setup]: ../design/basic/04-setup-and-check.md

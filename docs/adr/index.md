@@ -69,6 +69,7 @@
 | ADR-20261101-001 | [作業 AI のモデルを上げたことは、fix の印の model の欄と決まった文で残す][adr-20261101-001-record-model-raise-in-fix-marker] | accepted | 2026-11-01 |
 | ADR-20261101-002 | [攻撃の疑いと全体の停止は、人が選んだ Slack 互換の Webhook に決まった文を送って GitHub の外に知らせる][adr-20261101-002-notify-outside-github-by-webhook] | accepted | 2026-11-01 |
 | ADR-20261107-001 | [進行 Bot は、GitHub App の JWT で呼ぶ 2 つの API を、JWT を標準入力から渡した curl で呼ぶ][adr-20261107-001-send-app-jwt-via-curl-stdin] | proposed | 2026-11-07 |
+| ADR-20261107-002 | [進行 Bot は実行時に npm の依存を持ってよく、Claude Code の Plugin の依存の導入で入れる][adr-20261107-002-allow-runtime-npm-deps-via-plugin-install] | accepted | 2026-11-07 |
 
 <!--
 行の例（表の最後に足す）:
@@ -144,3 +145,4 @@
 [adr-20261101-001-record-model-raise-in-fix-marker]: ./adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-20261101-002-notify-outside-github-by-webhook]: ./adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-20261107-001-send-app-jwt-via-curl-stdin]: ./adr-20261107-001-send-app-jwt-via-curl-stdin.md
+[adr-20261107-002-allow-runtime-npm-deps-via-plugin-install]: ./adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
