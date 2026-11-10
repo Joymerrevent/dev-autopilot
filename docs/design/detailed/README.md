@@ -20,7 +20,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | [01-io.md][d01] | 外との境（システム、子プロセスの時間の上限と止め方、GitHub の API・`git`・`claude` の呼び方、ファイル、秘密の置き場、HTTP、OS ごとの部分） | あり |
 | [02-settings-and-records.md][d02] | 設定の読み込みと確かめ、手元の記録、lock、依頼と結果のファイル、`status.json` | あり |
 | [03-markers.md][d03] | 印の形、署名に使う JSON の並べ方、鍵の読み方 | あり |
-| `04-check.md` | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | まだ無い |
+| [04-check.md][d04] | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | あり |
 | `05-setup.md` | setup | まだ無い |
 | `06-text-and-intake.md` | 検疫、漏えいの検査、ハッシュ、コメントの組み立て、出力契約、見出しの比べ方、intake | まだ無い |
 | `07-sessions.md` | AI のセッション | まだ無い |
@@ -59,6 +59,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `entry/setup.ts` | 入口 | 人の `setup` の入口（引数の `rollback`・`upgrade`・`uninstall` を含む）。入れた Plugin の `src/` から動く。処理は `flow/setup/` | 「[導入と点検][b04]」の「setup の流れ」「プログラムの写し」 | `05-setup.md` |
 | `entry/check.ts` | 入口 | 人の `check` の入口。処理は `flow/skill/` | 「[導入と点検][b04]」の「点検だけで動かす仕組み」 | `04-check.md` |
 | `entry/dev-autopilot.ts` | 入口 | `/dev-autopilot` の入口。処理は `flow/skill/` | 「[導入と点検][b04]」の「状態の表示」 | `08-flow.md` |
+| `entry/check-probe.ts` | 入口 | 試しのスクリプト。試しのセッションの中で AI に 1 回だけ実行させ、読めたか・書けたかだけを出力する | 「[導入と点検][b04]」の「試しのセッション」 | `04-check.md` |
 | `entry/intake.ts` | 入口 | intake の Skill の入口（引数「検疫」と「下書き」）。処理は `flow/skill/` | 「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」 | `06-text-and-intake.md` |
 | `check.ts` | 流れ | 点検の正本。組の一覧と順番、組ごとの回数、結果の形（pass・warn・fail と、確かめられなかった warn） | 「[導入と点検][b04]」の「組と回数」 | `04-check.md` |
 | `flow/check/` | 流れ | 点検の組ごとの処理（設定、GitHub、アプリの権限、マシン、子プロセスと clone、sandbox と AI のセッション） | 「[導入と点検][b04]」の「組と回数」「モデルを使わない試し」「試しのセッション」、「[設定][b01]」の「`check` が設定について確かめること」 | `04-check.md` |
@@ -78,7 +79,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `logic/run/` | 判断 | lock が古いかの判定、起こされ方の決定、作業場所の残骸の見分け、運用の記録の数え方 | 「[状態遷移と判定][b02]」の「1 回の実行の流れ」「作業場所の残骸」「運用の記録の数え方」 | `02-settings-and-records.md`、`08-flow.md` |
 | `logic/text/` | 判断 | 検疫、漏えいの検査、ハッシュ、コメントの組み立て、指摘の区切りの行（`dap-finding`）、出力契約のスキーマと取り出し、見出しの比べ方 | 「[AI のセッション][b03]」の「検疫が探す URL」「役ごとの出力契約」「コメントの形」「ハッシュの取り方」「レビューのコメントの形」 | `06-text-and-intake.md` |
 | `logic/session/` | 判断 | セッションの名前、環境変数と安全設定と `claude` の引数の組み立て、費用の見積もりと数え方 | 「[AI のセッション][b03]」の「セッションの名前」「環境変数」「セッションごとの安全設定」「止め方と利用枠の数え方」 | `07-sessions.md` |
-| `logic/check/` | 判断 | 点検と setup の読み戻しが共有する比べる規則（ruleset の形、App の権限、Environment の規則の照らし（[FACT-101][facts]）） | 「[導入と点検][b04]」の「ruleset の形と確かめ方」「GitHub App の権限」 | `04-check.md` |
+| `logic/check/` | 判断 | 点検と setup の読み戻しが共有する比べる規則（ruleset の形、App の権限、Environment の規則の照らし（[FACT-101][facts]））、点検の結果の形、試しのセッションを省く判定と結果の決め方 | 「[導入と点検][b04]」の「ruleset の形と確かめ方」「GitHub App の権限」 | `04-check.md` |
 
 - `plugin/skills/review/scripts/per-commit-gates.ts` は `plugin/src/` の外に置き、`review` Skill と一緒に単体でも写る（[分離を見越した構成][struct]）。単体で写したときに `plugin/src/` が無いので、`plugin/src/` を import しない
 - 検疫（`logic/text/` の検疫のモジュール）は、入口の検疫、人の見出しの検疫、AI に渡す直前、AI の文を GitHub に書く前、intake の Skill から呼ばれ（「[AI のセッション][b03]」の「検疫が探す URL」）、見つけたときの扱い（安全の軸の値、全体を止めるか）が呼ぶ側で違う（「[状態遷移と判定][b02]」の「計画の工程の中の順番」「push の手順」など）。検疫のモジュールは見つけたものを返すだけにし、扱いは呼ぶ側の流れが決める
@@ -96,6 +97,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `entry/check.ts` | 写し。人の Claude Code（依頼を置くコマンドと結果を消すコマンドだけ、人の許可を得て sandbox の外） | 秘密の置き場を読むモジュール、`check.ts` と `flow/check/`、GitHub の API と `claude` を呼ぶモジュール | 判定のロジックを持たず、点検は進行 Bot の 1 か所で行う（[STRUCT-3][struct]） |
 | `entry/dev-autopilot.ts` | 写し。人の Claude Code | 秘密の置き場を読むモジュール、GitHub の API と `claude` を呼ぶモジュール、`flow/steps/` | `status.json` を読んで表示し、手動の 1 回実行は依頼を置いてジョブを起こすだけ |
 | `entry/intake.ts` | 写し。人の Claude Code の sandbox の中（記録の置き場に書くコマンドだけ、人の許可を得て外） | 秘密の置き場を読むモジュール、GitHub の API と `claude` を呼ぶモジュール、lock を取るモジュール（`flow/run/` の中） | 引数「検疫」は、AI のセッションも秘密も使わない。引数「下書き」は、lock を取らず、`claude` を起こさない（[STRUCT-3][struct]、[ADR-20261022-004][adr-intake-req]） |
+| `entry/check-probe.ts` | 試しのセッションのフォルダに写したもの。AI が sandbox の中で `node` で動かす | `node:` で始まるモジュールのほかすべて | 写した先に `plugin/src/` も `node_modules` も無い。秘密も GitHub も使わず、読めたか・書けたかだけを出す |
 
 - 秘密の置き場を読むモジュールは、`io/` の中で 1 つに分ける。`setup` が秘密のファイルを作って書くときは、ファイルの操作のモジュールを使い、秘密を読むモジュールを使わない
 - 検疫のモジュールは判断の層なので、秘密・GitHub・記録・lock に依存しない。当てる先のリポの owner と名前は引数で受ける（「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」）
@@ -160,6 +162,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 [d01]: ./01-io.md
 [d02]: ./02-settings-and-records.md
 [d03]: ./03-markers.md
+[d04]: ./04-check.md
 [fig-layers]: ./diagrams/00-layers.drawio.svg
 [fig-entries]: ./diagrams/00-entries.drawio.svg
 [fig-tests]: ./diagrams/00-tests.drawio.svg
