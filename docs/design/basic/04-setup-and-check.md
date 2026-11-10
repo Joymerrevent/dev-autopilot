@@ -332,6 +332,8 @@ lock で見送った実行と、マシンのスリープや停止で起動しな
 | --- | --- | --- |
 | Administration（リポ） | 書き込み | ruleset を作り、`bypass_actors` を含めて読み戻す（FACT-94・98） |
 | Variables（リポ） | 書き込み | 全体の止める合図と ruleset の控えの変数を作る |
+| Contents（リポ） | 書き込み | リポの設定の PR のブランチと commit を作る（上の「GitHub の準備」の表のリポの設定の行） |
+| Pull requests（リポ） | 書き込み | リポの設定の PR を作る |
 | Issues（リポ） | 書き込み | ラベルを作る |
 | Projects（組織） | 書き込み | Project の欄と選択肢とビューを作り、組み込みのワークフローが有効かを読む（FACT-76） |
 | Secrets（リポ） | 読み取り | CI の秘密の置き方を確かめる（名前だけで、値は読めない） |
