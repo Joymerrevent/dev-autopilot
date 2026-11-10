@@ -538,7 +538,7 @@ AI のセッションは、作業の結果を GitHub に書かず、出力契約
 | --- | --- |
 | 1 | 「AI が生成した」の 1 行（[REVIEW-3][review-skill]） |
 | 2 | 見出し（1 回目は `## レビュー結果（基点: <base ブランチ>）`、2 回目以降は `## 再レビュー結果 R<n>（対象: <修正コミットの範囲>）`）と、冒頭の判定の 1 行（[IMPL-17][impl]）。判定と件数は、統合の後の指摘から進行 Bot が決める |
-| 3 | 指摘。🔴 → 🟡 → 🟢 の順に、同じ重要度の中は仕様 → 動作 → 規約の順に並べる（[REVIEW-1][review-skill]）。1 件ごとに、区切りの行と、人が読む形の見出し・パス・確信度・証拠レベル・失敗シナリオ・推奨を書く。区切りの行は `<!-- dap-finding id=<指摘の ID> severity=<high・medium・low> axis=<軸> confidence=<0〜100> evidence=<executed・read> heading=<見出し> path=<パス> -->` の 1 行で、見出しとパスは UTF-8 の % エンコード（JavaScript の `encodeURIComponent` と同じ。空白と `>` も符号になるので、HTML コメントを閉じられない）で書く。最後の指摘の後に、終わりの区切りの行 `<!-- dap-finding-end -->` を置く。区切りの行は印でないので、`dev-autopilot:` で始めない（印を読む処理の対象にならず、`dev-autopilot:` で始まる署名の無い行は、今のとおり `marker-invalid` で止める） |
+| 3 | 指摘。🔴 → 🟡 → 🟢 の順に、同じ重要度の中は仕様 → 動作 → 規約の順に並べる（[REVIEW-1][review-skill]）。1 件ごとに、区切りの行と、人が読む形の見出し・パス・確信度・証拠レベル・失敗シナリオ・推奨を書く。区切りの行は `<!-- dap-finding id=<指摘の ID> severity=<high・medium・low> axis=<軸> confidence=<0〜100> evidence=<executed・read> heading=<見出し> path=<パス> -->` の 1 行で、見出しとパスは UTF-8 の % エンコード（JavaScript の `encodeURIComponent` と同じ。空白と `>` も符号になるので、HTML コメントを閉じられない）で書く。最後の指摘の後に、終わりの区切りの行 `<!-- dap-finding-end -->` を置く。区切りの行は印でないので、`<!-- dev-autopilot` で始めない（印の形の見つけ方に当たらず、印を読む処理の対象にならない。`<!-- dev-autopilot` で始まる署名の無い行は、`marker-invalid` で止める。詳細設計の「[印][d-markers]」の「印の形の見つけ方」） |
 | 4 | 批評 AI が 🔴 を 🟡 に下げた指摘には、下げた理由（`results[].note`）を添える（[IMPL-22][impl]。人が下げた理由を見てマージするため） |
 | 5 | 末尾のラウンドの表（列はラウンド・指摘・最も重い種類。[IMPL-17][impl]、[REVIEW-4][review-skill]） |
 | 6 | `review` の印（[IMPL-18][impl]） |
@@ -647,3 +647,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-claude-dir]: ../../adr/adr-20261027-003-approved-claude-md-by-ai-and-claude-dir-by-humans.md
 [adr-same-model]: ../../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
+[d-markers]: ../detailed/03-markers.md
