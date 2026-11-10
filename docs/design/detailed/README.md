@@ -23,7 +23,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | [04-check.md][d04] | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | あり |
 | [05-setup.md][d05] | setup | あり |
 | [06-text-and-intake.md][d06] | 検疫、漏えいの検査、ハッシュ、コメントの組み立て、出力契約、見出しの比べ方、intake | あり |
-| `07-sessions.md` | AI のセッション | まだ無い |
+| [07-sessions.md][d07] | AI のセッション | あり |
 | `08-flow.md` | 1 回の実行の流れ、状態の組み立て、次の工程、工程、push の手順、判定、全体の停止と通知、実装の都合で止める理由の記号 | まだ無い |
 
 ## 層と依存の向き
@@ -166,6 +166,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 [d04]: ./04-check.md
 [d05]: ./05-setup.md
 [d06]: ./06-text-and-intake.md
+[d07]: ./07-sessions.md
 [fig-layers]: ./diagrams/00-layers.drawio.svg
 [fig-entries]: ./diagrams/00-entries.drawio.svg
 [fig-tests]: ./diagrams/00-tests.drawio.svg
