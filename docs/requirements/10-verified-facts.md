@@ -455,6 +455,17 @@ macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。�
 | FACT-123 | プログラムの宛先（`https://api.github.com`）を変えずに、子プロセスの環境変数だけで、Node の fetch を偽の送り先に向けられるか | **`NODE_USE_ENV_PROXY=1`・`HTTPS_PROXY`・`NODE_EXTRA_CA_CERTS` の 3 つで向けられる。** 偽の proxy（CONNECT を受け、テスト用の CA で作った `api.github.com` の証明書で自分が答える）に、素の fetch も、fetch を渡さない Octokit も届いた。`HTTPS_PROXY` だけでは proxy を使わずに本物の GitHub に届き、テスト用の CA を渡さないと `UNABLE_TO_VERIFY_LEAF_SIGNATURE` で止まった。`NODE_USE_ENV_PROXY` は、Node の文書（v24 の CLI）で v24.0.0 から入り、安定度は「1.1 - Active Development」。Node 24.3.0 の `node --help` には出ない | 実行、文書 |
 | FACT-124 | 試し用 App で、Octokit が本物の GitHub に通るか | **通る。** `node:crypto` で作った JWT を `@octokit/core` に渡す形でも、App の認証の部品の形でも、JWT で読むインストールの情報（`GET /app/installations/{installation_id}`）が 200 だった。引き換えで `metadata: read` と 1 つのリポに絞ると、`repository_selection` が `selected` で期限 60 分のトークンが返り、引き換えたトークンで `GET /installation/repositories` が 200 で 1 件だった。どちらの形も、通信 3 回はすべて渡した fetch を通った | 実行 |
 
+## 状態の組み立てで GitHub の事実を読む形を確かめた事実（2026-11-10）
+
+詳細設計の 1 回の実行の流れ（`docs/design/detailed/08-flow.md`）で、作業の単位の状態を組み立てるときに、GitHub の事実をどの API のどの欄で読むかを決めるために確かめた。読むだけで、GitHub には何も書いていない。
+コメントと投稿者は、試し専用の組織のリポ（試し用 App `jm-sandbox-probe-20261024` がコメントを書いたもの）を、試し専用の組織だけに届く fine-grained PAT で読んだ。チェックの実行とワークフローの実行は、公開のリポ dev-autopilot の develop の先端の commit を、メンテナの `gh` の認証で読んだ。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-125 | GraphQL で読んだ Issue のコメントから、REST のコメントの `id` と同じ値を読めるか | **`fullDatabaseId` で読める。** `IssueComment` の `fullDatabaseId`（BigInt）は、REST の `id` と同じ数を文字列で返した。値は 10 桁で、32 ビットの整数の上限（2,147,483,647）を超えていた。`databaseId`（Int）も同じ数を返したが、GraphQL の Int は 32 ビットの範囲の型で、上限を超えた値を返している。[GraphQL の文書][doc-graphql-issues]は、`fullDatabaseId` を「データベースの主キーを BigInt で示す」欄としている | 実行、文書 |
+| FACT-126 | GitHub App が書いたコメントの投稿者の名前は、REST と GraphQL でどう読めるか | **REST は `<アプリの名前>[bot]`、GraphQL は `[bot]` の無いアプリの名前。** REST のコメントの `user.login` は `<アプリの名前>[bot]`、`user.type` は `Bot`、`performed_via_github_app.slug` はアプリの名前だった。GraphQL のコメントの `author` は、`__typename` が `Bot`、`login` がアプリの名前（`[bot]` が無い）だった。人のコメントは、REST と GraphQL のどちらもログイン名が同じで、GraphQL の `__typename` は `User` だった。timeline のラベルの出来事の `actor` は、App の出来事が試しのリポに無く、確かめていない | 実行 |
+| FACT-127 | チェックの実行から、チェックを出したワークフローのパスを読めるか | **チェックの実行には無く、ワークフローの実行と、チェックスイートの ID で突き合わせて読める。** `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` のチェックの実行には、ワークフローのパスの欄が無く、`check_suite` には `id` だけがあった。`GET /repos/{owner}/{repo}/actions/runs?head_sha=<SHA>` のワークフローの実行は、`path`（`.github/workflows/ci.yml`）と `check_suite_id` を持ち、`check_suite_id` がチェックの実行の `check_suite.id` と同じ値だった。チェックの実行の `app.slug` は `github-actions` だった | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
@@ -486,3 +497,4 @@ macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。�
 [adr-ci-secrets]: ../adr/adr-20261028-001-ci-secrets-only-in-base-branch-environments.md
 [adr-plugin]: ../adr/adr-20261017-003-bundle-bot-in-plugin-and-run-from-snapshot.md
 [design-setup]: ../design/basic/04-setup-and-check.md
+[doc-graphql-issues]: https://docs.github.com/en/graphql/reference/issues
