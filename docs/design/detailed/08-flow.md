@@ -7,22 +7,22 @@
 
 | ファイル | 層 | 受け持つこと | 基本設計 |
 | --- | --- | --- | --- |
-| `main.ts` | 入口 | 引数（マシンの設定のパス）を読み、システムを作り、外との境を組み立てて `flow/run/run.ts` を呼び、返った終わり方の終了コードで終える | 「[状態遷移と判定][b02]」の「1 回の実行の流れ」 |
+| `main.ts` | 入口 | 引数（マシンの設定のパス）を読み、システムを作り、外との境と `FlowSystem` を組み立てて `flow/run/run.ts` を呼び、返った終わり方の終了コードで、`process.exit` で終える。`runs.jsonl` に書かない終わり方では、`flow/run/run.ts` が返した 1 行を標準エラーに書いてから終える | 「[状態遷移と判定][b02]」の「1 回の実行の流れ」 |
 | `flow/run/run.ts` | 流れ | 順 1〜10 を、起こされ方ごとの順で呼ぶ。思わない失敗で止まったときの後始末 | 同上 |
-| `flow/run/clone.ts` | 流れ | 進行 Bot の clone の fetch（順 4）と、取り込みの前の後始末 | 同上、「push の手順」の表の下 |
+| `flow/run/clone.ts` | 流れ | 進行 Bot の clone の用意（`known_hosts` を書くことと、clone が無ければ作ること）と fetch（順 4）と、取り込みの前の後始末 | 同上、「push の手順」の表の下、「[設定][b01]」の「秘密の置き場のファイル」の表の下、「[導入と点検][b04]」の「マシンの準備」の表の下 |
 | `flow/run/gather.ts` | 流れ | 順 6・7 の GitHub の読み取り。基線の必須チェックと、作業の単位ごとの事実を作る | 「状態の組み立て」 |
 | `flow/run/units.ts` | 流れ | 順 8・9。作業の単位を組の順に進め、作業の単位ごとに見直しを繰り返す | 「作業の単位を進める順」「次の工程」 |
 | `flow/run/write.ts` | 流れ | GitHub に書くときの共通の処理（合図の読み直し、印のコメントの組み立て、記録） | 「1 回の実行の流れ」の表の下 |
-| `flow/run/intake.ts` | 流れ | 受け入れの依頼の実行の、受付 AI を起こして結果を書く処理 | 「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の順 5〜7 |
+| `flow/run/intake.ts` | 流れ | 受け入れの依頼の実行の、受付 AI を起こして結果を書く処理（結果のファイルの欄は「[文の検査と受け入れ][d06]」の「受け入れの結果のファイル」の `outcome` と `reason`）。受付 AI が `not-stopped` を返したら、終わりの行を書かず、残ったプロセスの PID とフォルダを結果のファイルと `runs.jsonl` に書く | 「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の順 5〜7 |
 | `flow/steps/brief.ts` | 流れ | 依頼の枠の工程（入口の検疫、下書き、書き直し、人の直しの検疫、無効な `agent-ready` を外す、`ignored-instruction`） | 「状態ごとの工程」 |
-| `flow/steps/decide.ts` | 流れ | 決定済みの工程（決定の印、着手） | 同上 |
+| `flow/steps/decide.ts` | 流れ | 決定済みの工程（決定の印、着手）。着手の前に、渡す文に TEXT-7 の検査（`logic/text/leak.ts`）を掛け、見つけたら着手せずに停止中（`brief-sensitive`）にする | 同上、[TEXT-7][text] |
 | `flow/steps/plan.ts` | 流れ | 計画の輪（順 1〜6） | 「計画の工程の中の順番」 |
 | `flow/steps/change.ts` | 流れ | 作業 AI を起こす工程（変更の作成、検査の失敗の直し、指摘の直し、衝突の直し）と、人が push した作業ブランチから PR を作る工程 | 「状態ごとの工程」 |
 | `flow/steps/review.ts` | 流れ | レビューと、載せ直しの後に印を付け直す工程 | 同上の検査合格 |
 | `flow/steps/passed.ts` | 流れ | レビュー合格の (1)〜(5)（🟢 の起票、ready、載せ直し、マージの判定、催促） | 同上のレビュー合格 |
 | `flow/steps/cleanup.ts` | 流れ | 片付けと、戻した後に前の PR を閉じる工程（「先に見る」の順 9） | 「状態ごとの工程」、「作業場所の残骸」 |
 | `flow/steps/dependency.ts` | 流れ | 先の依頼の `wait` の印と、計画の見直し | 「先に見る」の順 13・14 |
-| `flow/steps/stop.ts` | 流れ | 停止中にする（止めた先ごとの `stop` の印と、止めた理由のコメント） | 「先に見る」の表の下 |
+| `flow/steps/stop.ts` | 流れ | 停止中にする（止めた先ごとの `stop` の印と、止めた理由のコメント）。`session-not-stopped` で止めたときは、止めた先のすべてに `stop` の印を書けた後に、`flow/session/leftovers.ts` で停止中にした後の終わりの行を書く | 「先に見る」の表の下、「[AI のセッション][b03]」の「止める手順」の順 5 |
 | `flow/steps/display.ts` | 流れ | Project の表示の欄と、表示のラベル `security-suspected` | 「1 回の実行の流れ」の順 8 |
 | `flow/push.ts` | 流れ | push の手順の順 1〜8 | 「push の手順」 |
 | `flow/safety/signal.ts` | 流れ | 全体の止める合図と、全体の停止の Issue を読む | 「全体の停止の Issue」 |
@@ -30,7 +30,7 @@
 | `flow/safety/halt.ts` | 流れ | 全体の停止の Issue を開くか `halt` の印を足し、動いているセッションを止める | 「全体の停止の Issue」 |
 | `flow/safety/notify.ts` | 流れ | GitHub の外への通知と送り直し | 「GitHub の外への通知」 |
 | `logic/state/states.ts` | 判断 | 主な流れの状態と軸の値の記号、Project の表示の名前（[FLOW-39][flow]）と主な流れの枠 | 「作業の単位の状態遷移」 |
-| `logic/state/facts.ts` | 判断 | 作業の単位の事実の型（下の「GitHub の事実の読み方」で作るもの） | 「状態の組み立て」 |
+| `logic/state/facts.ts` | 判断 | 作業の単位の事実の型（下の「GitHub の事実の読み方」で作るもの）。型だけを書き、単体テストを持たない（[README][readme] の「テストで外との境を差し替える方法」） | 「状態の組み立て」 |
 | `logic/state/discount.ts` | 判断 | 戻した後の読み方と、数えない無効な印（組み立ての 1） | 同上の「戻した後の読み方」「数えない無効な印」 |
 | `logic/state/main-flow.ts` | 判断 | 主な流れの状態と、依頼の中の状態（組み立ての 2・3） | 同上の「主な流れの状態の決め方」「依頼の中の状態の決め方」 |
 | `logic/state/axes.ts` | 判断 | 重ねる 3 本の軸（組み立ての 4） | 同上の「重ねる軸の決め方」 |
@@ -38,13 +38,15 @@
 | `logic/state/next.ts` | 判断 | 次の工程（「先に見る」と「状態ごとの工程」の表） | 「次の工程」 |
 | `logic/state/order.ts` | 判断 | 作業の単位を進める順、進行中の作業の単位の数え方、着手の条件 | 「作業の単位を進める順」「進行中の作業の単位の数え方」 |
 | `logic/state/apply.ts` | 判断 | 工程で書いた印と GitHub の変化を、事実に足す | 「作業の単位を進める順」の表の下 |
-| `logic/state/halt.ts` | 判断 | 全体の停止の Issue の見分けと、止める間か | 「全体の停止の Issue」 |
-| `logic/state/reasons.ts` | 判断 | 止めた理由の記号の一覧（下の「止めた理由の記号」） | 「止めた理由の記号」 |
+| `logic/state/halt.ts` | 判断 | 全体の停止の Issue の見分けと、止める間か。全体の停止の Issue を開き直す作業の単位（下の「全体の停止と通知」） | 「全体の停止の Issue」 |
+| `logic/state/reasons.ts` | 判断 | 止めた理由の記号の一覧（下の「止めた理由の記号」）。何も import しない | 「止めた理由の記号」 |
+| `logic/state/session-result.ts` | 判断 | AI のセッションの終わり方の記号を、工程の結果に写す（下の「工程の結果」） | 「[AI のセッション][b03]」の「止め方と利用枠の数え方」 |
 | `logic/judge/checks.ts` | 判断 | 必須チェックの読み方（3 つの一致、最新の 1 件、結果ごとの扱い） | 「主な流れの状態の決め方」の表の下、[IMPL-27][impl] |
 | `logic/judge/rounds.ts` | 判断 | ラウンドの欠けと、往復の回数 | 「ラウンドと往復の数え方」 |
 | `logic/judge/convergence.ts` | 判断 | レビュー合格の判定 | 「レビュー合格の判定」 |
 | `logic/judge/repeat.ts` | 判断 | 同じ指摘の再発の判定（head の形の見分けを含む） | 「同じ指摘の再発の判定」 |
-| `logic/judge/merge.ts` | 判断 | マージの判定と、`reasons` の記号の一覧 | 「マージの判定」 |
+| `logic/judge/merge.ts` | 判断 | マージの判定（`reasons` の記号は `logic/judge/merge-reasons.ts` から読む） | 「マージの判定」 |
+| `logic/judge/merge-reasons.ts` | 判断 | マージの判定の `reasons` の記号の一覧。何も import しない | 同上 |
 | `logic/push/paths.ts` | 判断 | push の範囲の commit が触れたパスを、変えてはいけないパスの 2 つの組と照らし、止める理由を決める | 「push の手順」の順 3 |
 | `logic/push/overlap.ts` | 判断 | 変更ファイルの一覧の重なり（`overlap` の印） | 「状態ごとの工程」の表の下 |
 | `logic/run/wake.ts` | 判断 | 起こされ方の決定と、依頼のファイルごとの扱い | 「[導入と点検][b04]」の「見送った実行と、起動しなかった定期の実行」 |
@@ -68,15 +70,19 @@
 | 実行 ID と起こされ方 | `logic/run/ids.ts`（「[設定と記録][d02]」）と `logic/run/wake.ts` で決める | 記録、`status.json` |
 | 設定 | 凍らせたマシンの設定とリポの設定と、リポの設定を読んだ base ブランチの SHA（「[設定と記録][d02]」の「設定を読む順」） | すべて |
 | 期限 | 実行を始めた時刻に `run.maxMinutes` を足した時刻 | 順 9 |
-| 費用の帳簿 | 「[AI のセッション][d07]」の「費用の取り置き」 | AI のセッション |
-| 合図 | 最後に読んだ全体の止める合図と、全体の停止の Issue の有無（読んだ時刻と値） | 書き込み、重い工程 |
+| 費用の帳簿 | 今日の累計・今の実行の累計・作業の単位ごとの累計と、取り置き（枠ごと）。型と入れ替える関数は `logic/session/budget.ts`（「[AI のセッション][d07]」の「費用の取り置き」） | AI のセッション |
+| 合図 | 最後に読んだ全体の止める合図（`run`・ほかの値・読めない）と、全体の停止の Issue の有無（ある・無い・読んでいない）と、読んだ `halt` の印（`issue` と時刻）。どれも読んだ時刻を添える | 書き込み、重い工程、AI のセッションの起動の前の確かめ（どの役も）、点検（順 5・10）、受け入れの依頼の受付 AI、`status.json` |
 | 数え上げ | 着手した件数、下書きと書き直しの件数、`ready` の判定を書いた PR | `limits.startsPerRun`、`limits.intakePerRun`、[MERGE-5][merge] |
-| 動いているセッション | 起こして、まだ終わりの行を書いていないセッション | 全体の停止の Issue を開いたときと、思わない失敗で止まったとき |
-| 止められなかったセッションの作業の単位 | 順 2 で、前の実行が残したセッションを止められなかった作業の単位 | 順 8（次の工程の表より先に `session-not-stopped` にする） |
-| 作業の単位の結果 | 作業の単位ごとの、進めた工程・結果・止めた理由・外れた着手の条件 | `runs.jsonl`、`status.json` |
+| 動いているセッション | 起こして、まだ終わりの行を書いていないセッション（残りを止められずに返ったセッションを含む）。足すのは `flow/session/run.ts` の起動（「[AI のセッション][d07]」のセッションの順 6（起動））、外すのは終わりの行を書いたとき | 全体の停止の Issue を開いたときと、思わない失敗で止まったとき |
+| 前の実行が残したセッションの片付けの結果 | 順 2 の `flow/session/leftovers.ts` が返すもの。止めたセッション、止められなかったセッション（名前・始まりの行の値・作業の単位と PR。受付 AI のセッションは PID とフォルダ）、「[AI のセッション][b03]」の「前の実行が残したセッション」の順 3（全体の探し方）で見つけたプロセス（人に渡したセッションのフォルダの中のものと、ほかのもの。PID・コマンドの名前・フォルダ） | 点検（順 5・10）のマシンの組、順 8（止められなかったセッションの作業の単位を、次の工程の表より先に `session-not-stopped` にし、終わりの行を書く）、`runs.jsonl` の前の実行が残したセッションの片付けの欄 |
+| 作業の単位の結果 | 作業の単位ごとの、進めた工程・結果・止めた理由・外れた着手の条件 | `runs.jsonl`、`status.json`、`logic/run/failures.ts`（今の実行の失敗を数える） |
+| 実行を終える理由 | 実行を途中で終える理由の記号（`stop-signal`・`signal-unreadable`・`machine-unsafe`）。無ければ空 | `flow/run/units.ts`（残りの作業の単位を進めない）、終わり方 |
+| 漏えいの検査に渡す値 | マシンのパスの並び（書いたままの形、実体の形、実体が `/private/` で始まるときは頭の `/private` を除いた形。実体に解くのは `io/files.ts`）と、短い一時フォルダの ID の並び（`sessions.jsonl` の一時フォルダの行の ID と、今の実行で決めた ID）。実行の最初に作り、セッションの順 2（一時フォルダの確かめ）で ID を決めるたびに足す | 漏えいの検査（「[文の検査と受け入れ][d06]」の「漏えいの検査」） |
 
 - 値は 1 つの進行 Bot のプロセスの中にだけ持つ。実行の lock で、同じマシンで同じリポの実行は 1 つだけなので、ファイルで守る要は無い（「[AI のセッション][d07]」の「費用の取り置き」と同じ）
-- 合図と全体の停止の Issue の値は、読み直すたびに入れ替える。全体の停止の Issue を開いたときは、読み直さずに「ある」に入れ替え、開いた後の重い工程を起こさない（「[状態遷移と判定][b02]」の「全体の停止の Issue」）
+- 合図の値は、読み直すたびに入れ替える。全体の停止の Issue の値は、「ある」になったら、その実行の中では「無い」に戻さない（読み直して全体の停止の Issue が見つからなくても）。開けなかった全体の停止の Issue（下の「全体の停止と通知」）を、同じ実行の読み直しで解かないため。人が実行の途中で解いた全体の停止は、次の実行から効く
+- `where` が `text` の `security` の印を書けたときと、全体の停止の Issue を開いたときは、読み直さずに全体の停止の Issue を「ある」に入れ替え、その後の AI のセッションを起こさない（「[状態遷移と判定][b02]」の「全体の停止の Issue」）
+- 時刻・待ち・乱数（`FlowSystem`。[README][readme] の「層と依存の向き」）は、外との境と並べて引数で渡し、`RunContext` には入れない
 
 ## 起こされ方と進む順
 
@@ -87,22 +93,28 @@
 | 順 | 受け持つファイル | 定期・手動 | 点検の依頼（待つ時間の内） | 受け入れの依頼 |
 | --- | --- | --- | --- | --- |
 | 1 | `flow/run/settings.ts`（マシンの設定） | 行う | 行う | 行う |
-| 2 | `flow/run/lock.ts`、`logic/run/wake.ts`、`flow/session/leftovers.ts` | 行う | 行う | 行う |
-| 3 | `flow/safety/signal.ts` | 行う | 行う | 行う |
-| 4 | `flow/run/clone.ts`、`flow/run/settings.ts`（リポの設定） | 行う | 行う | 行う |
-| 5 | `check.ts`（「[点検][d04]」） | 行う | 行う | 行う |
+| 2 | `flow/run/lock.ts`、`flow/run/records.ts`（記録の切れた行）、`logic/run/wake.ts`、`flow/session/leftovers.ts` | 行う | 行う | 行う |
+| 3 | `flow/safety/signal.ts`（全体の止める合図） | 行う | 行う | 行う |
+| 4 | `flow/run/clone.ts`、`flow/run/settings.ts`（リポの設定）、`flow/safety/signal.ts`（全体の停止の Issue） | 行う | 行う | 行う |
+| 5 | `check.ts`（「[点検][d04]」） | 行う | 行い、結果を書いて依頼を消す（`flow/run/requests.ts`） | 行う |
 | 6・7 | `flow/run/gather.ts`、`logic/state/assemble.ts` | 行う | 行わない | 行わない |
-| 8・9 | `flow/run/units.ts` | 行う | 行わない | 受付 AI を 1 つ起こす（`flow/run/intake.ts`） |
-| 10 | `flow/run/requests.ts`、`flow/run/records.ts`、`flow/run/status.ts`、`flow/run/lock.ts` | 行う | 点検の結果を書く | 受け入れの結果を書く |
+| 8・9 | `flow/run/units.ts` | 行う | 行わない | 全体の停止の Issue が無ければ、受付 AI を 1 つ起こす（`flow/run/intake.ts`）。あれば起こさず、理由（`halt-issue`）を受け入れの依頼の結果のファイルに書く |
+| 10 | `flow/run/requests.ts`、`flow/run/records.ts`、`flow/run/status.ts`、`flow/run/lock.ts` | 行う | 記録・`status.json`・lock（点検の結果は順 5 で書いた） | 受け入れの結果を書く |
 
 - 待つ時間を過ぎた点検の依頼は、順 5 の結果を書いて依頼のファイルを消してから、定期の実行として順 6 へ進む。待つ時間を過ぎた受け入れの依頼は、受付 AI を起こさずに消す（「[導入と点検][b04]」の「見送った実行と、起動しなかった定期の実行」）
-- 順 3〜5 で止まるときも、順 10 を行う。順 10 は、点検の依頼のファイルを読み直し、あれば順 3 の合図を読み直して順 5 だけを行う（「[状態遷移と判定][b02]」の「1 回の実行の流れ」の順 10）
-- 順 2〜4 の子プロセスと GitHub の呼び出しの時間の上限は、リポの設定を読むまで、プログラムに固定した 10 分と 10 秒を使う（「[設定と記録][d02]」の「プログラムに固定する値」）
+- 順 3〜5 で止まるときも、順 10 を行う。点検の依頼の結果は、待つ時間の内も過ぎたものも、順 5 で書いて依頼のファイルを消す（読んだ依頼と ID が同じときだけ。「[導入と点検][b04]」の「点検だけで動かす仕組み」の順 4）。順 10 は、点検の依頼のファイルを読み直し、順 2 で読んだ依頼と ID が違う依頼（実行の途中で人が `check` を呼んだもの）があるときだけ、合図と全体の停止の Issue を読み直して順 5 だけを行い、結果を書いて依頼を消す。ID が同じ依頼が残っていれば（順 5 で消せなかった）、点検し直さずに消し直す（「[状態遷移と判定][b02]」の「1 回の実行の流れ」の順 10）
+- 順 1 の前に、`io/os.ts` が動かさない OS を返したら、マシンの設定を読まずに止める（`unsupported-os`。下の「終わり方と終了コード」）
+- 順 2 で lock を取った直後に、`flow/run/records.ts` が `runs.jsonl` と `sessions.jsonl` が改行で終わっているかを読む。切れた行があれば、前の実行が残したセッションを止める手順だけを行い（終わりの行は書かない）、作業に入らずに順 10 へ進む（点検の依頼があれば、記録の項目を fail として結果を書き、lock を外す）。終わり方は `records-cut`（「[設定と記録][d02]」の「手元の記録」）
+- 順 4 で、`flow/run/clone.ts` は次の順に行う。(1) `<置き場>/known_hosts` が無ければ、`io/github.ts` の読み取りで `GET /meta` を呼び（インストールのトークン）、返った SSH のホストの鍵から書く。あれば書き直さない。(2) `<置き場>/controller/` が無ければ、origin（マシンの設定の `repository.*` から作る SSH の URL）から、deploy key の `GIT_SSH_COMMAND` で clone する。途中で止まった clone を、できた clone と読まないため、一時の名前（`controller.new-<実行 ID>`）に clone してから rename で `controller/` にする。前の実行の一時の名前のフォルダが残っていれば、消してから作る（lock を持つ実行の中なので、ほかに使う者はいない）。(3) fetch する。(1)〜(3) のどれかが失敗したら、リポの設定を読めないとして止まる（`settings-unreadable`）
+- 全体の停止の Issue は、見分けに `safety.botAccounts`（リポの設定）を使うので、順 4 でリポの設定を読んだ直後に読む。順 4 より前に、AI のセッションを起こす処理も GitHub に書く処理も無いので、[ADR-20261024-005][adr-security] の決定 3 の「実行の最初に読む」を満たす。順 4 で止まった実行は、全体の停止の Issue を読まない（作業に入らない）
+- 順 5 の `check.ts` には、`RunContext` の合図（全体の止める合図の値と、全体の停止の Issue の有無）と、前の実行が残したセッションの片付けの結果を渡す。順 10 で点検だけを行い直すときも、片付けの結果は同じ値を渡す（順 2 は 1 回の実行で 1 回だけ行う）
+- 受け入れの依頼の実行は、`RunContext` の全体の停止の Issue が「ある」（読めなかったときを含む）なら、受付 AI を起こさない（「[状態遷移と判定][b02]」の「1 回の実行の流れ」の表の下、[ADR-20261024-005][adr-security] の決定 3）
+- 順 2〜4 の子プロセスと GitHub の呼び出し（順 4 の `known_hosts` と clone を含む）の時間の上限は、リポの設定を読むまで、プログラムに固定した 10 分と 10 秒を使う（「[設定と記録][d02]」の「プログラムに固定する値」）
 - 起動しなかった定期の実行は、順 2 の後に、`logic/run/missed.ts` が `runs.jsonl` の行と、定期の実行の時刻（「[導入と点検][b04]」の「時刻」）と、今の時刻から決め、順 10 で記録に書く
 
 ## 終わり方と終了コード
 
-`runs.jsonl` の終わり方（「[状態遷移と判定][b02]」の「手元の記録」）を、次の記号で書く。終わり方の記号と終了コードの対応は、`runs.jsonl` の行の形と一緒に `logic/run/records.ts`（「[設定と記録][d02]」の「手元の記録」）に置き、`main.ts` は、`flow/run/run.ts` が返した終わり方から、対応の終了コードで終える。
+`runs.jsonl` の終わり方（「[状態遷移と判定][b02]」の「手元の記録」）を、次の記号で書く（`runs.jsonl` に書かないと添えた 2 つは、終了コードと標準エラーにだけ出る）。終わり方の記号と終了コードの対応は、`runs.jsonl` の行の形と一緒に `logic/run/records.ts`（「[設定と記録][d02]」の「手元の記録」）に置き、`main.ts` は、`flow/run/run.ts` が返した終わり方から、対応の終了コードで終える。
 
 | 終わり方 | 記号 | 終了コード |
 | --- | --- | --- |
@@ -110,15 +122,26 @@
 | 点検だけ | `check-only` | 0 |
 | 受け入れの依頼だけ | `intake-only` | 0 |
 | 合図で止めた | `stop-signal` | 0 |
-| lock で見送った | `lock-skipped` | 0 |
+| 持ち主が動いている lock で見送った | `lock-skipped` | 0 |
+| 見分けられない lock で見送った | `lock-unknown` | 1 |
+| 動かさない OS で止めた（`runs.jsonl` に書かない） | `unsupported-os` | 1 |
+| マシンの設定を読めずに止めた（順 1。`runs.jsonl` に書かない） | `machine-settings-unreadable` | 1 |
+| 記録の最後の行が切れていて止めた（順 2） | `records-cut` | 1 |
+| 合図を読めずに止めた（順 3 か、実行の途中の読み直し） | `signal-unreadable` | 1 |
 | 設定を読めずに止めた（順 4） | `settings-unreadable` | 1 |
 | 点検の fail で止めた | `check-failed` | 1 |
 | GitHub を読めずに止めた（順 7） | `github-unreadable` | 1 |
-| 思わない失敗で止めた | `crashed` | 1 |
+| マシンの中のフォルダの異常で止めた（起動の前の確かめの順 5・6、順 9 の上のフォルダ） | `machine-unsafe` | 1 |
+| 思わない失敗があった | `crashed` | 1 |
 
-- 順 1 でマシンの設定を読めないときは、記録の置き場が分からないので `runs.jsonl` に書かず、標準エラー（定期の実行の `launchd.err.log`）に 1 行だけ書いて、終了コード 1 で終える。行には、読めなかったパスと理由の種類を書き、ファイルの中身を書かない
-- 終了コードを 0 と 1 に分けるのは、人が `launchd.err.log` と定期の実行の登録から、手当てが要る終わり方かを見分けるため。合図で止めたときと lock で見送ったときは、決まりどおりの終わり方なので 0 にする
-- 思わない失敗（`crashed`）は、基本設計の終わり方に無い。例外で止まったときも、下の順で後始末をし、記録と lock を残したままにしないために足した。`flow/run/run.ts` が例外を受け、動いているセッションを止める手順（「[AI のセッション][d07]」の「止める相手と前の実行の残り」）で止め、`runs.jsonl` の行と `status.json` を書き、lock を外す。止められなかったセッションは終わりの行を書かず、次の実行が「前の実行が残したセッション」で探す。後始末の途中でも例外が出たら、そこで終了コード 1 で終える（lock は、PID のプロセスが無いので、次の実行が古い lock として奪う。「[設定と記録][d02]」の「lock」）
+- `runs.jsonl` に書かない終わり方（`unsupported-os`・`machine-settings-unreadable`）では、`flow/run/run.ts` が標準エラーに書く 1 行（OS の名前か、読めなかったパスと理由の種類。ファイルの中身は書かない）を返し、`main.ts` が標準エラー（定期の実行の `launchd.err.log`）に書いて、終了コード 1 で終える。動かさない OS では OS ごとの部分を使えず、順 1 でマシンの設定を読めないときは記録の置き場が分からないため。`runs.jsonl` に切れた行があって足せないとき（`records-cut`。lock で見送った実行を含む）も、同じく標準エラーに 1 行（ファイルのパスと、断片の位置と長さ）を書く
+- 写しの `node_modules` が欠けて `main.ts` が起動で止まったときは、Node が標準エラー（`launchd.err.log`）に書いて、終了コード 1 で終わる。`main.ts` は依存の照らしを持たない（写しはハッシュで確かめてある。「[導入と点検][b04]」の「依存」）
+- 終了コードを 0 と 1 に分けるのは、人が `launchd.err.log` と定期の実行の登録から、手当てが要る終わり方かを見分けるため。合図で止めたときと、持ち主が動いている lock で見送ったとき（`lock-skipped`）は、決まりどおりの終わり方なので 0 にする。見分けられない lock で見送ったとき（`lock-unknown`）は、人が壊れた lock を戻すまで続くので 1 にする（「[設定と記録][d02]」の「lock」）。合図を読めないときは、秘密鍵の取り違え、App のインストールの外れ、つながらないなど、人の手当てが要るので 1 にする
+- 終わり方が 2 つ以上に当たるときは、終了コード 1 のものを先にし、1 どうしは先に起きたものにする。待つ時間の内の点検の依頼の実行は、点検に fail があっても `check-failed` にせず `check-only` にする（fail は結果のファイルで人に示す）
+- 思わない失敗（`crashed`）は、基本設計の終わり方に無い。例外で止まったときも、記録と lock を残したままにしないために足した
+  - 作業の単位を進める間（順 8 の作業の単位ごとの見直し）の思わない失敗は、`flow/run/units.ts` が作業の単位ごとに受ける。その作業の単位の動いているセッションを止める手順で止め、作業の単位の結果を `failed`（思わない失敗。例外の種類と工程の記号を添え、例外の文は書かない）として `RunContext` に書き、次の作業の単位へ進む。`logic/run/failures.ts` は、この `failed` も実行の失敗に数えるので、同じ例外が続けば `limits.retry.count` 回目で停止中（`retry-limit`）になる。実行の終わり方は、上の先後で `crashed` にする（作業の単位を進めても、人が終了コードで気づくため）
+  - 順 1〜7 と順 10 の思わない失敗は、`flow/run/run.ts` が例外を受け、動いているセッションを止める手順（「[AI のセッション][d07]」の「止める相手と前の実行の残り」）で止め、次の順で後始末をする。(1) 依頼で起こされた実行（待つ時間の内の点検の依頼か受け入れの依頼）で、まだ結果を書いていなければ、結果のファイルを書いてから依頼を消す（読んだ依頼と ID が同じときだけ）。点検の結果は、まだ結果の無い項目をすべて `fail`（`unchecked`）にして書く（「[点検][d04]」の、組の処理が思わない失敗で止まったときと同じ関数）。受け入れの結果は、受付 AI の文の欄を書かず、理由を `crashed` にする（「[文の検査と受け入れ][d06]」の「受け入れの結果のファイル」）。結果のファイルを書けなければ、依頼を消さない（次の実行が、待つ時間で扱いを決める）。(2) `runs.jsonl` の行と `status.json` を書き、lock を外す
+  - 止められなかったセッションは終わりの行を書かず、次の実行が「前の実行が残したセッション」で探す。後始末の途中でも例外が出たら、そこで終了コード 1 で終える（lock は、PID のプロセスが無いので、次の実行が古い lock として奪う。「[設定と記録][d02]」の「lock」）
 
 ## GitHub の事実の読み方
 
@@ -128,19 +151,25 @@
 | --- | --- |
 | 設定した Project の項目（当てる先のリポの Issue だけ。表示の欄の今の値も） | GraphQL の操作 `ProjectIssues` |
 | 作業の単位の Issue（題名、本文、開閉、作者、マイルストーン、依存の相手、timeline のラベルと閉じた出来事、コメント） | GraphQL の操作 `WorkUnitIssue`。作業の単位ごとに 1 つ |
-| 結びつく PR（作業ブランチの名前ごと。開閉、マージ、head の SHA、base、draft、コメント） | GraphQL の操作 `WorkUnitPullRequests`。作業の単位ごとに 1 つ |
-| 依存の相手の Issue と、結びつく PR | `WorkUnitIssue` と `WorkUnitPullRequests` を、相手の番号で呼ぶ |
+| 結びつく PR（作業ブランチの名前の集まりごと。開閉、マージ、head の SHA、base、draft、コメント） | GraphQL の操作 `WorkUnitPullRequests`。作業の単位ごとに 1 つ。名前の集まりは、`labels.branchTypes` の型と `labels.defaultBranchType` の型の `<型>/issue-<番号>` と、下の origin の作業ブランチの同じ番号の名前を合わせたもの。あわせて、Issue の有効な `link` の印の `pr` の番号の PR も引く（ブランチが消えた後も、進行 Bot が作った PR を型を問わずに読むため）。1 つの操作の中で、名前ごとと番号ごとに別名（alias）を付けて引く |
+| origin の作業ブランチ（型を問わず、`<型>/issue-<番号>` の形の名前） | `io/git.ts` の読み取りで `git ls-remote --heads origin` を、パターンを渡さずに 1 回の実行に 1 回呼ぶ。`flow/run/gather.ts` が、名前の形（`refs/heads/<型>/issue-<番号>`。型は `/` を含まない 1 つ以上の文字）に当たるものを、番号ごとに分ける（`git ls-remote` のパターンの当たり方に頼らない） |
+| 置き場の `sessions/` のフォルダと、短い一時フォルダの根の下のフォルダの名前 | `io/files.ts` でフォルダの中の名前を読む。順 7 で `flow/run/gather.ts` が読み、`logic/run/residue.ts` に渡して、作業の単位の事実に残骸の扱いを入れる（下の「作業場所の残骸」） |
+| 依存の相手の Issue と、結びつく PR | `WorkUnitIssue` で読んだ依存の一覧（blocked by）の項目ごとに、相手のリポ（`repository` の owner と名前）と番号と開閉を読む。相手が当てる先のリポにあるときだけ、その番号で `WorkUnitIssue`（閉じた人）と `WorkUnitPullRequests` を呼ぶ。相手が当てる先のリポの外にあるときは、相手を読まずに、先の依頼の軸を未完了とする（止める側。人が依存を外すか、相手を当てる先のリポに移すまで待つ） |
 | 別のリポに移された Issue を探す、当てる先のリポの開いている PR | GraphQL の操作 `OpenPullRequests` と、印の Issue の REST（`repository_url`）。読み方は「状態の組み立て」の箇条（FACT-66） |
 | 必須チェック（PR の head と、base ブランチの先端） | REST の `commits/{ref}/check-runs` と `actions/runs?head_sha=<SHA>` |
-| 人の権限 | REST の `collaborators/{username}/permission`（[TEXT-10][text]） |
+| 人の権限 | REST の `collaborators/{username}/permission` の `user.permissions`（`admin`・`maintain`・`push` の真偽。[FACT-132][facts]）（[TEXT-10][text]） |
 
-- コメントと timeline と PR は、100 件ずつのページで読み、続きは同じ名前の操作に、前のページの終わりの位置（`endCursor`）を渡して読む。途中のページで失敗したら、読めたページだけで判断しない（「[外との境][d01]」の「GitHub の呼び方」）
+- GraphQL の一覧（Project の項目、コメント、timeline、PR、依存の相手、編集の記録など、`first` と `endCursor` で読むものすべて）は、100 件ずつのページで読み、続きは同じ名前の操作に、前のページの終わりの位置（`endCursor`）を渡して読む。途中のページで失敗したら、読めたページだけで判断しない（「[外との境][d01]」の「GitHub の呼び方」）
 - 1 つの作業の単位でも読めなければ、読めた作業の単位だけで進めず、順 7 の「API が失敗したら、作業を増やさずに記録して止まる」に当てる（終わり方は `github-unreadable`）。読めない作業の単位を飛ばして進めると、着手の件数や進行中の作業の単位の数を少なく数えるため
 - コメントの ID は、GraphQL の `fullDatabaseId`（文字列）を数にして持つ。REST の `id` と同じ値で、印の欄のコメントの ID（「[印][d03]」の「欄の値の形」）と突き合わせられる（[FACT-125][facts]）。`databaseId` は、GraphQL の Int の範囲を超える値を返すので使わない。数にした値が `Number.isSafeInteger` に収まらなければ、読めなかったものとする
 - 投稿者とラベルの出来事の人の名前は、REST の `login` の形にそろえて持つ。GraphQL の `__typename` が `Bot` なら、`login` の後ろに `[bot]` を足す（GitHub App の名前は、REST では `<アプリの名前>[bot]`、GraphQL では `[bot]` が無い。[FACT-126][facts]）。`safety.botAccounts` は REST の形で書くので、そろえないと、進行 Bot の印を人のコメントと読み誤る。投稿者が無い（アカウントが消された）ときは、権限の無い人として読む。timeline の出来事の `actor` と、進行 Bot の App のコメントで同じ形になるかは、段階 3 の一度だけの試しで確かめる（「[導入と点検][b04]」の「GitHub App の権限」）
-- 未編集かは、GraphQL の `lastEditedAt` が無いことで読む（[FACT-16][facts]）。人の見出しの最後に編集した人は `editor` で読み、名前を上と同じにそろえる
+- 未編集かは、GraphQL の `lastEditedAt` が無いことで読む（[FACT-16][facts]）。人の見出しの最後に編集した人は、コメントの編集の記録（`userContentEdits`）の項目のうち、`editedAt` の最も新しいものの `editor` で読み、名前を上と同じにそろえる（「[状態遷移と判定][b02]」の「状態の組み立て」。並びの順に頼らず、`editedAt` で選ぶ）。`lastEditedAt` があるのに編集の記録が空か読めないときと、`editor` が無い（アカウントが消された）ときは、最後に編集した人を権限の無い人として読む（止める側）。コメントの `editor` の欄は使わない。編集の記録の最新の項目の `editor` が最後に編集した人になることは、段階 3 の一度だけの試し（「[導入と点検][b04]」の「GitHub App の権限」）で確かめる
 - 人の権限は、事実を読むときに 1 人ずつ引く。1 回の実行の中では同じ人を 1 回だけ引いて同じ実行の組み立てにだけ使い、実行をまたいで持たない。コラボレータの一覧は取らない（[TEXT-10][text]）。進行 Bot のアカウントの出来事（進行 Bot が外したラベル）は、権限を引かずに、行ったものとして読む
-- コメントの印は、`logic/marker/read.ts` に通した結果（有効・無効・読まない。「[印][d03]」の「読み方」）を事実に入れる。印の中身の意味（数えるか、止める契機か）は、`logic/state/discount.ts` が決める
+- push 以上と maintain 以上は、`user.permissions` の真偽で見分ける。`admin` か `maintain` が `true` なら maintain 以上、それに当たらず `push` が `true` なら push 以上とし、どれでもないか、欄が無いか、真偽でなければ、権限の無い人として読む（止める側）。`permission` の欄は maintain を `write` に寄せうるので、`role_name` の欄は独自の役の名前を返しうるので使わない。maintain・push・triage の人の応答の値は、段階 3 の一度だけの試し（「[導入と点検][b04]」の「GitHub App の権限」）で確かめる（[FACT-132][facts] は admin の人だけで確かめた）
+- コメントの印は、`logic/marker/read.ts` に通した結果（有効・無効・読まない（人のコメント）・読まない（印の無い進行 Bot のコメント。人の投稿として読む）。「[印][d03]」の「読み方」）を事実に入れる。印の中身の意味（数えるか、止める契機か）は、`logic/state/discount.ts` が決める
+- `logic/marker/read.ts` が「読まない（人の投稿として読む）」と返したコメントは、投稿者が `safety.botAccounts` のどれかでも、人のコメントとして見出しを読み、権限はほかの人と同じに引く（[ADR-20261015-004][adr-markers] の決定 1）
+- `## 仕組みの変更の承認` に挙がったパスは、`logic/settings/paths.ts` の形の確かめに通し、形に外れたパスは認めなかったものとして事実に入れる（止める側。「[設定と記録][d02]」の「パスの照らし」）
+- 依存の相手のリポと番号は、`runs.jsonl` の作業の単位の結果（待たせた理由）に書く。`wait` の印の `blockedBy` は番号だけなので、別のリポの相手を人が見分けるため。依存が別のリポの Issue を指せるかと、相手を移すか消した後に依存の一覧に残るかは、段階 3 の実装の前に、試し専用の組織で確かめる
 - 必須チェックは、チェックの実行にワークフローのパスが無いので、ワークフローの実行の `check_suite_id` とチェックの実行の `check_suite.id` を突き合わせてパスを付ける（[FACT-127][facts]）。GitHub Actions のほかの app のチェックは、パスを持たない（設定の `workflow` が `null` のもの。「[設定][b01]」の `checks.required`）
 - 印の Issue を REST で引いたときに返る `301` は、`@octokit/core` がたどるかに依らず、返った Issue の `repository_url` で、当てる先のリポにあるかを見分ける（「[状態遷移と判定][b02]」の「状態の組み立て」）
 
@@ -150,8 +179,8 @@
 
 | 枠 | 状態 | 記号 |
 | --- | --- | --- |
-| 依頼 | 起票済み・検疫済み・差し戻し済み・直し済み・下書き済み | `filed`・`quarantined`・`returned`・`corrected`・`drafted` |
-| 計画 | 決定済み・計画済み | `decided`・`planned` |
+| 依頼 | 起票済み・検疫済み・差し戻し済み・直し済み・下書き済み・決定済み | `filed`・`quarantined`・`returned`・`corrected`・`drafted`・`decided` |
+| 計画 | 計画済み | `planned` |
 | 変更 | 変更済み・検査合格・検査不合格・レビュー不合格・レビュー合格・衝突あり | `changed`・`checks-passed`・`checks-failed`・`review-failed`・`review-passed`・`conflicted` |
 | 終了 | マージ済み・閉鎖済み・完了・中止 | `merged`・`closed`・`done`・`cancelled` |
 
@@ -184,7 +213,7 @@
 | 順 | すること |
 | --- | --- |
 | 1 | `logic/state/assemble.ts` で状態を組み立てる |
-| 2 | `logic/state/next.ts` に、状態と、実行の全体の値（下の箇条）と、今の時刻を渡し、工程を決める |
+| 2 | `logic/state/next.ts` に、状態と、作業の単位ごとの値と、実行の全体の値（どちらも下の箇条）と、凍らせたリポの設定と、今の時刻を渡し、工程を決める |
 | 3 | 下の「見直しを止める条件」に当たれば、作業の単位を終える |
 | 4 | 工程のファイルを呼ぶ |
 | 5 | 工程の結果の書いた印と GitHub の変化を、`logic/state/apply.ts` で事実に足し、順 1 に戻る |
@@ -196,13 +225,17 @@
 | push した | push した作業の単位は次の実行まで進めない（[FLOW-4][flow]） |
 | 工程の結果が `advanced` でない（止めた、攻撃の疑いにした、失敗した、起こさなかった） | 下の「工程の結果」 |
 | 組 2 で、マージの判定に当たった | マージの判定は組 2 の後に回す（[MERGE-5][merge]） |
-| 1 つの作業の単位で、見直しが 20 回を超えた | 足し方の誤りで同じ工程を繰り返し、実行が終わらない形を止めるため。実行の失敗として記録し、次の作業の単位へ進む |
+| 同じ実行で、同じ作業の単位に、同じ工程の記号を 2 回目に選んだ | 書いた印の足し方の誤りで、同じ書き込みを重ねないため。工程を呼ばずに、実行の失敗（`failed`）として記録し、次の作業の単位へ進む |
+| 1 つの作業の単位で、見直しが 20 回を超えた | 足し方の誤りで工程が入れ替わりながら続き、実行が終わらない形を止めるため。実行の失敗として記録し、次の作業の単位へ進む |
 
-- `logic/state/next.ts` に渡す実行の全体の値は、全体の止める合図、全体の停止の Issue の有無、基線が緑か、着手した件数、下書きと書き直しの件数、`ready` の判定を書いた PR、進行中の作業の単位の数（着手しようとする作業の単位自身を除く。`logic/state/order.ts` が、渡す時点のすべての作業の単位の状態から数える）、重い工程を起こしてよいか（下の「実行の失敗の数え方」）。どれも実行の中で変わるので、作業の単位ごとと見直しごとに渡し直す
+- `logic/state/next.ts` に渡す作業の単位ごとの値は、実行の失敗が続いた回数、片付けの失敗が続いた回数、重い工程を起こしてよいか（どれも `logic/run/failures.ts` が返す。下の「実行の失敗の数え方」）
+- `logic/state/next.ts` に渡す実行の全体の値は、全体の止める合図、全体の停止の Issue の有無、基線が緑か、着手した件数、下書きと書き直しの件数、`ready` の判定を書いた PR、進行中の作業の単位の数（着手しようとする作業の単位自身を除く。`logic/state/order.ts` が、渡す時点のすべての作業の単位の状態から数える）。設定（`limits.*`・`checks.required` など）は、`RunContext` の凍らせたリポの設定をそのまま渡す。設定のほかは実行の中で変わるので、作業の単位ごとと見直しごとに渡し直す
 - 足す時刻は、書いたときの GitHub の応答の時刻（コメントの `created_at` など）を使い、手元の時計を使わない。マスターと人の操作のように、時刻の前後で状態が決まるため
 - 作業の単位の見直しを終えたら、`flow/steps/display.ts` で、Project の表示の欄と表示のラベル `security-suspected` を書く。`ProjectIssues` で読んだ今の値と違う欄とラベルだけを書く。毎回の実行で、変わっていない欄まで書き直さないため
 - 作業の単位を 1 つ終えるたびに、期限（`RunContext`）を見る。過ぎていたら、残りの作業の単位を進めず、作業の単位の結果に「次の実行に回した」と書く（順 9）。組の境目でも同じに見る
-- 前の実行が残したセッションを止められなかった作業の単位は、組を問わず、組 1 の前に停止中（`session-not-stopped`）にする。片付けの「先に見る」の順 2 の扱いは、書いた `stop` の印の時刻で決まる（「[状態遷移と判定][b02]」の「1 回の実行の流れ」の順 2）
+- 工程を 1 つ終えるたびに、`RunContext` の実行を終える理由を見る。あれば、残りの作業の単位を進めず、作業の単位の結果に「次の実行に回した」と書き、順 10 へ進む。終わり方は、その理由の記号にする
+- 前の実行が残したセッションを止められなかった作業の単位は、組を問わず、組 1 の前に停止中（`session-not-stopped`）にする。`flow/steps/stop.ts` が止めた先（Issue と、PR のセッションなら PR）のすべてに `stop` の印を書けたら、`flow/session/leftovers.ts` で、そのセッションの終わりの行を、始まりの行の `--max-budget-usd` の値で書き、`session-not-stopped` で人に渡したことを書く（「[AI のセッション][b03]」の「前の実行が残したセッション」の順 4）。`stop` の印を 1 つでも書けなければ、終わりの行を書かない（次の実行が同じセッションを見つけて、停止中にし直す）。片付けの「先に見る」の順 2 の扱いは、書いた `stop` の印の時刻で決まる（「[状態遷移と判定][b02]」の「1 回の実行の流れ」の順 2）
+- 前の実行が全体の停止の Issue を開けなかった作業の単位（下の「全体の停止と通知」の開き直し）は、組を問わず、組 1 の前に、全体の停止の Issue を開き直す。安全の軸に値がある作業の単位は「先に見る」の順 4 で何もしないので、作業の単位の見直しの外で行う
 
 ## 工程
 
@@ -214,11 +247,16 @@
 | `decision-marker`・`start` | 決定済み（(1) と (2)） | `flow/steps/decide.ts`（`start` は `flow/steps/plan.ts` を呼ぶ） |
 | `create-change`・`create-pr-from-branch`・`fix-checks`・`fix-review`・`fix-conflict` | 計画済み・検査不合格・レビュー不合格・衝突あり | `flow/steps/change.ts` |
 | `review`・`remark-review` | 検査合格（載せ直しの後に印を付け直すときは `remark-review`） | `flow/steps/review.ts` |
-| `follow-up`・`ready`・`rebase`・`merge-judgment`・`remind` | レビュー合格の (1)〜(5) | `flow/steps/passed.ts` |
+| `follow-up`・`ready`・`sync-base`・`merge-judgment`・`remind` | レビュー合格の (1)〜(5) | `flow/steps/passed.ts` |
 | `cleanup`・`close-old-pr` | マージ済み・閉鎖済み、「先に見る」の順 9 | `flow/steps/cleanup.ts` |
 | `wait-marker`・`dependency-review` | 「先に見る」の順 13・14 | `flow/steps/dependency.ts` |
 | `stop` | 停止中にする行（止めた理由の記号と、止めた先を添える） | `flow/steps/stop.ts` |
 | `none` | 何もしないか待つ行 | — |
+
+- `sync-base` は、進行 Bot の clone で base ブランチを作業ブランチに取り込む（`git merge`）載せ直し。`git rebase` と、GitHub の PR のブランチを更新する API は使わない（「[状態遷移と判定][b02]」の「push の手順」の表の下）。基本設計のセッションの名前 `rebase-pr-<PR の番号>`（衝突の解消。「[AI のセッション][b03]」の「セッションの名前」）は、工程の記号 `fix-conflict` に当たる
+- 工程は、同じ行の対象をまとめて 1 回で行う（`ignored-instruction` は対象の作業指示のコメントのすべて、`follow-up` はまだ記録していない 🟢 の指摘のすべて、`close-old-pr` は前の PR のすべて、`wait-marker` は終わっていない先の Issue のすべて）。書いた印を正しく足せていれば、同じ実行で、同じ作業の単位に同じ工程が 2 回選ばれることは無い
+- `flow/steps/brief.ts` の入口の検疫と書き直しの前の検疫、`flow/run/intake.ts` の受け入れの依頼の実行の検疫は、`logic/text/issue-text.ts` で組み立てた Issue の文（進行 Bot の有効な印のコメントを除いたもの。「[文の検査と受け入れ][d06]」の「掛ける文」）を使う
+- 計画の輪（`flow/steps/plan.ts`）とレビューのラウンド（`flow/steps/review.ts`）は、工程の前に、起こしうるセッションの数の分（計画の輪は `3 + 2 × limits.planRevisions`、レビューのラウンドは 5）を `RunContext` の費用の帳簿でまとめて取り置き、セッションごとに 1 枠ずつ `flow/session/run.ts` に渡す。使わなかった枠は、工程の終わりに返す（「[AI のセッション][d07]」の「費用の取り置き」）
 
 ### 工程の結果
 
@@ -232,8 +270,10 @@
 | `failed` | 実行の失敗（AI のセッションの終わり方の記号、push の失敗、書き込みの失敗など） | 止める |
 | `deferred` | 合図・全体の停止・1 日か 1 回の実行の費用の上限で起こさなかったか、途中で止めた | 止める。実行の失敗に数えない |
 
-- AI のセッションの終わり方の記号（「[AI のセッション][d07]」の「段階」）は、工程のファイルが結果に写す。`done` のほかは、`stop-signal` を `deferred` に、`not-started` を外れた順の扱い（`deferred`・`stopped`・`suspected`）に、`not-stopped` を `stopped`（`session-not-stopped`）に、ほかを `failed` にする
-- 計画の輪とレビューのラウンドのように、1 つの工程が 2 つ以上のセッションを起こすときも、結果は工程に 1 つにする
+- AI のセッションの終わり方の記号（「[AI のセッション][d07]」の「セッションの順」と終わり方の記号）は、`logic/state/session-result.ts` が工程の結果に写し、工程のファイルはこの関数を呼ぶだけにする。`done` のほかは、`not-stopped` を `stopped`（`session-not-stopped`）に、`settings-tampered` を `stopped`（`settings-tampered`）に、`stop-signal` を `deferred` に、`not-started` を外れた順の扱い（`deferred`・`stopped`・`suspected`・実行を終える）に、ほか（`prepare-failed`・上限・`refusal`・`error`・`contract-invalid`）を `failed` にする
+- 扱いが実行を終えるとき（起動の前の確かめの順 1 で合図が `run` でないか読めない、順 5・6、順 9 の上のフォルダ）は、工程を `deferred` にし、`RunContext` の実行を終える理由に、添えられた記号（`stop-signal`・`signal-unreadable`・`machine-unsafe`）を入れる。起動の前の確かめの順 1 で全体の停止の Issue に当たったときは `deferred` だけにし、実行を終えない（AI を使わない工程は続ける）。`stop-signal` で止まったセッションは、`RunContext` の合図が `run` でなければ、実行を終える理由を `stop-signal` にする。全体の停止の Issue を開いて止めたとき（`flow/safety/halt.ts`）は、合図が `run` のままなので、実行を終えない。全体の止める合図で止めた実行は、手元の記録に残し、lock を外して終わる（[ADR-20261017-007][adr-stop]）
+- 計画の輪とレビューのラウンドのように、1 つの工程が 2 つ以上のセッションを起こすときは、セッションごとの記号を、「[AI のセッション][d07]」の終わり方の記号の先後で 1 つにしてから写し、結果は工程に 1 つにする
+- 子プロセスの出力が上限を超えて失敗したときは、`runs.jsonl` の作業の単位の結果の失敗の理由に `output-limit` を書く（「[外との境][d01]」の「子プロセスの起こし方と止め方」）。止めた理由の記号には足さない
 
 ## GitHub に書くとき
 
@@ -241,19 +281,19 @@
 
 | 順 | すること |
 | --- | --- |
-| 1 | 全体の止める合図を読み直す（`flow/safety/signal.ts`）。`run` でなければ書かずに、工程を `deferred` で終え、実行を合図で止めた（`stop-signal`）として終える |
+| 1 | 全体の止める合図を読み直す（`flow/safety/signal.ts`）。`run` でない値なら `stop-signal`、読めなければ `signal-unreadable` を `RunContext` の実行を終える理由に入れ、書かずに工程を `deferred` で終える |
 | 2 | 印を付けるコメントは、`marker.ts` と `logic/marker/sign.ts` で印の行を作り、`logic/text/comments.ts` で決まった部分と `CheckedText` の文につなぐ（「[文の検査と受け入れ][d06]」の「コメントの組み立て」） |
 | 3 | 書く |
-| 4 | 結果（書いた・HTTP の状態で断られた・時間の上限を過ぎて届いたか分からない）を `writes/<実行 ID>.jsonl` に 1 行足す（「[設定と記録][d02]」の「手元の記録」） |
+| 4 | 結果（書いた・HTTP の状態で断られた・届いたか分からない（時間の上限で取り消した、つながらない、GraphQL の誤り））を `writes/<実行 ID>.jsonl` に 1 行足す（「[設定と記録][d02]」の「手元の記録」） |
 
-- 書き込みが断られたときと、時間の上限を過ぎたときは、作業の単位を今の実行では進めず、工程を `failed` で終える。次の実行が GitHub から読み直して続ける（「[設定][b01]」の「子プロセスが時間の上限を過ぎたとき」）
+- 書き込みが断られたときと、届いたか分からないときは、作業の単位を今の実行では進めず、工程を `failed` で終える。次の実行が GitHub から読み直して続ける（「[設定][b01]」の「子プロセスが時間の上限を過ぎたとき」）
 - 書いた印は、コメントの ID と GitHub の応答の時刻と組で、工程の結果に添える（上の「作業の単位の進め方」の足す時刻）
 - 「1 回だけ書く」印（「[状態遷移と判定][b02]」の「ほかの印」）を書くかは、`logic/state/next.ts` が、事実の有効な印から決める。`flow/run/write.ts` は書くかを判定しない
 - 合図は、工程ごとにまとめて読まず、書き込みの呼び出しのたびに読む。工程の途中で人が合図を `stop` にした後の書き込みも止めるため（[ADR-20261017-007][adr-stop] の「GitHub に書き込む前に合図を読む」を、呼び出しの単位で行う）
 
 ## 実行の失敗の数え方
 
-`logic/run/failures.ts` は、`runs.jsonl` の作業の単位の結果と、作業の単位の最新の `## 再開`（R）の時刻と、今の時刻から、作業の単位ごとに次を返す。数え方の決まりは「[AI のセッション][b03]」の「起動の前の確かめ」の表の下のとおり。
+`logic/run/failures.ts` は、`runs.jsonl` の作業の単位の結果と、今の実行の作業の単位の結果（`RunContext`。順 10 まで `runs.jsonl` に書かないため）と、作業の単位の最新の `## 再開`（R）の時刻と、今の時刻から、作業の単位ごとに次を返す。数え方の決まりは「[AI のセッション][b03]」の「起動の前の確かめ」の表の下のとおり。
 
 | 返すもの | 決め方 |
 | --- | --- |
@@ -271,12 +311,12 @@
 | push の結果 | 中身 | 工程の結果 |
 | --- | --- | --- |
 | `pushed` | 送り、読み戻した（初回は PR と `link` の印まで） | `advanced` |
-| `stopped` | `workspace-tampered`・`no-new-commit`・`protected-path`・`manual-push`・`not-fast-forward`・`unrecoverable` のどれかで止めた | `stopped` |
-| `suspected` | 漏えいの検査（`where` が `leak`）か検疫（`where` が `text`、`manual-push` の差分は `code`）で見つけた | `suspected` |
-| `deferred` | 順 6 で、合図が `run` でないか、全体の停止の Issue があった | `deferred` |
+| `stopped` | `adr-required`（順 1。作業 AI の出力契約の `stopReason` が `adr-required` か `canon-change`）・`workspace-tampered`・`no-new-commit`・`protected-path`・`manual-push`・`not-fast-forward`・`unrecoverable` のどれかで止めた | `stopped` |
+| `suspected` | 漏えいの検査（`where` が `leak`）か検疫（`where` が `text`、`manual-push` の差分は `code`）で見つけた。両方で見つけたときは、検疫の `where` で 1 つにする | `suspected` |
+| `deferred` | 順 6 で、合図が `run` でないか、全体の停止の Issue があった（合図が `run` でないか読めないときは、上の「GitHub に書くとき」の順 1 と同じく、`RunContext` の実行を終える理由を入れる） | `deferred` |
 | `failed` | 出力契約を取り出せない、対応コメントを書けない、push が断られた、PR を作れない、時間の上限を過ぎた | `failed` |
 
-- 範囲の commit の一覧（`git rev-list <控えた SHA> ^<base> ^<origin>`）、commit ごとの触れたパス（`git diff-tree -r --name-only -z`。merge の commit は `--cc`）、commit ごとの差分とメッセージと作者は、`io/git.ts` で読む。パスの照らしは `logic/push/paths.ts` が `logic/settings/paths.ts` を使って行い、push で効くものの当たりを、マージまで効かないものの当たりより先に返す
+- 範囲の commit の一覧（`git rev-list <控えた SHA> ^<base> ^<origin>`）、commit ごとの触れたパス（`git diff-tree -r --name-only -z`。merge の commit は `--cc`）、commit ごとの差分とメッセージと作者は、`io/git.ts` で読む（漏えいの検査に渡す差分は、`io/git.ts` の漏えいの検査用の読み方（`--text`。「[外との境][d01]」の「git の呼び方」、[FACT-129][facts]）で読む）。パスの照らしは `logic/push/paths.ts` が `logic/settings/paths.ts` を使って行い、push で効くものの当たりを、マージまで効かないものの当たりより先に返す
 - PR の題名を規約（`conventions.*`）に照らす処理と、固定の形の題名と、本文の並べ方は、`logic/text/comments.ts` に置く（「[文の検査と受け入れ][d06]」の「コメントの組み立て」）
 - 重なり（`overlap` の印）は、順 2 で取り込んだ後に、`logic/push/overlap.ts` が、PR の変更ファイルの一覧と、ほかの進行中の PR の変更ファイルの一覧（進行 Bot の clone の `git diff --name-only <base>...<ブランチ>`）を比べて決める
 - 取り込みの前の後始末（git のプロセスが無いことの確かめ、`index.lock` を消す、`git merge --abort`、`git reset --hard` と `git clean -ffdx`）は、`flow/run/clone.ts` が行う。git のプロセスがあれば、取り込まずに `failed` にする
@@ -292,26 +332,28 @@
 | `rounds.ts` | 数える `review` と `fix` の印 | `round` の欠けは、数える `review` の印の `round` の集合が 1 から最大まで欠けずにそろうかで見る。同じ `round` の印が 2 つ以上あっても欠けにしない（最新の 1 つを採る） |
 | `convergence.ts` | 必須チェックの結果、PR の head、最新の `review` の印 | — |
 | `repeat.ts` | ラウンドごとの `review` の印の `findings` と `head`、`fix` の印、最新のラウンドの head の形（親の SHA の並びと、2 つ目の親が base ブランチにあるか） | head の形は、工程のファイルが進行 Bot の clone で読む（`git rev-list --parents -n 1 <head>` と `git merge-base --is-ancestor <2 つ目の親> <base>`） |
-| `merge.ts` | レビュー合格の判定、PR の向き先と `link` の印、`git diff --raw <base>...<head>` の一覧、最終の head の差分への漏えいの検査の結果、最新の `review` の印の `droppedHigh`、`merge.allowPaths` と `merge.policyPaths`、実行の全体の値の `ready` の判定を書いた PR、ほかの開いた PR の最新の `merge` の印 | `ready` の 1 件の上限は、今の実行で `ready` を書いた PR と、ほかの開いた PR のうち、最新の数える `merge` の印が `ready` で、`head` が PR の今の head と同じものを数える。head が進んだ PR は、判定し直すまで数えない |
+| `merge.ts` | レビュー合格の判定、PR の向き先と `link` の印、`git diff --raw <base>...<head>` の一覧、最終の head の差分（漏えいの検査用の読み方で読んだもの）への漏えいの検査の結果、最新の `review` の印の `droppedHigh`、`merge.allowPaths` と `merge.policyPaths`、実行の全体の値の `ready` の判定を書いた PR、ほかの開いた PR の最新の `merge` の印 | `ready` の 1 件の上限は、今の実行で `ready` を書いた PR と、ほかの開いた PR のうち、最新の数える `merge` の印が `ready` のものを、印の `head` が PR の今の head と同じかを問わずに数える。head の進んだ PR も、閉じられるか、判定し直して最新の数える `merge` の印が `human` になるまで数える（[MERGE-5][merge]、[ADR-20261016-001][adr-merge-limit] の決定 2） |
 
-- `reasons` の記号の一覧は `logic/judge/merge.ts` の定数にし、`marker.ts` が読む（「[印][d03]」の「欄の値の形」の表の下）
+- `reasons` の記号の一覧は `logic/judge/merge-reasons.ts` の定数にし、`logic/judge/merge.ts` と `marker.ts` が読む（「[印][d03]」の「欄の値の形」の表の下）
 
 ## 全体の停止と通知
 
 | すること | ファイル | 決めたこと |
 | --- | --- | --- |
-| 全体の止める合図を読む | `flow/safety/signal.ts` | REST でリポの変数 `DEV_AUTOPILOT_RUN` を読む。値が `run` か、ほかの値か、読めないかを返す。読めないときは `run` でないものと扱う |
-| 全体の停止の Issue を読む | `flow/safety/signal.ts`、`logic/state/halt.ts` | `safety.botAccounts` のアカウントごとに、起票した Issue を REST の `creator` で開閉を問わず一覧にし、`WorkUnitIssue` と同じ読み方でコメントを読む。止める間かは `logic/state/halt.ts` が決め、読めなければ「ある」とする |
-| 攻撃の疑いにする | `flow/safety/suspect.ts` | `security` の印を、Issue と、PR が契機なら PR に書く。`where` が `text` なら `flow/safety/halt.ts` を呼ぶ。書けた印ごとに通知する |
-| 全体の停止の Issue を開く | `flow/safety/halt.ts` | 開いた全体の停止の Issue があれば `halt` の印のコメントを足し、無ければ Issue を開いてから `halt` の印のコメントを書く。続けて、`RunContext` の動いているセッションを止める手順で止め、`RunContext` の全体の停止の Issue を「ある」にする |
-| 通知する | `flow/safety/notify.ts` | 文は `logic/text/comments.ts` の固定の文と、決まった値（リポ、種類、Issue と PR の番号と URL）だけで作る。送り直しの回数と間隔は、プログラムに固定する値（「[設定と記録][d02]」の「プログラムに固定する値」）に置き、値は送り先のサービスを段階 3 で確かめるときに決める |
+| 全体の止める合図を読む | `flow/safety/signal.ts` | REST でリポの変数 `DEV_AUTOPILOT_RUN` を読む。値が `run` か、ほかの値か、読めないかを分けて返す。呼ぶ側は、読めないときを `run` でないものと扱う（書かず、AI のセッションを起こさない）。ただし、AI のセッションの見張りは、読めないときに止めない（「[AI のセッション][d07]」の「見張り」、[ADR-20261017-007][adr-stop] の決定 2）。順 3 で読めなければ、終わり方は `signal-unreadable` |
+| 全体の停止の Issue を読む | `flow/safety/signal.ts`、`logic/state/halt.ts` | 順 4 でリポの設定を読んだ直後に、`safety.botAccounts` のアカウントごとに、起票した Issue を REST の `creator` で開閉を問わず一覧にし（ページは「[外との境][d01]」の「GitHub の呼び方」のとおり送る）、`pull_request` の欄を持つ項目（PR。[FACT-130][facts]）を除いてから、残りを `WorkUnitIssue` と同じ読み方でコメントを読む。止める間かは `logic/state/halt.ts` が決め、読めなければ「ある」とする |
+| 攻撃の疑いにする | `flow/safety/suspect.ts` | `security` の印を、Issue と、PR が契機なら PR に書く。検疫と漏えいの検査の両方で見つけたときは、`where` を `text` にした `security` の印を 1 つ書く（「[文の検査と受け入れ][d06]」の「検査を通った文の型」）。`where` が `text` の印を書けたら、すぐに `RunContext` の全体の停止の Issue を「ある」にしてから、`flow/safety/halt.ts` を呼ぶ。書けた印ごとに通知する |
+| 全体の停止の Issue を開く | `flow/safety/halt.ts` | 先に、`RunContext` の動いているセッションを止める手順で止め（止めたセッションは `stop-signal` を返す）、`RunContext` の全体の停止の Issue を「ある」にする。続けて、開いた全体の停止の Issue があれば `halt` の印のコメントを足し、無ければ Issue を開いてから `halt` の印のコメントを書く。開けなかったか印を書けなかったとき（断られた、届いたか分からない、合図が `run` でなかった）も、「ある」を戻さない。GitHub に書く順（`security` の印、全体の停止の Issue と `halt` の印）は [ADR-20261024-005][adr-security] の決定 3 のまま |
+| 全体の停止の Issue を開き直す | `logic/state/halt.ts`、`flow/run/units.ts`、`flow/safety/halt.ts` | `logic/state/halt.ts` が、作業の単位の事実と、`RunContext` の読んだ `halt` の印から、開き直す作業の単位（Issue の、`where` が `text` の最新の `security` の印より後に、`issue` がその作業の単位の番号の有効な `halt` の印が、どの全体の停止の Issue にも無いもの）を返す。`flow/run/units.ts` は、組 1 の前に、1 つでもあれば `RunContext` の全体の停止の Issue を「ある」にし、作業の単位ごとに `flow/safety/halt.ts` を呼ぶ（軽い）。Issue だけを開いて `halt` の印を書けなかったときは、その Issue を全体の停止の Issue と見分けられないので、新しく開く（印の無い Issue は、今のとおり点検の warn に出す） |
+| 通知する | `flow/safety/notify.ts` | 文は `logic/text/comments.ts` の固定の文と、決まった値（リポ、種類、Issue と PR の番号と URL）だけで作る。送り直しの回数と間隔は、`flow/safety/notify.ts` に名前を付けた定数で置き（「[設定と記録][d02]」の「プログラムに固定する値」の表の下の箇条）、値は送り先のサービスを段階 3 で確かめるときに決める。1 回の送信の上限は 30 秒（「[外との境][d01]」の「HTTPS」） |
 
-- 合図と全体の停止の Issue を読む時は、「[状態遷移と判定][b02]」の「1 回の実行の流れ」の表の下のとおり（順 3、重い工程の起動の前、書き込みの前（合図だけ）、セッションの見張り、push の手順の順 6、順 10）
+- 合図と全体の停止の Issue を読む時は、「[状態遷移と判定][b02]」の「1 回の実行の流れ」の表の下のとおり（順 3（合図）、順 4 でリポの設定を読んだ直後（全体の停止の Issue）、重い工程を始める前、AI のセッションを起動する前（「[AI のセッション][d07]」のセッションの順 1（起動の前の確かめ）。点検の試しのセッションと受付 AI を含むどの役も）、書き込みの前（合図だけ。点検の書き込みの権限の試しを含む）、セッションの見張り（合図だけ。全体の停止の Issue を開いたときは、`flow/safety/halt.ts` が動いているセッションを止める）、push の手順の順 6、順 10）
+- 全体の停止の Issue を開けなかった実行から、次の実行が開き直すまで（次の実行の順 7（状態の組み立て）まで）の間は、順 5 の試しのセッションと受け入れの依頼の受付 AI を止められない。止めるには手元の記録（`writes/`）を判定に使うことになり、[ADR-20261015-006][adr-records] の決定 4（判定は GitHub だけ）を改める判断になるので、本書では扱わない
 - 送れなかった通知は、種類・Issue の番号・時刻・応答の状態を `runs.jsonl` の行に書き、点検の warn に出す。Webhook の URL は書かない（[ADR-20261101-002][adr-notify]）
 
 ## 止めた理由の記号
 
-`logic/state/reasons.ts` に、止めた理由の記号の一覧を、14 個と実装の都合の記号の 2 つの組で定数として持つ。`marker.ts` は、`stop` の印の `reason` の値の形を、一覧で確かめる（「[印][d03]」の「欄の値の形」）。
+`logic/state/reasons.ts` に、止めた理由の記号の一覧を、14 個と実装の都合の記号の 2 つの組で定数として持つ。`logic/state/reasons.ts` は何も import しない（`marker.ts` が読むので、互いに import しあう形を作らないため）。`marker.ts` は、`stop` の印の `reason` の値の形を、一覧で確かめる（「[印][d03]」の「欄の値の形」）。
 
 - 実装の都合の記号は、基本設計の「止めた理由の記号」の表の名前を変えずに使う（基本設計が、名前を変えるかを詳細設計に任せた）。どれも英小文字を `-` でつないだ形で、14 個の記号と書き方がそろっており、要件・基本設計・図に同じ名前で載っている。名前を変えても動きは変わらず、文書と図を直す手間だけが増えるため
 - 組み直す前の記号（`usage-limit` など）は、一覧に入れない。進行 Bot はまだ GitHub に印を書いたことが無く、読む古い印も無いため。古い記号の `stop` の印は、形が合わない無効な印になる
@@ -327,12 +369,12 @@
 
 ## 人が呼ぶ /dev-autopilot
 
-`flow/skill/dev-autopilot.ts` は、「[導入と点検][b04]」の「状態の表示」を受け持つ。秘密の置き場を読まず、GitHub の API と `claude` を呼ばない（[README][readme] の「入口ごとの import の範囲」）。
+`flow/skill/dev-autopilot.ts` は、「[導入と点検][b04]」の「状態の表示」を受け持つ。秘密の置き場を読まず、GitHub の API と `claude` を呼ばない（[README][readme] の「入口ごとの import の範囲」）。マシンの設定と `run.lock` と `status.json` は、`flow/skill/context.ts` で読む。
 
 | 引数 | すること |
 | --- | --- |
-| 表示 | マシンの設定から記録の置き場を見つけ、`status.json` を読んで表示する。順は、実行の時刻・起こされ方・終わり方、全体（合図・全体の停止の Issue・基線）、点検の fail と warn、人の番の作業の単位、ほかの作業の単位、見送った依頼。記録の目印のファイルを作った日が今日なら、`setup` をした日は AI のセッションを起動しないことを添える |
-| 1 回実行 | `run.lock` があれば、依頼を置かずに、実行の最中であることと lock の起動の時刻を示して終える。無ければ、`run-request.json` を置くコマンドの文（書く先のパスと中身）を返す。Skill が人の許可を得て sandbox の外で動かし、続けて定期の実行と同じジョブを起こす（`-k` を付けない。FACT-80） |
+| 表示 | マシンの設定から記録の置き場を見つけ、`status.json` を読んで表示する。順は、実行の時刻・起こされ方・終わり方、全体（合図・全体の停止の Issue・基線）、点検の fail と warn（項目は ID と `logic/check/items.ts` の決まった文と `details` で出す）、人の番の作業の単位、ほかの作業の単位、見送った依頼。記録の目印のファイルを作った日が今日なら、`setup` をした日は AI のセッションを起動しないことを添える |
+| 1 回実行 | `run.lock` があれば、依頼を置かずに終える。lock の中身を読めれば、実行の最中か、前の実行が落ちて lock が残っているかのどちらかであることと、lock の起動の時刻を示し、lock の起動の時刻が古ければ、`check` を呼ぶと定期の実行と同じジョブが起き、持ち主の無い lock を奪って片付けることも示す（`check` は lock を見ずに依頼を置く。「[点検][d04]」の「人が呼ぶ check」）。中身を読めなければ、壊れた lock であることと戻し方（「[設定と記録][d02]」の「lock」）を示す（`check` の案内は出さない。進行 Bot は読めない lock を奪わないため）。lock が無ければ、`run-request.json` を置くコマンドの文（書く先のパスと中身）を返す。Skill が人の許可を得て sandbox の外で動かし、続けて定期の実行と同じジョブを起こす（`-k` を付けない。FACT-80） |
 
 - 表示は、状態と軸を、記号でなく [FLOW-39][flow] の名前で出す（`logic/state/states.ts` の表）。止めた理由は記号と、`logic/text/comments.ts` の決まった文で出す
 - `status.json` の形が違うか読めなければ、表示できないことと、`launchd.err.log` を見ることを示す
@@ -342,25 +384,32 @@
 
 | ファイル | 単体テストで確かめること |
 | --- | --- |
-| `flow/run/run.ts` | 起こされ方ごとに、上の「起こされ方と進む順」の表のとおりに呼ぶこと。順 3〜5 で止まっても順 10 を行うこと。思わない失敗で、動いているセッションを止め、記録を書き、lock を外すこと |
-| `logic/run/records.ts`（足す分） | 終わり方ごとの終了コード |
-| `flow/run/gather.ts` | `fullDatabaseId` を数にすること、収まらない値を読めなかったものにすること。`__typename` が `Bot` の名前に `[bot]` を足すこと。途中のページの失敗と、1 つの作業の単位の失敗で全体を止めること。同じ人の権限を 1 回の実行で 1 回だけ引くこと。チェックの実行とワークフローの実行の突き合わせ |
+| `flow/run/run.ts` | 起こされ方ごとに、上の「起こされ方と進む順」の表のとおりに呼ぶこと。順 3〜5 で止まっても順 10 を行うこと。思わない失敗で、動いているセッションを止め、記録を書き、lock を外すこと。思わない失敗で止まった依頼の実行で、結果のファイルを書いてから依頼を消し、結果を書けなければ依頼を消さないこと。点検の依頼の実行で、点検を 1 回だけ行い（順 10 で、順 2 で読んだ依頼と ID が同じ依頼を点検し直さない）、点検の fail でも `check-only` で終わること。全体の停止の Issue がある受け入れの依頼の実行で、受付 AI を起こさず、`halt-issue` を結果に書くこと。記録の切れた行で `records-cut` にし、順 10 を行うこと。動かさない OS とマシンの設定を読めないときに、`runs.jsonl` に書かずに標準エラーの 1 行を返すこと |
+| `logic/run/records.ts`（足す分） | 終わり方ごとの終了コード。2 つ以上に当たるときの先後 |
+| `flow/run/gather.ts` | `fullDatabaseId` を数にすること、収まらない値を読めなかったものにすること。`__typename` が `Bot` の名前に `[bot]` を足すこと。途中のページの失敗と、1 つの作業の単位の失敗で全体を止めること。Project の項目が 100 件を超えるときに 2 ページ目を読むこと。同じ人の権限を 1 回の実行で 1 回だけ引くこと。`user.permissions` の組み合わせごとの読み方（`maintain` だけが `true`、`push` だけが `true`、欄が無い）。チェックの実行とワークフローの実行の突き合わせ。設定に無い型の作業ブランチの PR と、origin の作業ブランチと、`link` の印の番号の PR を事実に入れること。依存の相手が当てる先のリポの外にあるとき、相手を引かずに未完了と読むこと。編集の記録が 2 件以上あるとき、`editedAt` の最も新しい項目の `editor` を最後に編集した人にし、記録が空か `editor` が無いときに権限の無い人にすること。印の無い進行 Bot のコメントの見出しを、人の見出しとして読むこと。形に外れた `## 仕組みの変更の承認` のパスを認めないこと |
+| `flow/run/clone.ts` | clone も `known_hosts` も無い置き場で、`known_hosts` を書いてから clone を作り、リポの設定を読めること（[ADR-20261021-006][adr-repo] の確認方法）。`known_hosts` があれば書き直さないこと。一時の名前のフォルダが残っていても、できた clone と読まないこと。取り込みの前の後始末で、git のプロセスが残っていれば実行の失敗にすること |
+| `flow/run/intake.ts` | 受付 AI の結果を、結果のファイルの欄（`outcome` と `reason`）で書き、GitHub に書かないこと。全体の停止の Issue があれば受付 AI を起こさずに `halt-issue` を書くこと。受付 AI が `not-stopped` を返したら、終わりの行を書かずに、残ったプロセスを結果のファイルと `runs.jsonl` に書くこと |
+| `flow/steps/` | 工程ごとの外れ方と、返す結果（`advanced`・`stopped`・`suspected`・`failed`・`deferred`）。`decide.ts`：渡す文に TEXT-7 の検査で見つけたら、着手せずに `stopped`（`brief-sensitive`）を返すこと。`change.ts`：`fix` の印の `model` が、その修正で `--model` に渡した値と同じこと（`cause` の 3 つのどれでも）。`models.work` が `sonnet` のときに修正を `models.workRaised` で起こし、その `fix` の印のコメントに決まった文があり、Issue に別のコメントを書かないこと（[ADR-20261101-001][adr-raise]）。`passed.ts`：🟢 の起票で、同じ見出しの有効な `follow-up` の印を持つ開いた Issue にはコメントと `follow-up` の印を足し、持たない Issue（人の Issue、全体の停止の Issue、印を書く前に実行が切れた Issue）には足さずに新しく作ること。足した印でも ready の前の確かめが通ること（[ADR-20261031-001][adr-follow-up]）。`stop.ts`：`session-not-stopped` で止めた先のすべてに `stop` の印を書けたときだけ、終わりの行を書くこと |
+| `logic/state/states.ts` | 記号の一覧と、Project の表示の名前と、主な流れの枠が、要件と基本設計の表と同じこと（期待値は要件と基本設計から写す。決定済みは依頼の枠） |
 | `logic/state/discount.ts`・`main-flow.ts`・`axes.ts` | 基本設計の表の行ごと。表の順で、進んだほうを先に見ること。どの行にも当たらないときに「決められない」を返すこと |
-| `logic/state/next.ts` | 「先に見る」と「状態ごとの工程」の行ごと。実行の全体の値（全体の停止、基線、件数の上限、重い工程を起こしてよいか）ごとの扱い。続いた失敗が上限で、新しい `stop` の印が無いときに停止中を返すこと |
+| `logic/state/assemble.ts` | 組み立ての 1〜4 を順に呼ぶこと |
+| `logic/state/session-result.ts` | 上の「工程の結果」の写し方の行ごと（終わり方の記号ごとの工程の結果と、実行を終える扱い）。2 つ以上のセッションの記号を、先後で 1 つにすること |
+| `logic/state/next.ts` | 「先に見る」と「状態ごとの工程」の行ごと。作業の単位ごとの値（続いた失敗の回数、重い工程を起こしてよいか）と、実行の全体の値（全体の停止、基線、件数の上限）ごとの扱い。続いた失敗が上限で、新しい `stop` の印が無いときに停止中を返すこと |
 | `logic/state/apply.ts` | 工程ごとの書いた印と変化を足した後の組み立てが、GitHub から読み直したときと同じ状態になること |
 | `logic/state/order.ts` | 組の順と組の中の順（マイルストーンの版、Issue と PR の番号）。進行中の作業の単位の数え方 |
-| `logic/state/halt.ts` | 開いた Issue、`## 安全の確認` の無い閉じた Issue、権限の無い人の `## 安全の確認`、読めないときに止めること |
+| `logic/state/halt.ts` | 開いた Issue、`## 安全の確認` の無い閉じた Issue、権限の無い人の `## 安全の確認`、読めないときに止めること。`where` が `text` の `security` の印より後の、同じ番号の `halt` の印が無い作業の単位を、開き直す作業の単位として返すこと。`where` が `leak`・`code`・`entry` の印では返さないこと |
 | `logic/state/reasons.ts` | 一覧が、基本設計の 2 つの表の記号と同じこと（期待値は基本設計から写す） |
-| `flow/run/units.ts` | 見直しを止める条件の行ごと。組 2 でマージの判定を回さず、組 2 の後に PR の番号の順に回すこと。期限を過ぎたら残りを次の実行に回すこと |
-| `flow/run/write.ts` | 書く前に合図を読み、`run` でなければ書かないこと。結果を `writes/` に書くこと。断られたときと時間の上限を過ぎたときに `failed` を返すこと |
-| `flow/push.ts`・`logic/push/` | 基本設計の「push の手順」の順ごとの外れ方。範囲に、取り込んだ base の commit と GitHub にもうある commit を入れないこと。途中の commit で触れて戻したパスで止めること |
-| `logic/judge/` | 基本設計の「判定」の表と例（ラウンドと往復の表、同じ指摘の再発の表）。最新のチェックの選び方。`checks.required` が空で緑にしないこと。`ready` の 1 件の上限の数え方 |
-| `logic/run/wake.ts`・`missed.ts`・`failures.ts`・`residue.ts` | 依頼のファイルの組み合わせごとの起こされ方。眠っていた間の時刻の数え方。R と重い工程の成功で数え直すこと、`deferred` を数えないこと。残骸の表の行ごと |
-| `flow/safety/` | 合図を読めないときに `run` でないと扱うこと。全体の停止の Issue を開いた後に、動いているセッションを止め、重い工程を起こさないこと。送り直しの後も送れないときに記録に書き、URL を書かないこと |
-| `flow/skill/dev-autopilot.ts` | lock があるときに依頼を置かないこと。依頼を置くコマンドの文に、書く先のパスと中身が見えること。形の違う `status.json` を表示しないこと |
+| `flow/run/units.ts` | 見直しを止める条件の行ごと（同じ工程の記号を 2 回目に選んだら、工程を呼ばずに `failed` にすることを含む）。組 2 でマージの判定を回さず、組 2 の後に PR の番号の順に回すこと。期限を過ぎたときと、実行を終える理由が入ったときに、残りを次の実行に回すこと。1 つの作業の単位の工程で例外が出ても、その作業の単位を `failed` にして次の作業の単位へ進み、終わり方が `crashed` になること。止められなかったセッションの作業の単位を組 1 の前に停止中にし、`stop` の印を書けたときだけ終わりの行を書くこと。開き直す作業の単位があれば、組 1 の前に全体の停止の Issue を開き直し、AI のセッションを起こさないこと |
+| `flow/run/write.ts` | 書く前に合図を読み、`run` でなければ書かないこと。合図を読めないときに、実行を終える理由を `signal-unreadable` にすること。結果を `writes/` に書くこと。断られたとき、時間の上限で取り消したとき、つながらないとき、GraphQL の誤りのときに `failed` を返すこと |
+| `flow/push.ts`・`logic/push/` | 基本設計の「push の手順」の順ごとの外れ方。作業 AI が `stopReason` を返したら、push せずに `stopped`（`adr-required`）を返すこと。範囲に、取り込んだ base の commit と GitHub にもうある commit を入れないこと。途中の commit で触れて戻したパスで止めること。漏えいの検査に渡す差分を、漏えいの検査用の読み方で読むこと |
+| `logic/judge/` | 基本設計の「判定」の表と例（ラウンドと往復の表、同じ指摘の再発の表）。最新のチェックの選び方。`checks.required` が空で緑にしないこと。`ready` の 1 件の上限の数え方（head の進んだ 1 件目も数え、2 件目を判定しないこと。1 件目が閉じられるか、判定し直して `human` になったら待つのをやめること） |
+| `logic/judge/merge-reasons.ts` | 記号の一覧が、基本設計の「マージの判定」の表の記号と同じこと（期待値は基本設計から写す） |
+| `logic/run/wake.ts`・`missed.ts`・`failures.ts`・`residue.ts` | 依頼のファイルの組み合わせごとの起こされ方。眠っていた間の時刻の数え方。R と重い工程の成功で数え直すこと、`deferred` を数えないこと、今の実行の `failed` を数えて `limits.retry.count` 回目を同じ実行で返すこと。残骸の表の行ごと |
+| `flow/safety/` | 合図の 3 つの値（`run`・ほかの値・読めない）を分けて返すこと。`creator` の一覧に進行 Bot の PR が混じっても、PR を全体の停止の Issue として読まず、「ある」にしないこと。全体の停止の Issue を開いた後に、動いているセッションを止め、AI のセッションを起こさないこと。`where` が `text` の印を書けた後、全体の停止の Issue を開けなくても、動いているセッションを止め、同じ実行で AI のセッションを起こさないこと（読み直しで「無い」に戻さないこと）。検疫と漏えいの検査の両方で見つけたときに、`where` が `text` の印を 1 つ書くこと。送り直しの後も送れないときに記録に書き、URL を書かないこと |
+| `flow/skill/dev-autopilot.ts` | lock があるときに依頼を置かないこと。示す文に、lock の起動の時刻と `check` の案内が入ること。中身を読めない lock では、壊れた lock であることと戻し方を示し、`check` の案内を出さないこと。依頼を置くコマンドの文に、書く先のパスと中身が見えること。形の違う `status.json` を表示しないこと |
 
 - 結合テストは、偽の GitHub（「[テスト][b05]」の「偽物」）の筋書きで、作業の単位を起票済みから完了まで、決まった実行の回数で進めることを確かめる。偽の GitHub は、GraphQL の操作の名前で答えを選ぶので、上の「GitHub の事実の読み方」の操作の名前を、偽物の筋書きと共有する
-- 偽の GitHub の答えには、`fullDatabaseId` を 32 ビットの整数の上限より大きな値で、App の投稿者を `__typename` が `Bot` で `[bot]` の無い名前で入れる（[FACT-125・126][facts] の形）
+- 偽の GitHub の答えには、`fullDatabaseId` を 32 ビットの整数の上限より大きな値で、App の投稿者を `__typename` が `Bot` で `[bot]` の無い名前で入れる（[FACT-125・126][facts] の形）。`creator` で絞った Issue の一覧の答えには、`pull_request` の欄を持つ PR の項目を混ぜる（[FACT-130][facts] の形）。人の権限の答えには、admin・maintain・push・triage の人の `user.permissions` を入れる
 
 [readme]: ./README.md
 [d01]: ./01-io.md
@@ -379,7 +428,14 @@
 [merge]: ../../requirements/03-merge.md
 [text]: ../../requirements/04-external-text-and-markers.md
 [facts]: ../../requirements/10-verified-facts.md
+[adr-markers]: ../../adr/adr-20261015-004-signed-markers-and-actor-checks.md
+[adr-records]: ../../adr/adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-merge-limit]: ../../adr/adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [adr-stop]: ../../adr/adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-repo]: ../../adr/adr-20261021-006-repo-owner-and-name-in-machine-settings.md
+[adr-security]: ../../adr/adr-20261024-005-security-axis-and-halt-issue.md
+[adr-follow-up]: ../../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
+[adr-raise]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
 [fig-run]: ./diagrams/08-run.drawio.svg
 [fig-units]: ./diagrams/08-units.drawio.svg
