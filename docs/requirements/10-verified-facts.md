@@ -468,7 +468,7 @@ macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。�
 
 ## 詳細設計のレビューで確かめた事実（2026-11-11）
 
-詳細設計（`docs/design/detailed/`）のレビューで、書いてあるとおりに作ると壊れるかを確かめた。macOS 15.7.9、lsof 4.91、git 2.50.1（Apple Git-155）。lsof と git は手元の使い捨てのフォルダで試し、試した後に消した。
+詳細設計（`docs/design/detailed/`）のレビューで、書いてあるとおりに作ると壊れるかを確かめた。macOS 15.7.9、lsof 4.91、git 2.50.1（Apple Git-155。個人とシステムの設定を読まない形で動かした）。lsof と git は手元の使い捨てのフォルダで試し、試した後に消した。
 GitHub は、試し専用の組織のリポを、試し専用の組織だけに届く fine-grained PAT で読んだ。Markdown の描き出し（`POST /markdown`）のほかは読むだけで、GitHub には何も書いていない。描き出しも、何も作らない。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
@@ -478,6 +478,7 @@ GitHub は、試し専用の組織のリポを、試し専用の組織だけに�
 | FACT-130 | Issue の作者で絞った REST の Issue の一覧に、PR が混じるか | **混じる。** `GET /repos/{owner}/{repo}/issues?state=all&creator=<作者>` は、作者が作った PR も返し、PR には `pull_request` の欄があった。PR の番号を GraphQL の `repository.issue(number:)` で引くと、`NOT_FOUND`（「Could not resolve to an Issue with the number of <番号>.」）だった | 実行 |
 | FACT-131 | GitHub の画面に出ない書き方で、Issue やコメントに文を隠せるか | **隠せる。** Markdown の描き出し（`POST /markdown`、`mode` は `gfm`）で、参照の定義 `[//]: # (<文>)` と `[a]: # "<文>"` は何も描き出さず、文は画面に出なかった。`<a name="…" title="…">` と `<span title="…">` は `title` の属性を残した（画面には出ず、マウスを重ねたときに出る）。`name` の値は頭に `user-content-` が付いた | 実行 |
 | FACT-132 | リポの権限を引く REST の応答に、どの欄があるか | **`permission`・`role_name`・`user.permissions` がある。** `GET /repos/{owner}/{repo}/collaborators/{username}/permission` は、`permission`（`admin`）、`role_name`（`admin`）、`user.permissions`（`admin`・`maintain`・`push`・`triage`・`pull` の真偽。どれも真）を返した。確かめたのは admin の人だけで、maintain・push・triage の人と、独自の役の人の値は確かめていない | 実行 |
+| FACT-133 | git のパスの指定（`:(glob)`）で、`*` と `**` とワイルドカードの無いパスは、どこまで当たるか | **`*` は `/` を越えず、`**` は 0 段以上のフォルダに当たり、ワイルドカードの無いパスはフォルダとして中のすべてに当たる。** `docs/x.md`・`docs/a/b.md`・`docs/a/c/d.md` を持つリポで `git ls-files -- ':(glob)<形>'` を動かすと、`docs/*` は `docs/x.md` だけ、`docs/**` は 3 つすべて、`docs/**/*.md` は 3 つすべて（`docs/x.md` を含む）、`**/b.md` は `docs/a/b.md` だけ、`docs/a` は `docs/a/b.md` と `docs/a/c/d.md` を返した | 実行（手元だけ） |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
