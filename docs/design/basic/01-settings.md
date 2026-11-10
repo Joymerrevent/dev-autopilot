@@ -233,7 +233,7 @@
 
 | キー | 中身 | 形 | 初期値 | 根拠 |
 | --- | --- | --- | --- | --- |
-| `conventions.language` | commit メッセージと PR の言語 | 文字列（言語のタグ。例：`ja`） | `setup` が人に聞いて書く（business-os：`ja`（日本語）。[IMPL-4][impl]） | 作業 AI に守らせる規約は、当てる先のリポの正典をそのまま渡す（[IMPL-4][impl]）。規約は設定に持つ（[STRUCT-2][struct]） |
+| `conventions.language` | commit メッセージと PR の言語 | 文字列（言語のタグ。進行 Bot がコメントの固定の文を持つ言語に限る。今は `ja` だけ。詳細設計の「[文の検査と受け入れ][d-text]」の「コメントの組み立て」） | `setup` が人に聞いて書く（business-os：`ja`（日本語）。[IMPL-4][impl]） | 作業 AI に守らせる規約は、当てる先のリポの正典をそのまま渡す（[IMPL-4][impl]）。規約は設定に持つ（[STRUCT-2][struct]） |
 | `conventions.conventionalCommits` | commit メッセージを Conventional Commits で書くか | 真偽 | `setup` が人に聞いて書く（business-os：`true`。[IMPL-4][impl]） | 作業 AI に守らせる規約（[IMPL-4][impl]） |
 | `conventions.changeset` | 変更に changeset を付けるか | 真偽 | `setup` が人に聞いて書く（business-os：`true`。[IMPL-4][impl]） | 作業 AI に守らせる規約（[IMPL-4][impl]） |
 
@@ -348,3 +348,4 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-github]: ../../adr/adr-20261107-001-call-github-with-octokit-instead-of-gh.md
+[d-text]: ../detailed/06-text-and-intake.md
