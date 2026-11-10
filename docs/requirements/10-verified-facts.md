@@ -466,6 +466,19 @@ macOS、Claude Code 2.1.285、npm（Node 24.3.0 に付属）、pnpm 10.29.3。�
 | FACT-126 | GitHub App が書いたコメントの投稿者の名前は、REST と GraphQL でどう読めるか | **REST は `<アプリの名前>[bot]`、GraphQL は `[bot]` の無いアプリの名前。** REST のコメントの `user.login` は `<アプリの名前>[bot]`、`user.type` は `Bot`、`performed_via_github_app.slug` はアプリの名前だった。GraphQL のコメントの `author` は、`__typename` が `Bot`、`login` がアプリの名前（`[bot]` が無い）だった。人のコメントは、REST と GraphQL のどちらもログイン名が同じで、GraphQL の `__typename` は `User` だった。timeline のラベルの出来事の `actor` は、App の出来事が試しのリポに無く、確かめていない | 実行 |
 | FACT-127 | チェックの実行から、チェックを出したワークフローのパスを読めるか | **チェックの実行には無く、ワークフローの実行と、チェックスイートの ID で突き合わせて読める。** `GET /repos/{owner}/{repo}/commits/{ref}/check-runs` のチェックの実行には、ワークフローのパスの欄が無く、`check_suite` には `id` だけがあった。`GET /repos/{owner}/{repo}/actions/runs?head_sha=<SHA>` のワークフローの実行は、`path`（`.github/workflows/ci.yml`）と `check_suite_id` を持ち、`check_suite_id` がチェックの実行の `check_suite.id` と同じ値だった。チェックの実行の `app.slug` は `github-actions` だった | 実行 |
 
+## 詳細設計のレビューで確かめた事実（2026-11-11）
+
+詳細設計（`docs/design/detailed/`）のレビューで、書いてあるとおりに作ると壊れるかを確かめた。macOS 15.7.9、lsof 4.91、git 2.50.1（Apple Git-155）。lsof と git は手元の使い捨てのフォルダで試し、試した後に消した。
+GitHub は、試し専用の組織のリポを、試し専用の組織だけに届く fine-grained PAT で読んだ。Markdown の描き出し（`POST /markdown`）のほかは読むだけで、GitHub には何も書いていない。描き出しも、何も作らない。
+
+| 番号 | 確かめたこと | 結果 | 証拠 |
+|---|---|---|---|
+| FACT-128 | `lsof +D` がプロセスを見つけたときの終了コードは 0 か | **0 とは限らない。** フォルダを作業フォルダにしたプロセス（`sleep`）を動かし、`LANG=C lsof -n -P -F pcn +D <フォルダ>` を実行すると、標準出力に `p<PID>`・`c<コマンド>`・`fcwd`・`n<フォルダ>` の行を出したのに、終了コード 1・標準エラー空で終わった。フォルダの中には、どのプロセスも開いていないファイルがあった。FACT-115 の「何も見つからない」ときと同じ終わり方なので、見つけたかは終了コードでなく、標準出力の `p` の行で見分ける。終了コード 1・標準エラー空・標準出力空のときだけを「見つからない」と読める | 実行（手元だけ） |
+| FACT-129 | 個人とシステムの設定を読まない git（`GIT_CONFIG_GLOBAL=/dev/null`・`GIT_CONFIG_NOSYSTEM=1`）でも、リポの属性で差分の中身が隠れるか | **隠れる。** リポの `.gitattributes` に `<ファイル> -diff` を置き、そのファイルにトークンの形の文字列を書いて commit すると、`git show` はそのファイルの差分を `Binary files /dev/null and b/<ファイル> differ` の 1 行だけにし、中身の行を出さなかった。`git show --text` は中身の行を出した | 実行（手元だけ） |
+| FACT-130 | Issue の作者で絞った REST の Issue の一覧に、PR が混じるか | **混じる。** `GET /repos/{owner}/{repo}/issues?state=all&creator=<作者>` は、作者が作った PR も返し、PR には `pull_request` の欄があった。PR の番号を GraphQL の `repository.issue(number:)` で引くと、`NOT_FOUND`（「Could not resolve to an Issue with the number of <番号>.」）だった | 実行 |
+| FACT-131 | GitHub の画面に出ない書き方で、Issue やコメントに文を隠せるか | **隠せる。** Markdown の描き出し（`POST /markdown`、`mode` は `gfm`）で、参照の定義 `[//]: # (<文>)` と `[a]: # "<文>"` は何も描き出さず、文は画面に出なかった。`<a name="…" title="…">` と `<span title="…">` は `title` の属性を残した（画面には出ず、マウスを重ねたときに出る）。`name` の値は頭に `user-content-` が付いた | 実行 |
+| FACT-132 | リポの権限を引く REST の応答に、どの欄があるか | **`permission`・`role_name`・`user.permissions` がある。** `GET /repos/{owner}/{repo}/collaborators/{username}/permission` は、`permission`（`admin`）、`role_name`（`admin`）、`user.permissions`（`admin`・`maintain`・`push`・`triage`・`pull` の真偽。どれも真）を返した。確かめたのは admin の人だけで、maintain・push・triage の人と、独自の役の人の値は確かめていない | 実行 |
+
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
 [adr-store]: ../adr/adr-20261015-002-no-shared-dependency-store.md
