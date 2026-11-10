@@ -21,7 +21,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | [02-settings-and-records.md][d02] | 設定の読み込みと確かめ、手元の記録、lock、依頼と結果のファイル、`status.json` | あり |
 | [03-markers.md][d03] | 印の形、署名に使う JSON の並べ方、鍵の読み方 | あり |
 | [04-check.md][d04] | 点検（組ごとの処理と、setup の読み戻しと共有する比べる規則） | あり |
-| `05-setup.md` | setup | まだ無い |
+| [05-setup.md][d05] | setup | あり |
 | `06-text-and-intake.md` | 検疫、漏えいの検査、ハッシュ、コメントの組み立て、出力契約、見出しの比べ方、intake | まだ無い |
 | `07-sessions.md` | AI のセッション | まだ無い |
 | `08-flow.md` | 1 回の実行の流れ、状態の組み立て、次の工程、工程、push の手順、判定、全体の停止と通知、実装の都合で止める理由の記号 | まだ無い |
@@ -56,7 +56,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | --- | --- | --- | --- | --- |
 | `main.ts` | 入口 | 進行 Bot の入口。定期の実行が、写しの `src/main.ts` を、マシンの設定のパスを引数にして起こす | 「[導入と点検][b04]」の「macOS（launchd）」、「[状態遷移と判定][b02]」の「1 回の実行の流れ」 | `08-flow.md` |
 | `entry/system.ts` | 入口 | システムの実体を作る。`main.ts` とほかの入口が使う | — | `01-io.md` |
-| `entry/setup.ts` | 入口 | 人の `setup` の入口（引数の `rollback`・`upgrade`・`uninstall` を含む）。入れた Plugin の `src/` から動く。処理は `flow/setup/` | 「[導入と点検][b04]」の「setup の流れ」「プログラムの写し」 | `05-setup.md` |
+| `entry/setup.ts` | 入口 | 人の `setup` の入口（引数の `rollback`・`upgrade`・`uninstall` を含む）。入れた Plugin の `src/` から動く。setup の本体（`run`）と、Skill が使う出来事の受け取り（`next`）と答えの書き込み（`answer`）。処理は `flow/setup/` | 「[導入と点検][b04]」の「setup の流れ」「プログラムの写し」 | `05-setup.md` |
 | `entry/check.ts` | 入口 | 人の `check` の入口。処理は `flow/skill/` | 「[導入と点検][b04]」の「点検だけで動かす仕組み」 | `04-check.md` |
 | `entry/dev-autopilot.ts` | 入口 | `/dev-autopilot` の入口。処理は `flow/skill/` | 「[導入と点検][b04]」の「状態の表示」 | `08-flow.md` |
 | `entry/check-probe.ts` | 入口 | 試しのスクリプト。試しのセッションの中で AI に 1 回だけ実行させ、読めたか・書けたかだけを出力する | 「[導入と点検][b04]」の「試しのセッション」 | `04-check.md` |
@@ -73,6 +73,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `io/` | 外との境 | システムの型、子プロセスの起動と時間の上限と止め方、GitHub の API（`@octokit/core` で REST と、名前を付けた GraphQL の操作）、`git`（個人とシステムの設定を読まない環境）、`claude`（起動と `stream-json` の読み取り）、ファイル（権限、実体のパス、排他の作成、追記と書き出し）、秘密の置き場を読む、HTTP（Webhook と、setup の手元の戻り先）、OS ごとの部分 | 「[設定][b01]」の「秘密の置き場のファイル」「子プロセスが時間の上限を過ぎたとき」、「[AI のセッション][b03]」の「起動の形」「止める手順」 | `01-io.md` |
 | `marker.ts` | 判断 | 印の形の正本（種類と欄、組み立て、読み取り、AI の出力から印の形を取り除く規則） | 「[状態遷移と判定][b02]」の「印の種類」、要件の「[印と固定の見出しの一覧][markers]」 | `03-markers.md` |
 | `logic/marker/` | 判断 | 印の署名（JSON の並べ方と HMAC-SHA256）、鍵のファイルの読み方、コメントの印の読み方（投稿者・未編集・印の数・形・署名） | 「[状態遷移と判定][b02]」の「印の署名」 | `03-markers.md` |
+| `logic/setup/` | 判断 | setup の差分の一覧とハッシュ、dev-autopilot 自身のリポの見分け方、写しの中身の一覧、定期の実行の登録の中身、App のマニフェスト | 「[導入と点検][b04]」の「setup の流れ」「プログラムの写し」「定期の実行の登録」「GitHub App を作る」 | `05-setup.md` |
 | `logic/settings/` | 判断 | マシンの設定とリポの設定の形と確かめ、プログラムに固定する一覧（名指しのパス、環境変数の名前、`denyRead` の固定の分）、パスの照らし | 「[設定][b01]」 | `02-settings-and-records.md` |
 | `logic/state/` | 判断 | GitHub の事実から作業の単位の状態を組み立て、次の工程を選び、進める順に並べる | 「[状態遷移と判定][b02]」の「状態の組み立て」「次の工程」「作業の単位を進める順」 | `08-flow.md` |
 | `logic/judge/` | 判断 | レビュー合格とマージの判定、ラウンドと往復の数え方、同じ指摘の再発、必須チェックの読み方 | 「[状態遷移と判定][b02]」の「判定」 | `08-flow.md` |
@@ -163,6 +164,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 [d02]: ./02-settings-and-records.md
 [d03]: ./03-markers.md
 [d04]: ./04-check.md
+[d05]: ./05-setup.md
 [fig-layers]: ./diagrams/00-layers.drawio.svg
 [fig-entries]: ./diagrams/00-entries.drawio.svg
 [fig-tests]: ./diagrams/00-tests.drawio.svg
