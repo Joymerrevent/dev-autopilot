@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-11-01
+updated: 2026-11-11
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -201,6 +201,7 @@ decision-makers: メンテナ
 ### 決定 4：状態の正本と、人の操作の手段と権限
 
 - 状態の正本は GitHub だけにする。進行 Bot は、毎回の実行で、Issue・PR・ラベル・進行 Bot の署名付きの印・必須チェックの結果から状態を組み立てる。手元の記録は、費用や失敗の回数の数え上げにだけ使う（[ADR-20261015-006][adr-flow] の決定 4 のまま）
+  > **［2026-11-11 追記］** [ADR-20261111-001][adr-keep-halt] で、[ADR-20261015-006][adr-flow] の決定 4 に、全体を止める側にだけ使う例外を 1 つ足した（AI が書いた文の検疫で見つけたことを GitHub に書けなかったときの見つかりの記録。記録がある間は全体の停止の Issue があるものとして扱い、AI のセッションを起こさない）。本決定の「手元の記録は、費用や失敗の回数の数え上げにだけ使う」は、この例外を除いて読む。状態の正本を GitHub だけにすることと、決定 4 のほかの項目は変わらない。
 - 人が書くものと進行 Bot が書くものを分ける。人の操作は人だけが書く手段で受け、進行 Bot が書く欄（Project の欄）は表示だけにして、判定に読まない
 - 続く様子を表す操作（決める・一時止める・引き取る）はラベル、文を伴う操作は固定の見出しのコメントで受ける。どちらも、操作した人と時刻を GitHub の timeline で確かめられる
 
@@ -501,6 +502,7 @@ decision-makers: メンテナ
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
 [adr-markers]: ./adr-20261015-004-signed-markers-and-actor-checks.md
 [adr-flow]: ./adr-20261015-006-run-stages-baseline-agent-field-and-local-records.md
+[adr-keep-halt]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [adr-pr]: ./adr-20261016-001-ci-states-merge-ready-limit-and-pr-issue-link.md
 [adr-reapprove]: ./adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [adr-marker-keys]: ./adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
