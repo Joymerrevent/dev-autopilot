@@ -283,7 +283,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 - base ブランチの先端に `.claude/settings.local.json` が無く、どのフォルダにも `CLAUDE.local.md` が無いこと。base ブランチの先端は AI のセッションの worktree に入り、`.claude/settings.local.json` は `--setting-sources local` でも読まれて hook が sandbox の外で動き、`CLAUDE.local.md` は指示として AI の文脈に入るため（FACT-56、FACT-60、[SAFE-2][safety] の (a)）。点検で止めないと、起動の前の確かめ（[AI のセッション][design-ai]の「起動の前の確かめ」の順 9）が、作業の単位ごとに停止中（`local-settings`）にしていく。名前は、base ブランチの先端の git の木（進行 Bot の clone で読む）のすべてのフォルダをたどり、英字の大文字と小文字を区別せずに比べる（`.Claude/settings.local.json` と `sub/claude.local.md` も当てる。FACT-68）。綴りどおりに比べるか、ファイルシステムに名前で問うだけにすると、大文字と小文字を変えた名前か、下のフォルダの `CLAUDE.local.md` を見落とすため。fail のときは、試しのセッションも起こさない（試しのセッションの worktree も base ブランチの先端で切るため。「[導入と点検][design-setup]」の「試しのセッション」）
 - `checks.required` が空でないこと
 - `run.intervalHours` が 24 の約数であること
-- `safety.botAccounts` が空でなく、投稿に使うアカウント（アプリの投稿者の名前。取り方は「[導入と点検][design-setup]」の「GitHub App の権限」）が入っていること（[ADR-20261020-001][adr-bots]、[ADR-20261020-002][adr-app]）。一覧にほかの名前が残っていれば warn にする（外し忘れを人に知らせる。前のアカウントの印が残る間は残してよい。[ADR-20261020-001][adr-bots] の決定 4）
+- `safety.botAccounts` が空でなく、投稿に使うアカウント（アプリの投稿者の名前。取り方は「[導入と点検][design-setup]」の「GitHub App の権限」）が入っていること（[ADR-20261020-001][adr-bots]、[ADR-20261020-002][adr-app]）。一覧にほかの名前が残っていれば warn にする（外し忘れを人に知らせる。前のアカウントの印が残る間は残してよい。[ADR-20261020-001][adr-bots] の決定 4）。一覧に人のアカウントの名前が残っていると、一覧に名前のある人が自分の印の無いコメントを編集したときに、印の書き換えとして停止中（`marker-invalid`）になる（[ADR-20261015-004][adr-markers] の決定 1 の追記（2026-11-11））
 - `githubApp.appId` と `githubApp.installationId` があり、秘密の置き場にアプリの秘密鍵があって、PAT のファイルが無いこと。外れていれば fail にする。進行 Bot は最初から GitHub App だけを使う（[SETUP-13][setup]、[ADR-20261020-002][adr-app]、[ADR-20261030-002][adr-no-pat]）ため
 - `models.planHard` のほかの `models.*` の `model` に `fable` が無いこと（[モデルの流れ][impl]、[IMPL-32][impl]）
 - `safety.env.names` に、AI のセッションに渡さない名前（`GH_TOKEN`、`PNPM_HOME` など。「[AI のセッション][design-ai]」の「環境変数」）と、プログラムに固定した名前が無いこと。`safety.env.names` の名前がすべて進行 Bot の環境変数にあること（値はマシンの設定の `safety.env.values` から定期の実行の定義に写す）。`safety.env.values` の値に秘密の形（漏えいの検査の鍵の形式など。[IMPL-15][impl]）が無いこと
@@ -308,6 +308,7 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [flow]: ../../requirements/01-issue-flow.md
 [flow-rules]: ../../requirements/01-issue-flow.md
 [markers]: ../../requirements/04-external-text-and-markers.md
+[adr-markers]: ../../adr/adr-20261015-004-signed-markers-and-actor-checks.md
 [review-skill]: ../../requirements/08-review-skill.md
 [adr-table]: ../../adr/adr-20261018-005-settings-table-shows-required-values.md
 [adr-redo]: ../../adr/adr-20261018-002-plan-redo-in-same-run.md
