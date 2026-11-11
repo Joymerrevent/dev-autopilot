@@ -67,13 +67,13 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `check.ts` | 流れ | 点検の正本。組の一覧と順番、組ごとの回数、結果の形（pass・warn・fail と、未確認の warn（`unverified`）） | 「[導入と点検][b04]」の「組と回数」 | `04-check.md` |
 | `flow/check/` | 流れ | 点検の組ごとの処理（設定、GitHub、アプリの権限、マシン、子プロセスと clone、sandbox と AI のセッション） | 「[導入と点検][b04]」の「組と回数」「モデルを使わない試し」「試しのセッション」、「[設定][b01]」の「`check` が設定について確かめること」 | `04-check.md` |
 | `flow/setup/` | 流れ | setup の手順（差分の一覧と承認、GitHub の準備と読み戻し、App の作成、マシンの準備、プログラムの写し、定期の実行の登録、動かすマシンを替えるとき） | 「[導入と点検][b04]」の「setup の流れ」から「動かすマシンを替えるとき」まで、「setup 用の App」「GitHub App を作る」 | `05-setup.md` |
-| `flow/skill/` | 流れ | 人が呼ぶ `check`・`/dev-autopilot`・intake の Skill の処理。`check` は、依頼のファイルを置き、定期の実行と同じジョブを起こし、結果を待って表示し、消す（点検の処理は持たない）。`/dev-autopilot` は、`status.json` を読んで表示し、手動の 1 回実行は依頼のファイルを置いてジョブを起こす。intake は、引数「検疫」で検疫を動かして結果を出し、引数「下書き」で受け入れの依頼のファイルを置いて結果を待つ。3 つの Skill が共有する読み取り（開いているプロジェクトの origin からマシンの設定の場所を引くこと、マシンの設定、`run.lock` の中身、`status.json`、依頼に書く待つ時間）は `flow/skill/context.ts` に置き、`flow/run/` を import しない（intake の入口の範囲。下の「入口ごとの import の範囲」）。`run.lock` の中身は、`io/files.ts` で読み、`logic/run/lock.ts` の「lock の中身の形」で読む | 「[導入と点検][b04]」の「点検だけで動かす仕組み」「状態の表示」、「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」 | `04-check.md`、`06-text-and-intake.md`、`08-flow.md` |
+| `flow/skill/` | 流れ | 人が呼ぶ `check`・`/dev-autopilot`・intake の Skill の処理。`check` は、依頼のファイルを置き、定期の実行と同じジョブを起こし、結果を待って表示し、消す（点検の処理は持たない）。`/dev-autopilot` は、`status.json` を読んで表示し、手動の 1 回実行は依頼のファイルを置いてジョブを起こす。intake は、引数「検疫」で検疫を動かして結果を出し、引数「下書き」で受け入れの依頼のファイルを置いて結果を待つ。3 つの Skill が共有する読み取り（開いているプロジェクトの origin からマシンの設定の場所を引くこと、マシンの設定、`run.lock` の中身、`status.json`、依頼に書く待つ時間）は `flow/skill/context.ts`（受け持ちとテストは `02-settings-and-records.md`）に置き、`flow/run/` を import しない（intake の入口の範囲。下の「入口ごとの import の範囲」）。`run.lock` の中身は、`io/files.ts` で読み、`logic/run/lock.ts` の「lock の中身の形」で読む | 「[導入と点検][b04]」の「点検だけで動かす仕組み」「状態の表示」、「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」 | `02-settings-and-records.md`、`04-check.md`、`06-text-and-intake.md`、`08-flow.md` |
 | `flow/run/` | 流れ | 1 回の実行の順 1〜10、起こされ方と依頼のファイルの扱い、lock を取って外す、手元の記録と `status.json` を書く | 「[状態遷移と判定][b02]」の「1 回の実行の流れ」「手元の記録」、「[導入と点検][b04]」の「見送った実行と、起動しなかった定期の実行」 | `02-settings-and-records.md`、`08-flow.md` |
 | `flow/steps/` | 流れ | 次の工程の表の工程ごとの処理（入口の検疫、下書き、決定、計画、変更の作成、レビュー、直し、レビュー合格の軽い工程、マージの判定、片付けなど） | 「[状態遷移と判定][b02]」の「次の工程」「計画の工程の中の順番」 | `08-flow.md` |
 | `flow/push.ts` | 流れ | push の手順 | 「[状態遷移と判定][b02]」の「push の手順」 | `08-flow.md` |
 | `flow/session/` | 流れ | AI のセッション（作業場所と短い一時フォルダと安全設定のファイルを作る、起動の前の確かめ、起動と監視、止める手順、前の実行が残したセッション、レビューの軸と批評 AI） | 「[AI のセッション][b03]」 | `07-sessions.md` |
 | `flow/safety/` | 流れ | 全体の止める合図と全体の停止の Issue を読む、攻撃の疑いにする、全体の停止の Issue を開く、GitHub の外への通知 | 「[状態遷移と判定][b02]」の「全体の停止の Issue」「GitHub の外への通知」、「[設定][b01]」の「設定ファイルの外の合図」 | `08-flow.md` |
-| `io/` | 外との境 | システムの型（流れに渡す `FlowSystem` の型を含む）、子プロセスの起動と時間の上限と出力の上限と止め方（出力の上限を超えたときの失敗の理由は `output-limit`）、GitHub の API（`@octokit/core` で REST と、名前を付けた GraphQL の操作）、JWT（`io/github-jwt.ts`）とインストールのトークン（点検のための、リポを絞らないトークンでの読み取り `readInstallationRepositories` を含む）、`git`（個人とシステムの設定と属性のファイルを読まない環境。`core.hooksPath` は置き場の空のフォルダ `empty-hooks/`）、`claude`（起動と `stream-json` の読み取り）、ファイル（権限、実体のパス、排他の作成、追記と書き出し、置き換え）、秘密の置き場を読む、HTTP（Webhook と、setup の手元の戻り先）、OS ごとの部分 | 「[設定][b01]」の「秘密の置き場のファイル」「子プロセスが時間の上限を過ぎたとき」、「[AI のセッション][b03]」の「起動の形」「止める手順」 | `01-io.md` |
+| `io/` | 外との境 | システムの型（流れに渡す `FlowSystem` の型を含む）、子プロセスの起動と時間の上限と出力の上限と止め方（出力の上限を超えたときの失敗の理由は `output-limit`）、GitHub の API（`@octokit/core` で REST と、名前を付けた GraphQL の操作）、JWT（`io/github-jwt.ts`）とインストールのトークン（点検のための、リポを絞らないトークンでの読み取り `readInstallationRepositories` を含む）、`git`（個人とシステムの設定と属性のファイルを読まない環境。`core.hooksPath` は置き場の空のフォルダ `empty-hooks/`）、`claude`（起動と `stream-json` の読み取り）、ファイル（権限、実体のパス、排他の作成、追記と書き出し、置き換え）、秘密の置き場を読む、秘密のファイルを置く（`io/secret-files.ts`）、HTTP（Webhook と、setup の手元の戻り先）、OS ごとの部分 | 「[設定][b01]」の「秘密の置き場のファイル」「子プロセスが時間の上限を過ぎたとき」、「[AI のセッション][b03]」の「起動の形」「止める手順」 | `01-io.md` |
 | `marker.ts` | 判断 | 印の形の正本（種類と欄、組み立て、読み取り、AI の出力から印の形を取り除く規則） | 「[状態遷移と判定][b02]」の「印の種類」、要件の「[印と固定の見出しの一覧][markers]」 | `03-markers.md` |
 | `logic/marker/` | 判断 | 印の署名（JSON の並べ方と HMAC-SHA256）、鍵のファイルの読み方、コメントの印の読み方（投稿者・未編集・印の数・形・署名） | 「[状態遷移と判定][b02]」の「印の署名」 | `03-markers.md` |
 | `logic/setup/` | 判断 | setup の差分の一覧とハッシュ、dev-autopilot 自身のリポの見分け方、写しの中身の一覧、定期の実行の登録の中身、App のマニフェスト、版ごとの設定の表の控え（`settings-versions.ts`） | 「[導入と点検][b04]」の「setup の流れ」「プログラムの写し」「定期の実行の登録」「GitHub App を作る」 | `05-setup.md` |
@@ -105,9 +105,9 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 | `entry/intake.ts` | 写し。人の Claude Code の sandbox の中（記録の置き場に書くコマンドだけ、人の許可を得て外） | 秘密の置き場を読むモジュール、GitHub の API と `claude` を呼ぶモジュール、lock を取るモジュール（`flow/run/` の中） | 引数「検疫」は、AI のセッションも秘密も使わない。引数「下書き」は、lock を取らず、`claude` を起こさない（[STRUCT-3][struct]、[ADR-20261022-004][adr-intake-req]） |
 | `entry/check-probe.ts` | 試しのセッションのフォルダに写したもの。AI が sandbox の中で `node` で動かす | `node:` で始まるモジュールのほかすべて | 写した先に `plugin/src/` も `node_modules` も無い。秘密も GitHub も使わず、読めたか・書けたかだけを出す |
 
-- 秘密の置き場を読むモジュールは、`io/` の中で 1 つに分ける。`setup` が秘密のファイルを作って書くときは、ファイルの操作のモジュールを使い、秘密を読むモジュールを使わない
+- 秘密の置き場を読むモジュールは、`io/` の中で 1 つに分ける。`setup` が秘密のファイルを作って書くときは、ファイルの操作のモジュールを使い、秘密を読むモジュールを使わない。秘密鍵の中身を書くのは `io/secret-files.ts` だけ（秘密を書くだけで、読まない）
 - 秘密の値の型（`logic/secret.ts`）は、何も import しない判断の層のファイルに置く。入口と判断の層と外との境が型を使っても、秘密の置き場を読むモジュールに届かない（「[外との境][d01]」の「秘密の置き場」）
-- 3 つの人の Skill が共有する読み取り（マシンの設定、`run.lock` の中身、`status.json`）は `flow/skill/context.ts` に置き、lock を取るモジュール（`flow/run/` の中）を import しない
+- 3 つの人の Skill が共有する読み取り（上の「フォルダとモジュールの一覧」の `flow/skill/` の行）は `flow/skill/context.ts` に置き、lock を取るモジュール（`flow/run/` の中）を import しない
 - 検疫のモジュールは判断の層なので、秘密・GitHub・記録・lock に依存しない。当てる先のリポの owner と名前は引数で受ける（「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」）
 - テストは、`check`・`/dev-autopilot`・`intake` の入口を `node --permission` で起こし、秘密の置き場の読み込みを許さない（「[テスト][b05]」の「偽物」）。import の範囲の確かめは、秘密の置き場を読むコードが入口から届かないことを、動かす前に構成の検査で確かめる
 
@@ -148,7 +148,7 @@ README は、詳細設計の全体に効く決まり（層と依存の向き、�
 - 構成の検査は、実行時に読み込まれる import を数える。`import type …` の文と `export type … from` の文だけを型の import とする。名前ごとに `type` を付けた `import { type … }` は、Node が読み込んで中のコードを動かすので、実行時の import に数える
 - 入口ごとの import の範囲と import の輪は、実行時の import と、`export … from` と、文字列で書いた動的な `import()` をたどって見る。型の import は、読み込まれないので範囲に数えない
 - 動的な `import()` は、`entry/setup.ts` の中で、引数を文字列の定数で書いたときだけ使ってよい（上の「層と依存の向き」）。構成の検査は、ほかの所の `import()` と、文字列でない `import()` を落とす
-- `revealSecret` を import してよいファイルの今の一覧は、`io/github.ts`、`io/github-jwt.ts`、`io/http.ts`、`logic/marker/keys.ts`、`logic/marker/sign.ts`、`logic/text/leak.ts`（「[外との境][d01]」の「秘密の置き場」）
+- `revealSecret` を import してよいファイルの今の一覧は、`io/github.ts`、`io/github-jwt.ts`、`io/http.ts`、`io/secret-files.ts`、`logic/marker/keys.ts`、`logic/marker/sign.ts`、`logic/text/leak.ts`（「[外との境][d01]」の「秘密の置き場」）
 - `fixtures/repo-layout/` に、流れが外との境を `import { type … }` で読む木、流れが入口を import する木、`entry/setup.ts` のほかで `import()` を使う木、文字列でない `import()` を使う木、import の輪がある木、上の止める全体の名前と許す一覧に無い `node:` のモジュールと関数を 1 つずつ使った木を置き、どれも落ちることを確かめる
 
 ## TypeScript の書き方
