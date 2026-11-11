@@ -33,6 +33,7 @@
   - 全体の探し方（順 3）で見つけたプロセスのうち、`session-not-stopped` で人に渡したセッションのフォルダか短い一時フォルダの中のものは `warn`、フォルダの外のものは `fail`
   - 止められなかったセッションのうち、作業の単位を持たないもの（受け入れの依頼の実行のセッション（名前が `verify-intake-issue-` で始まるもの）と、点検の試しのセッション（名前が `check-` で始まるもの）。「[AI のセッション][b03]」の「前の実行が残したセッション」の順 2）は `fail`
   - 止められなかったセッションのうち、作業の単位を持つものは `warn`（作業の単位は、順 8 で停止中（`session-not-stopped`）にし、ほかの作業の単位は続ける。「[1 回の実行の流れ][d08]」の「作業の単位の進め方」、「[導入と点検][b04]」の「組と回数」の表の下）。作業の単位が順 7 の作業の単位に無く停止中にできないときも、人が残りを止め、次の実行が残りが無いと確かめるまで、毎回の実行の点検に `warn` で出る
+- 見つかりの記録の項目（`machine.security-pending`）は、`flow/check/machine.ts` が記録の置き場の `security-pending/` を読んで決める（ファイルの形は「[設定と記録][d02]」の「手元の記録」）。ファイルが 1 つでもある間は `warn`（`details` に、見つけた作業の単位の Issue の番号と見つけた時刻。次の定期の実行が GitHub に印を書き直すことを、決まった文で示す）。フォルダかファイルを読めない、形が違うときは `fail`（`details` に記録のファイルのパス。人の戻し方は「[設定と記録][d02]」の「手元の記録」）。どちらも、見つかった文は出さない（[ADR-20261111-001][adr-halt-records] の決定 3）
 
 ## 結果の形
 
@@ -42,7 +43,7 @@
 | --- | --- |
 | `id` | 項目の ID。`<組>.<項目>` の形（例：`github.rulesets`、`machine.os`）。組は `settings`・`machine`・`app`・`github`・`probes`・`sandbox`。項目は英小文字と数字を `-` でつないだもの |
 | `level` | `pass`・`warn`・`fail` |
-| `unverified` | 未確認の warn のときだけ、理由の記号（`stop-signal`：全体の止める合図が `run` でない間（`stop`、ほかの値、変数が無い、読めない）。`halt-issue`：全体の停止の Issue がある間（読めなかったときと、開き直しの条件に当たる作業の単位があるとき（「[1 回の実行の流れ][d08]」の「全体の停止と通知」）を含む）。`setup-day`：記録の目印のファイルを作った日）。2 つ以上に当たるときは、`stop-signal`・`halt-issue`・`setup-day` の順で最初の 1 つを書く |
+| `unverified` | 未確認の warn のときだけ、理由の記号（`stop-signal`：全体の止める合図が `run` でない間（`stop`、ほかの値、変数が無い、読めない）。`halt-issue`：全体の停止の Issue がある間（読めなかったときと、開き直しの条件に当たる作業の単位があるとき（「[1 回の実行の流れ][d08]」の「全体の停止と通知」）と、見つかりの記録があるとき（[ADR-20261111-001][adr-halt-records] の決定 1）を含む）。`setup-day`：記録の目印のファイルを作った日）。2 つ以上に当たるときは、`stop-signal`・`halt-issue`・`setup-day` の順で最初の 1 つを書く |
 | `reason` | fail と warn の理由の記号。項目ごとに決める。確かめようとして確かめられなかった fail は `unchecked`（前の組が fail で前提が欠けた、応答が読めない、時間の上限を過ぎた）。試しのセッションを起動できなかった fail は `not-started`、試しのセッションの安全設定のファイルが書き換えられた fail は `settings-tampered`（下の「試しのセッションの判定」） |
 | `details` | 人が直すための値の並び。1 つの値は種類と値の組で、種類は次だけ：数（Issue と PR の番号、鍵の行の番号、PID、HTTP の状態、起動の前の確かめの順の番号）、時刻（UTC の ISO 8601）、名前（ラベル、必須チェック、ruleset、Environment、App の名前と ID、App の権限の名前と読み取りか書き込みか、通知の種類、プロセスのコマンドの名前）、ref の形（ruleset の対象の `refs/heads/<型>/issue-*` など）、パス（リポの中のパスと、マシンの中のパス（置き場・記録の置き場・短い一時フォルダの根・マシンの設定のフォルダ・道具のフォルダなど）。秘密の置き場とその下は入れない）、版 |
 
@@ -70,7 +71,7 @@
 
 - 順 6 は、前の組に `fail` が 1 つでもあれば、試しのセッションを起こさずに、sandbox の組の項目を `fail`（`unchecked`。表の見出しの、前提が欠けたとき）にする。壊れた環境で AI のセッションを起こさないため。基本設計の「GitHub の組の、base ブランチの先端に local の設定と指示が無いことの確かめが fail なら、試しのセッションを起こさない」を、前の組の `fail` のすべてに広げた形
 - 全体の止める合図が `run` でない間（`stop`、ほかの値、変数が無い、読めない）は、書き込みの権限の試し（順 3）と試しのセッション（順 6）を行わず、`warn`（`unverified` が `stop-signal`）にする（[ADR-20261017-007][adr-stop] の決定 1・2）。書き込みの権限の試しの前には、`flow/safety/signal.ts` で合図を読み直す（GitHub に書き込む前に合図を読む決まり。「[状態遷移と判定][b02]」の「1 回の実行の流れ」の表の下）。試しのセッションは、起動の前の確かめ（「[AI のセッション][d07]」の「セッションの順」の 1）で合図と全体の停止の Issue を読み直す
-- 全体の停止の Issue がある間（読めなかったときを含む）は、試しのセッションが要るときも行わず、`warn`（`unverified` が `halt-issue`）にする。書き込みの権限の試し（順 3）は、AI のセッションを起こさないので行う（[ADR-20261024-005][adr-security] の決定 3。AI を使わない工程は続ける）
+- 全体の停止の Issue がある間（`RunContext` の全体の停止の Issue が「ある」の間。読めなかったときと、見つかりの記録があるときを含む。[ADR-20261111-001][adr-halt-records] の決定 1）は、試しのセッションが要るときも行わず、`warn`（`unverified` が `halt-issue`）にする。書き込みの権限の試し（順 3）は、AI のセッションを起こさないので行う（[ADR-20261024-005][adr-security] の決定 3。AI を使わない工程は続ける）
 - 試しのセッションの起動の前の確かめ（「[AI のセッション][d07]」の「セッションの順」の 1）は、作業の単位の Issue の印も読み、開き直しの条件に当たる作業の単位があれば `not-started`（扱いは `deferred`）を返すので、下の「試しのセッションの判定」の表の全体の停止の Issue の行で、`halt-issue` の warn にする
 - 記録の目印のファイルを作った日は、試しのセッションを行わず、`warn`（`unverified` が `setup-day`）にする（「[導入と点検][b04]」の「組と回数」の表の下）
 - 人が呼ぶ `check` で入れた Plugin と写しの版が違うことの warn は、人の Skill だけが確かめる（定期の実行は入れた Plugin の場所を知らない）。`flow/skill/check.ts` が結果を表示するときに足す
@@ -175,7 +176,7 @@
 | `logic/check/trial-judge.ts` | 基本設計の「確かめる項目」の表の行ごとの判定。決めたコマンドと違う Bash、欠けた試しの名前、読めない出力、上限に当たったときに `fail` になること。試しのセッションの終わり方ごとの結果（上の「試しのセッションの判定」の表の行ごと） |
 | `entry/check-probe.ts` | 外に触れる関数を偽物にして渡し、試しの名前ごとに 1 行を出すこと、偽物が返したファイルの中身を出力に出さないこと、引数の期待する値と違う値で `ok` が `false` になること。import しただけでは試しを行わないこと。試しの名前の並びが `logic/check/trial-judge.ts` と同じこと（子プロセスと本物の git・pnpm は使わない） |
 | `flow/check/settings.ts` | 設定を確かめた問題を項目の結果に写すこと。`io/secrets.ts` が返した `notify-webhook-url` の無いことと形の問題を、fail の項目の結果にし、`details` に URL を入れないこと |
-| `flow/check/machine.ts` | OS に依る項目を `io/os.ts` で読むこと。定期の実行に渡る環境（登録の中身と `launchctl getenv`）に `HTTP_PROXY`・`HTTPS_PROXY`（小文字の名前も）・`NODE_USE_ENV_PROXY`・`NODE_EXTRA_CA_CERTS`・`NODE_OPTIONS` のどれかがあれば fail になること（[ADR-20261107-001][adr-github]）。短い一時フォルダの根を作った後に長さを数えること。止めなかったプロセスが、人に渡したセッションのフォルダの中なら `warn`、ほかのものと、止められなかった受付 AI のセッションと試しのセッションの残りなら `fail` になること。止められなかった作業の単位のセッションを、止めなかったプロセスの項目の `warn` にし、`fail` にしないこと。定期の実行の下書きと書き直しの受付 AI（`intake-issue-`）の止められなかったセッションを、作業の単位を持たないセッションとして `fail` にしないこと。順 10 で渡された、今の実行で止められなかった作業の単位を持たないセッションを `fail` にすること |
+| `flow/check/machine.ts` | OS に依る項目を `io/os.ts` で読むこと。定期の実行に渡る環境（登録の中身と `launchctl getenv`）に `HTTP_PROXY`・`HTTPS_PROXY`（小文字の名前も）・`NODE_USE_ENV_PROXY`・`NODE_EXTRA_CA_CERTS`・`NODE_OPTIONS` のどれかがあれば fail になること（[ADR-20261107-001][adr-github]）。短い一時フォルダの根を作った後に長さを数えること。止めなかったプロセスが、人に渡したセッションのフォルダの中なら `warn`、ほかのものと、止められなかった受付 AI のセッションと試しのセッションの残りなら `fail` になること。止められなかった作業の単位のセッションを、止めなかったプロセスの項目の `warn` にし、`fail` にしないこと。定期の実行の下書きと書き直しの受付 AI（`intake-issue-`）の止められなかったセッションを、作業の単位を持たないセッションとして `fail` にしないこと。順 10 で渡された、今の実行で止められなかった作業の単位を持たないセッションを `fail` にすること。見つかりの記録が 1 つでもあれば `machine.security-pending` が `warn`（`details` に Issue の番号と時刻）、フォルダかファイルを読めないか形が違えば `fail`、無ければ `pass` になり、見つかった文を出さないこと（[ADR-20261111-001][adr-halt-records] の決定 3） |
 | `flow/check/app.ts` | 前提が欠けたら組の項目が `unchecked` の fail になること。リポの一覧を `readInstallationRepositories` で読み、読めなければ `unchecked` の fail になること。読み直した合図が `run` でない間は、書き込みの権限の試しを投げないこと |
 | `flow/check/github.ts` | リポの秘密がある、組織の秘密が届く、Environment の使えるブランチが無制限か保護ブランチだけ、作業ブランチの形に当たる規則がある、のそれぞれで fail になること（[ADR-20261028-001][adr-ci-secrets]・[ADR-20261028-002][adr-app-secrets]） |
 | `flow/check/probes.ts` | モデルを使わない試しの外れ方ごとの項目の結果 |
@@ -207,3 +208,4 @@
 [adr-app-secrets]: ../../adr/adr-20261028-002-app-reads-secret-names-for-checks.md
 [adr-bypass-baseline]: ../../adr/adr-20261028-004-compare-ruleset-updated-at-with-setup-baseline.md
 [adr-github]: ../../adr/adr-20261107-001-call-github-with-octokit-instead-of-gh.md
+[adr-halt-records]: ../../adr/adr-20261111-001-keep-halt-across-security-marker-write-failures.md
