@@ -181,7 +181,7 @@ AI のセッションを起動する前に、毎回、次の順に確かめる�
 
 | 順 | 確かめること | 外れたとき |
 | --- | --- | --- |
-| 1 | 全体の止める合図が `run` で、全体の停止の Issue が無い（[状態遷移と判定][design-flow]の「全体の停止の Issue」）。点検の試しのセッション（名前が `check-` で始まる）と、受け入れの依頼の実行の受付 AI（名前が `verify-intake-issue-` で始まる）は、作業の単位の Issue の印のコメントも読み、全体の停止の Issue の止める間かを確かめる（読めなければ止める間とする。[状態遷移と判定][design-flow]の「全体の停止の Issue」の「開き直し」） | 起動しない。実行の失敗に数えず、合図が戻り、全体の停止が解けた後の実行で続ける（[運用の規則][flow-rules]、[ADR-20261017-007][adr-stop]、[ADR-20261024-005][adr-security] の決定 3） |
+| 1 | 全体の止める合図が `run` で、全体の停止の Issue が無く、書けなかった見つかりの記録（記録の置き場の `security-pending/`）も無い（[状態遷移と判定][design-flow]の「全体の停止の Issue」、[ADR-20261111-001][adr-halt-record] の決定 1。見つかりの記録を読めないか形が違えば、あるものとする）。点検の試しのセッション（名前が `check-` で始まる）と、受け入れの依頼の実行の受付 AI（名前が `verify-intake-issue-` で始まる）は、作業の単位の Issue の印のコメントも読み、全体の停止の Issue の止める間かを確かめる（読めなければ止める間とする。[状態遷移と判定][design-flow]の「全体の停止の Issue」の「開き直し」） | 起動しない。実行の失敗に数えず、合図が戻り、全体の停止が解けた後の実行で続ける（[運用の規則][flow-rules]、[ADR-20261017-007][adr-stop]、[ADR-20261024-005][adr-security] の決定 3、[ADR-20261111-001][adr-halt-record]） |
 | 2 | その日の累計 ＋ 動いているセッションの上限 ＋ 起動するセッションの費用の上限が、`limits.dailyCostUsd` を超えない | 起動しない。その日は、ほかの AI のセッションも起動しない。実行の失敗に数えず、次の日の実行で続ける |
 | 3 | その実行の累計 ＋ 動いているセッションの上限 ＋ 起動するセッションの費用の上限が、`limits.runCostUsd` を超えない | 起動しない。実行の失敗に数えず、次の実行で続ける |
 | 4 | その作業の単位の累計（往復を含む）＋ 動いているセッションの上限 ＋ 起動するセッションの費用の上限が、`limits.issueCostUsd` を超えない | 起動せず、停止中にする（`cost-limit`。[IMPL-14][impl]） |
@@ -652,3 +652,4 @@ business-os の `/verify-issue`（人が手で深く確かめたいときに呼�
 [d-markers]: ../detailed/03-markers.md
 [d-text]: ../detailed/06-text-and-intake.md
 [adr-github]: ../../adr/adr-20261107-001-call-github-with-octokit-instead-of-gh.md
+[adr-halt-record]: ../../adr/adr-20261111-001-keep-halt-across-security-marker-write-failures.md
