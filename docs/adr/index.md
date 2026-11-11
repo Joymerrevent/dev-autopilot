@@ -70,6 +70,7 @@
 | ADR-20261101-002 | [攻撃の疑いと全体の停止は、人が選んだ Slack 互換の Webhook に決まった文を送って GitHub の外に知らせる][adr-20261101-002-notify-outside-github-by-webhook] | accepted | 2026-11-01 |
 | ADR-20261107-001 | [進行 Bot と setup は、GitHub を Octokit で呼び、gh を使わない][adr-20261107-001-call-github-with-octokit-instead-of-gh] | accepted | 2026-11-07 |
 | ADR-20261107-002 | [進行 Bot は実行時に npm の依存を持ってよく、Claude Code の Plugin の依存の導入で入れる][adr-20261107-002-allow-runtime-npm-deps-via-plugin-install] | accepted | 2026-11-07 |
+| ADR-20261111-001 | [AI の文の検疫で見つけたことを GitHub に書けなかったときは、手元の記録で次の実行からも全体を止め、印を書き直せたら記録を消す][adr-20261111-001-keep-halt-across-security-marker-write-failures] | proposed | 2026-11-11 |
 
 <!--
 行の例（表の最後に足す）:
@@ -146,3 +147,4 @@
 [adr-20261101-002-notify-outside-github-by-webhook]: ./adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-20261107-001-call-github-with-octokit-instead-of-gh]: ./adr-20261107-001-call-github-with-octokit-instead-of-gh.md
 [adr-20261107-002-allow-runtime-npm-deps-via-plugin-install]: ./adr-20261107-002-allow-runtime-npm-deps-via-plugin-install.md
+[adr-20261111-001-keep-halt-across-security-marker-write-failures]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md
