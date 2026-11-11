@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-11-01
+updated: 2026-11-11
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -117,6 +117,8 @@ decision-makers: メンテナ
 
 - 同じ PR を別のモデルでもレビューして比べることをしない。設定の `models.reviewComparison` と、比べのセッションの起こし方と数え方（[ADR-20261021-007][adr-compare]）を持たない
 - [ADR-20261015-006][adr-flow] の決定 4 の「判定には、手元の記録を使わない」に足した 2 つの例外（書かずに試す間の受け入れ、比べるためのレビューを起こすか）は、どちらも無くなる。判定には、手元の記録を使わない
+
+  > **［2026-11-11 追記］** [ADR-20261111-001][adr-keep-halt] で、[ADR-20261015-006][adr-flow] の決定 4 の「判定には、手元の記録を使わない」に、全体を止める側にだけ使う例外を 1 つ足した（AI が書いた文の検疫で見つけたことを GitHub に書けなかったときの見つかりの記録。記録がある間は全体の停止の Issue があるものとして扱い、AI のセッションを起こさない）。本決定の「判定には、手元の記録を使わない」は、この例外を除いて読む。書かずに試す間の受け入れと、比べるためのレビューを起こすかの 2 つの例外が無くなったことと、決定 5 のほかの項目は変わらない。
 
 ### 決定 6：段階の出口の数え上げを持たない
 
@@ -258,3 +260,4 @@ decision-makers: メンテナ
 [adr-20261030-002]: ./adr-20261030-002-bot-uses-github-app-only-from-start.md
 [adr-same-model]: ./adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ./adr-20261101-001-record-model-raise-in-fix-marker.md
+[adr-keep-halt]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md
