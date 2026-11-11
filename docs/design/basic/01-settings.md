@@ -53,7 +53,7 @@
 | フォルダ | キー | macOS | Linux | 中身 |
 | --- | --- | --- | --- | --- |
 | 置き場 | `paths.workspace` | `~/.local/share/dev-autopilot/<owner>/<repo>/` | `$XDG_DATA_HOME/dev-autopilot/<owner>/<repo>/`（`XDG_DATA_HOME` が無ければ `~/.local/share`） | 進行 Bot の clone（`controller/`）、セッションごとのフォルダ（`sessions/<セッションの名前>/`）、進行 Bot のプログラムの写し（`program/<版>/`）、GitHub の SSH のホストの鍵（`known_hosts`。下の「秘密の置き場のファイル」）、`core.hooksPath` に渡す、git の hook を置かない空のフォルダ（`empty-hooks/`。[SAFE-16][safety]。進行 Bot が作り、`git` を呼ぶ前に空であることを確かめる）、安全設定の置き場の既定の場所（`sandbox-settings/`） |
-| 記録の置き場 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く記録の目印のファイル（`records-created.json`）。ファイルの一覧は「[状態遷移と判定][design-flow]」の「手元の記録」（「[運用の規則][flow-rules]」） |
+| 記録の置き場 | `paths.records` | `<マシンの設定のフォルダ>/records/` | `$XDG_STATE_HOME/dev-autopilot/<owner>/<repo>/records/`（`XDG_STATE_HOME` が無ければ `~/.local/state`） | 実行の記録（FLOW-5）、lock、`setup` が置く記録の目印のファイル（`records-created.json`）、書けなかった見つかりの記録（`security-pending/`。[ADR-20261111-001][adr-halt-pending]）。ファイルの一覧は「[状態遷移と判定][design-flow]」の「手元の記録」（「[運用の規則][flow-rules]」） |
 | 秘密の置き場 | `paths.secrets` | `<マシンの設定のフォルダ>/secrets/` | `<マシンの設定のフォルダ>/secrets/` | 下の「秘密の置き場のファイル」。フォルダの権限は 700、ファイルは 600（[ADR-20261015-001][adr-read] の決定 2、[ADR-20261020-002][adr-app]） |
 | 短い一時フォルダの根 | `sessionTmp.root` | `/tmp/dap` | `/tmp/dap` | セッションごとの短い一時フォルダ（[ADR-20261017-006][adr-tmp]） |
 | 安全設定の置き場 | `paths.sandboxSettings` | `<paths.workspace>/sandbox-settings/` | `<paths.workspace>/sandbox-settings/` | AI のセッションごとの安全設定のファイル（[AI のセッション][design-ai]の「セッションごとの安全設定」）。フォルダの権限は 700 |
@@ -351,4 +351,5 @@ SETUP-2 の点検のうち、設定に係るものをまとめる。点検の組
 [adr-raise-in-fix]: ../../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-notify]: ../../adr/adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-github]: ../../adr/adr-20261107-001-call-github-with-octokit-instead-of-gh.md
+[adr-halt-pending]: ../../adr/adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [d-text]: ../detailed/06-text-and-intake.md
