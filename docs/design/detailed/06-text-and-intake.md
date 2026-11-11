@@ -171,7 +171,7 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 | `brief` | オブジェクト（`problem`・`behavior`・`acceptance`・`outOfScope`） | `draft` のときだけ。`CheckedText` を通った文の欄 |
 | `policy`・`policyReason` | 真偽・文（1 行） | `draft` のときだけ（`policyReason` も `CheckedText`） |
 | `findings` | オブジェクトの一覧（`where`・`kind`・場所） | `found` のときだけ。`where` は `entry`（Issue の文。受け入れの依頼の実行の順 5 の検疫か、起動の前の確かめの順 7）・`text`（返した文の欄の検疫）・`leak`（返した文の欄の漏えいの検査）。`kind` は上の検疫と漏えいの検査の種類の記号。場所は上の「結果の形」の場所。見つかった文の中身は書かない |
-| `reason` | 記号 | `not-run` と `no-draft` のときだけ。`not-run` は次の閉じた一覧のどれか：実行を途中で止めた終わり方（「[1 回の実行の流れ][d08]」の「終わり方と終了コード」の記号）の `records-cut`・`stop-signal`・`signal-unreadable`・`settings-unreadable`・`check-failed`・`crashed`（`crashed` は受付 AI を起動する前の思わない失敗に限る）、`halt-issue`（全体の停止の Issue の止める間。読めなかったときと、開き直しの条件に当たる作業の単位があるときを含む。「[点検][d04]」の「結果の形」の `unverified` の `halt-issue` と同じ）、`overlap`（ほかの依頼と重なった。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の表の下）、`not-started`（起動の前の確かめに外れた）、`prepare-failed`（セッションの準備に失敗した）。受付 AI のセッションが起動の前の確かめの順 1 で外れたときは、合図なら `stop-signal`・`signal-unreadable`、全体の停止の Issue なら `halt-issue` を書く（実行の順 3・4 で止まったときと同じ記号。人に示す文を同じにするため）。順 2〜9 で外れたときは `not-started` と `preflightStep`。`machine-unsafe` は書かない（起動の前の確かめの順 5・6・9 で起きるので、`not-started` と `preflightStep` で書く）。`no-draft` は、「[AI のセッション][d07]」の終わり方の記号のうち `done` と `not-stopped` のほかと、起動した後の思わない失敗の `crashed` |
+| `reason` | 記号 | `not-run` と `no-draft` のときだけ。`not-run` は次の閉じた一覧のどれか：実行を途中で止めた終わり方（「[1 回の実行の流れ][d08]」の「終わり方と終了コード」の記号）の `records-cut`・`stop-signal`・`signal-unreadable`・`settings-unreadable`・`check-failed`・`crashed`（`crashed` は受付 AI を起動する前の思わない失敗に限る）、`halt-issue`（全体の停止の Issue の止める間。読めなかったときと、開き直しの条件に当たる作業の単位があるときと、見つかりの記録があるとき（[ADR-20261111-001][adr-keep-halt] の決定 1。受け入れの依頼の実行は、記録を書き直さず、消さない）を含む。「[点検][d04]」の「結果の形」の `unverified` の `halt-issue` と同じ）、`overlap`（ほかの依頼と重なった。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の表の下）、`not-started`（起動の前の確かめに外れた）、`prepare-failed`（セッションの準備に失敗した）。受付 AI のセッションが起動の前の確かめの順 1 で外れたときは、合図なら `stop-signal`・`signal-unreadable`、全体の停止の Issue なら `halt-issue` を書く（実行の順 3・4 で止まったときと同じ記号。人に示す文を同じにするため）。順 2〜9 で外れたときは `not-started` と `preflightStep`。`machine-unsafe` は書かない（起動の前の確かめの順 5・6・9 で起きるので、`not-started` と `preflightStep` で書く）。`no-draft` は、「[AI のセッション][d07]」の終わり方の記号のうち `done` と `not-stopped` のほかと、起動した後の思わない失敗の `crashed` |
 | `preflightStep` | 2〜9 の整数（起動の前の確かめの順 1 で外れたときは `not-started` を書かない。上の `reason` の行） | `reason` が `not-started` のときだけ。外れた起動の前の確かめの順 |
 | `costUsd` | 0 以上の数 | 受付 AI を起こしたときだけ（終わりの行と同じ数え方） |
 | `leftovers` | オブジェクトの一覧（`pid`・`command`・`folder`） | `not-stopped` のときだけ。残ったプロセスの PID とコマンドの名前とフォルダ（「[AI のセッション][b03]」の「止める手順」の順 5） |
@@ -214,6 +214,7 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 [adr-settings]: ../../adr/adr-20261015-005-settings-values-and-machine-settings.md
 [adr-security]: ../../adr/adr-20261024-005-security-axis-and-halt-issue.md
 [adr-leak]: ../../adr/adr-20261027-002-leak-findings-go-to-security-axis.md
+[adr-keep-halt]: ../../adr/adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [facts]: ../../requirements/10-verified-facts.md
 [design-change]: ../README.md#設計を変えるとき
 [fig-intake]: ./diagrams/06-intake.drawio.svg
