@@ -69,7 +69,7 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 検疫を掛ける文と時は [TEXT-11][text] の表のとおり。本書は、Issue の文の組み立てと、PR の差分の範囲を決める。
 
 - Issue の文（題名・本文・コメント）は、`logic/text/issue-text.ts` が、コメントから進行 Bot の有効な印のコメント（`logic/marker/read.ts` が有効な印と返したもの。投稿者が `safety.botAccounts` のどれかで、未編集で、印の形がちょうど 1 つで、形と署名が通る）を除き、作成の順に並べて組み立てる。進行 Bot が書いた印の行と決まった文を、入口の検疫で攻撃の疑いと読まないため。進行 Bot のコメントの AI の文は、投稿の前に検疫と漏えいの検査を通っている。印の無い進行 Bot のアカウントのコメント（人の投稿として読む。[ADR-20261015-004][adr-markers] の決定 1）と、無効な印のコメント（書き換えられた文を持ちうる）は除かない（止める側）
-- 入口の検疫、受け入れの依頼の実行の検疫（「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の順 5）、受付 AI に渡す前の検疫（起動の前の確かめの順 7）、受付 AI の欄、`quarantine` の印の `textHash` は、どれも上の組み立てで作った同じ文を使う。進行 Bot の有効な印のコメントは受付 AI に渡さない（書き直しで要る今のマスターは別の欄で渡す）ので、検疫から除いても、渡す文の検疫は緩まない
+- 入口の検疫、受け入れの依頼の実行の検疫（「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の順 5）、受付 AI に渡す前の検疫（起動の前の確かめの順 7）、受付 AI の欄、`quarantine` の印の `textHash` は、どれも上の組み立てで作った同じ文を使う。進行 Bot の有効な印のコメントは、受付 AI の Issue の文の欄に入れない（書き直しで要る今のマスターは、検疫を通して、Issue の文と別の欄で渡す。「[AI のセッション][b03]」の「役ごとの要素」の受付 AI の行）ので、検疫から除いても、渡す文の検疫は緩まない
 - PR の差分は、足した行（diff の `+` の行）だけを検疫する。消した行と前後の行は base ブランチの中身で、base ブランチのファイルは検疫しない（[TEXT-11][text]）。場所は、ファイルのパスと新しい側の行の番号で書く
 - `hidden-text` は、PR の差分に掛けない。差分は人の目に元の行のまま見え、GitHub が描き出さないので、画面に出ない文が無いため（上の `html-comment` がコードの書式の中を探さないのと同じ考え方）。ほかの検査は差分にも掛ける
 - 中身を文で持たないファイル（git が binary とみなすもの）は、diff に中身が出ないので検疫しない。AI にも中身を渡さない
@@ -171,8 +171,8 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 | `brief` | オブジェクト（`problem`・`behavior`・`acceptance`・`outOfScope`） | `draft` のときだけ。`CheckedText` を通った文の欄 |
 | `policy`・`policyReason` | 真偽・文（1 行） | `draft` のときだけ（`policyReason` も `CheckedText`） |
 | `findings` | オブジェクトの一覧（`where`・`kind`・場所） | `found` のときだけ。`where` は `entry`（Issue の文。受け入れの依頼の実行の順 5 の検疫か、起動の前の確かめの順 7）・`text`（返した文の欄の検疫）・`leak`（返した文の欄の漏えいの検査）。`kind` は上の検疫と漏えいの検査の種類の記号。場所は上の「結果の形」の場所。見つかった文の中身は書かない |
-| `reason` | 記号 | `not-run` と `no-draft` のときだけ。`not-run` は次の閉じた一覧のどれか：実行を途中で止めた終わり方（「[1 回の実行の流れ][d08]」の「終わり方と終了コード」の記号）の `records-cut`・`stop-signal`・`signal-unreadable`・`settings-unreadable`・`check-failed`・`crashed`（`crashed` は受付 AI を起動する前の思わない失敗に限る）、`halt-issue`（全体の停止の Issue がある）、`overlap`（ほかの依頼と重なった。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の表の下）、`not-started`（起動の前の確かめに外れた）、`prepare-failed`（セッションの準備に失敗した）。受付 AI のセッションが起動の前の確かめの順 1 で外れたときは、合図なら `stop-signal`・`signal-unreadable`、全体の停止の Issue なら `halt-issue` を書く（実行の順 3・4 で止まったときと同じ記号。人に示す文を同じにするため）。順 2〜9 で外れたときは `not-started` と `preflightStep`。`machine-unsafe` は書かない（起動の前の確かめの順 5・6・9 で起きるので、`not-started` と `preflightStep` で書く）。`no-draft` は、「[AI のセッション][d07]」の終わり方の記号のうち `done` と `not-stopped` のほかと、起動した後の思わない失敗の `crashed` |
-| `preflightStep` | 1〜9 の整数 | `reason` が `not-started` のときだけ。外れた起動の前の確かめの順 |
+| `reason` | 記号 | `not-run` と `no-draft` のときだけ。`not-run` は次の閉じた一覧のどれか：実行を途中で止めた終わり方（「[1 回の実行の流れ][d08]」の「終わり方と終了コード」の記号）の `records-cut`・`stop-signal`・`signal-unreadable`・`settings-unreadable`・`check-failed`・`crashed`（`crashed` は受付 AI を起動する前の思わない失敗に限る）、`halt-issue`（全体の停止の Issue の止める間。読めなかったときと、開き直しの条件に当たる作業の単位があるときを含む。「[点検][d04]」の「結果の形」の `unverified` の `halt-issue` と同じ）、`overlap`（ほかの依頼と重なった。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の表の下）、`not-started`（起動の前の確かめに外れた）、`prepare-failed`（セッションの準備に失敗した）。受付 AI のセッションが起動の前の確かめの順 1 で外れたときは、合図なら `stop-signal`・`signal-unreadable`、全体の停止の Issue なら `halt-issue` を書く（実行の順 3・4 で止まったときと同じ記号。人に示す文を同じにするため）。順 2〜9 で外れたときは `not-started` と `preflightStep`。`machine-unsafe` は書かない（起動の前の確かめの順 5・6・9 で起きるので、`not-started` と `preflightStep` で書く）。`no-draft` は、「[AI のセッション][d07]」の終わり方の記号のうち `done` と `not-stopped` のほかと、起動した後の思わない失敗の `crashed` |
+| `preflightStep` | 2〜9 の整数（起動の前の確かめの順 1 で外れたときは `not-started` を書かない。上の `reason` の行） | `reason` が `not-started` のときだけ。外れた起動の前の確かめの順 |
 | `costUsd` | 0 以上の数 | 受付 AI を起こしたときだけ（終わりの行と同じ数え方） |
 | `leftovers` | オブジェクトの一覧（`pid`・`command`・`folder`） | `not-stopped` のときだけ。残ったプロセスの PID とコマンドの名前とフォルダ（「[AI のセッション][b03]」の「止める手順」の順 5） |
 
