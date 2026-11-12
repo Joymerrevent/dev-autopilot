@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-10-24
+updated: 2026-11-11
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -89,6 +89,8 @@ decision-makers: メンテナ
 - 印のコメントの削除は、GitHub の API から検出できない。`review` の印の `round` は 1 から欠けずに続くことを判定の条件に足し、欠けていたら `needs-human` にする。`dropped_high` は PR ごとの累計を書く（途中の印が消えても、最新の印に累計が残る）
 - メンテナが進行役のコメントの誤りを見つけても、編集せず、新しいコメントで補う（編集すると印が無効になり `needs-human` になる）。運用の文書に書く
 - AI の出力を投稿する前に印の形の文字列を取り除く処理（IMPL-20）は、印を読む処理（`src/marker.ts`）と同じ規則（空白の揺れを含む）で行う。AI のセッションに前回の印を渡すときは、進行役が読み取った値（ラウンド・件数・判定）だけを渡し、印の 1 行を手を加えずに渡すことはしない
+
+> **［2026-11-11 追記］** 上の「印が無効になっていたら止める」の箇条の「進行役のアカウントが投稿した印のうち、IMPL-20 の (b)（未編集）…を満たさないもの」には、進行役のアカウントの、印の形の無い、編集された投稿も当たると読む。進行役が投稿するコメントは必ず署名付きの印を 1 つ持ち（上の 2 つ目の箇条）、[ADR-20261020-002][adr-app] の決定 4 で `safety.botAccounts` にはアプリの投稿者の名前だけを入れ、人はそのアカウントで投稿しないので、印の形の無い編集された投稿は、投稿した印が編集で消えたものと読むため。印の無い進行役のアカウントの投稿を人の投稿として読む決定（上の 2 つ目の箇条）は、未編集の投稿について変わらない。一覧に人のアカウントの名前を残したとき（点検の warn）は、その人が自分の印の無いコメントを編集すると、印の書き換えとして止まる（止める側）
 
 ### 決定 2：人の操作は、操作した人の権限と時刻を確かめてから従う
 
@@ -192,6 +194,7 @@ decision-makers: メンテナ
 [facts]: ../requirements/10-verified-facts.md
 [adr-draft]: ./adr-20261016-002-intake-ai-drafts-every-issue.md
 [adr-bots]: ./adr-20261020-001-bot-accounts-as-list.md
+[adr-app]: ./adr-20261020-002-switch-to-github-app-before-writing.md
 [adr-reapprove]: ./adr-20261021-003-reapprove-by-relabel-and-ignore-outside-instructions.md
 [adr-marker-keys]: ./adr-20261021-004-marker-key-list-and-resume-after-invalid-markers.md
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
