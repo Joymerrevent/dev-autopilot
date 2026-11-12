@@ -484,7 +484,7 @@ GitHub は、試し専用の組織のリポを、試し専用の組織だけに�
 ## 導入と点検の実装（段階 3）の一度だけの試しで、人の操作が要らないものを確かめた事実（2026-11-12）
 
 [導入と点検][design-setup]の「GitHub App の権限」の一度だけの試しのうち、人の操作が要らないものを、試し専用の組織で確かめた。App は、試し専用の組織の試し用 App（`jm-sandbox-probe-20261024`。組織のすべてのリポに入っている。権限は Actions・Variables・Checks・Commit statuses・Metadata の読み取りと、Issues・Pull requests・組織の Projects の書き込みで、Contents は無い）で、`setup` が作る進行 Bot の App ではない。人の操作は、試し専用の組織だけに届く fine-grained PAT（組織の管理者）で行った。Node 24.3.0 の `fetch` で呼び、JWT とトークンの値は画面に出していない。
-「App の入っていないリポ」と「App の導入先から外れたとき」は、インストールのトークンを引き換えるときに `repositories` か `repository_ids` で読めるリポを絞って、まねた（App の導入先と権限は変えていない）。試しで作ったリポ・Issue・ラベル・変数は、試しの後に消した。試し専用の組織に Project が無いので、Project の項目の試しはしていない。
+「App の入っていないリポ」と「App の導入先から外れたとき」は、インストールのトークンを引き換えるときに `repositories` か `repository_ids` で読めるリポを絞って、まねた（App の導入先と権限は変えていない）。試しで作ったリポ・Issue・ラベル・変数・Project は、試しの後に消した。Project は試し専用の組織に無かったので、試し用 App で試し用の Project を作って試した。
 
 | 番号 | 確かめたこと | 結果 | 証拠 |
 |---|---|---|---|
@@ -502,6 +502,7 @@ GitHub は、試し専用の組織のリポを、試し専用の組織だけに�
 | FACT-146 | リポの名前を変えた後に、旧い名前で Issue を、リダイレクトをたどらずに引くとどう返るか | **`301` で、`Location` は同じリポの ID の `/repositories/<ID>/issues/<番号>`。引き直すと 200。** `GET /repos/{owner}/{旧い名前}/issues/{n}` は `301` で、`Location` は `https://api.github.com/repositories/<リポの ID>/issues/<n>`（名前を変える前と同じ ID）だった。その `Location` を、たどらずに 1 回引くと 200 で、Issue の `url` は新しい名前だった。旧い名前でリポそのものを引くと、`301` で `Location` は `https://api.github.com/repositories/<リポの ID>` だった。トークンをリポの ID で絞ったとき（名前を変える前と後に引き換えたもの）も同じだった | 実行 |
 | FACT-147 | Issue の機能を切ったリポの Issue を、REST と GraphQL で引くとどう返るか | **REST は `410`（`Issues are disabled for this repo`）で、消した Issue と同じ状態になる。** リポを `has_issues: false` にした後、`GET /repos/{owner}/{repo}/issues/{n}` は `410` で、`message` は `Issues are disabled for this repo` だった（消した Issue の `410` は `This issue was deleted`。FACT-134）。旧い名前で引くと `301`（FACT-146 と同じ形）。リポを読めないトークンでは `404`。Issue の一覧（`…/issues?state=all`）は 200 で空の配列。GraphQL は、`hasIssuesEnabled` が `false`、`repository.issue(number:)` が `NOT_FOUND` だった | 実行 |
 | FACT-148 | 消した Issue と、リポを読めないトークンで引いた Issue は、REST で見分けられるか | **消した Issue は `410`、リポを読めないトークンでは `404`。** 消した Issue を App のトークン（すべてのリポを読めるものと、そのリポだけに絞ったもの）で `redirect: "manual"` で引くと、どちらも `410`（`This issue was deleted`）で、GraphQL は `NOT_FOUND` だった（FACT-134 の再現）。Issue のあるリポを読めないように絞ったトークン（App の導入先から外れたまね）では、ある Issue も、Issue の機能を切ったリポの Issue も `404` で、`410` は返らなかった。App の導入先から実際に外したときは確かめていない | 実行 |
+| FACT-149 | Project に足した Issue を消すと、Project の項目は残るか。足した直後の Project の項目の一覧に、足した Issue が出るか | **消すと項目も消える。足した直後の一覧には出ないことがある。** 試し用 App のトークン（組織の Projects の書き込み）で、試し専用の組織に試し用の Project（単一選択の欄を 1 つ持つもの）を作り、App で起票した Issue を `addProjectV2ItemById` で足し、欄を書いた（どれも通った）。足した直後（1〜2 秒後）に `organization.projectV2(number:).items` を読むと 0 件で、15 秒ほど後には 1 件（`content` は Issue、欄の値も読めた）だった。項目の ID を `node(id:)` で引くと、足した直後から読めた。Issue を `deleteIssue` で消すと、5 秒後と 30 秒後のどちらも、`items` は 0 件で、項目の ID の `node` は `NOT_FOUND` だった。2 回試して同じだった（足した直後の 0 件も 2 回）。Project の作成と削除（`createProjectV2`・`deleteProjectV2`）も、App のトークンで通った | 実行 |
 
 [adr-workspace]: ../adr/adr-20261013-001-fresh-clone-per-ai-session.md
 [adr-read]: ../adr/adr-20261015-001-read-allowlist-and-secret-file.md
