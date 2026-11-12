@@ -27,7 +27,7 @@ Plugin を入れたプロジェクトで、`setup` を実行すれば、進行 B
     src/                       進行 Bot（TypeScript、Node 24 が直接実行。ビルドしない。bash を置かない）。Plugin に同封し、マシンの写しから定期の実行が動かす（ADR-20261017-003）
       main.ts                  入口
       select.ts                例：Issue の選定
-      marker.ts                印の形の正本（1 定数）
+      marker.ts                印の形の正本（形の定義と、印を読む処理と取り除く規則を 1 か所に持つ。IMPL-18・20）
       check.ts                 点検の正本（進行 Bot が毎回の最初に回す）
     package.json               進行 Bot の実行時の依存（版を固定する。Plugin を入れるときに Claude Code が入れる。STRUCT-4）
     package-lock.json          実行時の依存の npm のロックファイル（Claude Code は npm か Bun のロックファイルがあるときに依存を入れる）
