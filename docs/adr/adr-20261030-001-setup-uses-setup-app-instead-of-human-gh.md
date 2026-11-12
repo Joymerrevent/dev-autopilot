@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-12
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -60,6 +60,7 @@ decision-makers: メンテナ
 - `setup` の GitHub の準備と、`setup` が GitHub について確かめること（ruleset の `bypass_actors` を含む）は、`setup` 用の App の人の代わりのトークン（device flow）で行う。人の `gh` のログインは使わない
 - トークンは `setup` の実行の間だけメモリに持ち、ファイルに書かない。更新のトークンも持たない。`setup` を実行するたびに、人がブラウザで承認のコードを入れる
 - `setup` 用の App の権限は、GitHub の準備と `setup` の確かめに要るものだけにする（ruleset を作る Administration の書き込み、変数を作る Variables の書き込み、ラベルを作る Issues の書き込み、Project の欄を作る Projects（組織）の書き込み、確かめに要る読み取り）。権限の表は基本設計で決める。当てる先のリポだけに入れる
+  > **［2026-11-12 追記］** 権限の表を決めた基本設計の「[導入と点検][design-setup]」の「setup 用の App」は、上の括弧の権限に、リポの設定の PR のブランチと commit を作る Contents の書き込みと、リポの設定の PR を作る Pull requests の書き込みを足した（`setup` の GitHub の準備の 1 つとして、リポの設定を PR で入れるため）。権限を GitHub の準備と `setup` の確かめに要るものだけにすることと、権限の表を基本設計で決めることは変わらない。人の代わりのトークンは承認した人の権限との重なりだけを持つので、承認した人が書けないリポには書けない
 - 人の代わりのトークンは、App の権限と、承認した人の権限の重なりだけを持つ。ruleset を作るには、組織の管理者が承認する
 
 ### 決定 2：setup が 2 つの App を作り、setup 用の App には秘密鍵を作らない

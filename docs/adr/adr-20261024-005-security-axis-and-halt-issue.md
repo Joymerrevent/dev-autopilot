@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-11-01
+updated: 2026-11-11
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -9,6 +9,8 @@ decision-makers: メンテナ
 # 検疫で見つかったら止め方でなく安全の軸に値を入れて maintain 以上の人の安全の確認だけで外し、AI が書いた文で見つかったら全体の停止の Issue で全体を止める
 
 > **Amended by [ADR-20261027-002][adr-leak]（2026-10-27）**: 決定 1 の表に、漏えいの検査で見つかったときの行（`security` の印の `where` が `leak`、攻撃の疑い（AI の文）、全体は止めない）を足した。決定 3 の全体の停止は、AI が書いた文の検疫で見つかったとき（`where` が `text`）に限ると読む。ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261111-001][adr-keep-halt]（2026-11-11）**: 決定 3 の「全体の停止の Issue が 1 つでもある間は、どの作業の単位でも AI のセッションを起こさない」と「リポの変数が `run` で、全体の停止の Issue が無いときだけ、AI のセッションを起こす」に、見つかりの記録がある間を足した。AI が書いた文の検疫で見つけたら、`security` の印を書く前に、手元に見つかりの記録を残す。見つかりの記録がある間は、全体の停止の Issue があるものとして扱う。`security` の印か全体の停止の Issue を書けなかったときは、次の実行が記録から書き直す。決定 3 の書く順（見つけた作業の単位の Issue に `security` の印を書いてから、全体の停止の Issue を開いて `halt` の印を書く）と、全体の停止の解き方、決定 1・2・4 は据え置く。
 
 要件の UNDECIDED-80（検疫で攻撃の疑いが見つかったときの止め方と、全体の止め方。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 本 ADR は、[ADR-20261024-001][adr-model-states]（作業の単位の状態を主な流れと重ねる 3 本の軸で表す）と [ADR-20261024-004][adr-master]（検疫は AI に渡す前と GitHub に書く前に毎回行う）を前提にする。
@@ -194,3 +196,4 @@ AI が書いたコードの差分は、コードの中の文字列やテスト�
 [design-tests]: ../design/basic/05-tests.md
 [adr-leak]: ./adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
+[adr-keep-halt]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md

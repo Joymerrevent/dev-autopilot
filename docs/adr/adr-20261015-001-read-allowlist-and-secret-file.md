@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-11-08
+updated: 2026-11-11
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -21,7 +21,9 @@ decision-makers: メンテナ
 >
 > **Amended by [ADR-20261020-002][adr-app]（2026-10-20）**: 決定 2 の秘密の置き場に置くもののうち、PAT を、GitHub App に切り替えた後はアプリの秘密鍵にした。置き場と権限（700・600）は据え置く。
 >
-> **Amended by [ADR-20261107-001][adr-github]（2026-11-08）**: 決定 2 の「`gh` を呼ぶときだけ `GH_TOKEN` を渡す」を改めた。進行 Bot は GitHub の API を Octokit で呼び、GitHub App のトークンを子プロセスに渡さない。秘密の置き場、起動したときに読んでプロセスの中だけで持つこと、deploy key を push と fetch のときだけ `GIT_SSH_COMMAND` で渡すことと、ほかの決定は据え置く。
+> **Amended by [ADR-20261107-001][adr-github]（2026-11-08）**: 決定 2 の「`gh` を呼ぶときだけ `GH_TOKEN` を渡す」を改めた。進行 Bot は GitHub の API を Octokit で呼び、GitHub App のトークンを子プロセスに渡さない。秘密の置き場、起動したときに読んでプロセスの中だけで持つこと、deploy key を ~~push と fetch のときだけ~~ `GIT_SSH_COMMAND` で渡すことと、ほかの決定は据え置く。
+>
+> **訂正（2026-11-11）**: 上の注記の、取り消し線を引いた「push と fetch のときだけ」は誤りで、deploy key は、決定 2 の訂正のとおり、origin とやりとりする git（clone・fetch・`ls-remote`・push）に渡す。AI のセッションに渡さない決定は変わらない。
 
 要件の UNDECIDED-16（[決めていないこと][undecided]の「AI の読み取り範囲と秘密の置き場」）を決める。
 問いは 3 つある：AI が読める範囲、秘密（PAT・印の署名の鍵・deploy key）の置き場、人が手で実行するときの起こし方。
@@ -114,7 +116,8 @@ decision-makers: メンテナ
 - PAT、印の署名の鍵（IMPL-20 の (c)）、deploy key を、秘密の置き場（設定の `paths.secrets`）のファイルに置く。フォルダの権限は 700、ファイルは 600
 - 秘密の置き場は、置き場（`<置き場>/`）の外の、同期されないフォルダにする。手元の Mac では `~/.config` と `~/.ssh` が同期フォルダへのリンクなので、`~/.config` の下には置かない。
   `check` は、秘密の置き場の実体のパスが同期フォルダ（`~/Library/CloudStorage/`、`~/Library/Mobile Documents/`）の下に無いことを確かめる。既定のパスの値は UNDECIDED-17 で決める
-- 進行役は起動したときに秘密のファイルを読み、値を自分のプロセスの中だけで持つ。`gh` を呼ぶときだけ `GH_TOKEN` を渡し、push と fetch のときだけ deploy key を `GIT_SSH_COMMAND` で渡す。AI のセッションには渡さない（SAFE-1）
+- 進行役は起動したときに秘密のファイルを読み、値を自分のプロセスの中だけで持つ。`gh` を呼ぶときだけ `GH_TOKEN` を渡し、~~push と fetch のときだけ~~ deploy key を `GIT_SSH_COMMAND` で渡す。AI のセッションには渡さない（SAFE-1）
+  **訂正（2026-11-11）**: deploy key を渡す git は、push と fetch だけでなく、origin とやりとりする git（AI の作業場所と進行役の clone を作る clone、fetch、`ls-remote`、push）。clone の認証を進行役の鍵で行うことは [ADR-20261013-001][adr-workspace] が先に決めていて、`ls-remote` は push の手順で origin を読む。鍵を進行役のプロセスの中だけで持ち、AI のセッションに渡さない決定は変わらない
 - launchd の plist には秘密の値を書かない。plist は `setup` が書き `check` が読むジョブの定義で、秘密の値を混ぜると `setup` と `check` が秘密を扱うことになる
 - 秘密の値は人が書く（SETUP-1 の「人がやるもの」）。`setup` はフォルダとファイルを権限付きで作り、書く欄を示す
 
