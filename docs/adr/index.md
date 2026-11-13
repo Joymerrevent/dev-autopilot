@@ -73,6 +73,7 @@
 | ADR-20261111-001 | [AI の文の検疫で見つけたことを GitHub に書けなかったときは、手元の記録で次の実行からも全体を止め、印を書き直せたら記録を消す][adr-20261111-001-keep-halt-across-security-marker-write-failures] | accepted | 2026-11-11 |
 | ADR-20261112-001 | [App から見えない依存の相手で待つときは、wait の印に見えない相手の数を書き、番号の並びと数の組で同じ相手かを比べる][adr-20261112-001-wait-marker-hidden-blockers] | accepted | 2026-11-12 |
 | ADR-20261112-002 | [依存の相手の Issue が消されたら、wait の印に書いた番号を当てる先のリポで引いて見つけ、中止ありと読んで計画を見直す][adr-20261112-002-deleted-blocker-as-cancelled] | accepted | 2026-11-12 |
+| ADR-20261112-003 | [受け入れの依頼で受付 AI の下書きが検疫に当たったときも、見つかりの記録を書いて次の実行から全体を止め、印は作業の単位を進める次の実行が GitHub に書く][adr-20261112-003-intake-request-finding-keeps-halt] | accepted | 2026-11-12 |
 
 <!--
 行の例（表の最後に足す）:
@@ -152,3 +153,4 @@
 [adr-20261111-001-keep-halt-across-security-marker-write-failures]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [adr-20261112-001-wait-marker-hidden-blockers]: ./adr-20261112-001-wait-marker-hidden-blockers.md
 [adr-20261112-002-deleted-blocker-as-cancelled]: ./adr-20261112-002-deleted-blocker-as-cancelled.md
+[adr-20261112-003-intake-request-finding-keeps-halt]: ./adr-20261112-003-intake-request-finding-keeps-halt.md
