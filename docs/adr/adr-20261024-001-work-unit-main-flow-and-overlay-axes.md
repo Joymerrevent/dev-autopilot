@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-11-11
+updated: 2026-11-13
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -13,6 +13,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261031-001][adr-follow-up-dup]（2026-10-31）**: 決定 9 の印の表の `follow-up` の行の「書くとき」（🟢 を新しい Issue にした）と「置き場」（新しい Issue）を、🟢 を Issue に記録した（新しい Issue にしたか、有効な `follow-up` の印を持つ同じ見出しの開いた Issue に足した）と、🟢 を記録した Issue に改めた。組み直す前の `note kind=duplicate` は `follow-up` にした。印の種類の数（21）、`follow-up` の欄、決定 9 のほかの行と、ほかの決定は据え置く。
 >
 > **Amended by [ADR-20261101-001][adr-raise-in-fix]（2026-11-01）**: 決定 9 の印の表の `fix` の行の欄（`round`、`head`、`cause`）に、`model`（その修正で作業 AI を起こしたモデル）を足した。組み直す前の `note kind=raise` は、`fix` の印の `model` の欄と、上げた修正の `fix` の印のコメントの決まった文にした。印の種類の数（21）、`fix` のほかの欄と書くとき、決定 9 のほかの行と、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261112-001][adr-wait-hidden]（2026-11-13）**: 決定 9 の印の表の `wait` の行の欄（`blockedBy`）に、`hidden`（App から見えない依存の相手の数）を足した。`blockedBy` は、`hidden` が 1 以上のときだけ空を許す。印の種類の数（21）、`wait` を書くとき（D1）と置き場、決定 9 のほかの行と、ほかの決定は据え置く。
 
 要件の UNDECIDED-76（作業の単位の状態を、どの模型で表し、人の操作と表示をどう分けるか。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 
@@ -184,6 +186,8 @@ decision-makers: メンテナ
 | D3 | 未完了 → 中止あり | 先の作業が閉鎖済みになった | UNDECIDED-81 |
 | D4 | 中止あり →（なし） | AI が計画を見直し、計画を変えずに進めてよいと判断した | UNDECIDED-81 |
 | D5 | 中止あり →（なし） | AI が計画を変える必要があると判断し、止め方を停止中にした | UNDECIDED-81 |
+
+> **［2026-11-13 追記］** [ADR-20261112-002][adr-deleted-blocker] で、当てる先のリポにある先の作業の Issue が消されたときも中止ありにした。D3 の出来事「先の作業が閉鎖済みになった」は、ADR-20261112-002 で消されたと読んだ相手を含めて読む。決定 6 の軸の値の決め方と、決定 9 の `wait` と `dependency-review` の印の欄は変わらない。
 
 安全の線（すべて UNDECIDED-80 で中身を決める）：
 
@@ -540,3 +544,5 @@ decision-makers: メンテナ
 [design-tests]: ../design/basic/05-tests.md
 [adr-follow-up-dup]: ./adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
 [adr-raise-in-fix]: ./adr-20261101-001-record-model-raise-in-fix-marker.md
+[adr-wait-hidden]: ./adr-20261112-001-wait-marker-hidden-blockers.md
+[adr-deleted-blocker]: ./adr-20261112-002-deleted-blocker-as-cancelled.md

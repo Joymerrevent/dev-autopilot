@@ -120,6 +120,7 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 
 - コメントは、決まった部分（見出し、「AI が生成した」の 1 行、固定の文）と、`CheckedText` の文と、最後の印の行（`marker.ts` で組み立てたもの）をつないで作る
 - 組み立てたコメントが 60,000 文字を超えたときの扱いは、「[AI のセッション][b03]」の「共通の決まり」と「レビューのコメントの形」のとおり。長さは、JavaScript の文字列の長さでなく Unicode の文字の数で数える。GitHub のコメントの上限を何で数えるか（文字の数か、UTF-16 の単位か、バイトか）は確かめていない（[実機で確かめた事実][facts] に無い）。導入と点検の実装（段階 3）で、上限を超える長さのコメントを書いて確かめ、文字の数と違えば数え方を直す
+- `wait` の印を付けるコメント（「[1 回の実行の流れ][d08]」の工程 `wait-marker`）は、`hidden`（App から見えない依存の相手の数。「[印][d03]」の「欄の値の形」）が 1 以上のときだけ、決まった文「App から見えないリポにある先の依頼が <数> 件ある。進行 Bot は、見えない先の依頼が終わったかを読めないので、人が依存（blocked by）を外すか、先の依頼の Issue を当てる先のリポに移すまで待つ」を足す（<数> は `hidden` の値。[ADR-20261112-001][adr-wait-hidden] の決定 3）。見えない相手のリポと番号は、App から読めないので書かない
 
 ## 指摘の区切りの行と見出しの比べ方
 
@@ -172,12 +173,14 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 | `findings` | オブジェクトの一覧（`where`・`kind`・場所） | `found` のときだけ。`where` は `entry`（Issue の文。受け入れの依頼の実行の順 5（進行 Bot が Issue の文を読んで掛ける検疫。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」）か、起動の前の確かめの順 7（受付 AI に渡す前の検疫））・`text`（返した文の欄の検疫）・`leak`（返した文の欄の漏えいの検査）。`kind` は上の検疫と漏えいの検査の種類の記号。場所は上の「結果の形」の場所。見つかった文の中身は書かない |
 | `reason` | 記号 | `not-run` と `no-draft` のときだけ。`not-run` は次の閉じた一覧のどれか：実行を途中で止めた終わり方（「[1 回の実行の流れ][d08]」の「終わり方と終了コード」の記号）の `records-cut`・`stop-signal`・`signal-unreadable`・`settings-unreadable`・`check-failed`・`crashed`（`crashed` は受付 AI を起動する前の思わない失敗に限る）、`halt-issue`（全体の停止の Issue の止める間。読めなかったときと、開き直しの条件に当たる作業の単位があるときと、見つかりの記録があるとき（[ADR-20261111-001][adr-keep-halt] の決定 1。受け入れの依頼の実行は、記録を書き直さず、消さない）を含む。「[点検][d04]」の「結果の形」の `unverified` の `halt-issue` と同じ）、`overlap`（ほかの依頼と重なった。「[AI のセッション][b03]」の「人の Skill から受け入れを呼ぶ形」の表の下）、`not-started`（起動の前の確かめに外れた）、`prepare-failed`（セッションの準備に失敗した）。受付 AI のセッションが起動の前の確かめの順 1 で外れたときは、合図なら `stop-signal`・`signal-unreadable`、全体の停止の Issue なら `halt-issue` を書く（1 回の実行の流れの順 3（全体の止める合図を読む）・順 4（全体の停止の Issue を読む）で止まったときと同じ記号。人に示す文を同じにするため）。順 2〜9 で外れたときは `not-started` と `preflightStep`。`machine-unsafe` は書かない（起動の前の確かめの順 5・6・9 で起きるので、`not-started` と `preflightStep` で書く）。`no-draft` は、「[AI のセッション][d07]」の終わり方の記号のうち `done` と `not-stopped` のほかと、起動した後の思わない失敗の `crashed` |
 | `preflightStep` | 2〜9 の整数（起動の前の確かめの順 1 で外れたときは `not-started` を書かない。上の `reason` の行） | `reason` が `not-started` のときだけ。外れた起動の前の確かめの順 |
+| `securityPending` | 記号：`written`・`not-written` | `outcome` が `found` で、`findings` に `where` が `text` の見つかりがあるときだけ。見つかりの記録（「[設定と記録][d02]」の「見つかりの記録」）を書けたか。`not-written` は記録の置き場に書けなかった（[ADR-20261112-003][adr-intake-finding] の決定 3） |
 | `costUsd` | 0 以上の数 | 受付 AI を起こしたときだけ（終わりの行と同じ数え方） |
 | `leftovers` | オブジェクトの一覧（`pid`・`command`・`folder`） | `not-stopped` のときだけ。残ったプロセスの PID とコマンドの名前とフォルダ（「[AI のセッション][b03]」の「止める手順」の順 5） |
 
 - 欄の形は、`logic/run/requests.ts`（「[設定と記録][d02]」の「依頼と結果のファイル」）が、本節の表を写して持つ（`reason` の値の一覧も写す）。`flow/skill/intake.ts` は、読むときに形を確かめ、形が違えば結果が無いものとして扱う
-- 条件つきの欄は、`outcome` で要るか無いかが決まる。表に無い欄と、`outcome` に合わない欄があれば、形が違うとする
+- 条件つきの欄は、`outcome` で要るか無いかが決まる（`securityPending` は、`outcome` と `findings` の `where` で決まる）。表に無い欄と、`outcome` に合わない欄があれば、形が違うとする
 - `reason` が `halt-issue` のとき、Skill が示す文は、「[点検][d04]」の「結果の形」の表の下の `halt-issue` の決まった文と同じにする（GitHub に全体の停止の Issue が無くても止める間がありうること、どれに当たるかを `/dev-autopilot` の状態の表示で見ること、開き直しの条件に当たる作業の単位だけのときは、順 6〜9 に進む次の実行が開き直すまで待つこと）
+- `securityPending` があるとき、Skill は、見つかった種類と場所に続けて、`logic/text/comments.ts` の決まった文を示す（[ADR-20261112-003][adr-intake-finding] の決定 3）。`written` なら「受付 AI の下書きが検疫に当たったので、進行 Bot は見つかりの記録を書いた。次の実行から、どの作業の単位でも AI のセッションを起こさない。作業の単位を進める次の実行（定期の実行か、`/dev-autopilot` の手動の 1 回実行）が、Issue に `security` の印を書き、全体の停止の Issue を開く。全体の停止の Issue が開いたら、見つけた Issue とほかの作業を確かめ、maintain 以上の人が `## 安全の確認` を書いて、全体の停止の Issue を閉じる」。`not-written` なら「受付 AI の下書きが検疫に当たったが、記録の置き場が異常で、見つかりの記録を書けなかった。次の実行から全体が止まるとは限らない。全体の止める合図（リポの変数）を `stop` にするかを、人が決める」
 
 ## テスト
 
@@ -191,10 +194,10 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 | `logic/text/leak.ts` | `fixtures/leak/` の見本のすべて。秘密の値の書いてあるままの文字を見つけ、結果に値を入れないこと。当てないアドレスとホスト。渡した短い一時フォルダの ID の値に当て、`function` のような英小文字と数字の 8 文字の語に当てないこと。`/tmp/dap/…`・`/private/tmp/dap/…`・`/var/folders/…/T/…`・`/private/var/folders/…` のどれにも当たること。`Binary files … differ` の行で `binary-diff` を返すこと。TEXT-7 の関数が `secret-format` と `email` だけを返すこと |
 | `logic/text/checked.ts` | 検疫を通らない文から `QuarantinedText` を、検疫か漏えいの検査を通らない文から `CheckedText` を作れないこと。`CheckedText` でない文字列（`QuarantinedText` を含む）をコメントの組み立てに渡すと型の検査で落ちること。両方に当たる文で、検疫と漏えいの検査の両方の結果を返すこと |
 | `logic/text/hash.ts` | 改行の形・行の末尾の空白・前後の空の行で同じハッシュになること。NUL の区切りで、つなぎ目のずれた組が同じハッシュにならないこと |
-| `logic/text/comments.ts` | 言語ごとの決まった文。60,000 文字を Unicode の文字の数で数えること |
+| `logic/text/comments.ts` | 言語ごとの決まった文。受け入れの結果の `securityPending` の 2 つの値ごとの文があること。60,000 文字を Unicode の文字の数で数えること。`wait` の印のコメントに、`hidden` が 1 以上のときだけ、見えない相手の数と人がすることの文が入ること |
 | `logic/text/findings.ts` | 区切りの行の読み書きが元に戻ること（パスが空の行を含む）。見出しの正規化と指摘の ID が [ADR-20261019-001][adr-repeat] の例と同じこと。題名の比べ方が ID の正規化と同じで、末尾の空白だけが違う題名と見出しを同じとすること |
 | `logic/text/contracts.ts` | 役と工程ごとの、通る出力と、欠け・型の違い・決まった値のほか・長さの上限・表に無いキー・コードブロックの外の文・オブジェクトでない値。条件つきの欄の欠けとあってはいけない欄、範囲の外の整数、オブジェクトの一覧の要素の型の違い、役ごとの追加の確かめの外れ方、`environmentError` をほかの欄と一緒に返したとき。3 つの欄（`result`・`assistant`・`message_delta`）のどれに `refusal` があっても拒否とし、出力契約を取り出さないこと |
-| `flow/skill/intake.ts` | `quarantine` が GitHub を読まず、形の違う入力で通ったと返さないこと。`status.json` の一覧の投稿者で、未編集で、書く形の印を 1 つ持つコメントだけを除き、編集されたコメントと一覧に無い投稿者のコメントを除かないこと。`status.json` を読めなければ除かないこと。`draft` が lock と待つ時間の内の依頼で置かず、lock の中身を読めないときに壊れた lock の文を示すこと。`status.json` の待つ時間を依頼に書き、無ければ初期値を書くこと。`wait` の 1 回の呼び出しが 60 秒を超えないこと。結果・まだ・過ぎた・依頼が消えたの 4 つを返し分けること。結果のファイルの形が違えば結果が無いものとして扱うこと |
+| `flow/skill/intake.ts` | `quarantine` が GitHub を読まず、形の違う入力で通ったと返さないこと。`status.json` の一覧の投稿者で、未編集で、書く形の印を 1 つ持つコメントだけを除き、編集されたコメントと一覧に無い投稿者のコメントを除かないこと。`status.json` を読めなければ除かないこと。`draft` が lock と待つ時間の内の依頼で置かず、lock の中身を読めないときに壊れた lock の文を示すこと。`status.json` の待つ時間を依頼に書き、無ければ初期値を書くこと。`wait` の 1 回の呼び出しが 60 秒を超えないこと。結果・まだ・過ぎた・依頼が消えたの 4 つを返し分けること。結果のファイルの形が違えば結果が無いものとして扱うこと。`securityPending` の `written` と `not-written` で、それぞれの決まった文を示すこと |
 
 [readme]: ./README.md
 [d01]: ./01-io.md
@@ -219,3 +222,5 @@ AI に渡す文と GitHub に書く文を扱う処理（Issue の文の組み立
 [facts]: ../../requirements/10-verified-facts.md
 [design-change]: ../README.md#設計を変えるとき
 [fig-intake]: ./diagrams/06-intake.drawio.svg
+[adr-wait-hidden]: ../../adr/adr-20261112-001-wait-marker-hidden-blockers.md
+[adr-intake-finding]: ../../adr/adr-20261112-003-intake-request-finding-keeps-halt.md

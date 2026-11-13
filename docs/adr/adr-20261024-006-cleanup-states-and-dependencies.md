@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-24
-updated: 2026-10-27
+updated: 2026-11-13
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -11,6 +11,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261025-001][adr-tampered]（2026-10-26）**: 決定 1 のうち、作業場所を消す前の確かめに外れたときの止め方と、片付けをやり直さない例外を改めた。片付けの中で外れたら `workspace-tampered`（実装の都合の記号）で止め、片付けをやり直さないかは、止めた理由の記号（`cleanup-failed`）でなく、マージ済みか閉鎖済みに入った後に書いた `stop` の印かで決める。片付けを軸の値と全体の停止を問わず行うこと、片付けが失敗し続けたら `cleanup-failed` で止めることと、決定 2〜4 は据え置く。
 >
 > **Amended by [ADR-20261027-001][adr-leftover]（2026-10-27）**: 決定 1 の「作業場所を消す前の確かめ」に、残りのプロセスの確かめを足した。片付けで作業場所を消す前に、作業フォルダかファイルを開いているプロセスを探し、見つかるか探し切れなければ、消さずに停止中（`session-not-stopped`）にする。片付けを軸の値と全体の停止を問わず行うことと、ほかの決定は据え置く。
+>
+> **Amended by [ADR-20261112-002][adr-deleted-blocker]（2026-11-13）**: 決定 3 の表に、「先の作業の Issue が当てる先のリポで消された → 中止あり（D3）」の行を足した。消された相手は、有効な `wait` の印に書いた番号を当てる先のリポで引いて見つけ、表の「ほか → 未完了のまま」に入れない。決定 3 の表のほかの行と、中止ありの見直しの決まり（計画を確かめる AI、`dependency-review` の印、`keep` と `change`、後の作業が決定済みなら見直さずに（なし）、相手ごとに 1 つずつ見直す）と、決定 1・2・4 は据え置く。
 
 要件の UNDECIDED-81（マージと中止の後の片付けと、先の依頼（blocked by）の待ち方。[決めていないこと][undecided]の「ADR で決めること」の「作業の単位の状態遷移」）を決める。
 本 ADR は、[ADR-20261024-001][adr-model-states]（作業の単位の状態を主な流れと重ねる 3 本の軸で表す）を前提にする。
@@ -213,3 +215,4 @@ decision-makers: メンテナ
 [design-flow]: ../design/basic/02-flow-and-judgment.md
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
+[adr-deleted-blocker]: ./adr-20261112-002-deleted-blocker-as-cancelled.md

@@ -108,7 +108,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 - 欄の名前は camelCase、値は小文字の英単語（2 語以上は `-` でつなぐ）。判定の結果を入れる欄は、どの印も `result`
 - 署名（`sig`）は、`sig` を除いた欄に、印の置き場（リポ（`owner/repo`）と Issue か PR の番号）を加え、決まった並べ方にそろえた JSON に、進行 Bot の鍵で掛ける（並べ方は詳細設計。IMPL-20）。別の Issue や PR に写した印は、署名が通らない
 - 進行 Bot が投稿するコメントは、すべて署名付きの印を 1 つ持つ。印の真正性は IMPL-20 の 3 条件で確かめ、人の編集はどの印にも許さない（編集された印は無効で、停止中（`marker-invalid`）。FLOW-40）
-- 「1 回だけ書く」印（`wait`・`overlap`・`remind`・`ignored-instruction`）は、同じ種類で同じ相手（`wait` は `blockedBy`、`overlap` は `prs`、`remind` は `head`、`ignored-instruction` は `comment`）の有効な印があれば書かない。`stop` は、止めるたびに、止めた先（Issue と、PR が契機なら PR）ごとに書く
+- 「1 回だけ書く」印（`wait`・`overlap`・`remind`・`ignored-instruction`）は、同じ種類で同じ相手（`wait` は `blockedBy` の番号の集合と `hidden` の数の組、`overlap` は `prs`、`remind` は `head`、`ignored-instruction` は `comment`）の有効な印があれば書かない。`stop` は、止めるたびに、止めた先（Issue と、PR が契機なら PR）ごとに書く
 - コメントの ID は、REST の `id`（GraphQL の `databaseId` と同じ数で、コメントの URL の `#issuecomment-<ID>` の数）
 
 | 種類（`type`） | 書くとき | 置き場 | 欄（`type` と `sig` のほか） | 根拠 |
@@ -124,11 +124,11 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `merge` | マージの判定をした | PR | `head`、`result`（`ready` か `human`）、`reasons`（満たさない条件の記号の並び） | MERGE-3 |
 | `remind` | 催促した | PR | `head` | MERGE-3 |
 | `stop` | 停止中にした（S5） | Issue（PR が契機なら PR にも） | `reason`（止めた理由の記号。FLOW-40）、`comments`（`marker-invalid` のとき、書く先の書き換えられた印のコメントの ID の並び。挙げるコメントが無ければ持たない） | FLOW-40、IMPL-20、[ADR-20261021-004][adr-marker-keys] |
-| `wait` | 先の依頼で待つ（D1） | Issue | `blockedBy`（先の Issue の番号の並び） | FLOW-10、FLOW-43 |
+| `wait` | 先の依頼で待つ（D1） | Issue | `blockedBy`（番号の並び。終わっていない先の Issue のうち、依存の一覧で番号が分かるもの。`hidden` が 1 以上のときだけ空でよい）、`hidden`（App から見えない依存の相手の数。閉じた相手も数える） | FLOW-10、FLOW-43、[ADR-20261112-001][adr-wait-hidden] |
 | `dependency-review` | 中止ありの計画を見直した（D4・D5） | Issue | `dependency`（先の Issue の番号）、`result`（`keep` か `change`） | FLOW-43 |
 | `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
 | `cleanup` | 片付けた（T27・T28） | Issue | — | FLOW-42、MERGE-7 |
-| `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号） | SAFE-19 |
+| `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号。受け入れの依頼の実行で見つけたときは受け入れの依頼の Issue の番号で、Project に無い Issue のこともある） | SAFE-19、[ADR-20261112-003][adr-intake-finding] |
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
 | `ignored-instruction` | 決めた後の作業指示を読まなかった | Issue | `comment`（作業指示のコメントの ID） | TEXT-4 |
 | `manual-push` | push で効くものの差分を人に渡した | Issue | `head`、`paths`（並び） | IMPL-15 |
@@ -186,3 +186,5 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-follow-up-dup]: ../adr/adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
 [adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
+[adr-wait-hidden]: ../adr/adr-20261112-001-wait-marker-hidden-blockers.md
+[adr-intake-finding]: ../adr/adr-20261112-003-intake-request-finding-keeps-halt.md
