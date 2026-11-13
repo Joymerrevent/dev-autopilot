@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-13
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -155,6 +155,7 @@ decision-makers: メンテナ
   - 見つかりの記録のファイルの名前・形・書き方と、置き場の中の場所（基本設計と詳細設計）
   - 書き直すときに、前の実行で届いたか分からなかった印を見分けるか（見分けずに重ねて書く形を第一にする。見分けるなら、印に実行 ID を持たせる形を詳細設計で比べる）
   - 受け入れの依頼の実行で、受付 AI が返した下書き（AI が書いた文）が検疫で見つかったときの全体の停止。[ADR-20261022-004][adr-intake-req] の決定 2・3 は、受け入れの依頼の実行が GitHub に書かず、見つかった種類と場所を結果のファイルにだけ書くとし、全体の停止の Issue を開かない。見つけた事実が GitHub に残らない点は本 ADR の場面と同じなので、見つかりの記録を使うかは別の論点として決めていないことに足す
+    > **［2026-11-13 追記］** [ADR-20261112-003][adr-intake-finding] で決めた。受け入れの依頼の実行で、受付 AI が返した文の欄が検疫に当たったときも、本 ADR の決定 1 と同じ中身の見つかりの記録を書き（GitHub には書かない）、次の実行から全体を止める。書き直しと記録を消す条件は本 ADR の決定 2 のまま使い、受け入れの依頼の Issue が Project に無いときも `security` の印を書き直す。本 ADR の決定は変わらない。
 - 関連する要件：SAFE-19（[05-safety.md][safety]）、「運用の規則」の手元の記録と止める合図（[01-issue-flow.md][flow]）、UNDECIDED-97（[09-undecided.md][undecided]）
 - 関連する ADR：[ADR-20261024-005][adr-security]、[ADR-20261015-006][adr-flow]、[ADR-20261024-002][adr-no-stages]、[ADR-20261022-004][adr-intake-req]、[ADR-20261101-002][adr-notify]、[ADR-20261017-007][adr-stop]、[ADR-20261027-002][adr-leak]（漏えいの検査で見つかったときは全体を止めないので、見つかりの記録を書かない）
 - 承認の後の反映先（別の PR で行う）
@@ -186,3 +187,4 @@ decision-makers: メンテナ
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-leak]: ./adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-model-states]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
+[adr-intake-finding]: ./adr-20261112-003-intake-request-finding-keeps-halt.md

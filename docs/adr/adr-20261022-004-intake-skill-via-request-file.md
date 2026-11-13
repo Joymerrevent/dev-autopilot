@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-22
-updated: 2026-10-28
+updated: 2026-11-13
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -13,6 +13,8 @@ decision-makers: メンテナ
 > **Amended by [ADR-20261024-004][adr-20261024-004]（2026-10-24）**: 決定 3 の返す下書きの欄から、計画の難しさの判定（`planReason`）を外した。作業ごとに使うモデルの決め方を決めるまで、受付 AI は判定を返さない（決定 8）。
 >
 > **［2026-10-24 追記］** `needs-human`・Status・Agent 欄・`note` の印の書き方は、[ADR-20261024-001][adr-20261024-001] の決定 11 で読む（`needs-human` を付けるのは停止中にすること、外すのは `## 再開 <戻す先>` を書くこと、Agent 欄の `paused`・`human` は `agent-paused`・`agent-manual` のラベル）。
+>
+> **Amended by [ADR-20261112-003][adr-20261112-003]（2026-11-13）**: 決定 3 の「見つかれば、文の欄を結果のファイルに書かず、見つかった種類と場所だけを書く」に、見つかりの記録を書けたかを足した。受付 AI が返した文の欄が検疫に当たったら、進行 Bot は結果のファイルを書く前に見つかりの記録を書き、次の実行から全体を止め、人の Skill は全体を止めたことを示す。決定 2（受け入れの依頼の実行は GitHub に何も書かない）と、決定 3 の文の欄を書かずに見つかった種類と場所を書くことと、決定 1・4〜6 は据え置く。
 
 要件の UNDECIDED-73（人が `/verify-issue` から呼ぶ intake の Skill を、進行 Bot を動かすマシンでどう動かすか。[決めていないこと][undecided]の「ADR で決めること」の「受け入れと印」）を決める。
 
@@ -273,3 +275,4 @@ decision-makers: メンテナ
 [adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-20261024-002]: ./adr-20261024-002-no-stages-4-to-8-and-no-trials.md
 [adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-20261112-003]: ./adr-20261112-003-intake-request-finding-keeps-halt.md
