@@ -187,6 +187,8 @@ decision-makers: メンテナ
 | D4 | 中止あり →（なし） | AI が計画を見直し、計画を変えずに進めてよいと判断した | UNDECIDED-81 |
 | D5 | 中止あり →（なし） | AI が計画を変える必要があると判断し、止め方を停止中にした | UNDECIDED-81 |
 
+> **［2026-11-13 追記］** [ADR-20261112-002][adr-deleted-blocker] で、当てる先のリポにある先の作業の Issue が消されたときも中止ありにした。D3 の出来事「先の作業が閉鎖済みになった」は、ADR-20261112-002 で消されたと読んだ相手を含めて読む。決定 6 の軸の値の決め方と、決定 9 の `wait` と `dependency-review` の印の欄は変わらない。
+
 安全の線（すべて UNDECIDED-80 で中身を決める）：
 
 | 線 | 元 → 先 | 出来事 |
@@ -543,3 +545,4 @@ decision-makers: メンテナ
 [adr-follow-up-dup]: ./adr-20261031-001-use-follow-up-marker-for-duplicate-green-findings.md
 [adr-raise-in-fix]: ./adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-wait-hidden]: ./adr-20261112-001-wait-marker-hidden-blockers.md
+[adr-deleted-blocker]: ./adr-20261112-002-deleted-blocker-as-cancelled.md
