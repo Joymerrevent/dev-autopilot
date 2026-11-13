@@ -128,7 +128,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `dependency-review` | 中止ありの計画を見直した（D4・D5） | Issue | `dependency`（先の Issue の番号）、`result`（`keep` か `change`） | FLOW-43 |
 | `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
 | `cleanup` | 片付けた（T27・T28） | Issue | — | FLOW-42、MERGE-7 |
-| `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号） | SAFE-19 |
+| `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号。受け入れの依頼の実行で見つけたときは受け入れの依頼の Issue の番号で、Project に無い Issue のこともある） | SAFE-19、[ADR-20261112-003][adr-intake-finding] |
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
 | `ignored-instruction` | 決めた後の作業指示を読まなかった | Issue | `comment`（作業指示のコメントの ID） | TEXT-4 |
 | `manual-push` | push で効くものの差分を人に渡した | Issue | `head`、`paths`（並び） | IMPL-15 |
@@ -187,3 +187,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-same-model]: ../adr/adr-20261031-002-same-model-per-role-for-all-tasks.md
 [adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-wait-hidden]: ../adr/adr-20261112-001-wait-marker-hidden-blockers.md
+[adr-intake-finding]: ../adr/adr-20261112-003-intake-request-finding-keeps-halt.md
