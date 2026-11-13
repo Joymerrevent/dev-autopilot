@@ -274,7 +274,7 @@ push 以上の人が書いた最新の `## 再開 <戻す先>` を R とする�
 | 10 | 結びつく PR が、マージされずに閉じられた | 停止中（`pr-closed`）。止めた理由のコメントに、やめるなら push 以上の人が Issue を閉じ、作り直すなら `## 再開 計画から` か `## 再開 下書きから` を書くことを書く（[IMPL-6][impl]） |
 | 11 | ブランチ名が一致するのに `link` の印が無い PR がある（無効な `link` の印を持つ PR は、順 5 で止める） | 停止中（`unlinked-pr`。実装の都合の記号）。PR を作った直後、`link` の印を書く前に切れたときも当たる（[IMPL-6][impl]） |
 | 12 | 作業の単位に紐づく作業場所の残骸がある（下の「作業場所の残骸」） | 停止中（`workspace-residue`。実装の都合の記号） |
-| 13 | 先の依頼の軸が未完了 | 待つ。`wait` の印（`blockedBy` に、終わっていない先の Issue の番号）を、同じ相手の有効な印が無いときだけ 1 回書く（D1。[FLOW-10][flow]、[FLOW-43][flow]）。App から見えない相手だけで未完了のとき（`blockedBy` に書く番号が無いとき）の `wait` の印の書き方は、要件の UNDECIDED-101 で決める |
+| 13 | 先の依頼の軸が未完了 | 待つ。`wait` の印（`blockedBy` に、終わっていない先の Issue のうち依存の一覧で番号が分かるもの、`hidden` に App から見えない相手の数）を、同じ相手（`blockedBy` の番号の集合と `hidden` の組）の有効な印が無いときだけ 1 回書く（D1。[FLOW-10][flow]、[FLOW-43][flow]、[ADR-20261112-001][adr-wait-hidden]）。`blockedBy` は、`hidden` が 1 以上のときだけ空にしてよい。`hidden` が 1 以上なら、印のコメントの決まった文に、App から見えない相手の数と、人がすること（依存を外すか、相手を当てる先のリポに移す）を書く（言い回しは詳細設計の「[文の検査と受け入れ][d-text]」の「コメントの組み立て」） |
 | 14 | 先の依頼の軸が中止あり | 計画の見直し（重い）：計画を確かめる AI に、先の依頼が中止されたことと、マスターと今の計画（PR があれば差分も）を渡し、計画を変えずに進めてよいか（`keep`）、変える必要があるか（`change`）を返させる。結果を `dependency-review` の印（`dependency` に先の Issue の番号）に書く。`keep` なら同じ状態から続ける（D4）。`change` なら、あわせて停止中（`plan-change`）にし、止めた理由のコメントに AI の判断と理由を書く（AI の文なので、検疫と漏えいの検査を通す。D5）。先の依頼が 2 つ以上あれば、1 回の実行で 1 つずつ見直す（[FLOW-43][flow]、[ADR-20261024-006][adr-cleanup] の決定 3） |
 
 - 停止中にするときは、`stop` の印（`reason` に記号）を書き、止めた理由のコメントに人がすることを書く。`stop` の印は、止めた先（Issue と、PR が契機なら PR にも）ごとに書く。Issue の止めた理由のコメントには、PR の止めた理由のコメントへのリンクを書く。人が Project で見る Issue に、止めた理由を残すため
@@ -528,7 +528,7 @@ AI の変更の後のラウンド（作業 AI が直すか衝突を解いた後�
 
 | 印 | 書くとき | 置き場 | 1 回だけ書く判定 |
 | --- | --- | --- | --- |
-| `wait` | 先の依頼で待つとき（D1。[FLOW-10][flow]、[FLOW-43][flow]） | Issue | 同じ `blockedBy` の有効な印があれば書かない |
+| `wait` | 先の依頼で待つとき（D1。[FLOW-10][flow]、[FLOW-43][flow]） | Issue | `blockedBy` の番号の集合と `hidden`（App から見えない相手の数）の組が同じ有効な印があれば書かない |
 | `overlap` | 作業 AI の commit を取り込んだとき（上の「push の手順」の順 2）に、変更ファイルの一覧が、ほかの進行中の PR の変更ファイルと重なったとき（[FLOW-8][flow]） | Issue | 同じ `prs` の有効な印があれば書かない |
 | `stop` | 停止中にするとき（S5。下の「止めた理由の記号」） | Issue（PR が契機なら PR にも） | 1 回だけにしない。止めるたびに、止めた先ごとに書く |
 | `dependency-review` | 先の依頼が中止になり、計画を見直したとき（D4・D5。[FLOW-43][flow]） | Issue | 同じ `dependency` の有効な印があれば書かない（先の Issue ごとに 1 回） |
@@ -752,3 +752,5 @@ UNDECIDED-27（作業場所の残骸の決め方）を決める。セッショ�
 [d-io]: ../detailed/01-io.md
 [adr-halt-pending]: ../../adr/adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [adr-app]: ../../adr/adr-20261020-002-switch-to-github-app-before-writing.md
+[d-text]: ../detailed/06-text-and-intake.md
+[adr-wait-hidden]: ../../adr/adr-20261112-001-wait-marker-hidden-blockers.md
