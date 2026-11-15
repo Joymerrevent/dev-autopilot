@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-15
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -132,6 +132,7 @@ decision-makers: メンテナ
   - 結果のファイルに足す欄の名前と、人の Skill が示す決まった文（詳細設計）
   - 読めない見つかりの記録を人が戻すときの手がかりとして、受け入れの依頼の実行が `runs.jsonl` の行に見つかった種類と場所を残すか。今の手がかりは、同じ実行 ID で引く `runs.jsonl` の行（作業の単位の結果）、`sessions.jsonl` の始まりの行、`outputs/<実行 ID>/` の出力契約で、受け入れの依頼の実行の行には作業の単位の結果が無い（詳細設計）
   - 受け入れの依頼の実行で、受付 AI の下書きが漏えいの検査だけで見つかったとき（`where` が `leak`）の安全の軸。全体を止めないので見つかりの記録を書かない（本 ADR の決定 1）。ほかの実行なら、見つけた作業の単位で安全の軸に値を入れる（[ADR-20261027-002][adr-leak]）が、受け入れの依頼の実行は GitHub に書かないので値が入らず、次の実行が見つけ直すとも限らない。要れば決めていないことに足す
+    > **［2026-11-15 追記］** [ADR-20261115-002][adr-intake-leak] で決めた。受け入れの依頼の実行で、受付 AI の下書きが漏えいの検査だけに当たったときは、見つかりの記録と別の置き場に全体を止めない漏えいの見つかりの記録を書き（GitHub には書かない）、作業の単位を進める次の実行が Issue に `security` の印（`where` が `leak`）を書いて安全の軸に値を入れる。全体は止めないので、本 ADR の決定 1 の「漏えいの検査だけで見つけたときは見つかりの記録を書かない」は変わらない。
   - 書き直せないまま残り続ける読める記録を、人が消してよいか（UNDECIDED-99。受け入れの依頼の実行で書いた記録も同じに扱う）
 - 外の利用者：結果のファイルを読むのは dev-autopilot の intake の Skill だけで、business-os の `/verify-issue` は intake の Skill を呼ぶ形で使う。2026-11-12 に business-os の `main` と `develop` の `.claude/skills/verify-issue/SKILL.md` を見て、まだ dev-autopilot を呼んでいないことを確かめた（呼ぶ形への拡張は、導入と点検の実装（段階 3）の business-os の PR で行う）
 - 関連する要件：SAFE-19（[05-safety.md][safety]）、「運用の規則」の手元の記録（[01-issue-flow.md][flow]）、印の表の `halt`（[04-external-text-and-markers.md][text]）、STRUCT-6（[07-structure.md][struct]）、UNDECIDED-98・UNDECIDED-99（[09-undecided.md][undecided]）
@@ -168,3 +169,4 @@ decision-makers: メンテナ
 [adr-leak]: ./adr-20261027-002-leak-findings-go-to-security-axis.md
 [adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
+[adr-intake-leak]: ./adr-20261115-002-intake-request-leak-finding.md
