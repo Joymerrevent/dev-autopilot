@@ -126,7 +126,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `stop` | 停止中にした（S5） | Issue（PR が契機なら PR にも） | `reason`（止めた理由の記号。FLOW-40）、`comments`（`marker-invalid` のとき、書く先の書き換えられた印のコメントの ID の並び。挙げるコメントが無ければ持たない） | FLOW-40、IMPL-20、[ADR-20261021-004][adr-marker-keys] |
 | `wait` | 先の依頼で待つ（D1） | Issue | `blockedBy`（番号の並び。終わっていない先の Issue のうち、依存の一覧で番号が分かるもの。`hidden` が 1 以上のときだけ空でよい）、`hidden`（App から見えない依存の相手の数。閉じた相手も数える） | FLOW-10、FLOW-43、[ADR-20261112-001][adr-wait-hidden] |
 | `dependency-review` | 中止ありの計画を見直した（D4・D5） | Issue | `dependency`（先の Issue の番号）、`result`（`keep` か `change`） | FLOW-43 |
-| `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
+| `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]。受け入れの依頼の実行で受付 AI の下書きが漏えいの検査だけに当たったときは、作業の単位を進める次の実行が書く。[ADR-20261115-002][adr-intake-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
 | `cleanup` | 片付けた（T27・T28） | Issue | — | FLOW-42、MERGE-7 |
 | `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号。受け入れの依頼の実行で見つけたときは受け入れの依頼の Issue の番号で、Project に無い Issue のこともある） | SAFE-19、[ADR-20261112-003][adr-intake-finding] |
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
@@ -189,3 +189,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-wait-hidden]: ../adr/adr-20261112-001-wait-marker-hidden-blockers.md
 [adr-intake-finding]: ../adr/adr-20261112-003-intake-request-finding-keeps-halt.md
 [adr-once-only]: ../adr/adr-20261115-001-once-only-marker-comparison.md
+[adr-intake-leak]: ../adr/adr-20261115-002-intake-request-leak-finding.md
