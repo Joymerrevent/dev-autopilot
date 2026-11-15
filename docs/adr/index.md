@@ -76,6 +76,7 @@
 | ADR-20261112-003 | [受け入れの依頼で受付 AI の下書きが検疫に当たったときも、見つかりの記録を書いて次の実行から全体を止め、印は作業の単位を進める次の実行が GitHub に書く][adr-20261112-003-intake-request-finding-keeps-halt] | accepted | 2026-11-12 |
 | ADR-20261115-001 | [「1 回だけ書く」印をもう一度書くかは、要件の印の一覧が種類ごとに決めた相手の欄で比べ、署名付きの印を決めた ADR には決定を変えずに読み方を追記する][adr-20261115-001-once-only-marker-comparison] | accepted | 2026-11-15 |
 | ADR-20261115-002 | [受け入れの依頼で受付 AI の下書きが漏えいの検査だけに当たったときは、全体を止めない記録を別の置き場に残し、作業の単位を進める次の実行が Issue に security の印を書く][adr-20261115-002-intake-request-leak-finding] | accepted | 2026-11-15 |
+| ADR-20261115-003 | [見つかりの記録から Issue に security の印を書き直せないときも halt の印を書き、人が GitHub で全体の停止を解いたら進行 Bot が記録を消す][adr-20261115-003-persistent-pending-records] | proposed | 2026-11-15 |
 
 <!--
 行の例（表の最後に足す）:
@@ -158,3 +159,4 @@
 [adr-20261112-003-intake-request-finding-keeps-halt]: ./adr-20261112-003-intake-request-finding-keeps-halt.md
 [adr-20261115-001-once-only-marker-comparison]: ./adr-20261115-001-once-only-marker-comparison.md
 [adr-20261115-002-intake-request-leak-finding]: ./adr-20261115-002-intake-request-leak-finding.md
+[adr-20261115-003-persistent-pending-records]: ./adr-20261115-003-persistent-pending-records.md
