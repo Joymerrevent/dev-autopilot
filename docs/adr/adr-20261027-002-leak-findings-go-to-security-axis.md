@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-27
-updated: 2026-11-01
+updated: 2026-11-15
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -51,6 +51,7 @@ decision-makers: メンテナ
 - 漏えいの検査で見つかったら、止め方を停止中にせず、見つかった作業の単位の安全の軸に、攻撃の疑い（AI の文）（Q2）を入れる。主な流れは、検査の前の状態のまま。見つかった文は、今のまま GitHub に書かない（push しない、投稿しない、起票しない）
 - `security` の印の `where` に `leak`（漏えいの検査で見つかった）を足す。値は攻撃の疑い（AI の文）。見つかった場所（差分ならファイルと行、文なら欄と行）と種類（鍵の形式・メールアドレス・機械上のパス・進行 Bot の設定と記録の内容）を書き、見つかった文そのものは写さない（写すと、漏えいを進行 Bot の投稿で広めるため）
 - 見つかった場所を問わず同じにする（push の前、計画・レビュー・対応・受け入れのコメントを投稿する前、🟢 から起票する前、マージの判定で最終の head の差分に掛け直したとき）。マージの判定で見つかったときは、`merge` の印の判定を今のまま「人が判断する」（`result` が `human`、理由に `leak`）にしたうえで、安全の軸にも値を入れる
+  > **［2026-11-15 追記］** [ADR-20261115-002][adr-intake-leak] で、人が呼ぶ受け入れの Skill（`intake`）の依頼で起こされた実行（GitHub に何も書かない）で、受付 AI が返した下書きの文の欄が漏えいの検査だけに当たったときも、見つけた Issue の安全の軸に値を入れると決めた。受け入れの依頼の実行は GitHub に書かずに、全体を止めない漏えいの見つかりの記録を手元に残し、作業の単位を進める次の実行が、記録から Issue に `security` の印（`where` が `leak`）を書く。見つかった場所を問わず安全の軸に値を入れること（本決定）と、全体を止めないこと（決定 2）は変わらない。
 
 ### 決定 2：全体は止めない
 
@@ -129,3 +130,4 @@ decision-makers: メンテナ
 [design-ai]: ../design/basic/03-ai-sessions.md
 [design-tests]: ../design/basic/05-tests.md
 [adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
+[adr-intake-leak]: ./adr-20261115-002-intake-request-leak-finding.md
