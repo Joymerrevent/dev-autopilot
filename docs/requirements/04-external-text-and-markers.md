@@ -108,7 +108,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 - 欄の名前は camelCase、値は小文字の英単語（2 語以上は `-` でつなぐ）。判定の結果を入れる欄は、どの印も `result`
 - 署名（`sig`）は、`sig` を除いた欄に、印の置き場（リポ（`owner/repo`）と Issue か PR の番号）を加え、決まった並べ方にそろえた JSON に、進行 Bot の鍵で掛ける（並べ方は詳細設計。IMPL-20）。別の Issue や PR に写した印は、署名が通らない
 - 進行 Bot が投稿するコメントは、すべて署名付きの印を 1 つ持つ。印の真正性は IMPL-20 の 3 条件で確かめ、人の編集はどの印にも許さない（編集された印は無効で、停止中（`marker-invalid`）。FLOW-40）
-- 「1 回だけ書く」印（`wait`・`overlap`・`remind`・`ignored-instruction`）は、同じ種類で同じ相手（`wait` は `blockedBy` の番号の集合と `hidden` の数の組、`overlap` は `prs`、`remind` は `head`、`ignored-instruction` は `comment`）の有効な印があれば書かない。`stop` は、止めるたびに、止めた先（Issue と、PR が契機なら PR）ごとに書く
+- 「1 回だけ書く」印（`wait`・`overlap`・`remind`・`ignored-instruction`）は、同じ種類で同じ相手（`wait` は `blockedBy` の番号の集合と `hidden` の数の組、`overlap` は `prs`、`remind` は `head`、`ignored-instruction` は `comment`）の有効な印があれば書かない。`stop` は、止めるたびに、止めた先（Issue と、PR が契機なら PR）ごとに書く。どの種類を「1 回だけ書く」印にするかと、種類ごとの相手の欄は、[ADR-20261015-004][adr-markers] の決定 1 が「1 回だけ書く」を判定するときに比べる相手の正本で、変えるときは ADR で決めてから直す（[ADR-20261115-001][adr-once-only]）
 - コメントの ID は、REST の `id`（GraphQL の `databaseId` と同じ数で、コメントの URL の `#issuecomment-<ID>` の数）
 
 | 種類（`type`） | 書くとき | 置き場 | 欄（`type` と `sig` のほか） | 根拠 |
@@ -188,3 +188,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-raise-in-fix]: ../adr/adr-20261101-001-record-model-raise-in-fix-marker.md
 [adr-wait-hidden]: ../adr/adr-20261112-001-wait-marker-hidden-blockers.md
 [adr-intake-finding]: ../adr/adr-20261112-003-intake-request-finding-keeps-halt.md
+[adr-once-only]: ../adr/adr-20261115-001-once-only-marker-comparison.md
