@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-10-15
-updated: 2026-11-11
+updated: 2026-11-15
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -82,6 +82,9 @@ decision-makers: メンテナ
 - 印の種類に `note` を足す。欄は `kind=wait|overlap|remind|stop` と、必要なら `reason=<短い記号>`。置き場は Issue か PR のコメント。人の編集は許さない。読むのは進行役
   - `wait`：依存の待ち（FLOW-10）、`overlap`：触る範囲の重なりの警告（FLOW-8）、`remind`：催促（MERGE-3）、`stop`：`needs-human` を付けた理由
   - 「1 回だけ書く」は、同じ Issue か PR に、同じ `kind` と `reason` の有効な `note` の印があるかで判定する
+
+    > **［2026-11-15 追記］** 印の書き方を JSON に改めた後（[ADR-20261024-001][adr-20261024-001] の決定 9）は、`note`・`kind`・`reason` の欄が無い。上の「1 回だけ書く」の箇条は、同じ Issue か PR に、同じ種類（`type`）で、要件の「[印と固定の見出しの一覧][markers]」にある「1 回だけ書く」印の決まりが種類ごとに決めた相手の欄（`wait` の `blockedBy` と `hidden` など）が同じ有効な印があるかで判定する、と読む。`reason` は、同じ種類の印を理由ごとに見分ける欄だったので、種類ごとに決めた相手の欄と読む。どの種類を「1 回だけ書く」印にするか（`stop` は止めるたびに書く）と、種類ごとに決めた相手の欄の正本は、要件の決まりにある（[ADR-20261115-001][adr-20261115-001]）。「1 回だけ書く」を、手元の記録でなく、同じ Issue か PR にある署名付きの有効な印で判定する決定は変わらない。
+
 - 進行役が投稿するコメントは、人向けの本文の有無を問わず、必ず署名付きの印を 1 つ持つ。印の無い進行役のアカウントの投稿は、人の投稿として読む（FLOW-14 の読み方のまま）
 - 署名の対象を、印の `sig` 以外のすべての欄に加えて、印の種類、リポ（`owner/repo`）、置き場の Issue か PR の番号とする。種類・リポ・番号は欄としては書かず、署名の計算にだけ入れる。別の Issue や PR に写した印は、署名が通らない
 - 印が無効になっていたら止める：同じ Issue か PR の中で、進行役のアカウントが投稿した印のうち、IMPL-20 の (b)（未編集）か (c)（署名）を満たさないものが 1 つでもあれば、印の置き場の Issue か PR を `needs-human` にし、`note kind=stop reason=marker-invalid` を投稿する。
@@ -200,3 +203,4 @@ decision-makers: メンテナ
 [adr-unlink]: ./adr-20261022-005-unlink-pr-closed-before-return-and-remove-needs-human-last.md
 [adr-20261024-001]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-20261024-004]: ./adr-20261024-004-master-draft-quarantine-and-protected-paths.md
+[adr-20261115-001]: ./adr-20261115-001-once-only-marker-comparison.md
