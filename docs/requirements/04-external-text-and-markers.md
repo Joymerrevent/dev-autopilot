@@ -128,7 +128,7 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 | `dependency-review` | 中止ありの計画を見直した（D4・D5） | Issue | `dependency`（先の Issue の番号）、`result`（`keep` か `change`） | FLOW-43 |
 | `security` | 攻撃の疑いを見つけた（Q1・Q2） | Issue（PR が契機なら PR にも） | `where`（`entry`・`text`・`code`・`leak`。`leak` は漏えいの検査で見つかったとき。[ADR-20261027-002][adr-leak]。受け入れの依頼の実行で受付 AI の下書きが漏えいの検査だけに当たったときは、作業の単位を進める次の実行が書く。[ADR-20261115-002][adr-intake-leak]）、`finding`（見つかった種類。見つかった文は写さない） | TEXT-11、IMPL-15、SAFE-19 |
 | `cleanup` | 片付けた（T27・T28） | Issue | — | FLOW-42、MERGE-7 |
-| `halt` | 全体を止めた | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号。受け入れの依頼の実行で見つけたときは受け入れの依頼の Issue の番号で、Project に無い Issue のこともある） | SAFE-19、[ADR-20261112-003][adr-intake-finding] |
+| `halt` | 全体を止めた（見つかりの記録から作業の単位の Issue に `security` の印を書き直せなかったときも書く。コメントに書く中身は SAFE-19） | 全体の停止の Issue | `issue`（見つけた作業の Issue の番号。受け入れの依頼の実行で見つけたときは受け入れの依頼の Issue の番号で、Project に無い Issue のこともある）、`record`（もとの見つかりの記録のファイルの名前。記録と `halt` の印を結ぶ。見つかりの記録から書くときだけ持つ。[ADR-20261115-003][adr-persistent-pending]） | SAFE-19、[ADR-20261112-003][adr-intake-finding]、[ADR-20261115-003][adr-persistent-pending] |
 | `approval-reset` | 無効な `agent-ready` を外した | Issue | `label`、`reason`（`stale`・`early`・`permission`） | FLOW-36、TEXT-10 |
 | `ignored-instruction` | 決めた後の作業指示を読まなかった | Issue | `comment`（作業指示のコメントの ID） | TEXT-4 |
 | `manual-push` | push で効くものの差分を人に渡した | Issue | `head`、`paths`（並び） | IMPL-15 |
@@ -190,3 +190,4 @@ AI が読む文と、その出どころ（検疫を通す場所を決めるた�
 [adr-intake-finding]: ../adr/adr-20261112-003-intake-request-finding-keeps-halt.md
 [adr-once-only]: ../adr/adr-20261115-001-once-only-marker-comparison.md
 [adr-intake-leak]: ../adr/adr-20261115-002-intake-request-leak-finding.md
+[adr-persistent-pending]: ../adr/adr-20261115-003-persistent-pending-records.md
