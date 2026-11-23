@@ -189,7 +189,8 @@ decision-makers: メンテナ
   - Discussion に変えた Issue を、状態の組み立てでどう読むか（`ClosedEvent` が無いので、閉じた人を読めない）。案 D（Discussion に変えた Issue を「無くなった」に入れる）も、同じ論点で扱う。無くなったと読むと決めれば、Discussion の場面では、見つかりの記録は `halt` の印を書けた時に消え、漏えいの見つかりの記録も [ADR-20261115-002][adr-intake-leak] の決定 3 で印を書かずに消える
   - 記録と `halt` の印を結ぶ方法、書き直した結果の値、点検の文、状態の表示の欄、`halt` の印を書くコメントの文（詳細設計）。`halt` の印に欄を足すか（要件の印の一覧）も、コメントの文で足りるかを詳細設計で確かめてから決める
   - 人が全体の停止の Issue を Discussion に変えたとき。FACT-154 でコメントが `422` で断られたことから見込むと、`## 安全の確認` を書けないまま閉じた全体の停止の Issue になり、全体の停止を解けなくなりうる（全体の停止の Issue では確かめていない）。要れば決めていないことに足す
-  - Discussion に変えたものでない、鍵の掛かった Issue に、App がコメントを書けるか（確かめていない）。書けなければ、本 ADR の決定 1・2 の場面に入る
+  - ~~Discussion に変えたものでない、鍵の掛かった Issue に、App がコメントを書けるか（確かめていない）。書けなければ、本 ADR の決定 1・2 の場面に入る~~
+    **訂正（2026-11-23）**: 確かめた。Discussion に変えていない鍵の掛かった Issue に、当てる先のリポだけに絞った App のトークンでコメントを書けて（`201`）、閉じることもできた（`200`。FACT-155（[10-verified-facts.md][facts]））。鍵が掛かっているだけでは書き直しは断られないので、本 ADR の決定 1・2 の場面に入らない。本 ADR の決定は変わらない
 - 外の利用者：本 ADR が触れるのは、記録の置き場のファイル、点検の warn、状態の表示、全体の停止の Issue に書くコメントで、どれも dev-autopilot の中で使う。2026-11-15 に business-os を fetch し、`main` と `develop` に `security-pending`・`leak-pending`・`status.json`・`halt` を使う所が無いことを確かめた（GitHub の API は使っていない）
 - 関連する要件：SAFE-19（[05-safety.md][safety]）、FLOW-1 の着手の条件と「運用の規則」の手元の記録（[01-issue-flow.md][flow]）、印の表の `security`・`halt`（[04-external-text-and-markers.md][text]）、FACT-145・FACT-154（[10-verified-facts.md][facts]）、UNDECIDED-99（[09-undecided.md][undecided]）
 - 関連する ADR：[ADR-20261111-001][adr-keep-halt]、[ADR-20261024-005][adr-security]、[ADR-20261112-003][adr-intake-finding]、[ADR-20261115-002][adr-intake-leak]、[ADR-20261015-006][adr-flow]、[ADR-20261101-002][adr-notify]、[ADR-20261022-004][adr-intake-req]、[ADR-20261017-007][adr-stop]、[ADR-20261112-002][adr-deleted-blocker]（Discussion に変えた依存の相手の読み方を、試しで確かめてから見分け方に足すとした）

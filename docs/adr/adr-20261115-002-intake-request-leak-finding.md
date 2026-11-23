@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -158,6 +158,7 @@ decision-makers: メンテナ
   - 結果のファイルの欄の名前、人の Skill が示す決まった文、点検の項目と理由の記号、状態の表示の欄（詳細設計）
   - 読めない漏えいの見つかりの記録を人が戻す手順。見つかりの記録の人の戻し方（基本設計の「[状態遷移と判定][design-flow]」の「記録の置き場のほかのファイル」の表の下）に、確かめる印を `where` が `leak` の `security` の印にした手順を足す形を第一にする（基本設計）
   - 書けないまま残り続ける読める漏えいの見つかりの記録を、人が消してよいか。全体を止めないので、残っても続くのは点検の warn と、見つけた作業の単位を進めないことだけ。要件の UNDECIDED-99（書き直せないまま残り続ける読める見つかりの記録を、人が消してよいか）と一緒に決める
+    > **［2026-11-23 追記］** [ADR-20261115-003][adr-persistent-pending] で決めた。漏えいの見つかりの記録には、全体の停止の Issue も `halt` の印も無く、人が GitHub で解いた事実を記録と結べないので、書けないまま残り続ける読める漏えいの見つかりの記録も、今のとおり人は消さず、点検の warn（`write-failed`）で示し続ける。原因を直せない場面（Issue を Discussion に変えた、移した先で Issue を消した）では warn が残り続けることを、warn の文で示す。本 ADR の決定 3・4 は変わらない。
   - 漏えいの見つかりの記録がある Issue か、安全の軸に値がある Issue に、人が受け入れの依頼をもう一度置いたときに、受付 AI を起こすか。今の設計では、受け入れの依頼の実行が受付 AI を起こす前の確かめで、Issue の安全の軸を読まない。要れば決めていないことに足す
 - 外の利用者：結果のファイルを読むのは dev-autopilot の intake の Skill だけで、business-os の `/verify-issue` は intake の Skill を呼ぶ形で使う。2026-11-15 に business-os の `main` と `develop` の `.claude/skills/verify-issue/SKILL.md` を見て、まだ dev-autopilot を呼んでいないことを確かめた（呼ぶ形への拡張は、導入と点検の実装（段階 3）の business-os の PR で行う）
 - 関連する要件：IMPL-15（[02-implement-review-fix.md][impl]）、SAFE-19（[05-safety.md][safety]）、「運用の規則」の手元の記録（[01-issue-flow.md][flow]）、印の表の `security`（[04-external-text-and-markers.md][text]）、STRUCT-6（[07-structure.md][struct]）、UNDECIDED-99・UNDECIDED-104（[09-undecided.md][undecided]）
@@ -196,3 +197,4 @@ decision-makers: メンテナ
 [adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-keep-halt]: ./adr-20261111-001-keep-halt-across-security-marker-write-failures.md
 [adr-intake-finding]: ./adr-20261112-003-intake-request-finding-keeps-halt.md
+[adr-persistent-pending]: ./adr-20261115-003-persistent-pending-records.md

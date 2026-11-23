@@ -1,7 +1,7 @@
 ---
 status: accepted
 created: 2026-11-12
-updated: 2026-11-15
+updated: 2026-11-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
@@ -134,6 +134,7 @@ decision-makers: メンテナ
   - 受け入れの依頼の実行で、受付 AI の下書きが漏えいの検査だけで見つかったとき（`where` が `leak`）の安全の軸。全体を止めないので見つかりの記録を書かない（本 ADR の決定 1）。ほかの実行なら、見つけた作業の単位で安全の軸に値を入れる（[ADR-20261027-002][adr-leak]）が、受け入れの依頼の実行は GitHub に書かないので値が入らず、次の実行が見つけ直すとも限らない。要れば決めていないことに足す
     > **［2026-11-15 追記］** [ADR-20261115-002][adr-intake-leak] で決めた。受け入れの依頼の実行で、受付 AI の下書きが漏えいの検査だけに当たったときは、見つかりの記録と別の置き場に全体を止めない漏えいの見つかりの記録を書き（GitHub には書かない）、作業の単位を進める次の実行が Issue に `security` の印（`where` が `leak`）を書いて安全の軸に値を入れる。全体は止めないので、本 ADR の決定 1 の「漏えいの検査だけで見つけたときは見つかりの記録を書かない」は変わらない。
   - 書き直せないまま残り続ける読める記録を、人が消してよいか（UNDECIDED-99。受け入れの依頼の実行で書いた記録も同じに扱う）
+    > **［2026-11-23 追記］** [ADR-20261115-003][adr-persistent-pending] で決めた。人は今のとおり読める記録を消さない。作業の単位を進める実行が、書き直しで記録の Issue に `security` の印を書けなかったときも全体の停止の Issue に `halt` の印を書き、その全体の停止の Issue で人が全体の停止を解いたら、進行 Bot が記録を消す。受け入れの依頼の実行で書いた記録にも同じに当てる（`halt` の印の `issue` は受け入れの依頼の Issue で、Issue が Project に無いときも同じ）。受け入れの依頼の実行は、今のとおり書き直さず、記録を消さない。本 ADR の決定 1〜3 は変わらない。
 - 外の利用者：結果のファイルを読むのは dev-autopilot の intake の Skill だけで、business-os の `/verify-issue` は intake の Skill を呼ぶ形で使う。2026-11-12 に business-os の `main` と `develop` の `.claude/skills/verify-issue/SKILL.md` を見て、まだ dev-autopilot を呼んでいないことを確かめた（呼ぶ形への拡張は、導入と点検の実装（段階 3）の business-os の PR で行う）
 - 関連する要件：SAFE-19（[05-safety.md][safety]）、「運用の規則」の手元の記録（[01-issue-flow.md][flow]）、印の表の `halt`（[04-external-text-and-markers.md][text]）、STRUCT-6（[07-structure.md][struct]）、UNDECIDED-98・UNDECIDED-99（[09-undecided.md][undecided]）
 - 関連する ADR：[ADR-20261111-001][adr-keep-halt]、[ADR-20261022-004][adr-intake-req]、[ADR-20261024-005][adr-security]、[ADR-20261015-006][adr-flow]、[ADR-20261027-002][adr-leak]、[ADR-20261101-002][adr-notify]、[ADR-20261017-007][adr-stop]
@@ -170,3 +171,4 @@ decision-makers: メンテナ
 [adr-notify]: ./adr-20261101-002-notify-outside-github-by-webhook.md
 [adr-stop]: ./adr-20261017-007-stop-switch-in-repo-variable.md
 [adr-intake-leak]: ./adr-20261115-002-intake-request-leak-finding.md
+[adr-persistent-pending]: ./adr-20261115-003-persistent-pending-records.md
