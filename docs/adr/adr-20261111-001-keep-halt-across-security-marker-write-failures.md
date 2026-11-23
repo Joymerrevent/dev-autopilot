@@ -1,12 +1,14 @@
 ---
 status: accepted
 created: 2026-11-11
-updated: 2026-11-15
+updated: 2026-11-23
 author: Claude Code（メンテナの依頼で起票）
 decision-makers: メンテナ
 ---
 
 # AI の文の検疫で見つけたことを GitHub に書けなかったときは、手元の記録で次の実行からも全体を止め、印を書き直せたら記録を消す
+
+> **Amended by [ADR-20261115-003][adr-persistent-pending]（2026-11-23）**: 決定 2 の、記録を消す条件に、人が全体の停止を GitHub で解いたときを足した。作業の単位を進める実行は、書き直しで記録の Issue に `security` の印を書けなかったとき（Issue を読めない、書き込みを断られた、届いたか分からない）も、記録を残したまま全体の停止の Issue に `halt` の印を書く。記録から書いた `halt` の印を持つ全体の停止の Issue で、maintain 以上の人が全体の停止を解いたら（`## 安全の確認` を書いて閉じたら）、進行 Bot が記録を消す。決定 1・3 と、決定 2 のほかの項目（作業の単位を進める実行だけが書き直すこと、両方の印を書けたら消すこと、Issue が当てる先のリポに無くなったら `halt` の印を書けたら消すこと、受け入れの依頼の実行と点検の依頼の実行は書き直さず消さないこと、書けた印ごとに通知すること）は据え置く。
 
 要件の UNDECIDED-97（AI が書いた文の検疫で見つけた後に `security` の印を GitHub に書けなかったとき、次の実行からも全体を止めるか。[決めていないこと][undecided]の「ADR で決めること」の「安全と設定」）を決める。
 
@@ -190,3 +192,4 @@ decision-makers: メンテナ
 [adr-model-states]: ./adr-20261024-001-work-unit-main-flow-and-overlay-axes.md
 [adr-intake-finding]: ./adr-20261112-003-intake-request-finding-keeps-halt.md
 [adr-intake-leak]: ./adr-20261115-002-intake-request-leak-finding.md
+[adr-persistent-pending]: ./adr-20261115-003-persistent-pending-records.md
