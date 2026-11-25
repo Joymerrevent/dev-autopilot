@@ -331,6 +331,12 @@
   ~~決めること：App から見えない依存の相手があるときの、`wait` の印の欄と、同じ相手かの比べ方。~~
   ~~候補：(A) `wait` の印に App から見えない相手の数の欄（例 `hidden`）を足し、`blockedBy` は見えない相手があるときだけ空を許し、同じ相手かを `blockedBy` の番号の並びと見えない数の組で比べる。コメントの決まった文に見えない数を書く。(B) 見えない相手だけで待つときは、`wait` でなく停止中にし、人が依存を確かめて戻す。(C) 見えない相手があるときは、`wait` の印もコメントも書かず、`runs.jsonl` だけに残す（FLOW-10 の例外）。~~
   ~~推奨は (A)。FLOW-10 の 1 回のコメントを保ち、待つ理由（見えない相手の数）を Issue に残せる。2026-11-12 にメンテナが、確かめ直しの直し方として (A) を選んだが、要件 04 と ADR-20261024-001 の印の表を改めるので、ADR で決める。決める時期は、導入と点検の実装（段階 3）で、先の依頼の軸を読む処理を作る前（[01-issue-flow.md][f01]、[04-external-text-and-markers.md][f04]）~~
+- UNDECIDED-105 **作業の単位の Issue か依存の相手の Issue が Discussion に変えられたときに、状態の組み立てでどう読むか。** 状態の組み立ては、Issue を閉じた人を、timeline の最新の閉じた出来事（`ClosedEvent`）の `actor` で確かめ、push 以上の人が閉じたら閉鎖済みか中止、push 未満の人が閉じたら停止中（`unauthorized-close`）にする（FLOW-42。基本設計の「[状態遷移と判定][design-flow]」の「主な流れの状態の決め方」）。閉鎖済みに入った時刻も、最新の `ClosedEvent` の時刻で読む（同じ文書の「次の工程」の「先に見る」の順 2）。依存の相手も、相手の Issue の開閉と閉じた人で先の作業が終わったかを読み、push 未満の人に閉じられた相手は未完了のままにする（FLOW-43、[ADR-20261024-006][adr-cleanup] の決定 3）。
+  一方、Issue を Discussion に変えると、元の番号は閉じて鍵の掛かった Issue として残って読めるが、timeline には Discussion に変えた出来事（`ConvertedToDiscussionEvent`。REST では `converted_to_discussion`。`actor` は変えた人）が残るだけで、閉じた出来事が無い。元の Issue にコメントは誰も書けない（`422`）が、ラベルは付けられる（FACT-154）。今の設計は、Discussion に変えた Issue を「無くなった」と読まない（基本設計の「[導入と点検][design-setup]」の一度だけの試しの一覧）ので、閉じた Issue として読むが、閉じた人と閉じた時刻を読めず、主な流れの状態と先の依頼の軸が決まらない。作業の単位の Issue にはどの印も書けないので、片付けの `cleanup` の印（中止に入るための印）も、止めた理由の `stop` の印も書けない。GitHub の文書では、triage 以上の人が Issue を Discussion に変えられる（[Moderating discussions][doc-moderating-discussions]）ので、push 未満の人が Issue を閉じたのと同じ結果になりうる（2026-11-15 に、FACT-154 を確かめたときに見つけた。PR #245）。
+  確かめていないこと（どれも、人が画面で Issue を Discussion に変える操作が要る）：Discussion に変えた Issue が Project の項目に残るか、依存する側の Issue の依存の一覧に残るか、triage の人が実際に変えられるか。
+  決めること：Discussion に変えた作業の単位の Issue と依存の相手の Issue を、状態の組み立てでどう読むか。印を書けない作業の単位をどう終えるか。
+  候補：(A) 閉じた人が分からないので、push 未満の人が閉じたときと同じに読む（作業の単位は停止中、依存の相手は未完了）。作業の単位の Issue に `stop` の印を書けないので、止めたことを GitHub に残す先も決める。(B) Discussion に変えた出来事の `actor` と時刻を、閉じた人と閉じた時刻として読む。変えた人が push 以上なら閉鎖済み（依存の相手なら中止あり）、push 未満なら (A) と同じ。片付けで `cleanup` の印を書けないので、印を書かずに片付けを終える形も決める。(C) 無くなった Issue と読む（状態の組み立ての見分け方に、Discussion に変えた出来事で見分ける形を足し、消された Issue と同じに扱う。[ADR-20261115-003][adr-persistent-pending] が比べた案 D）。依存の相手なら中止あり（[ADR-20261112-002][adr-deleted-blocker]）、見つかりの記録は `halt` の印を書けたら消え、漏えいの見つかりの記録は印を書かずに消える（[ADR-20261115-002][adr-intake-leak] の決定 3）。
+  決める時期は、導入と点検の実装（段階 3）で、状態の組み立てを作る前（[01-issue-flow.md][f01]、[10-verified-facts.md][f10]）
 
 ## 基本設計の中で決めてよいもの
 
@@ -445,6 +451,7 @@
 [adr-gaps]: ../adr/adr-20261019-002-review-gaps-axis-in-shadow-first.md
 [design-setup]: ../design/basic/04-setup-and-check.md
 [doc-rules]: https://docs.github.com/en/rest/repos/rules
+[doc-moderating-discussions]: https://docs.github.com/en/discussions/managing-discussions-for-your-community/moderating-discussions
 [adr-critic-skip]: ../adr/adr-20261022-002-skip-critic-when-no-high-or-medium-findings.md
 [adr-rounds]: ../adr/adr-20261022-003-count-round-trips-by-ai-pushes.md
 [adr-intake-req]: ../adr/adr-20261022-004-intake-skill-via-request-file.md
